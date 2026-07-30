@@ -1,0 +1,450 @@
+import 'package:flutter/material.dart';
+import 'package:path_drawing/path_drawing.dart';
+import '../theme/amani_theme.dart';
+import '../utils/trace_validation.dart';
+import 'amani_mascot.dart';
+
+/// Un tracé unique (signe atomique ou étape de lettre/chiffre) pouvant être
+/// exercé en cahier. Port fidèle de `src/components/amani/RepetitionRow.tsx`.
+class TraceableEntry {
+  final String id;
+  final String pathD;
+  final Offset startXY;
+  final Color strokeColor;
+
+  const TraceableEntry({
+    required this.id,
+    required this.pathD,
+    required this.startXY,
+    required this.strokeColor,
+  });
+}
+
+enum OccurrenceStatus { idle, drawing, success, retry }
+
+class OccurrenceState {
+  OccurrenceStatus status;
+  int attempts;
+  OccurrenceState({this.status = OccurrenceStatus.idle, this.attempts = 0});
+}
+
+class RepetitionRow extends StatefulWidget {
+  final TraceableEntry entry;
+  final String label;
+  final VoidCallback onSpeak;
+  final Widget? badge;
+  final int repetitions;
+  final double tolerance;
+  final String doneLabel;
+  final VoidCallback? onAllDone;
+
+  const RepetitionRow({
+    super.key,
+    required this.entry,
+    required this.label,
+    required this.onSpeak,
+    this.badge,
+    required this.repetitions,
+    required this.tolerance,
+    required this.doneLabel,
+    this.onAllDone,
+  });
+
+  @override
+  State<RepetitionRow> createState() => _RepetitionRowState();
+}
+
+class _RepetitionRowState extends State<RepetitionRow> {
+  late List<OccurrenceState> _occurrences;
+  int _activeIndex = 0;
+  bool _allDone = false;
+
+  static const double _occW = 100;
+  static const double _occH = 140;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetOccurrences();
+  }
+
+  @override
+  void didUpdateWidget(RepetitionRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.repetitions != widget.repetitions || oldWidget.entry.id != widget.entry.id) {
+      setState(_resetOccurrences);
+    }
+  }
+
+  void _resetOccurrences() {
+    _occurrences = List.generate(widget.repetitions, (_) => OccurrenceState());
+    _activeIndex = 0;
+    _allDone = false;
+  }
+
+  void _handleSuccess(int idx) {
+    setState(() {
+      _occurrences[idx].status = OccurrenceStatus.success;
+      if (idx + 1 < widget.repetitions) {
+        _activeIndex = idx + 1;
+      } else {
+        _allDone = true;
+        widget.onAllDone?.call();
+      }
+    });
+  }
+
+  void _handleRetry(int idx) {
+    setState(() {
+      _occurrences[idx].status = OccurrenceStatus.idle;
+      _occurrences[idx].attempts += 1;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _allDone ? AmaniColors.secondary.withValues(alpha: 0.6) : AmaniColors.textPrimary.withValues(alpha: 0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _allDone ? const Color(0x2E8FBF6F) : const Color(0x144A3B2A),
+            blurRadius: _allDone ? 16 : 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // En-tête
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AmaniColors.surface,
+              border: Border(bottom: BorderSide(color: AmaniColors.textPrimary.withValues(alpha: 0.1))),
+            ),
+            child: Row(
+              children: [
+                if (widget.badge != null) ...[widget.badge!, const SizedBox(width: 8)],
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, fontSize: 14, color: AmaniColors.textPrimary),
+                  ),
+                ),
+                if (_allDone)
+                  Text(
+                    '✓ ${widget.doneLabel}',
+                    style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, fontSize: 13, color: AmaniColors.secondary),
+                  ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: widget.onSpeak,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(color: AmaniColors.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
+                    child: const Icon(Icons.volume_up_rounded, size: 16, color: AmaniColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Zone du cahier
+          Container(
+            color: const Color(0xFFF8FBFF),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < _occurrences.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 10),
+                    _OccurrenceCanvas(
+                      entry: widget.entry,
+                      state: _occurrences[i],
+                      isActive: i == _activeIndex && !_allDone,
+                      onSuccess: () => _handleSuccess(i),
+                      onRetry: () => _handleRetry(i),
+                      w: _occW,
+                      h: _occH,
+                      tolerancePct: widget.tolerance,
+                    ),
+                  ],
+                  const SizedBox(width: 12),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (int i = 0; i < _occurrences.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _occurrences[i].status == OccurrenceStatus.success
+                                  ? AmaniColors.secondary
+                                  : i == _activeIndex
+                                      ? AmaniColors.primary
+                                      : AmaniColors.textPrimary.withValues(alpha: 0.12),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OccurrenceCanvas extends StatefulWidget {
+  final TraceableEntry entry;
+  final OccurrenceState state;
+  final bool isActive;
+  final VoidCallback onSuccess;
+  final VoidCallback onRetry;
+  final double w;
+  final double h;
+  final double tolerancePct;
+
+  const _OccurrenceCanvas({
+    required this.entry,
+    required this.state,
+    required this.isActive,
+    required this.onSuccess,
+    required this.onRetry,
+    required this.w,
+    required this.h,
+    required this.tolerancePct,
+  });
+
+  @override
+  State<_OccurrenceCanvas> createState() => _OccurrenceCanvasState();
+}
+
+class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
+  final List<Offset> _userPoints = [];
+  List<Offset> _refPoints = [];
+  late OccurrenceStatus _localStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _localStatus = widget.state.status;
+    _refPoints = sampleSvgPath(widget.entry.pathD, 30);
+  }
+
+  @override
+  void didUpdateWidget(_OccurrenceCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state.status != widget.state.status) {
+      setState(() => _localStatus = widget.state.status);
+    }
+    if (oldWidget.entry.pathD != widget.entry.pathD) {
+      _refPoints = sampleSvgPath(widget.entry.pathD, 30);
+    }
+  }
+
+  double get _scale => (widget.w < widget.h ? widget.w : widget.h) / 200.0;
+  Offset get _origin => Offset((widget.w - 200 * _scale) / 2, (widget.h - 200 * _scale) / 2);
+
+  Offset _toSvg(Offset canvasPt) => Offset((canvasPt.dx - _origin.dx) / _scale, (canvasPt.dy - _origin.dy) / _scale);
+
+  void _onPanStart(DragStartDetails details) {
+    if (!widget.isActive || _localStatus == OccurrenceStatus.success) return;
+    setState(() {
+      _localStatus = OccurrenceStatus.drawing;
+      _userPoints.clear();
+      _userPoints.add(_toSvg(details.localPosition));
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (_localStatus != OccurrenceStatus.drawing) return;
+    setState(() => _userPoints.add(_toSvg(details.localPosition)));
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (_localStatus != OccurrenceStatus.drawing) return;
+    final tolerancePx = (widget.tolerancePct) * 200;
+    final result = validateTrace(_userPoints, _refPoints, tolerancePx);
+    if (result.valid) {
+      setState(() => _localStatus = OccurrenceStatus.success);
+      Future.delayed(const Duration(milliseconds: 600), widget.onSuccess);
+    } else {
+      setState(() => _localStatus = OccurrenceStatus.retry);
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (!mounted) return;
+        setState(() {
+          _userPoints.clear();
+          _localStatus = OccurrenceStatus.idle;
+        });
+        widget.onRetry();
+      });
+    }
+  }
+
+  void _handleClear() {
+    if (_localStatus == OccurrenceStatus.success) return;
+    setState(() {
+      _userPoints.clear();
+      _localStatus = OccurrenceStatus.idle;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = _localStatus == OccurrenceStatus.success
+        ? AmaniColors.secondary
+        : widget.isActive
+            ? const Color(0x40A9784F)
+            : const Color(0x1A4A3B2A);
+
+    return Container(
+      width: widget.w,
+      height: widget.h,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: borderColor)),
+      child: Stack(
+        children: [
+          CustomPaint(
+            size: Size(widget.w, widget.h),
+            painter: _OccurrencePainter(
+              entry: widget.entry,
+              status: _localStatus,
+              userPoints: _userPoints,
+              refPoints: _refPoints,
+              scale: _scale,
+              origin: _origin,
+            ),
+          ),
+          GestureDetector(
+            onPanStart: _onPanStart,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            child: Container(color: Colors.transparent, width: widget.w, height: widget.h),
+          ),
+          if (_localStatus == OccurrenceStatus.success)
+            Positioned.fill(
+              child: Container(
+                color: const Color(0x1A8FBF6F),
+                alignment: Alignment.center,
+                child: const AmaniMascot(pose: AmaniPose.miniReussite, size: AmaniSize.avatar),
+              ),
+            ),
+          if (_localStatus == OccurrenceStatus.retry)
+            Positioned.fill(
+              child: Container(
+                color: const Color(0x1AF0C040),
+                alignment: Alignment.center,
+                child: const AmaniMascot(pose: AmaniPose.miniReessai, size: AmaniSize.avatar),
+              ),
+            ),
+          if (widget.isActive && _localStatus != OccurrenceStatus.success)
+            Positioned(
+              bottom: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: _handleClear,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: const BoxDecoration(color: Color(0x33E05252), shape: BoxShape.circle),
+                  child: const Icon(Icons.replay_rounded, size: 12, color: AmaniColors.error),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OccurrencePainter extends CustomPainter {
+  final TraceableEntry entry;
+  final OccurrenceStatus status;
+  final List<Offset> userPoints;
+  final List<Offset> refPoints;
+  final double scale;
+  final Offset origin;
+
+  _OccurrencePainter({
+    required this.entry,
+    required this.status,
+    required this.userPoints,
+    required this.refPoints,
+    required this.scale,
+    required this.origin,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (status != OccurrenceStatus.success) {
+      canvas.save();
+      canvas.translate(origin.dx, origin.dy);
+      canvas.scale(scale, scale);
+      final guidePaint = Paint()
+        ..color = status == OccurrenceStatus.retry ? const Color(0xE6D9A84A) : const Color(0xBF9BB5CC)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.5
+        ..strokeCap = StrokeCap.round;
+      final guidePath = dashPath(parseSvgPathData(entry.pathD), dashArray: CircularIntervalList<double>([7, 5]));
+      canvas.drawPath(guidePath, guidePaint);
+      canvas.restore();
+
+      // Pastille de départ
+      final startPt = Offset(entry.startXY.dx * scale + origin.dx, entry.startXY.dy * scale + origin.dy);
+      canvas.drawCircle(startPt, 5, Paint()..color = const Color(0xFF5BAA6A));
+      canvas.drawCircle(startPt, 5, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1);
+    }
+
+    if (status == OccurrenceStatus.success && refPoints.length >= 2) {
+      final path = Path()..moveTo(refPoints.first.dx * scale + origin.dx, refPoints.first.dy * scale + origin.dy);
+      for (final pt in refPoints.skip(1)) {
+        path.lineTo(pt.dx * scale + origin.dx, pt.dy * scale + origin.dy);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = entry.strokeColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4.5
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+      return;
+    }
+
+    if (userPoints.isNotEmpty) {
+      final path = Path()..moveTo(userPoints.first.dx * scale + origin.dx, userPoints.first.dy * scale + origin.dy);
+      for (final pt in userPoints.skip(1)) {
+        path.lineTo(pt.dx * scale + origin.dx, pt.dy * scale + origin.dy);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = const Color(0xFF5BAA6A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4.5
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _OccurrencePainter oldDelegate) => true;
+}
