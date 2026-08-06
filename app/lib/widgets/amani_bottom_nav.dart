@@ -109,16 +109,24 @@ class AmaniBottomNav extends StatelessWidget {
                                 color: AmaniColors.secondary,
                                 shape: BoxShape.circle,
                                 boxShadow: const [
-                                  BoxShadow(color: Color(0x4D8FBF6F), blurRadius: 20, offset: Offset(0, 6)),
+                                  BoxShadow(
+                                    color: Color(0x4D8FBF6F),
+                                    blurRadius: 20,
+                                    offset: Offset(0, 6),
+                                  ),
                                 ],
                               ),
                               alignment: Alignment.center,
-                              child: Icon(_items[currentIndex].icon, color: AmaniColors.surface, size: 28),
+                              child: Icon(
+                                _items[currentIndex].icon,
+                                color: AmaniColors.surface,
+                                size: 28,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               nav[_items[currentIndex].key] ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 9,
@@ -146,7 +154,11 @@ class _NavIcon extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _NavIcon({required this.icon, required this.label, required this.onTap});
+  const _NavIcon({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +172,7 @@ class _NavIcon extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: kBalooFontFamily,
               fontWeight: FontWeight.w700,
               fontSize: 9,
@@ -207,5 +219,6 @@ class _NotchBarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _NotchBarPainter oldDelegate) => oldDelegate.notchCenterX != notchCenterX;
+  bool shouldRepaint(covariant _NotchBarPainter oldDelegate) =>
+      oldDelegate.notchCenterX != notchCenterX;
 }

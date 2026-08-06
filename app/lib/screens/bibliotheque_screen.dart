@@ -11,6 +11,8 @@ import '../widgets/sign_glyph.dart';
 import '../widgets/amani_mascot.dart';
 import '../data/sign_exercise_catalog.dart';
 import '../data/letter_formation_catalog.dart';
+import '../data/letter_style_resolver.dart';
+import '../hooks/use_writing_style.dart';
 
 enum ModeLibreTab { scribble, signe, lettre, chiffre, crossword }
 
@@ -46,15 +48,20 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
 
   Key _canvasKey = UniqueKey();
   Color _penColor = _penColors.first;
-  final GlobalKey<ScribbleCanvasState> _scribbleKey = GlobalKey<ScribbleCanvasState>();
+  final GlobalKey<ScribbleCanvasState> _scribbleKey =
+      GlobalKey<ScribbleCanvasState>();
 
   late List<dynamic> _allLetters;
 
   @override
   void initState() {
     super.initState();
-    _allLetters = [...VOWELS, ...CONSONANTS];
-    _allLetters.sort((a, b) => (a['char'] as String).compareTo(b['char'] as String));
+    // a→z puis A→Z (le catalogue UPPERCASE couvre déjà tout le style script).
+    final lowercase = [...VOWELS, ...CONSONANTS]
+      ..sort((a, b) => (a['char'] as String).compareTo(b['char'] as String));
+    final uppercase = [...UPPERCASE]
+      ..sort((a, b) => (a['char'] as String).compareTo(b['char'] as String));
+    _allLetters = [...lowercase, ...uppercase];
   }
 
   List<dynamic> _signsForFamily(SignFamily family) {
@@ -76,6 +83,22 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     });
   }
 
+  /// Résout la forme (script/cursive/digitale) du caractère actuellement
+  /// sélectionné, selon le style d'écriture actif — avec repli sur le style
+  /// script déjà présent dans `_allLetters`/`DIGITS` si aucune forme dédiée
+  /// n'existe encore pour ce style.
+  dynamic _currentLetterFormation() {
+    final style = context.read<WritingStyleProvider>().style.name;
+    final fallback = _allLetters[_selectedLetterIndex];
+    return getLetterFormation(fallback['char'] as String, style) ?? fallback;
+  }
+
+  dynamic _currentDigitFormation() {
+    final style = context.read<WritingStyleProvider>().style.name;
+    final fallback = DIGITS[_selectedDigitIndex];
+    return getLetterFormation(fallback['char'] as String, style) ?? fallback;
+  }
+
   void _speakInstruction() {
     final lang = context.read<LanguageProvider>().lang;
     final speechService = context.read<SignSpeechService>();
@@ -87,11 +110,9 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       final sign = signs[_selectedSignIndex % signs.length];
       textToSpeak = sign['consigne'][lang.name] ?? '';
     } else if (_currentTab == ModeLibreTab.lettre) {
-      final letter = _allLetters[_selectedLetterIndex];
-      textToSpeak = letter['consigne'][lang.name] ?? '';
+      textToSpeak = _currentLetterFormation()['consigne'][lang.name] ?? '';
     } else if (_currentTab == ModeLibreTab.chiffre) {
-      final digit = DIGITS[_selectedDigitIndex];
-      textToSpeak = digit['consigne'][lang.name] ?? '';
+      textToSpeak = _currentDigitFormation()['consigne'][lang.name] ?? '';
     }
 
     if (textToSpeak.isNotEmpty) {
@@ -105,10 +126,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       final sign = signs[_selectedSignIndex % signs.length];
       return sign['pathD'];
     } else if (_currentTab == ModeLibreTab.lettre) {
-      final letter = _allLetters[_selectedLetterIndex];
+      final letter = _currentLetterFormation();
       return (letter['steps'] as List).map((s) => s['pathD']).join(' ');
     } else {
-      final digit = DIGITS[_selectedDigitIndex];
+      final digit = _currentDigitFormation();
       return (digit['steps'] as List).map((s) => s['pathD']).join(' ');
     }
   }
@@ -116,6 +137,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
   @override
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
+    // Le format d'écriture n'est lu qu'avec context.read() dans les helpers
+    // ci-dessus ; ce watch() force ce widget à se reconstruire quand il
+    // change, pour que l'aperçu de lettre/chiffre suive le style choisi.
+    context.watch<WritingStyleProvider>();
     final modeLibre = t['modeLibre'] as Map<String, dynamic>;
     final tabs = modeLibre['tabs'] as Map<String, dynamic>? ?? {};
 
@@ -140,12 +165,18 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                       const SizedBox(height: 4),
                       Text(
                         modeLibre['subtitle'] ?? '',
-                        style: AmaniTheme.bodyStyle.copyWith(color: AmaniColors.textSecondary, fontSize: 15),
+                        style: AmaniTheme.bodyStyle.copyWith(
+                          color: AmaniColors.textSecondary,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const AmaniMascot(pose: AmaniPose.encouragement, size: AmaniSize.small),
+                const AmaniMascot(
+                  pose: AmaniPose.encouragement,
+                  size: AmaniSize.small,
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -156,7 +187,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _buildTab(ModeLibreTab.scribble, tabs['scribble'] ?? 'Griffonnage'),
+                  _buildTab(
+                    ModeLibreTab.scribble,
+                    tabs['scribble'] ?? 'Griffonnage',
+                  ),
                   const SizedBox(width: 8),
                   _buildTab(ModeLibreTab.signe, tabs['sign'] ?? 'Signe'),
                   const SizedBox(width: 8),
@@ -164,7 +198,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                   const SizedBox(width: 8),
                   _buildTab(ModeLibreTab.chiffre, tabs['digit'] ?? 'Chiffre'),
                   const SizedBox(width: 8),
-                  _buildTab(ModeLibreTab.crossword, tabs['crossword'] ?? 'Mots croisés'),
+                  _buildTab(
+                    ModeLibreTab.crossword,
+                    tabs['crossword'] ?? 'Mots croisés',
+                  ),
                 ],
               ),
             ),
@@ -195,7 +232,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
-                      child: ScribbleCanvas(key: _scribbleKey, penColor: _penColor),
+                      child: ScribbleCanvas(
+                        key: _scribbleKey,
+                        penColor: _penColor,
+                      ),
                     ),
                   ),
                 )
@@ -251,7 +291,8 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               const SizedBox(height: 20),
 
               // Sélecteur du modèle courant (carousel horizontal)
-              if (_currentTab != ModeLibreTab.scribble) SizedBox(height: 74, child: _buildSelector()),
+              if (_currentTab != ModeLibreTab.scribble)
+                SizedBox(height: 74, child: _buildSelector()),
             ],
           ],
         ),
@@ -270,9 +311,18 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: Border.all(color: isSel ? AmaniColors.textPrimary : Colors.transparent, width: 2),
+          border: Border.all(
+            color: isSel ? AmaniColors.textPrimary : Colors.transparent,
+            width: 2,
+          ),
           boxShadow: isSel
-              ? [BoxShadow(color: AmaniColors.textPrimary.withValues(alpha: 0.25), blurRadius: 4, spreadRadius: 1)]
+              ? [
+                  BoxShadow(
+                    color: AmaniColors.textPrimary.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ]
               : const [BoxShadow(color: Color(0x33000000), blurRadius: 3)],
         ),
       ),
@@ -306,20 +356,24 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                 color: isSel ? colors.bg : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSel ? AmaniColors.textPrimary.withValues(alpha: 0.19) : Colors.transparent,
+                  color: isSel
+                      ? AmaniColors.textPrimary.withValues(alpha: 0.19)
+                      : Colors.transparent,
                   width: 2,
                 ),
               ),
               alignment: Alignment.center,
               child: Semantics(
-                label: signNames[signFamilyKey(family)] as String? ?? family.name,
+                label:
+                    signNames[signFamilyKey(family)] as String? ?? family.name,
                 child: SignGlyph(
                   family: family,
                   stroke: isSel
                       ? colors.stroke
-                      : (family == SignFamily.trait || family == SignFamily.point
-                          ? AmaniColors.textPrimary
-                          : colors.bg),
+                      : (family == SignFamily.trait ||
+                                family == SignFamily.point
+                            ? AmaniColors.textPrimary
+                            : colors.bg),
                   size: 32,
                 ),
               ),
@@ -339,14 +393,26 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
         decoration: BoxDecoration(
           color: AmaniColors.surface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: const [BoxShadow(color: Color(0x1A4A3B2A), offset: Offset(0, 2), blurRadius: 8)],
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1A4A3B2A),
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
               width: 80,
               height: 80,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Color(0x1A4A3B2A), blurRadius: 6)]),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x1A4A3B2A), blurRadius: 6),
+                ],
+              ),
               alignment: Alignment.center,
               child: const Text('✏️', style: TextStyle(fontSize: 32)),
             ),
@@ -356,9 +422,18 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(modeLibre['noModelTitle'] ?? '', style: AmaniTheme.titleStyle.copyWith(fontSize: 15)),
+                  Text(
+                    modeLibre['noModelTitle'] ?? '',
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 15),
+                  ),
                   const SizedBox(height: 2),
-                  Text(modeLibre['noModelBody'] ?? '', style: AmaniTheme.bodyStyle.copyWith(fontSize: 13, color: AmaniColors.textSecondary)),
+                  Text(
+                    modeLibre['noModelBody'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 13,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -375,17 +450,19 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       label = signNames[signFamilyKey(_selectedFamily)] as String? ?? '';
       preview = SignGlyph(
         family: _selectedFamily,
-        stroke: _selectedFamily == SignFamily.trait || _selectedFamily == SignFamily.point
+        stroke:
+            _selectedFamily == SignFamily.trait ||
+                _selectedFamily == SignFamily.point
             ? AmaniColors.textPrimary
             : colors.bg,
         size: 48,
       );
     } else if (_currentTab == ModeLibreTab.lettre) {
-      final letter = _allLetters[_selectedLetterIndex];
+      final letter = _currentLetterFormation();
       label = letter['char'];
       preview = _LetterPreview(steps: letter['steps'] as List, size: 56);
     } else {
-      final digit = DIGITS[_selectedDigitIndex];
+      final digit = _currentDigitFormation();
       label = digit['char'];
       preview = _LetterPreview(steps: digit['steps'] as List, size: 56);
     }
@@ -395,7 +472,13 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       decoration: BoxDecoration(
         color: AmaniColors.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [BoxShadow(color: Color(0x1A4A3B2A), offset: Offset(0, 2), blurRadius: 8)],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A4A3B2A),
+            offset: Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -405,7 +488,9 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [BoxShadow(color: Color(0x1A4A3B2A), blurRadius: 6)],
+              boxShadow: const [
+                BoxShadow(color: Color(0x1A4A3B2A), blurRadius: 6),
+              ],
             ),
             alignment: Alignment.center,
             child: preview,
@@ -417,8 +502,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  (modeLibre['modelLabel'] ?? 'Modèle').toString().toUpperCase(),
-                  style: const TextStyle(
+                  (modeLibre['modelLabel'] ?? 'Modèle')
+                      .toString()
+                      .toUpperCase(),
+                  style: TextStyle(
                     fontFamily: kBalooFontFamily,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -454,7 +541,12 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
           color: isSelected ? AmaniColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            if (isSelected) const BoxShadow(color: Color(0x338FBF6F), blurRadius: 8, offset: Offset(0, 4)),
+            if (isSelected)
+              const BoxShadow(
+                color: Color(0x338FBF6F),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
           ],
         ),
         child: Center(
@@ -472,7 +564,11 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     );
   }
 
-  Widget _buildToolButton({required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildToolButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -480,7 +576,13 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
         decoration: const BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Color(0x1A000000), offset: Offset(0, 2), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x1A000000),
+              offset: Offset(0, 2),
+              blurRadius: 6,
+            ),
+          ],
         ),
         child: Icon(icon, color: color, size: 28),
       ),
@@ -517,9 +619,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             variant: items[index]['variant'] ?? 'vertical',
             stroke: isSelected
                 ? Colors.white
-                : (_selectedFamily == SignFamily.trait || _selectedFamily == SignFamily.point
-                    ? AmaniColors.textPrimary
-                    : colors.bg),
+                : (_selectedFamily == SignFamily.trait ||
+                          _selectedFamily == SignFamily.point
+                      ? AmaniColors.textPrimary
+                      : colors.bg),
             size: 30,
           );
         } else {
@@ -554,7 +657,13 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             decoration: BoxDecoration(
               color: isSelected ? AmaniColors.primaryDark : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [BoxShadow(color: Color(0x14000000), offset: Offset(0, 2), blurRadius: 4)],
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  offset: Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
             ),
             alignment: Alignment.center,
             child: child,
@@ -577,9 +686,7 @@ class _LetterPreview extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _LetterPreviewPainter(steps: steps),
-      ),
+      child: CustomPaint(painter: _LetterPreviewPainter(steps: steps)),
     );
   }
 }
@@ -595,7 +702,9 @@ class _LetterPreviewPainter extends CustomPainter {
     canvas.scale(scale, scale);
     for (final step in steps) {
       final paint = Paint()
-        ..color = Color(int.parse((step['strokeColor'] as String).replaceFirst('#', '0xFF')))
+        ..color = Color(
+          int.parse((step['strokeColor'] as String).replaceFirst('#', '0xFF')),
+        )
         ..style = PaintingStyle.stroke
         ..strokeWidth = 14
         ..strokeCap = StrokeCap.round
@@ -606,7 +715,8 @@ class _LetterPreviewPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LetterPreviewPainter oldDelegate) => oldDelegate.steps != steps;
+  bool shouldRepaint(covariant _LetterPreviewPainter oldDelegate) =>
+      oldDelegate.steps != steps;
 }
 
 Path _parsePath(String d) => pd.parseSvgPathData(d);

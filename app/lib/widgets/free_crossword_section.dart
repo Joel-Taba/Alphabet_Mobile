@@ -49,18 +49,36 @@ class _FreeCrosswordSectionState extends State<FreeCrosswordSection> {
       children: [
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: AmaniColors.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: AmaniColors.textPrimary.withValues(alpha: 0.1))),
+          decoration: BoxDecoration(
+            color: AmaniColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+            ),
+          ),
           child: Row(
             children: [
-              const AmaniMascot(pose: AmaniPose.curiosite, size: AmaniSize.small),
+              const AmaniMascot(
+                pose: AmaniPose.curiosite,
+                size: AmaniSize.small,
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(mlc['title'] ?? '', style: AmaniTheme.titleStyle.copyWith(fontSize: 14)),
+                    Text(
+                      mlc['title'] ?? '',
+                      style: AmaniTheme.titleStyle.copyWith(fontSize: 14),
+                    ),
                     const SizedBox(height: 2),
-                    Text(mlc['intro'] ?? '', style: AmaniTheme.bodyStyle.copyWith(fontSize: 12, color: AmaniColors.textSecondary)),
+                    Text(
+                      mlc['intro'] ?? '',
+                      style: AmaniTheme.bodyStyle.copyWith(
+                        fontSize: 12,
+                        color: AmaniColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -73,13 +91,35 @@ class _FreeCrosswordSectionState extends State<FreeCrosswordSection> {
           onTap: _newGame,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(color: const Color(0xFF4A90E2), borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Color(0x334A90E2), blurRadius: 10, offset: Offset(0, 4))]),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4A90E2),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x334A90E2),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(CupertinoIcons.shuffle, color: Colors.white, size: 18),
+                const Icon(
+                  CupertinoIcons.shuffle,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
-                Text(mlc['newGame'] ?? '', style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white)),
+                Text(
+                  mlc['newGame'] ?? '',
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -91,7 +131,14 @@ class _FreeCrosswordSectionState extends State<FreeCrosswordSection> {
         else
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(mlc['generating'] ?? '', textAlign: TextAlign.center, style: AmaniTheme.bodyStyle.copyWith(fontSize: 13, color: AmaniColors.textSecondary)),
+            child: Text(
+              mlc['generating'] ?? '',
+              textAlign: TextAlign.center,
+              style: AmaniTheme.bodyStyle.copyWith(
+                fontSize: 13,
+                color: AmaniColors.textSecondary,
+              ),
+            ),
           ),
       ],
     );

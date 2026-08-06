@@ -39,7 +39,8 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
 
   List get _steps => widget.letter['steps'] as List;
   bool get _solved => widget.given || _status == _CellStatus.solved;
-  dynamic get _activeStep => _currentStepIdx < _steps.length ? _steps[_currentStepIdx] : null;
+  dynamic get _activeStep =>
+      _currentStepIdx < _steps.length ? _steps[_currentStepIdx] : null;
 
   @override
   void initState() {
@@ -60,11 +61,18 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
 
   void _sampleRef() {
     final step = _activeStep;
-    _refPoints = (step != null && !_solved) ? sampleSvgPath(step['pathD'] as String, 40) : [];
+    _refPoints = (step != null && !_solved)
+        ? sampleSvgPath(step['pathD'] as String, 40)
+        : [];
   }
 
   void _onPanStart(DragStartDetails d) {
-    if (widget.given || !widget.isActive || _activeStep == null || _solved || _status == _CellStatus.retry) return;
+    if (widget.given ||
+        !widget.isActive ||
+        _activeStep == null ||
+        _solved ||
+        _status == _CellStatus.retry)
+      return;
     setState(() {
       _status = _CellStatus.drawing;
       _userPoints.clear();
@@ -122,22 +130,31 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
     final borderColor = widget.given
         ? AmaniColors.primary.withValues(alpha: 0.4)
         : _solved
-            ? AmaniColors.secondary
-            : widget.isActive
-                ? AmaniColors.primary.withValues(alpha: 0.5)
-                : AmaniColors.textPrimary.withValues(alpha: 0.12);
+        ? AmaniColors.secondary
+        : widget.isActive
+        ? AmaniColors.primary.withValues(alpha: 0.5)
+        : AmaniColors.textPrimary.withValues(alpha: 0.12);
     final bg = widget.given ? AmaniColors.surface : Colors.white;
 
     return Container(
       width: widget.size,
       height: widget.size,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: borderColor, width: 2), color: bg),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor, width: 2),
+        color: bg,
+      ),
       child: widget.given
           ? Center(
               child: Text(
                 widget.letter['char'] as String,
-                style: TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: widget.size * 0.5, color: AmaniColors.primary),
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: widget.size * 0.5,
+                  color: AmaniColors.primary,
+                ),
               ),
             )
           : Stack(
@@ -159,7 +176,11 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
                   onPanStart: _onPanStart,
                   onPanUpdate: _onPanUpdate,
                   onPanEnd: _onPanEnd,
-                  child: Container(color: Colors.transparent, width: widget.size, height: widget.size),
+                  child: Container(
+                    color: Colors.transparent,
+                    width: widget.size,
+                    height: widget.size,
+                  ),
                 ),
               ],
             ),
@@ -197,7 +218,17 @@ class _CellPainter extends CustomPainter {
       for (var i = 0; i < steps.length; i++) {
         final pts = sampleSvgPath(steps[i]['pathD'] as String, 35);
         if (pts.length < 2) continue;
-        _drawPolyline(canvas, pts, scale, Color(int.parse((steps[i]['strokeColor'] as String).replaceFirst('#', '0xFF'))), lineWidth);
+        _drawPolyline(
+          canvas,
+          pts,
+          scale,
+          Color(
+            int.parse(
+              (steps[i]['strokeColor'] as String).replaceFirst('#', '0xFF'),
+            ),
+          ),
+          lineWidth,
+        );
       }
       return;
     }
@@ -208,32 +239,77 @@ class _CellPainter extends CustomPainter {
       final isCurrentStep = idx == currentStepIdx;
       final pts = sampleSvgPath(steps[idx]['pathD'] as String, 30);
       if (pts.length < 2) continue;
-      final color = isCurrentStep ? (status == _CellStatus.retry ? AmaniColors.error : const Color(0xFF9BB5CC)) : const Color(0xFFB8CCE0);
-      _drawPolyline(canvas, pts, scale, color.withValues(alpha: isCurrentStep ? 0.85 : 0.3), isCurrentStep ? 13 : 10);
+      final color = isCurrentStep
+          ? (status == _CellStatus.retry
+                ? AmaniColors.error
+                : const Color(0xFF9BB5CC))
+          : const Color(0xFFB8CCE0);
+      _drawPolyline(
+        canvas,
+        pts,
+        scale,
+        color.withValues(alpha: isCurrentStep ? 0.85 : 0.3),
+        isCurrentStep ? 13 : 10,
+      );
     }
 
     // Étapes complétées
     for (final idx in completedSteps) {
       final pts = sampleSvgPath(steps[idx]['pathD'] as String, 35);
       if (pts.length < 2) continue;
-      _drawPolyline(canvas, pts, scale, Color(int.parse((steps[idx]['strokeColor'] as String).replaceFirst('#', '0xFF'))), lineWidth);
+      _drawPolyline(
+        canvas,
+        pts,
+        scale,
+        Color(
+          int.parse(
+            (steps[idx]['strokeColor'] as String).replaceFirst('#', '0xFF'),
+          ),
+        ),
+        lineWidth,
+      );
     }
 
     // Tracé en cours
     if (userPoints.isNotEmpty) {
-      _drawPolyline(canvas, userPoints, scale, const Color(0xFF5BAA6A), lineWidth);
+      _drawPolyline(
+        canvas,
+        userPoints,
+        scale,
+        const Color(0xFF5BAA6A),
+        lineWidth,
+      );
     }
 
     // Pastille de départ
-    if (isActive && !solved && (status == _CellStatus.idle || status == _CellStatus.retry) && currentStepIdx < steps.length) {
+    if (isActive &&
+        !solved &&
+        (status == _CellStatus.idle || status == _CellStatus.retry) &&
+        currentStepIdx < steps.length) {
       final startXY = steps[currentStepIdx]['startXY'] as List;
-      final startPt = Offset(startXY[0].toDouble() * scale, startXY[1].toDouble() * scale);
+      final startPt = Offset(
+        startXY[0].toDouble() * scale,
+        startXY[1].toDouble() * scale,
+      );
       canvas.drawCircle(startPt, 6, Paint()..color = const Color(0xFF5BAA6A));
-      canvas.drawCircle(startPt, 6, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+      canvas.drawCircle(
+        startPt,
+        6,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
     }
   }
 
-  void _drawPolyline(Canvas canvas, List<Offset> pts, double scale, Color color, double strokeWidth) {
+  void _drawPolyline(
+    Canvas canvas,
+    List<Offset> pts,
+    double scale,
+    Color color,
+    double strokeWidth,
+  ) {
     final path = Path()..moveTo(pts.first.dx * scale, pts.first.dy * scale);
     for (final p in pts.skip(1)) {
       path.lineTo(p.dx * scale, p.dy * scale);

@@ -131,9 +131,7 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('rouge', 'rouge', 'red', 'divers'),
 ];
 
-final Map<String, WordEntry> WORD_MAP = {
-  for (final w in WORD_CATALOG) w.id: w,
-};
+final Map<String, WordEntry> WORD_MAP = {for (final w in WORD_CATALOG) w.id: w};
 
 const Map<String, Map<String, String>> THEME_TITLES = {
   'animaux': {'fr': 'Animaux', 'en': 'Animals'},
@@ -169,12 +167,17 @@ final List<WordGroup> PALIER3_GROUPS = (() {
     const chunkSize = 5;
     final chunkCount = (words.length / chunkSize).ceil();
     for (var i = 0; i < chunkCount; i++) {
-      final chunk = words.sublist(i * chunkSize, ((i + 1) * chunkSize).clamp(0, words.length));
+      final chunk = words.sublist(
+        i * chunkSize,
+        ((i + 1) * chunkSize).clamp(0, words.length),
+      );
       final base = THEME_TITLES[theme] ?? {'fr': theme, 'en': theme};
       final title = chunkCount > 1
           ? {'fr': '${base['fr']} ${i + 1}', 'en': '${base['en']} ${i + 1}'}
           : base;
-      groups.add(WordGroup('${theme.substring(0, 2)}${i + 1}', theme, title, chunk));
+      groups.add(
+        WordGroup('${theme.substring(0, 2)}${i + 1}', theme, title, chunk),
+      );
     }
   }
   return groups;

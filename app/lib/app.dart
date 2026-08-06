@@ -17,7 +17,10 @@ import 'screens/exercice_lettre_screen.dart';
 import 'screens/cours_mots_screen.dart';
 import 'screens/exercice_mots_screen.dart';
 import 'screens/exercice_mots_croises_screen.dart';
+import 'screens/cours_syllabes_screen.dart';
+import 'screens/exercice_syllabes_screen.dart';
 import 'services/sign_speech.dart';
+import 'hooks/use_writing_style.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -26,17 +29,15 @@ final _router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const WelcomeScreen(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
     GoRoute(
       path: '/profil',
       builder: (context, state) => const ProfileCreateScreen(),
     ),
     GoRoute(
       path: '/cours/:family',
-      builder: (context, state) => CoursFamilyScreen(family: state.pathParameters['family']!),
+      builder: (context, state) =>
+          CoursFamilyScreen(family: state.pathParameters['family']!),
     ),
     GoRoute(
       path: '/exercice-liste',
@@ -45,10 +46,7 @@ final _router = GoRouter(
         group: state.uri.queryParameters['group'],
       ),
     ),
-    GoRoute(
-      path: '/exercice',
-      redirect: (context, state) => '/exercice-liste',
-    ),
+    GoRoute(path: '/exercice', redirect: (context, state) => '/exercice-liste'),
     GoRoute(
       path: '/cours/lettres/formation/:char',
       builder: (context, state) => CoursLettresFormationScreen(
@@ -64,16 +62,30 @@ final _router = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/cours/syllabes/:consonant',
+      builder: (context, state) =>
+          CoursSyllabesScreen(consonant: state.pathParameters['consonant']!),
+    ),
+    GoRoute(
+      path: '/exercice/syllabes/:consonant',
+      builder: (context, state) =>
+          ExerciceSyllabesScreen(consonant: state.pathParameters['consonant']!),
+    ),
+    GoRoute(
       path: '/cours/mots/:groupId',
-      builder: (context, state) => CoursMotsScreen(groupId: state.pathParameters['groupId']!),
+      builder: (context, state) =>
+          CoursMotsScreen(groupId: state.pathParameters['groupId']!),
     ),
     GoRoute(
       path: '/exercice/mots/:groupId',
-      builder: (context, state) => ExerciceMotsScreen(groupId: state.pathParameters['groupId']!),
+      builder: (context, state) =>
+          ExerciceMotsScreen(groupId: state.pathParameters['groupId']!),
     ),
     GoRoute(
       path: '/exercice/mots-croises/:puzzleId',
-      builder: (context, state) => ExerciceMotsCroisesScreen(puzzleId: state.pathParameters['puzzleId']!),
+      builder: (context, state) => ExerciceMotsCroisesScreen(
+        puzzleId: state.pathParameters['puzzleId']!,
+      ),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -126,12 +138,18 @@ class AmaniApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => SignSpeechService()),
+        ChangeNotifierProvider(create: (_) => WritingStyleProvider()),
       ],
-      child: MaterialApp.router(
-        title: 'Gentle Paths Academy',
-        theme: AmaniTheme.light,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
+      // La police de toute l'appli suit le format d'écriture actif : ce
+      // Consumer force MaterialApp (et donc son thème) à se reconstruire
+      // dès que WritingStyleProvider change, sans redémarrage.
+      child: Consumer<WritingStyleProvider>(
+        builder: (context, _, _) => MaterialApp.router(
+          title: 'Gentle Paths Academy',
+          theme: AmaniTheme.light,
+          routerConfig: _router,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }

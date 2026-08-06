@@ -5,10 +5,7 @@ import '../widgets/amani_bottom_nav.dart';
 class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const AppShell({
-    super.key,
-    required this.navigationShell,
-  });
+  const AppShell({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +14,10 @@ class AppShell extends StatelessWidget {
     final index = navigationShell.currentIndex;
 
     return Scaffold(
-      body: SafeArea(
-        child: navigationShell,
-      ),
-      extendBody: true, // Pour que la page passe sous la bottom nav transparente/flottante
-      bottomNavigationBar: SafeArea(
-        child: AmaniBottomNav(
-          currentIndex: index,
-        ),
-      ),
+      body: SafeArea(child: navigationShell),
+      extendBody:
+          true, // Pour que la page passe sous la bottom nav transparente/flottante
+      bottomNavigationBar: SafeArea(child: AmaniBottomNav(currentIndex: index)),
     );
   }
 }

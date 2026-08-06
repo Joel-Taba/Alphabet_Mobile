@@ -1403,7 +1403,6 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
 ]
 ''');
 
-
 /// Couleur des glyphes SVG par famille.
 const Map<String, Color> STROKE_FAMILLE = {
   'trait': Color(0xFF4A3B2A),

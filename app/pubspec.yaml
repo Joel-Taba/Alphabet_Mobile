@@ -15,6 +15,7 @@ dependencies:
   flutter_tts: ^4.2.0
   shared_preferences: ^2.3.0
   path_drawing: ^1.0.1
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -40,3 +41,11 @@ flutter:
           weight: 700
         - asset: assets/fonts/Baloo2-Variable.ttf
           weight: 800
+    - family: Comic Neue
+      fonts:
+        - asset: assets/fonts/ComicNeue-Light.ttf
+          weight: 300
+    - family: Dancing Script
+      fonts:
+        - asset: assets/fonts/DancingScript-Variable.ttf
+          weight: 700

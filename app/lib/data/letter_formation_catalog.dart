@@ -5833,7 +5833,6 @@ final List<dynamic> LETTER_CATALOG = jsonDecode(r'''
 ]
 ''');
 
-
 /// Table de correspondance caractère → formation, pour les écrans qui
 /// recherchent une lettre/chiffre précis (cahier d'écriture, mots...).
 final Map<String, dynamic> LETTER_MAP = {

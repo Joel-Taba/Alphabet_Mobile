@@ -25,7 +25,8 @@ class SignCard extends StatefulWidget {
   State<SignCard> createState() => _SignCardState();
 }
 
-class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin {
+class _SignCardState extends State<SignCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _shakeController;
 
   @override
@@ -40,7 +41,8 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
   @override
   void didUpdateWidget(SignCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.state == SignCardState.incorrect && oldWidget.state != SignCardState.incorrect) {
+    if (widget.state == SignCardState.incorrect &&
+        oldWidget.state != SignCardState.incorrect) {
       _shakeController.forward(from: 0.0);
     }
   }
@@ -85,9 +87,15 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
       decoration = BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Color(0x2E000000), offset: Offset(0, 3))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x2E000000), offset: Offset(0, 3)),
+        ],
       );
-      overlay = const Icon(CupertinoIcons.lock_fill, color: Colors.white, size: 16);
+      overlay = const Icon(
+        CupertinoIcons.lock_fill,
+        color: Colors.white,
+        size: 16,
+      );
       badgeBg = AmaniColors.textSecondary;
     } else {
       Color ringColor = Colors.transparent;
@@ -109,7 +117,11 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
           break;
         case SignCardState.misplaced:
           ringColor = AmaniColors.warning;
-          overlay = const Icon(Icons.arrow_forward, color: Colors.white, size: 18);
+          overlay = const Icon(
+            Icons.arrow_forward,
+            color: Colors.white,
+            size: 18,
+          );
           badgeBg = AmaniColors.warning;
           break;
         default:
@@ -119,8 +131,12 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
       decoration = BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16),
-        border: ringColor != Colors.transparent ? Border.all(color: ringColor, width: 4) : null,
-        boxShadow: const [BoxShadow(color: Color(0x2E000000), offset: Offset(0, 3))],
+        border: ringColor != Colors.transparent
+            ? Border.all(color: ringColor, width: 4)
+            : null,
+        boxShadow: const [
+          BoxShadow(color: Color(0x2E000000), offset: Offset(0, 3)),
+        ],
       );
     }
 
@@ -135,14 +151,33 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
         children: [
           Center(
             child: ColorFiltered(
-              colorFilter: isLocked 
-                ? const ColorFilter.matrix([
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0,      0,      0,      0.5, 0,
-                  ]) 
-                : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+              colorFilter: isLocked
+                  ? const ColorFilter.matrix([
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0.5,
+                      0,
+                    ])
+                  : const ColorFilter.mode(
+                      Colors.transparent,
+                      BlendMode.multiply,
+                    ),
               child: SignGlyph(
                 family: widget.family,
                 stroke: stroke,
@@ -172,10 +207,10 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
       card = AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          final sineValue = 
-            (4 * 3.14159 * _shakeController.value).abs() < 3.14159 
-            ? (10 * _shakeController.value) 
-            : (-10 * _shakeController.value); // Approximation du shake
+          final sineValue =
+              (4 * 3.14159 * _shakeController.value).abs() < 3.14159
+              ? (10 * _shakeController.value)
+              : (-10 * _shakeController.value); // Approximation du shake
           return Transform.translate(
             offset: Offset(sineValue % 5, 0),
             child: child,
@@ -188,7 +223,9 @@ class _SignCardState extends State<SignCard> with SingleTickerProviderStateMixin
     return GestureDetector(
       onTap: isLocked ? null : widget.onClick,
       child: MouseRegion(
-        cursor: isLocked ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+        cursor: isLocked
+            ? SystemMouseCursors.forbidden
+            : SystemMouseCursors.click,
         child: card,
       ),
     );

@@ -5,10 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum Lang { fr, en }
 
 /// Locale BCP-47 pour la synthèse vocale
-const Map<Lang, String> speechLocale = {
-  Lang.fr: 'fr-FR',
-  Lang.en: 'en-US',
-};
+const Map<Lang, String> speechLocale = {Lang.fr: 'fr-FR', Lang.en: 'en-US'};
 
 const _storageKey = 'amani_setting_lang';
 
@@ -81,18 +78,15 @@ const Map<String, dynamic> fr = {
     'subtitle': "Dis-nous qui tu es pour commencer l'aventure",
     'namePlaceholder': "Comment tu t'appelles ?",
     'passwordPlaceholder': 'Mot de passe secret',
-    'passwordHint':
-        "Ce mot de passe protégera l'accès à Mon Profil. Un adulte peut le retenir !",
+    'passwordHint': "Ce mot de passe protège l'accès à Mon Profil.",
     'showPassword': 'Afficher le mot de passe',
     'hidePassword': 'Masquer le mot de passe',
     'languageLabel': 'Langue',
-    'imAnAdult': 'Je suis un adulte',
     'start': "Commencer l'aventure",
   },
   'profileLock': {
     'title': 'Mon Profil est protégé',
-    'subtitle':
-        "Entre le mot de passe défini à l'inscription pour continuer.",
+    'subtitle': "Entre le mot de passe défini à l'inscription pour continuer.",
     'passwordPlaceholder': 'Mot de passe',
     'wrongPassword': 'Mot de passe incorrect, réessaie.',
     'unlockButton': 'Déverrouiller',
@@ -108,7 +102,8 @@ const Map<String, dynamic> fr = {
     'coursStep': 'Cours',
     'exerciceStep': 'Exercice',
     'crosswordStep': 'Mots croisés',
-    'comingSoon': 'Cette étape arrive bientôt ! Amani continue de la préparer 🌱',
+    'comingSoon':
+        'Cette étape arrive bientôt ! Amani continue de la préparer 🌱',
     'paliers': [
       {
         'title': 'Les Signes de base',
@@ -121,14 +116,20 @@ const Map<String, dynamic> fr = {
         'tagline': 'Assemble les signes pour écrire',
       },
       {
-        'title': 'Les Mots',
+        'title': 'Les Syllabes',
         'subtitle': 'PALIER 3',
+        'tagline': 'Assemble consonnes et voyelles pour lire',
+      },
+      {
+        'title': 'Les Mots',
+        'subtitle': 'PALIER 4',
         'tagline': 'Relie les lettres entre elles',
       },
     ],
   },
   'coursFamily': {
-    'intro': 'Voici le cours sur {title}. Touche une carte en bas pour voir comment tracer chaque variante.',
+    'intro':
+        'Voici le cours sur {title}. Touche une carte en bas pour voir comment tracer chaque variante.',
     'variantsTitle': 'Toutes les variantes',
     'exercer': "M'exercer",
     'passExercices': 'Passer aux Exercices ({title})',
@@ -143,18 +144,23 @@ const Map<String, dynamic> fr = {
     'titleGroup': 'Cahier : {titre}',
     'subtitleGroupLettres': 'Exerce-toi à tracer ces lettres',
     'subtitleGroupDigits': 'Exerce-toi à tracer ces chiffres',
-    'introGroup': "Voici le cahier d'écriture pour {titre} ! Choisis un caractère pour t'entraîner à le former signe par signe.",
-    'groupHint': "Touche un caractère ci-dessous pour t'entraîner sur la grille Seyès avec validation de chaque geste !",
+    'introGroup':
+        "Voici le cahier d'écriture pour {titre} ! Choisis un caractère pour t'entraîner à le former signe par signe.",
+    'groupHint':
+        "Touche un caractère ci-dessous pour t'entraîner sur la grille Seyès avec validation de chaque geste !",
     'letterPrefix': 'La lettre',
     'digitPrefix': 'Le chiffre',
     'gestureCount': '{count} geste(s)',
     'title': "Cahier d'Écriture",
     'titleFamily': 'Cahier : {titre}',
     'subtitle': 'Repasse sur les pointillés',
-    'introGeneral': "Bienvenue dans le cahier d'écriture ! Repasse sur les pointillés en suivant la pastille verte pour apprendre à tracer chaque signe correctement.",
-    'startHint': 'Le point vert indique le point de départ. Suis les pointillés en levant le moins possible le doigt.',
+    'introGeneral':
+        "Bienvenue dans le cahier d'écriture ! Repasse sur les pointillés en suivant la pastille verte pour apprendre à tracer chaque signe correctement.",
+    'startHint':
+        'Le point vert indique le point de départ. Suis les pointillés en levant le moins possible le doigt.',
     'done': 'Terminé !',
-    'rowComplete': 'Bravo ! Tu as tracé tous les signes de cette ligne. Excellent travail !',
+    'rowComplete':
+        'Bravo ! Tu as tracé tous les signes de cette ligne. Excellent travail !',
     'reducedLabel': 'réduit',
     'backAria': "Retour à l'accueil",
     'familyNames': {
@@ -187,10 +193,13 @@ const Map<String, dynamic> fr = {
     'stepPrefix': 'Signe',
     'signsReady': '{done}/{total} signes prêts',
     'practiceStepsTitle': 'Entraîne-toi sur chaque signe',
-    'practiceStepsHint': "Réussis chaque signe {reps} fois avant d'écrire la lettre complète.",
+    'practiceStepsHint':
+        "Réussis chaque signe {reps} fois avant d'écrire la lettre complète.",
     'finalTitle': 'Écris la lettre complète',
-    'finalHint': 'Trace maintenant tous les signes à la suite, comme pour écrire la vraie lettre.',
-    'finalLocked': 'Termine d\'abord tous les signes ci-dessus pour débloquer cette étape.',
+    'finalHint':
+        'Trace maintenant tous les signes à la suite, comme pour écrire la vraie lettre.',
+    'finalLocked':
+        'Termine d\'abord tous les signes ci-dessus pour débloquer cette étape.',
     'successAll': 'Félicitations ! Lettre complète !',
     'successAllSub': "Tu maîtrises l'assemblage de ce caractère.",
     'formulaTitle': 'Formule de',
@@ -208,13 +217,39 @@ const Map<String, dynamic> fr = {
     'speakLetterDone': 'Bravo ! Tu as parfaitement formé la lettre {name} !',
     'speakRetryStep': 'Presque ! Réessaie juste ce geste : {desc}',
   },
+  'coursSyllabes': {
+    'title': 'Les syllabes',
+    'subtitle': 'Assemble les lettres pour lire',
+    'notFound': "n'est pas disponible pour le moment.",
+    'backToList': 'Retour au parcours',
+    'consonantTitle': 'Syllabes avec « {consonant} »',
+    'syllableCount': '{count} syllabe(s)',
+    'formingLabel': '{consonant} + {vowel} = {syllable}',
+    'exampleWordLabel': 'Un mot avec « {syllable} »',
+    'speakFormation': '{consonant}... {vowel}... {syllable} !',
+    'practice': "M'exercer sur ces syllabes",
+    'nextConsonant': 'Consonne suivante : {consonant}',
+  },
+  'exerciceSyllabes': {
+    'title': 'Trace',
+    'syllablesReady': '{done}/{total} syllabes tracées',
+    'introTitle': 'Écris chaque syllabe',
+    'introBody':
+        'Trace la consonne puis la voyelle pour former chaque syllabe.',
+    'allDoneTitle': 'Bravo, toutes les syllabes sont tracées !',
+    'allDoneBody': 'Tu maîtrises les syllabes de cette consonne.',
+    'nextGroup': 'Consonne suivante : {consonant}',
+    'exampleWordPrefix': 'comme dans',
+  },
   'coursMots': {
     'notFound': "n'est pas disponible pour le moment.",
     'backToList': "Retour à l'accueil",
     'wordCount': '{count} mot(s) à découvrir',
-    'introSpeak': 'Voici le cours sur {titre}. Touche le haut-parleur de chaque mot pour l\'écouter.',
+    'introSpeak':
+        'Voici le cours sur {titre}. Touche le haut-parleur de chaque mot pour l\'écouter.',
     'introTitle': 'Écoute et regarde chaque mot',
-    'introBody': "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le haut-parleur pour l'entendre !",
+    'introBody':
+        "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le haut-parleur pour l'entendre !",
     'practiceGroup': "M'exercer sur {titre}",
   },
   'exerciceMots': {
@@ -230,20 +265,24 @@ const Map<String, dynamic> fr = {
     'subtitle': 'Complète la grille lettre par lettre',
     'levelSubtitle': 'Niveau {level} · {count} mots',
     'hintTitle': 'Écoute puis complète',
-    'hintBody': 'Écoute chaque mot ci-dessous et trace ses lettres dans la grille, comme un vrai mot croisé !',
+    'hintBody':
+        'Écoute chaque mot ci-dessous et trace ses lettres dans la grille, comme un vrai mot croisé !',
     'doneTitle': 'Grille complétée !',
     'doneBody': 'Bravo, tu as résolu ce mot croisé.',
     'across': 'Horizontal',
     'down': 'Vertical',
     'featuredTitle': 'Grille terminée, bravo !',
-    'featuredBody': 'Tu as écrit et prononcé tous les mots ! Voici le mot vedette à l\'honneur :',
+    'featuredBody':
+        'Tu as écrit et prononcé tous les mots ! Voici le mot vedette à l\'honneur :',
     'continueLabel': 'Continuer',
     'generationFailed': 'Impossible de créer cette grille, réessaie.',
+    'wordsFoundLabel': '{solved} sur {total} mots trouvés',
   },
   'modeLibreCroises': {
     'title': 'Mots croisés',
     'subtitle': 'Une nouvelle grille à chaque partie',
-    'intro': 'Touche « Nouvelle grille » pour piocher des mots au hasard et jouer aux mots croisés autant de fois que tu veux !',
+    'intro':
+        'Touche « Nouvelle grille » pour piocher des mots au hasard et jouer aux mots croisés autant de fois que tu veux !',
     'newGame': 'Nouvelle grille',
     'generating': 'Préparation de la grille…',
   },
@@ -252,8 +291,7 @@ const Map<String, dynamic> fr = {
     'subtitle': 'Le classement',
     'othersTitle': 'Les autres pousses',
     'you': 'moi',
-    'amaniQuote':
-        "Chacun grandit à son rythme, l'important est d'y aller.",
+    'amaniQuote': "Chacun grandit à son rythme, l'important est d'y aller.",
     'amaniLine': 'Bravo à toutes les pousses de la clairière !',
     'starsSuffix': '⭐',
     'stumpAria': 'Souche rang {rank}',
@@ -273,6 +311,14 @@ const Map<String, dynamic> fr = {
     'volumeLabel': 'Volume de la voix',
     'volumeTest': 'Tester le volume',
     'volumeTestPhrase': 'Voici à quoi ressemble ma voix !',
+    'voiceGenderLabel': 'Style de voix',
+    'voiceGenderOptions': [
+      {'label': 'Voix Homme', 'desc': 'Douce et chaleureuse'},
+      {'label': 'Voix Femme', 'desc': 'Douce et chaleureuse'},
+    ],
+    'voiceGenderTest': 'Écouter un exemple',
+    'voiceGenderTestPhrase':
+        "Coucou, c'est Amani ! On continue à apprendre ensemble ?",
     'formatCardTitle': "Format d'écriture",
     'formatOptions': [
       {'label': 'Script', 'desc': 'Imprimé'},
@@ -357,12 +403,10 @@ const Map<String, dynamic> en = {
     'subtitle': 'Tell us who you are to start the adventure',
     'namePlaceholder': "What's your name?",
     'passwordPlaceholder': 'Secret password',
-    'passwordHint':
-        'This password will protect access to My Profile. An adult can remember it!',
+    'passwordHint': 'This password protects access to My Profile.',
     'showPassword': 'Show password',
     'hidePassword': 'Hide password',
     'languageLabel': 'Language',
-    'imAnAdult': "I'm an adult",
     'start': 'Start the adventure',
   },
   'profileLock': {
@@ -374,8 +418,7 @@ const Map<String, dynamic> en = {
   },
   'parcours': {
     'title': 'The Branch Path',
-    'subtitle':
-        'Follow the zigzag path and open the buds one step at a time.',
+    'subtitle': 'Follow the zigzag path and open the buds one step at a time.',
     'start': 'Start',
     'lockedAria': 'Locked step',
     'bonusAria': 'Locked bonus reward',
@@ -396,6 +439,11 @@ const Map<String, dynamic> en = {
         'tagline': 'Combine signs to write',
       },
       {
+        'title': 'Syllables',
+        'subtitle': 'TIER 3',
+        'tagline': 'Blend letters to read',
+      },
+      {
         'title': 'Words',
         'subtitle': 'TIER 3',
         'tagline': 'Link letters together',
@@ -403,7 +451,8 @@ const Map<String, dynamic> en = {
     ],
   },
   'coursFamily': {
-    'intro': "Here's the lesson on {title}. Tap a card below to see how to trace each variant.",
+    'intro':
+        "Here's the lesson on {title}. Tap a card below to see how to trace each variant.",
     'variantsTitle': 'All variants',
     'exercer': 'Practice',
     'passExercices': 'Go to Exercises ({title})',
@@ -418,18 +467,23 @@ const Map<String, dynamic> en = {
     'titleGroup': 'Notebook: {titre}',
     'subtitleGroupLettres': 'Practice tracing these letters',
     'subtitleGroupDigits': 'Practice tracing these digits',
-    'introGroup': "Here's the writing notebook for {titre}! Choose a character to practice forming it sign by sign.",
-    'groupHint': 'Tap a character below to practice on the Seyès grid with validation of every gesture!',
+    'introGroup':
+        "Here's the writing notebook for {titre}! Choose a character to practice forming it sign by sign.",
+    'groupHint':
+        'Tap a character below to practice on the Seyès grid with validation of every gesture!',
     'letterPrefix': 'The letter',
     'digitPrefix': 'The digit',
     'gestureCount': '{count} gesture(s)',
     'title': 'Writing Notebook',
     'titleFamily': 'Notebook: {titre}',
     'subtitle': 'Trace over the dotted line',
-    'introGeneral': "Welcome to the writing notebook! Trace over the dotted line following the green dot to learn how to draw each sign correctly.",
-    'startHint': 'The green dot shows the starting point. Follow the dotted line, lifting your finger as little as possible.',
+    'introGeneral':
+        "Welcome to the writing notebook! Trace over the dotted line following the green dot to learn how to draw each sign correctly.",
+    'startHint':
+        'The green dot shows the starting point. Follow the dotted line, lifting your finger as little as possible.',
     'done': 'Done!',
-    'rowComplete': 'Well done! You traced every sign on this line. Excellent work!',
+    'rowComplete':
+        'Well done! You traced every sign on this line. Excellent work!',
     'reducedLabel': 'reduced',
     'backAria': 'Back to home',
     'familyNames': {
@@ -462,9 +516,11 @@ const Map<String, dynamic> en = {
     'stepPrefix': 'Sign',
     'signsReady': '{done}/{total} signs ready',
     'practiceStepsTitle': 'Practice each sign',
-    'practiceStepsHint': 'Succeed at each sign {reps} times before writing the complete letter.',
+    'practiceStepsHint':
+        'Succeed at each sign {reps} times before writing the complete letter.',
     'finalTitle': 'Write the complete letter',
-    'finalHint': 'Now trace all the signs one after another, just like writing the real letter.',
+    'finalHint':
+        'Now trace all the signs one after another, just like writing the real letter.',
     'finalLocked': 'Finish all the signs above to unlock this step.',
     'successAll': 'Congratulations! Letter complete!',
     'successAllSub': "You've mastered assembling this character.",
@@ -483,13 +539,38 @@ const Map<String, dynamic> en = {
     'speakLetterDone': "Well done! You've perfectly formed the letter {name}!",
     'speakRetryStep': 'Almost! Try just this gesture again: {desc}',
   },
+  'coursSyllabes': {
+    'title': 'Syllables',
+    'subtitle': 'Blend letters to read',
+    'notFound': "isn't available yet.",
+    'backToList': 'Back to the path',
+    'consonantTitle': 'Syllables with "{consonant}"',
+    'syllableCount': '{count} syllable(s)',
+    'formingLabel': '{consonant} + {vowel} = {syllable}',
+    'exampleWordLabel': 'A word with "{syllable}"',
+    'speakFormation': '{consonant}... {vowel}... {syllable}!',
+    'practice': 'Practice these syllables',
+    'nextConsonant': 'Next consonant: {consonant}',
+  },
+  'exerciceSyllabes': {
+    'title': 'Trace',
+    'syllablesReady': '{done}/{total} syllables traced',
+    'introTitle': 'Write each syllable',
+    'introBody': 'Trace the consonant then the vowel to form each syllable.',
+    'allDoneTitle': 'Well done, every syllable is traced!',
+    'allDoneBody': "You've mastered this consonant's syllables.",
+    'nextGroup': 'Next consonant: {consonant}',
+    'exampleWordPrefix': 'as in',
+  },
   'coursMots': {
     'notFound': 'is not available yet.',
     'backToList': 'Back to home',
     'wordCount': '{count} word(s) to discover',
-    'introSpeak': "Here's the lesson on {titre}. Tap each word's speaker to hear it.",
+    'introSpeak':
+        "Here's the lesson on {titre}. Tap each word's speaker to hear it.",
     'introTitle': 'Listen and look at each word',
-    'introBody': 'Each word is already written with letters you know. Tap the speaker to hear it!',
+    'introBody':
+        'Each word is already written with letters you know. Tap the speaker to hear it!',
     'practiceGroup': 'Practice {titre}',
   },
   'exerciceMots': {
@@ -505,7 +586,8 @@ const Map<String, dynamic> en = {
     'subtitle': 'Complete the grid letter by letter',
     'levelSubtitle': 'Level {level} · {count} words',
     'hintTitle': 'Listen, then complete',
-    'hintBody': 'Listen to each word below and trace its letters in the grid, like a real crossword!',
+    'hintBody':
+        'Listen to each word below and trace its letters in the grid, like a real crossword!',
     'doneTitle': 'Grid complete!',
     'doneBody': 'Well done, you solved this crossword.',
     'across': 'Across',
@@ -514,11 +596,13 @@ const Map<String, dynamic> en = {
     'featuredBody': "You wrote and said every word! Here's the featured word:",
     'continueLabel': 'Continue',
     'generationFailed': "Couldn't build this grid, try again.",
+    'wordsFoundLabel': '{solved} of {total} words found',
   },
   'modeLibreCroises': {
     'title': 'Crossword',
     'subtitle': 'A new grid every game',
-    'intro': 'Tap "New grid" to draw random words and play crosswords as many times as you like!',
+    'intro':
+        'Tap "New grid" to draw random words and play crosswords as many times as you like!',
     'newGame': 'New grid',
     'generating': 'Building the grid…',
   },
@@ -549,6 +633,13 @@ const Map<String, dynamic> en = {
     'volumeLabel': 'Voice volume',
     'volumeTest': 'Test the volume',
     'volumeTestPhrase': 'This is what my voice sounds like!',
+    'voiceGenderLabel': 'Voice style',
+    'voiceGenderOptions': [
+      {'label': 'Male voice', 'desc': 'Soft and warm'},
+      {'label': 'Female voice', 'desc': 'Soft and warm'},
+    ],
+    'voiceGenderTest': 'Hear an example',
+    'voiceGenderTestPhrase': "Hi, it's Amani! Shall we keep learning together?",
     'formatCardTitle': 'Writing format',
     'formatOptions': [
       {'label': 'Print', 'desc': 'Printed'},

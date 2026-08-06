@@ -12,11 +12,15 @@ class TraceableEntry {
   final Offset startXY;
   final Color strokeColor;
 
+  /// Le point se remplit (disque) plutôt que de rester un simple contour.
+  final String family;
+
   const TraceableEntry({
     required this.id,
     required this.pathD,
     required this.startXY,
     required this.strokeColor,
+    this.family = '',
   });
 }
 
@@ -71,7 +75,8 @@ class _RepetitionRowState extends State<RepetitionRow> {
   @override
   void didUpdateWidget(RepetitionRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.repetitions != widget.repetitions || oldWidget.entry.id != widget.entry.id) {
+    if (oldWidget.repetitions != widget.repetitions ||
+        oldWidget.entry.id != widget.entry.id) {
       setState(_resetOccurrences);
     }
   }
@@ -108,7 +113,9 @@ class _RepetitionRowState extends State<RepetitionRow> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _allDone ? AmaniColors.secondary.withValues(alpha: 0.6) : AmaniColors.textPrimary.withValues(alpha: 0.1),
+          color: _allDone
+              ? AmaniColors.secondary.withValues(alpha: 0.6)
+              : AmaniColors.textPrimary.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
@@ -126,21 +133,38 @@ class _RepetitionRowState extends State<RepetitionRow> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: AmaniColors.surface,
-              border: Border(bottom: BorderSide(color: AmaniColors.textPrimary.withValues(alpha: 0.1))),
+              border: Border(
+                bottom: BorderSide(
+                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                ),
+              ),
             ),
             child: Row(
               children: [
-                if (widget.badge != null) ...[widget.badge!, const SizedBox(width: 8)],
+                if (widget.badge != null) ...[
+                  widget.badge!,
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: Text(
                     widget.label,
-                    style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, fontSize: 14, color: AmaniColors.textPrimary),
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AmaniColors.textPrimary,
+                    ),
                   ),
                 ),
                 if (_allDone)
                   Text(
                     '✓ ${widget.doneLabel}',
-                    style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, fontSize: 13, color: AmaniColors.secondary),
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AmaniColors.secondary,
+                    ),
                   ),
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -148,59 +172,73 @@ class _RepetitionRowState extends State<RepetitionRow> {
                   child: Container(
                     width: 32,
                     height: 32,
-                    decoration: BoxDecoration(color: AmaniColors.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
-                    child: const Icon(Icons.volume_up_rounded, size: 16, color: AmaniColors.textPrimary),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.volume_up_rounded,
+                      size: 16,
+                      color: AmaniColors.textPrimary,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Zone du cahier
+          // Zone du cahier, lignes réglées façon Seyès
           Container(
-            color: const Color(0xFFF8FBFF),
+            color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  for (int i = 0; i < _occurrences.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 10),
-                    _OccurrenceCanvas(
-                      entry: widget.entry,
-                      state: _occurrences[i],
-                      isActive: i == _activeIndex && !_allDone,
-                      onSuccess: () => _handleSuccess(i),
-                      onRetry: () => _handleRetry(i),
-                      w: _occW,
-                      h: _occH,
-                      tolerancePct: widget.tolerance,
-                    ),
-                  ],
-                  const SizedBox(width: 12),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (int i = 0; i < _occurrences.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _occurrences[i].status == OccurrenceStatus.success
-                                  ? AmaniColors.secondary
-                                  : i == _activeIndex
-                                      ? AmaniColors.primary
-                                      : AmaniColors.textPrimary.withValues(alpha: 0.12),
+            child: CustomPaint(
+              painter: _SeyesLinesPainter(),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    for (int i = 0; i < _occurrences.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 10),
+                      _OccurrenceCanvas(
+                        entry: widget.entry,
+                        state: _occurrences[i],
+                        isActive: i == _activeIndex && !_allDone,
+                        onSuccess: () => _handleSuccess(i),
+                        onRetry: () => _handleRetry(i),
+                        w: _occW,
+                        h: _occH,
+                        tolerancePct: widget.tolerance,
+                      ),
+                    ],
+                    const SizedBox(width: 12),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (int i = 0; i < _occurrences.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    _occurrences[i].status ==
+                                        OccurrenceStatus.success
+                                    ? AmaniColors.secondary
+                                    : i == _activeIndex
+                                    ? AmaniColors.primary
+                                    : AmaniColors.textPrimary.withValues(
+                                        alpha: 0.12,
+                                      ),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -208,6 +246,27 @@ class _RepetitionRowState extends State<RepetitionRow> {
       ),
     );
   }
+}
+
+class _SeyesLinesPainter extends CustomPainter {
+  static const List<double> _positions = [20, 45, 70, 95, 115, 135];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < _positions.length; i++) {
+      final y = _positions[i] + 12;
+      final isBaseline = i == 3;
+      final paint = Paint()
+        ..color =
+            (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                .withValues(alpha: 0.8)
+        ..strokeWidth = isBaseline ? 1.5 : 1;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SeyesLinesPainter oldDelegate) => false;
 }
 
 class _OccurrenceCanvas extends StatefulWidget {
@@ -259,9 +318,13 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   }
 
   double get _scale => (widget.w < widget.h ? widget.w : widget.h) / 200.0;
-  Offset get _origin => Offset((widget.w - 200 * _scale) / 2, (widget.h - 200 * _scale) / 2);
+  Offset get _origin =>
+      Offset((widget.w - 200 * _scale) / 2, (widget.h - 200 * _scale) / 2);
 
-  Offset _toSvg(Offset canvasPt) => Offset((canvasPt.dx - _origin.dx) / _scale, (canvasPt.dy - _origin.dy) / _scale);
+  Offset _toSvg(Offset canvasPt) => Offset(
+    (canvasPt.dx - _origin.dx) / _scale,
+    (canvasPt.dy - _origin.dy) / _scale,
+  );
 
   void _onPanStart(DragStartDetails details) {
     if (!widget.isActive || _localStatus == OccurrenceStatus.success) return;
@@ -310,14 +373,17 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     final borderColor = _localStatus == OccurrenceStatus.success
         ? AmaniColors.secondary
         : widget.isActive
-            ? const Color(0x40A9784F)
-            : const Color(0x1A4A3B2A);
+        ? const Color(0x40A9784F)
+        : const Color(0x1A4A3B2A);
 
     return Container(
       width: widget.w,
       height: widget.h,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: borderColor)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
       child: Stack(
         children: [
           CustomPaint(
@@ -335,14 +401,21 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
             onPanStart: _onPanStart,
             onPanUpdate: _onPanUpdate,
             onPanEnd: _onPanEnd,
-            child: Container(color: Colors.transparent, width: widget.w, height: widget.h),
+            child: Container(
+              color: Colors.transparent,
+              width: widget.w,
+              height: widget.h,
+            ),
           ),
           if (_localStatus == OccurrenceStatus.success)
             Positioned.fill(
               child: Container(
                 color: const Color(0x1A8FBF6F),
                 alignment: Alignment.center,
-                child: const AmaniMascot(pose: AmaniPose.miniReussite, size: AmaniSize.avatar),
+                child: const AmaniMascot(
+                  pose: AmaniPose.miniReussite,
+                  size: AmaniSize.avatar,
+                ),
               ),
             ),
           if (_localStatus == OccurrenceStatus.retry)
@@ -350,7 +423,10 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
               child: Container(
                 color: const Color(0x1AF0C040),
                 alignment: Alignment.center,
-                child: const AmaniMascot(pose: AmaniPose.miniReessai, size: AmaniSize.avatar),
+                child: const AmaniMascot(
+                  pose: AmaniPose.miniReessai,
+                  size: AmaniSize.avatar,
+                ),
               ),
             ),
           if (widget.isActive && _localStatus != OccurrenceStatus.success)
@@ -362,8 +438,15 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
                 child: Container(
                   width: 22,
                   height: 22,
-                  decoration: const BoxDecoration(color: Color(0x33E05252), shape: BoxShape.circle),
-                  child: const Icon(Icons.replay_rounded, size: 12, color: AmaniColors.error),
+                  decoration: const BoxDecoration(
+                    color: Color(0x33E05252),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.replay_rounded,
+                    size: 12,
+                    color: AmaniColors.error,
+                  ),
                 ),
               ),
             ),
@@ -396,25 +479,61 @@ class _OccurrencePainter extends CustomPainter {
       canvas.save();
       canvas.translate(origin.dx, origin.dy);
       canvas.scale(scale, scale);
+      final guideColor = status == OccurrenceStatus.retry
+          ? const Color(0xE6D9A84A)
+          : const Color(0xBF9BB5CC);
+      if (entry.family == 'point') {
+        canvas.drawPath(
+          parseSvgPathData(entry.pathD),
+          Paint()
+            ..color = guideColor
+            ..style = PaintingStyle.fill,
+        );
+      }
       final guidePaint = Paint()
-        ..color = status == OccurrenceStatus.retry ? const Color(0xE6D9A84A) : const Color(0xBF9BB5CC)
+        ..color = guideColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.5
         ..strokeCap = StrokeCap.round;
-      final guidePath = dashPath(parseSvgPathData(entry.pathD), dashArray: CircularIntervalList<double>([7, 5]));
+      final guidePath = dashPath(
+        parseSvgPathData(entry.pathD),
+        dashArray: CircularIntervalList<double>([7, 5]),
+      );
       canvas.drawPath(guidePath, guidePaint);
       canvas.restore();
 
       // Pastille de départ
-      final startPt = Offset(entry.startXY.dx * scale + origin.dx, entry.startXY.dy * scale + origin.dy);
+      final startPt = Offset(
+        entry.startXY.dx * scale + origin.dx,
+        entry.startXY.dy * scale + origin.dy,
+      );
       canvas.drawCircle(startPt, 5, Paint()..color = const Color(0xFF5BAA6A));
-      canvas.drawCircle(startPt, 5, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1);
+      canvas.drawCircle(
+        startPt,
+        5,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
     }
 
     if (status == OccurrenceStatus.success && refPoints.length >= 2) {
-      final path = Path()..moveTo(refPoints.first.dx * scale + origin.dx, refPoints.first.dy * scale + origin.dy);
+      final path = Path()
+        ..moveTo(
+          refPoints.first.dx * scale + origin.dx,
+          refPoints.first.dy * scale + origin.dy,
+        );
       for (final pt in refPoints.skip(1)) {
         path.lineTo(pt.dx * scale + origin.dx, pt.dy * scale + origin.dy);
+      }
+      if (entry.family == 'point') {
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = entry.strokeColor
+            ..style = PaintingStyle.fill,
+        );
       }
       canvas.drawPath(
         path,
@@ -429,7 +548,11 @@ class _OccurrencePainter extends CustomPainter {
     }
 
     if (userPoints.isNotEmpty) {
-      final path = Path()..moveTo(userPoints.first.dx * scale + origin.dx, userPoints.first.dy * scale + origin.dy);
+      final path = Path()
+        ..moveTo(
+          userPoints.first.dx * scale + origin.dx,
+          userPoints.first.dy * scale + origin.dy,
+        );
       for (final pt in userPoints.skip(1)) {
         path.lineTo(pt.dx * scale + origin.dx, pt.dy * scale + origin.dy);
       }

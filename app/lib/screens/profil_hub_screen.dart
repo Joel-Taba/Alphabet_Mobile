@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,8 @@ import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
 import '../services/sign_speech.dart';
 import '../widgets/amani_mascot.dart';
+import '../hooks/use_writing_style.dart';
+import '../utils/pick_profile_photo.dart';
 
 class ProfilHubScreen extends StatefulWidget {
   const ProfilHubScreen({super.key});
@@ -28,7 +31,7 @@ class _ProfilHubScreenState extends State<ProfilHubScreen> {
   Future<void> _checkLockStatus() async {
     final hasPassword = await isProfileProtected();
     final unlockedThisSession = isProfileUnlockedThisSession();
-    
+
     setState(() {
       _isUnlocked = !hasPassword || unlockedThisSession;
       _isLoading = false;
@@ -67,7 +70,7 @@ class _ProfilHubScreenState extends State<ProfilHubScreen> {
 
 class _LockScreen extends StatefulWidget {
   final VoidCallback onUnlock;
-  
+
   const _LockScreen({required this.onUnlock});
 
   @override
@@ -106,7 +109,10 @@ class _LockScreenState extends State<_LockScreen> {
               children: [
                 const SizedBox(
                   height: 120,
-                  child: AmaniMascot(pose: AmaniPose.reflexion, size: AmaniSize.medium),
+                  child: AmaniMascot(
+                    pose: AmaniPose.reflexion,
+                    size: AmaniSize.medium,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -116,25 +122,34 @@ class _LockScreenState extends State<_LockScreen> {
                 const SizedBox(height: 8),
                 Text(
                   t['profileLock']?['subtitle'] ?? 'Entrez le mot de passe',
-                  style: AmaniTheme.bodyStyle.copyWith(color: AmaniColors.textSecondary),
+                  style: AmaniTheme.bodyStyle.copyWith(
+                    color: AmaniColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Password Field
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: _hasError ? AmaniColors.error : (_passwordController.text.isNotEmpty ? AmaniColors.primary : AmaniColors.disabled),
+                      color: _hasError
+                          ? AmaniColors.error
+                          : (_passwordController.text.isNotEmpty
+                                ? AmaniColors.primary
+                                : AmaniColors.disabled),
                       width: 2,
                     ),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.lock_fill, color: AmaniColors.textSecondary),
+                      const Icon(
+                        CupertinoIcons.lock_fill,
+                        color: AmaniColors.textSecondary,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
@@ -142,7 +157,9 @@ class _LockScreenState extends State<_LockScreen> {
                           obscureText: !_showPassword,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            hintText: t['profileLock']?['passwordPlaceholder'] ?? 'Mot de passe',
+                            hintText:
+                                t['profileLock']?['passwordPlaceholder'] ??
+                                'Mot de passe',
                             hintStyle: TextStyle(color: AmaniColors.disabled),
                           ),
                           onChanged: (_) => setState(() => _hasError = false),
@@ -151,42 +168,55 @@ class _LockScreenState extends State<_LockScreen> {
                       ),
                       IconButton(
                         icon: Icon(
-                          _showPassword ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye_solid,
+                          _showPassword
+                              ? CupertinoIcons.eye_slash_fill
+                              : CupertinoIcons.eye_solid,
                           color: AmaniColors.textSecondary,
                         ),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
                       ),
                     ],
                   ),
                 ),
-                
+
                 if (_hasError)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      t['profileLock']?['wrongPassword'] ?? 'Mot de passe incorrect',
-                      style: AmaniTheme.bodyStyle.copyWith(color: AmaniColors.error, fontWeight: FontWeight.bold),
+                      t['profileLock']?['wrongPassword'] ??
+                          'Mot de passe incorrect',
+                      style: AmaniTheme.bodyStyle.copyWith(
+                        color: AmaniColors.error,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  
+
                 const SizedBox(height: 24),
-                
+
                 // Submit Button
                 SizedBox(
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _passwordController.text.isNotEmpty ? _submit : null,
+                    onPressed: _passwordController.text.isNotEmpty
+                        ? _submit
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AmaniColors.primary,
                       disabledBackgroundColor: AmaniColors.disabled,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                       elevation: 0,
                     ),
                     child: Text(
                       t['profileLock']?['unlockButton'] ?? 'Déverrouiller',
                       style: AmaniTheme.titleStyle.copyWith(
-                        color: _passwordController.text.isNotEmpty ? AmaniColors.background : AmaniColors.textSecondary,
+                        color: _passwordController.text.isNotEmpty
+                            ? AmaniColors.background
+                            : AmaniColors.textSecondary,
                         fontSize: 18,
                       ),
                     ),
@@ -213,11 +243,12 @@ class _UnlockedProfile extends StatefulWidget {
 }
 
 class _UnlockedProfileState extends State<_UnlockedProfile> {
-  String _format = 'script';
   bool _soundEnabled = true;
   double _volume = 0.85;
   int _repetitions = 3;
   double _tolerance = 0.10;
+  VoiceGender _voiceGender = VoiceGender.femme;
+  String? _photoBase64;
 
   final _newPasswordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
@@ -227,7 +258,12 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   static const List<Map<String, Object>> _branchMeta = [
     {'icon': Icons.eco_rounded, 'color': 0xFF8FBF6F, 'done': 4, 'total': 4},
     {'icon': Icons.park_rounded, 'color': 0xFFA9784F, 'done': 3, 'total': 4},
-    {'icon': Icons.auto_awesome_rounded, 'color': 0xFF4A90E2, 'done': 1, 'total': 6},
+    {
+      'icon': Icons.auto_awesome_rounded,
+      'color': 0xFF4A90E2,
+      'done': 1,
+      'total': 6,
+    },
   ];
 
   @override
@@ -245,25 +281,34 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final gender = await getStoredVoiceGender();
+    final photo = await getStoredPhoto();
     setState(() {
-      _format = prefs.getString('amani_setting_format') ?? 'script';
       _soundEnabled = prefs.getBool('amani_setting_sound') ?? true;
       _volume = prefs.getDouble('amani_setting_volume') ?? 0.85;
       _repetitions = prefs.getInt('amani_setting_repetitions') ?? 3;
       _tolerance = prefs.getDouble('amani_setting_tolerance') ?? 0.10;
+      _voiceGender = gender;
+      _photoBase64 = photo;
     });
   }
 
-  Future<void> _updateFormat(String newFormat) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('amani_setting_format', newFormat);
-    setState(() => _format = newFormat);
+  Future<void> _choosePhoto() async {
+    final encoded = await pickAndEncodeProfilePhoto();
+    if (encoded == null) return;
+    await setStoredPhoto(encoded);
+    if (mounted) setState(() => _photoBase64 = encoded);
   }
 
   Future<void> _updateSound(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('amani_setting_sound', enabled);
     setState(() => _soundEnabled = enabled);
+  }
+
+  Future<void> _updateVoiceGender(VoiceGender gender) async {
+    await setStoredVoiceGender(gender);
+    setState(() => _voiceGender = gender);
   }
 
   Future<void> _updateVolume(double vol) async {
@@ -309,6 +354,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final hub = t['profileHub'] as Map<String, dynamic>? ?? {};
     final branches = (hub['branches'] as List?) ?? [];
     final speech = context.read<SignSpeechService>();
+    final writingStyle = context.watch<WritingStyleProvider>();
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -319,29 +365,89 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             // Header
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(CupertinoIcons.settings, color: AmaniColors.textPrimary),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          image: _photoBase64 != null
+                              ? DecorationImage(
+                                  image: MemoryImage(
+                                    base64Decode(_photoBase64!),
+                                  ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: _photoBase64 == null
+                            ? const Icon(
+                                CupertinoIcons.settings,
+                                color: AmaniColors.textPrimary,
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: -2,
+                        right: -2,
+                        child: GestureDetector(
+                          onTap: _choosePhoto,
+                          child: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: AmaniColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AmaniColors.background,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.camera_fill,
+                              size: 11,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(hub['title'] ?? 'Mon Carnet', style: AmaniTheme.titleStyle.copyWith(fontSize: 21)),
+                      Text(
+                        hub['title'] ?? 'Mon Carnet',
+                        style: AmaniTheme.titleStyle.copyWith(fontSize: 21),
+                      ),
                       Text(
                         hub['subtitle'] ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AmaniTheme.bodyStyle.copyWith(fontSize: 12, color: AmaniColors.textSecondary),
+                        style: AmaniTheme.bodyStyle.copyWith(
+                          fontSize: 12,
+                          color: AmaniColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
                   tooltip: hub['lockAction'] ?? 'Verrouiller',
-                  icon: const Icon(CupertinoIcons.lock_open_fill, color: AmaniColors.textSecondary),
+                  icon: const Icon(
+                    CupertinoIcons.lock_open_fill,
+                    color: AmaniColors.textSecondary,
+                  ),
                   onPressed: widget.onLock,
                 ),
               ],
@@ -351,17 +457,41 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             // Statistiques
             Row(
               children: [
-                Expanded(child: _StatTile(icon: CupertinoIcons.book_fill, value: '7', label: hub['statsSignes'] ?? '', color: AmaniColors.secondary)),
+                Expanded(
+                  child: _StatTile(
+                    icon: CupertinoIcons.book_fill,
+                    value: '7',
+                    label: hub['statsSignes'] ?? '',
+                    color: AmaniColors.secondary,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _StatTile(icon: CupertinoIcons.rosette, value: '15', label: hub['statsExercices'] ?? '', color: AmaniColors.primary)),
+                Expanded(
+                  child: _StatTile(
+                    icon: CupertinoIcons.rosette,
+                    value: '15',
+                    label: hub['statsExercices'] ?? '',
+                    color: AmaniColors.primary,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _StatTile(icon: CupertinoIcons.calendar, value: '4', label: hub['statsDays'] ?? '', color: const Color(0xFF4A90E2))),
+                Expanded(
+                  child: _StatTile(
+                    icon: CupertinoIcons.calendar,
+                    value: '4',
+                    label: hub['statsDays'] ?? '',
+                    color: const Color(0xFF4A90E2),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 28),
 
             // Progression par palier
-            Text(hub['progressionTitle'] ?? '', style: AmaniTheme.titleStyle.copyWith(fontSize: 18)),
+            Text(
+              hub['progressionTitle'] ?? '',
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
+            ),
             const SizedBox(height: 14),
             for (int i = 0; i < _branchMeta.length; i++) ...[
               _PalierProgressCard(
@@ -370,14 +500,18 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 name: branches.length > i ? (branches[i]['name'] ?? '') : '',
                 done: _branchMeta[i]['done'] as int,
                 total: _branchMeta[i]['total'] as int,
-                stepsTemplate: hub['stepsValidated'] ?? 'sur {total} étapes validées',
+                stepsTemplate:
+                    hub['stepsValidated'] ?? 'sur {total} étapes validées',
               ),
               const SizedBox(height: 12),
             ],
             const SizedBox(height: 12),
 
             // Section Réglages
-            Text(hub['settingsTitle'] ?? 'Mes Réglages', style: AmaniTheme.titleStyle.copyWith(fontSize: 20)),
+            Text(
+              hub['settingsTitle'] ?? 'Mes Réglages',
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+            ),
             const SizedBox(height: 16),
 
             _buildCard(
@@ -396,10 +530,14 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   _buildSettingRow(
                     icon: CupertinoIcons.textformat_abc,
                     title: hub['formatCardTitle'] ?? "Format d'écriture",
-                    trailing: SegmentedControl<String>(
-                      value: _format,
-                      items: const {'script': 'Script', 'cursive': 'Cursive'},
-                      onChanged: _updateFormat,
+                    trailing: SegmentedControl<WritingStyle>(
+                      value: writingStyle.style,
+                      items: {
+                        WritingStyle.script: 'Script',
+                        WritingStyle.cursive: 'Cursive',
+                        WritingStyle.digitale: 'Digitale',
+                      },
+                      onChanged: writingStyle.setStyle,
                     ),
                   ),
                 ],
@@ -408,14 +546,19 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(hub['soundCardTitle'] ?? 'Audio', style: AmaniTheme.titleStyle.copyWith(fontSize: 20)),
+            Text(
+              hub['soundCardTitle'] ?? 'Audio',
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+            ),
             const SizedBox(height: 16),
 
             _buildCard(
               child: Column(
                 children: [
                   _buildSettingRow(
-                    icon: _soundEnabled ? CupertinoIcons.speaker_2_fill : CupertinoIcons.speaker_slash_fill,
+                    icon: _soundEnabled
+                        ? CupertinoIcons.speaker_2_fill
+                        : CupertinoIcons.speaker_slash_fill,
                     title: hub['voiceLabel'] ?? 'Voix & Sons',
                     trailing: CupertinoSwitch(
                       value: _soundEnabled,
@@ -425,10 +568,19 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   if (_soundEnabled) ...[
                     const Divider(color: AmaniColors.disabled, height: 32),
-                    Text(hub['volumeLabel'] ?? 'Volume', style: AmaniTheme.bodyStyle.copyWith(fontSize: 14, color: AmaniColors.textSecondary)),
+                    Text(
+                      hub['volumeLabel'] ?? 'Volume',
+                      style: AmaniTheme.bodyStyle.copyWith(
+                        fontSize: 14,
+                        color: AmaniColors.textSecondary,
+                      ),
+                    ),
                     Row(
                       children: [
-                        const Icon(CupertinoIcons.volume_down, color: AmaniColors.textSecondary),
+                        const Icon(
+                          CupertinoIcons.volume_down,
+                          color: AmaniColors.textSecondary,
+                        ),
                         Expanded(
                           child: CupertinoSlider(
                             value: _volume,
@@ -436,18 +588,126 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                             onChanged: _updateVolume,
                           ),
                         ),
-                        const Icon(CupertinoIcons.volume_up, color: AmaniColors.textSecondary),
+                        const Icon(
+                          CupertinoIcons.volume_up,
+                          color: AmaniColors.textSecondary,
+                        ),
                       ],
                     ),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () => speech.speak(hub['volumeTestPhrase'] ?? '', langProvider.lang),
-                        icon: const Icon(CupertinoIcons.play_fill, size: 16, color: AmaniColors.primary),
-                        label: Text(hub['volumeTest'] ?? 'Tester le volume', style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, color: AmaniColors.primary)),
+                        onPressed: () => speech.speak(
+                          hub['volumeTestPhrase'] ?? '',
+                          langProvider.lang,
+                        ),
+                        icon: const Icon(
+                          CupertinoIcons.play_fill,
+                          size: 16,
+                          color: AmaniColors.primary,
+                        ),
+                        label: Text(
+                          hub['volumeTest'] ?? 'Tester le volume',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w700,
+                            color: AmaniColors.primary,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AmaniColors.disabled),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const Divider(color: AmaniColors.disabled, height: 32),
+                    Text(
+                      hub['voiceGenderLabel'] ?? 'Style de voix',
+                      style: AmaniTheme.bodyStyle.copyWith(
+                        fontSize: 14,
+                        color: AmaniColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        for (final gender in VoiceGender.values) ...[
+                          if (gender != VoiceGender.values.first)
+                            const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _updateVoiceGender(gender),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _voiceGender == gender
+                                      ? AmaniColors.primary.withValues(
+                                          alpha: 0.15,
+                                        )
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _voiceGender == gender
+                                        ? AmaniColors.primary
+                                        : AmaniColors.disabled,
+                                    width: 2,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  ((hub['voiceGenderOptions']
+                                              as List?)?[gender.index]
+                                          as Map?)?['label'] ??
+                                      (gender == VoiceGender.homme
+                                          ? 'Voix Homme'
+                                          : 'Voix Femme'),
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                    color: _voiceGender == gender
+                                        ? AmaniColors.primaryDark
+                                        : AmaniColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => speech.speak(
+                          hub['voiceGenderTestPhrase'] ?? '',
+                          langProvider.lang,
+                        ),
+                        icon: const Icon(
+                          CupertinoIcons.play_fill,
+                          size: 16,
+                          color: AmaniColors.primary,
+                        ),
+                        label: Text(
+                          hub['voiceGenderTest'] ?? 'Écouter un exemple',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w700,
+                            color: AmaniColors.primary,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AmaniColors.disabled),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
@@ -459,15 +719,27 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(hub['exercisesCardTitle'] ?? "Exercices d'écriture", style: AmaniTheme.titleStyle.copyWith(fontSize: 20)),
+            Text(
+              hub['exercisesCardTitle'] ?? "Exercices d'écriture",
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+            ),
             const SizedBox(height: 16),
 
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(hub['repetitionsLabel'] ?? 'Répétitions par signe', style: AmaniTheme.titleStyle.copyWith(fontSize: 16)),
-                  Text(hub['repetitionsHint'] ?? '', style: AmaniTheme.bodyStyle.copyWith(fontSize: 12, color: AmaniColors.textSecondary)),
+                  Text(
+                    hub['repetitionsLabel'] ?? 'Répétitions par signe',
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    hub['repetitionsHint'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   _Stepper(
                     value: '$_repetitions',
@@ -475,8 +747,17 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     onIncrement: () => _updateRepetitions(_repetitions + 1),
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
-                  Text(hub['toleranceLabel'] ?? 'Tolérance de validation', style: AmaniTheme.titleStyle.copyWith(fontSize: 16)),
-                  Text(hub['toleranceHint'] ?? '', style: AmaniTheme.bodyStyle.copyWith(fontSize: 12, color: AmaniColors.textSecondary)),
+                  Text(
+                    hub['toleranceLabel'] ?? 'Tolérance de validation',
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    hub['toleranceHint'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   _Stepper(
                     value: '${(_tolerance * 100).round()}%',
@@ -489,7 +770,10 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(hub['passwordCardTitle'] ?? 'Mot de passe', style: AmaniTheme.titleStyle.copyWith(fontSize: 20)),
+            Text(
+              hub['passwordCardTitle'] ?? 'Mot de passe',
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+            ),
             const SizedBox(height: 16),
 
             _buildCard(
@@ -499,48 +783,81 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   _PasswordField(
                     controller: _newPasswordCtrl,
                     obscure: !_showNewPassword,
-                    placeholder: hub['newPasswordPlaceholder'] ?? 'Nouveau mot de passe',
-                    onToggleVisibility: () => setState(() => _showNewPassword = !_showNewPassword),
+                    placeholder:
+                        hub['newPasswordPlaceholder'] ?? 'Nouveau mot de passe',
+                    onToggleVisibility: () =>
+                        setState(() => _showNewPassword = !_showNewPassword),
                     onChanged: () => setState(() => _passwordFeedback = null),
                   ),
                   const SizedBox(height: 10),
                   _PasswordField(
                     controller: _confirmPasswordCtrl,
                     obscure: !_showNewPassword,
-                    placeholder: hub['confirmPasswordPlaceholder'] ?? 'Confirmer le mot de passe',
+                    placeholder:
+                        hub['confirmPasswordPlaceholder'] ??
+                        'Confirmer le mot de passe',
                     onChanged: () => setState(() => _passwordFeedback = null),
                   ),
                   if (_passwordFeedback == _PasswordFeedback.mismatch) ...[
                     const SizedBox(height: 8),
-                    Text(hub['passwordMismatch'] ?? '', style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, color: AmaniColors.error, fontSize: 13)),
+                    Text(
+                      hub['passwordMismatch'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        color: AmaniColors.error,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                   if (_passwordFeedback == _PasswordFeedback.tooShort) ...[
                     const SizedBox(height: 8),
                     Text(
                       tFormat(hub['passwordTooShort'] ?? '', {'count': 4}),
-                      style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, color: AmaniColors.error, fontSize: 13),
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        color: AmaniColors.error,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                   if (_passwordFeedback == _PasswordFeedback.success) ...[
                     const SizedBox(height: 8),
-                    Text(hub['passwordSaved'] ?? '', style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, color: AmaniColors.success, fontSize: 13)),
+                    Text(
+                      hub['passwordSaved'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        color: AmaniColors.success,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 14),
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: (_newPasswordCtrl.text.isNotEmpty && _confirmPasswordCtrl.text.isNotEmpty)
+                      onPressed:
+                          (_newPasswordCtrl.text.isNotEmpty &&
+                              _confirmPasswordCtrl.text.isNotEmpty)
                           ? _handleSavePassword
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AmaniColors.textPrimary,
                         disabledBackgroundColor: AmaniColors.disabled,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         elevation: 0,
                       ),
                       child: Text(
                         hub['savePassword'] ?? 'Enregistrer le mot de passe',
-                        style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, color: AmaniColors.surface),
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w800,
+                          color: AmaniColors.surface,
+                        ),
                       ),
                     ),
                   ),
@@ -561,13 +878,23 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [BoxShadow(color: Color(0x0D000000), offset: Offset(0, 4), blurRadius: 12)],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            offset: Offset(0, 4),
+            blurRadius: 12,
+          ),
+        ],
       ),
       child: child,
     );
   }
 
-  Widget _buildSettingRow({required IconData icon, required String title, required Widget trailing}) {
+  Widget _buildSettingRow({
+    required IconData icon,
+    required String title,
+    required Widget trailing,
+  }) {
     return Row(
       children: [
         Icon(icon, color: AmaniColors.textSecondary, size: 24),
@@ -590,7 +917,12 @@ class _StatTile extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _StatTile({required this.icon, required this.value, required this.label, required this.color});
+  const _StatTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -599,14 +931,23 @@ class _StatTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x0D000000), offset: Offset(0, 3), blurRadius: 10)],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            offset: Offset(0, 3),
+            blurRadius: 10,
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.16), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+            ),
             alignment: Alignment.center,
             child: Icon(icon, color: color, size: 18),
           ),
@@ -618,7 +959,10 @@ class _StatTile extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AmaniTheme.bodyStyle.copyWith(fontSize: 10.5, color: AmaniColors.textSecondary),
+            style: AmaniTheme.bodyStyle.copyWith(
+              fontSize: 10.5,
+              color: AmaniColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -651,7 +995,13 @@ class _PalierProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x0D000000), offset: Offset(0, 3), blurRadius: 10)],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            offset: Offset(0, 3),
+            blurRadius: 10,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -660,7 +1010,10 @@ class _PalierProgressCard extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 alignment: Alignment.center,
                 child: Icon(icon, color: color, size: 22),
               ),
@@ -669,18 +1022,40 @@ class _PalierProgressCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: AmaniTheme.titleStyle.copyWith(fontSize: 14.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(
+                      name,
+                      style: AmaniTheme.titleStyle.copyWith(fontSize: 14.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     Text(
                       '$done ${tFormat(stepsTemplate, {'total': total})}',
-                      style: AmaniTheme.bodyStyle.copyWith(fontSize: 12.5, color: AmaniColors.textSecondary),
+                      style: AmaniTheme.bodyStyle.copyWith(
+                        fontSize: 12.5,
+                        color: AmaniColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(999)),
-                child: Text('$pct%', style: TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: 14, color: color)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$pct%',
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: color,
+                  ),
+                ),
               ),
             ],
           ),
@@ -705,7 +1080,11 @@ class _Stepper extends StatelessWidget {
   final VoidCallback onDecrement;
   final VoidCallback onIncrement;
 
-  const _Stepper({required this.value, required this.onDecrement, required this.onIncrement});
+  const _Stepper({
+    required this.value,
+    required this.onDecrement,
+    required this.onIncrement,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -714,7 +1093,10 @@ class _Stepper extends StatelessWidget {
         _StepperButton(icon: CupertinoIcons.minus, onTap: onDecrement),
         Expanded(
           child: Center(
-            child: Text(value, style: AmaniTheme.titleStyle.copyWith(fontSize: 20)),
+            child: Text(
+              value,
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+            ),
           ),
         ),
         _StepperButton(icon: CupertinoIcons.plus, onTap: onIncrement),
@@ -735,7 +1117,10 @@ class _StepperButton extends StatelessWidget {
       child: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(color: AmaniColors.background, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: AmaniColors.background,
+          shape: BoxShape.circle,
+        ),
         alignment: Alignment.center,
         child: Icon(icon, size: 18, color: AmaniColors.textPrimary),
       ),
@@ -769,7 +1154,11 @@ class _PasswordField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
-          const Icon(CupertinoIcons.lock_fill, size: 18, color: AmaniColors.textSecondary),
+          const Icon(
+            CupertinoIcons.lock_fill,
+            size: 18,
+            color: AmaniColors.textSecondary,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -788,7 +1177,13 @@ class _PasswordField extends StatelessWidget {
           ),
           if (onToggleVisibility != null)
             IconButton(
-              icon: Icon(obscure ? CupertinoIcons.eye_solid : CupertinoIcons.eye_slash_fill, size: 18, color: AmaniColors.textSecondary),
+              icon: Icon(
+                obscure
+                    ? CupertinoIcons.eye_solid
+                    : CupertinoIcons.eye_slash_fill,
+                size: 18,
+                color: AmaniColors.textSecondary,
+              ),
               onPressed: onToggleVisibility,
             ),
         ],
@@ -830,13 +1225,17 @@ class SegmentedControl<T> extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: isSelected ? const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)] : [],
+                boxShadow: isSelected
+                    ? const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)]
+                    : [],
               ),
               child: Text(
                 entry.value,
                 style: AmaniTheme.titleStyle.copyWith(
                   fontSize: 16,
-                  color: isSelected ? AmaniColors.textPrimary : AmaniColors.textSecondary,
+                  color: isSelected
+                      ? AmaniColors.textPrimary
+                      : AmaniColors.textSecondary,
                 ),
               ),
             ),

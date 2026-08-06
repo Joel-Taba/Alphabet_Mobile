@@ -24,7 +24,10 @@ const Map<String, Color> _familyBg = {
   'trait': AmaniColors.background,
 };
 
-SignFamily _familyFromKey(String key) => SignFamily.values.firstWhere((f) => f.name == key, orElse: () => SignFamily.trait);
+SignFamily _familyFromKey(String key) => SignFamily.values.firstWhere(
+  (f) => f.name == key,
+  orElse: () => SignFamily.trait,
+);
 
 class CoursFamilyScreen extends StatefulWidget {
   final String family;
@@ -34,7 +37,8 @@ class CoursFamilyScreen extends StatefulWidget {
   State<CoursFamilyScreen> createState() => _CoursFamilyScreenState();
 }
 
-class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTickerProviderStateMixin {
+class _CoursFamilyScreenState extends State<CoursFamilyScreen>
+    with SingleTickerProviderStateMixin {
   late List<dynamic> _entries;
   dynamic _selectedSign;
   late AnimationController _controller;
@@ -42,9 +46,14 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _entries = EXERCISE_CATALOG.where((e) => e['family'] == widget.family).toList();
+    _entries = EXERCISE_CATALOG
+        .where((e) => e['family'] == widget.family)
+        .toList();
     _selectedSign = _entries.isNotEmpty ? _entries.first : null;
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 4000));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4000),
+    );
     _playAnimation();
   }
 
@@ -54,7 +63,10 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
       ..reset()
       ..forward();
     final lang = context.read<LanguageProvider>().lang;
-    context.read<SignSpeechService>().speak(_selectedSign['consigne'][lang.name] ?? '', lang);
+    context.read<SignSpeechService>().speak(
+      _selectedSign['consigne'][lang.name] ?? '',
+      lang,
+    );
   }
 
   void _selectSign(dynamic sign) {
@@ -87,7 +99,12 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
             // En-tête
             Container(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.12)))),
+              decoration: BoxDecoration(
+                color: bg,
+                border: Border(
+                  bottom: BorderSide(color: color.withValues(alpha: 0.12)),
+                ),
+              ),
               child: Row(
                 children: [
                   GestureDetector(
@@ -95,21 +112,47 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                     child: Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 6)]),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Color(0x1A000000), blurRadius: 6),
+                        ],
+                      ),
                       child: const Icon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(title, style: TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: 24, color: color)),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 24,
+                        color: color,
+                      ),
+                    ),
                   ),
                   GestureDetector(
-                    onTap: () => speech.speak(tFormat(coursFamily['intro'] ?? '', {'title': title}), lang),
+                    onTap: () => speech.speak(
+                      tFormat(coursFamily['intro'] ?? '', {'title': title}),
+                      lang,
+                    ),
                     child: Container(
                       width: 40,
                       height: 40,
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 6)]),
-                      child: const Icon(CupertinoIcons.speaker_2_fill, size: 18),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Color(0x1A000000), blurRadius: 6),
+                        ],
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.speaker_2_fill,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],
@@ -126,7 +169,13 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 20, offset: Offset(0, 6))],
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1F000000),
+                            blurRadius: 20,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
                       ),
                       child: Column(
                         children: [
@@ -148,11 +197,22 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                                     painter: _StrokeAnimPainter(
                                       pathD: _selectedSign['pathD'] as String,
                                       startXY: Offset(
-                                        (_selectedSign['startXY'] as List)[0].toDouble(),
-                                        (_selectedSign['startXY'] as List)[1].toDouble(),
+                                        (_selectedSign['startXY'] as List)[0]
+                                            .toDouble(),
+                                        (_selectedSign['startXY'] as List)[1]
+                                            .toDouble(),
                                       ),
-                                      strokeColor: Color(int.parse((_selectedSign['strokeColor'] as String).replaceFirst('#', '0xFF'))),
+                                      strokeColor: Color(
+                                        int.parse(
+                                          (_selectedSign['strokeColor']
+                                                  as String)
+                                              .replaceFirst('#', '0xFF'),
+                                        ),
+                                      ),
                                       progress: _controller.value,
+                                      family:
+                                          _selectedSign['family'] as String? ??
+                                          '',
                                     ),
                                     size: const Size(240, 240),
                                   ),
@@ -167,7 +227,9 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                                 child: _PillButton(
                                   icon: CupertinoIcons.restart,
                                   label: t['common']?['replay'] ?? 'Revoir',
-                                  bg: AmaniColors.secondary.withValues(alpha: 0.15),
+                                  bg: AmaniColors.secondary.withValues(
+                                    alpha: 0.15,
+                                  ),
                                   fg: AmaniColors.secondaryDark,
                                   onTap: _playAnimation,
                                 ),
@@ -176,10 +238,14 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                               Expanded(
                                 child: _PillButton(
                                   icon: CupertinoIcons.speaker_2_fill,
-                                  label: t['common']?['instruction'] ?? 'Consigne',
+                                  label:
+                                      t['common']?['instruction'] ?? 'Consigne',
                                   bg: AmaniColors.background,
                                   fg: AmaniColors.textPrimary,
-                                  onTap: () => speech.speak(_selectedSign['consigne'][lang.name] ?? '', lang),
+                                  onTap: () => speech.speak(
+                                    _selectedSign['consigne'][lang.name] ?? '',
+                                    lang,
+                                  ),
                                 ),
                               ),
                             ],
@@ -193,7 +259,9 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                               bg: AmaniColors.secondary,
                               fg: Colors.white,
                               filled: true,
-                              onTap: () => context.push('/exercice-liste?family=${widget.family}'),
+                              onTap: () => context.push(
+                                '/exercice-liste?family=${widget.family}',
+                              ),
                             ),
                           ),
                         ],
@@ -203,32 +271,55 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                   const SizedBox(height: 24),
                   Text(
                     '${coursFamily['variantsTitle'] ?? ''} (${_entries.length})',
-                    style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 0.4, color: AmaniColors.textPrimary),
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      letterSpacing: 0.4,
+                      color: AmaniColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 0.92,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 0.92,
+                        ),
                     itemCount: _entries.length,
                     itemBuilder: (context, i) {
                       final item = _entries[i];
-                      final isSelected = _selectedSign != null && _selectedSign['id'] == item['id'];
+                      final isSelected =
+                          _selectedSign != null &&
+                          _selectedSign['id'] == item['id'];
                       return GestureDetector(
                         onTap: () => _selectSign(item),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isSelected ? AmaniColors.surface : Colors.white,
+                            color: isSelected
+                                ? AmaniColors.surface
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: isSelected ? AmaniColors.secondary : const Color(0xFFE5E5E5), width: 2),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isSelected ? 0.08 : 0.04), blurRadius: isSelected ? 10 : 4)],
+                            border: Border.all(
+                              color: isSelected
+                                  ? AmaniColors.secondary
+                                  : const Color(0xFFE5E5E5),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: isSelected ? 0.08 : 0.04,
+                                ),
+                                blurRadius: isSelected ? 10 : 4,
+                              ),
+                            ],
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,25 +328,50 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                                 alignment: Alignment.topRight,
                                 child: SizedBox(
                                   height: 18,
-                                  child: isSelected ? const Icon(CupertinoIcons.check_mark_circled_solid, size: 16, color: AmaniColors.secondary) : null,
+                                  child: isSelected
+                                      ? const Icon(
+                                          CupertinoIcons
+                                              .check_mark_circled_solid,
+                                          size: 16,
+                                          color: AmaniColors.secondary,
+                                        )
+                                      : null,
                                 ),
                               ),
                               Container(
                                 width: 76,
                                 height: 76,
-                                decoration: const BoxDecoration(color: AmaniColors.background, shape: BoxShape.circle),
+                                decoration: const BoxDecoration(
+                                  color: AmaniColors.background,
+                                  shape: BoxShape.circle,
+                                ),
                                 alignment: Alignment.center,
                                 child: SignGlyph(
                                   family: _familyFromKey(item['family']),
                                   variant: item['variant'] ?? 'vertical',
-                                  stroke: Color(int.parse((item['strokeColor'] as String).replaceFirst('#', '0xFF'))),
+                                  stroke: Color(
+                                    int.parse(
+                                      (item['strokeColor'] as String)
+                                          .replaceFirst('#', '0xFF'),
+                                    ),
+                                  ),
                                   size: 50,
                                 ),
                               ),
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.only(top: 8),
-                                decoration: BoxDecoration(border: Border(top: BorderSide(color: isSelected ? AmaniColors.secondary.withValues(alpha: 0.2) : const Color(0xFFF0F0F0)))),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: isSelected
+                                          ? AmaniColors.secondary.withValues(
+                                              alpha: 0.2,
+                                            )
+                                          : const Color(0xFFF0F0F0),
+                                    ),
+                                  ),
+                                ),
                                 child: Text(
                                   item['label'][lang.name] ?? '',
                                   textAlign: TextAlign.center,
@@ -265,7 +381,9 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                                     fontFamily: kBalooFontFamily,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12.5,
-                                    color: isSelected ? AmaniColors.secondaryDark : const Color(0xFF333333),
+                                    color: isSelected
+                                        ? AmaniColors.secondaryDark
+                                        : const Color(0xFF333333),
                                   ),
                                 ),
                               ),
@@ -280,30 +398,53 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen> with SingleTicker
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const AmaniMascot(pose: AmaniPose.invitation, size: AmaniSize.small),
+                      const AmaniMascot(
+                        pose: AmaniPose.invitation,
+                        size: AmaniSize.small,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => context.push('/exercice-liste?family=${widget.family}'),
+                          onTap: () => context.push(
+                            '/exercice-liste?family=${widget.family}',
+                          ),
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
                               color: AmaniColors.secondary,
                               borderRadius: BorderRadius.circular(18),
-                              boxShadow: const [BoxShadow(color: Color(0x338FBF6F), blurRadius: 12, offset: Offset(0, 4))],
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x338FBF6F),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Flexible(
                                   child: Text(
-                                    tFormat(coursFamily['passExercices'] ?? '', {'title': title}),
+                                    tFormat(
+                                      coursFamily['passExercices'] ?? '',
+                                      {'title': title},
+                                    ),
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white),
+                                    style: TextStyle(
+                                      fontFamily: kBalooFontFamily,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Icon(CupertinoIcons.chevron_right, color: Colors.white, size: 20),
+                                const Icon(
+                                  CupertinoIcons.chevron_right,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                               ],
                             ),
                           ),
@@ -330,7 +471,14 @@ class _PillButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool filled;
 
-  const _PillButton({required this.icon, required this.label, required this.bg, required this.fg, required this.onTap, this.filled = false});
+  const _PillButton({
+    required this.icon,
+    required this.label,
+    required this.bg,
+    required this.fg,
+    required this.onTap,
+    this.filled = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +486,10 @@ class _PillButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -348,7 +499,12 @@ class _PillButton extends StatelessWidget {
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w800, fontSize: 13, color: fg),
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: fg,
+                ),
               ),
             ),
           ],
@@ -365,8 +521,15 @@ class _StrokeAnimPainter extends CustomPainter {
   final Offset startXY;
   final Color strokeColor;
   final double progress;
+  final String family;
 
-  _StrokeAnimPainter({required this.pathD, required this.startXY, required this.strokeColor, required this.progress});
+  _StrokeAnimPainter({
+    required this.pathD,
+    required this.startXY,
+    required this.strokeColor,
+    required this.progress,
+    this.family = '',
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -375,6 +538,17 @@ class _StrokeAnimPainter extends CustomPainter {
     canvas.scale(scale, scale);
 
     final fullPath = parseSvgPathData(pathD);
+    // Le point se remplit (disque) plutôt que de rester un simple contour.
+    final isPoint = family == 'point';
+
+    if (isPoint) {
+      canvas.drawPath(
+        fullPath,
+        Paint()
+          ..color = const Color(0xFF9BB5CC)
+          ..style = PaintingStyle.fill,
+      );
+    }
 
     // Guide en pointillés
     final guidePaint = Paint()
@@ -382,7 +556,19 @@ class _StrokeAnimPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 14
       ..strokeCap = StrokeCap.round;
-    canvas.drawPath(dashPath(fullPath, dashArray: CircularIntervalList<double>([6, 8])), guidePaint);
+    canvas.drawPath(
+      dashPath(fullPath, dashArray: CircularIntervalList<double>([6, 8])),
+      guidePaint,
+    );
+
+    if (isPoint) {
+      canvas.drawPath(
+        fullPath,
+        Paint()
+          ..color = strokeColor
+          ..style = PaintingStyle.fill,
+      );
+    }
 
     // Trait animé
     Offset? penPos;
@@ -406,18 +592,33 @@ class _StrokeAnimPainter extends CustomPainter {
     // Pastille de départ (disparaît en fin de tracé)
     if (progress <= 0.90) {
       canvas.drawCircle(startXY, 3, Paint()..color = const Color(0xFF8FBF6F));
-      canvas.drawCircle(startXY, 3, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1);
+      canvas.drawCircle(
+        startXY,
+        3,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
     }
 
     // Stylet
     if (progress < 0.98 && penPos != null) {
       canvas.drawCircle(penPos, 4.5, Paint()..color = const Color(0xFFA9784F));
-      canvas.drawCircle(penPos, 4.5, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+      canvas.drawCircle(
+        penPos,
+        4.5,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
     }
 
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _StrokeAnimPainter oldDelegate) => oldDelegate.progress != progress || oldDelegate.pathD != pathD;
+  bool shouldRepaint(covariant _StrokeAnimPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.pathD != pathD;
 }

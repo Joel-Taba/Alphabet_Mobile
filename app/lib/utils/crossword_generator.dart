@@ -4,6 +4,7 @@
 /// chaque case de départ comme dans une vraie grille. Port fidèle de
 /// `src/lib/crosswordGenerator.ts`.
 library;
+
 import '../data/word_catalog.dart';
 
 enum CrosswordDirection { across, down }
@@ -16,9 +17,17 @@ class PlacedWord {
   final int number;
   final bool mystery;
 
-  const PlacedWord(this.word, this.row, this.col, this.direction, this.number, this.mystery);
+  const PlacedWord(
+    this.word,
+    this.row,
+    this.col,
+    this.direction,
+    this.number,
+    this.mystery,
+  );
 
-  PlacedWord copyWith({int? row, int? col, int? number, bool? mystery}) => PlacedWord(
+  PlacedWord copyWith({int? row, int? col, int? number, bool? mystery}) =>
+      PlacedWord(
         word,
         row ?? this.row,
         col ?? this.col,
@@ -66,10 +75,20 @@ class _WorkingPlacement {
 class _AttemptResult {
   final List<_WorkingPlacement> placements;
   final int minRow, maxRow, minCol, maxCol;
-  const _AttemptResult(this.placements, this.minRow, this.maxRow, this.minCol, this.maxCol);
+  const _AttemptResult(
+    this.placements,
+    this.minRow,
+    this.maxRow,
+    this.minCol,
+    this.maxCol,
+  );
 }
 
-_AttemptResult? _attemptPlacement(List<WordEntry> candidates, int targetCount, double Function() rand) {
+_AttemptResult? _attemptPlacement(
+  List<WordEntry> candidates,
+  int targetCount,
+  double Function() rand,
+) {
   final grid = <String, String>{};
   final placements = <_WorkingPlacement>[];
   var minRow = 0, maxRow = 0, minCol = 0, maxCol = 0;
@@ -83,13 +102,21 @@ _AttemptResult? _attemptPlacement(List<WordEntry> candidates, int targetCount, d
       if (existing != null) {
         if (existing != chars[i]) return false;
       } else {
-        final n1 = dir == CrosswordDirection.across ? '${r - 1},$c' : '$r,${c - 1}';
-        final n2 = dir == CrosswordDirection.across ? '${r + 1},$c' : '$r,${c + 1}';
+        final n1 = dir == CrosswordDirection.across
+            ? '${r - 1},$c'
+            : '$r,${c - 1}';
+        final n2 = dir == CrosswordDirection.across
+            ? '${r + 1},$c'
+            : '$r,${c + 1}';
         if (grid.containsKey(n1) || grid.containsKey(n2)) return false;
       }
     }
-    final beforeKey = dir == CrosswordDirection.across ? '$row,${col - 1}' : '${row - 1},$col';
-    final afterKey = dir == CrosswordDirection.across ? '$row,${col + chars.length}' : '${row + chars.length},$col';
+    final beforeKey = dir == CrosswordDirection.across
+        ? '$row,${col - 1}'
+        : '${row - 1},$col';
+    final afterKey = dir == CrosswordDirection.across
+        ? '$row,${col + chars.length}'
+        : '${row + chars.length},$col';
     if (grid.containsKey(beforeKey) || grid.containsKey(afterKey)) return false;
     return true;
   }
@@ -147,9 +174,16 @@ _AttemptResult? _attemptPlacement(List<WordEntry> candidates, int targetCount, d
   return _AttemptResult(placements, minRow, maxRow, minCol, maxCol);
 }
 
-GeneratedCrossword? generateCrossword(List<WordEntry> pool, int targetCount, int seed, [int attempts = 60]) {
+GeneratedCrossword? generateCrossword(
+  List<WordEntry> pool,
+  int targetCount,
+  int seed, [
+  int attempts = 60,
+]) {
   final rand = seededRandom(seed);
-  final usable = pool.where((w) => w.fr.length >= 2 && w.fr.length <= 9).toList();
+  final usable = pool
+      .where((w) => w.fr.length >= 2 && w.fr.length <= 9)
+      .toList();
   if (usable.length < 2) return null;
 
   _AttemptResult? best;
@@ -159,7 +193,8 @@ GeneratedCrossword? generateCrossword(List<WordEntry> pool, int targetCount, int
     shuffled.sort((a, b) => b.fr.length.compareTo(a.fr.length));
     final seeded = attempt % 3 == 0 ? shuffled : _shuffle(shuffled, rand);
     final result = _attemptPlacement(seeded, targetCount, rand);
-    if (result != null && result.placements.length > (best?.placements.length ?? 0)) {
+    if (result != null &&
+        result.placements.length > (best?.placements.length ?? 0)) {
       best = result;
     }
     if (best != null && best.placements.length >= targetCount) break;
@@ -169,21 +204,43 @@ GeneratedCrossword? generateCrossword(List<WordEntry> pool, int targetCount, int
 
   final offsetRow = -best.minRow;
   final offsetCol = -best.minCol;
-  final normalized = best.placements
-      .map((p) => _WorkingPlacement(p.word, p.row + offsetRow, p.col + offsetCol, p.direction))
-      .toList()
-    ..sort((a, b) => a.row != b.row ? a.row.compareTo(b.row) : a.col.compareTo(b.col));
+  final normalized =
+      best.placements
+          .map(
+            (p) => _WorkingPlacement(
+              p.word,
+              p.row + offsetRow,
+              p.col + offsetCol,
+              p.direction,
+            ),
+          )
+          .toList()
+        ..sort(
+          (a, b) =>
+              a.row != b.row ? a.row.compareTo(b.row) : a.col.compareTo(b.col),
+        );
 
   final startNumbers = <String, int>{};
   var nextNumber = 1;
   final numbered = normalized.map((p) {
     final key = '${p.row},${p.col}';
     if (!startNumbers.containsKey(key)) startNumbers[key] = nextNumber++;
-    return PlacedWord(p.word, p.row, p.col, p.direction, startNumbers[key]!, false);
+    return PlacedWord(
+      p.word,
+      p.row,
+      p.col,
+      p.direction,
+      startNumbers[key]!,
+      false,
+    );
   }).toList();
 
   final mysteryIdx = (rand() * numbered.length).floor();
   numbered[mysteryIdx] = numbered[mysteryIdx].copyWith(mystery: true);
 
-  return GeneratedCrossword(best.maxRow - best.minRow + 1, best.maxCol - best.minCol + 1, numbered);
+  return GeneratedCrossword(
+    best.maxRow - best.minRow + 1,
+    best.maxCol - best.minCol + 1,
+    numbered,
+  );
 }

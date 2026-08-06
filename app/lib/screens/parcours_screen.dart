@@ -9,6 +9,7 @@ import '../theme/amani_theme.dart';
 import '../widgets/amani_mascot.dart';
 import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
+import '../data/syllable_catalog.dart';
 
 /// Décomposition "flore" décorative de la branche d'exercice, port fidèle du
 /// tracé SVG `BrancheExerciseIcon` (src/routes/_app.accueil.tsx).
@@ -22,9 +23,6 @@ M 86,13 L 73,15 L 82,23 Z M 78,21 L 64,25 L 74,32 Z M 70,32 L 54,38 L 66,43 Z M 
 M 81,19 L 90,23 L 77,29 Z M 73,30 L 86,35 L 69,41 Z M 65,42 L 80,48 L 62,53 Z M 58,54 L 72,61 L 55,65 Z M 52,66 L 66,72 L 49,76 Z
 ''';
 
-const String _medalRibbonsSvg =
-    'M11 22 C 8 18 8 12 12 10 M29 22 C 32 18 32 12 28 10';
-const String _medalCheckSvg = 'M17 22 L20 25 L24 19';
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
 const String _bonusArcSvg = 'M12 16 C14 8 26 8 28 16';
 
@@ -40,7 +38,6 @@ class Step {
   final Color? bannerBg;
   final Color? bannerBorder;
   final IconData? bannerIcon;
-  final bool showMascot;
 
   const Step({
     required this.kind,
@@ -52,7 +49,6 @@ class Step {
     this.bannerBg,
     this.bannerBorder,
     this.bannerIcon,
-    this.showMascot = false,
   });
 }
 
@@ -115,15 +111,19 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         margin: const EdgeInsets.fromLTRB(24, 0, 24, 96),
         content: Text(
           t['parcours']?['comingSoon'] ?? 'Cette étape arrive bientôt !',
-          style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontFamily: kBalooFontFamily,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
   }
 
-  List<StepEntry> _buildSteps(Map<String, dynamic> t) {
+  List<StepEntry> _buildSteps(Map<String, dynamic> t, Lang lang) {
     final paliers = (t['parcours']?['paliers'] as List?) ?? [];
-    String pal(int i, String key) => (paliers.length > i ? paliers[i][key] : null) ?? '';
+    String pal(int i, String key) =>
+        (paliers.length > i ? paliers[i][key] : null) ?? '';
 
     final steps = <StepEntry>[
       // ─── PALIER 1 : Les Signes de base ───
@@ -140,15 +140,47 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         ),
         0,
       ),
-      StepEntry(const Step(kind: StepKind.active, iconType: 'feuille'), -1, to: '/cours/point'),
-      StepEntry(const Step(kind: StepKind.active, iconType: 'branche'), 1, to: '/exercice-liste?family=point'),
-      StepEntry(const Step(kind: StepKind.locked, iconType: 'feuille'), -1, to: '/cours/courbe'),
-      StepEntry(const Step(kind: StepKind.locked, iconType: 'branche'), 1, to: '/exercice-liste?family=courbe'),
-      StepEntry(const Step(kind: StepKind.locked, iconType: 'feuille'), -1, to: '/cours/crochet'),
-      StepEntry(const Step(kind: StepKind.locked, iconType: 'branche'), 1, to: '/exercice-liste?family=crochet'),
-      StepEntry(const Step(kind: StepKind.locked, iconType: 'feuille'), -1, to: '/cours/trait'),
-      StepEntry(const Step(kind: StepKind.locked, iconType: 'branche'), 1, to: '/exercice-liste?family=trait'),
-      StepEntry(const Step(kind: StepKind.medal, showMascot: true), 0, to: '/exercice-liste'),
+      StepEntry(
+        const Step(kind: StepKind.active, iconType: 'feuille'),
+        -1,
+        to: '/cours/point',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.active, iconType: 'branche'),
+        1,
+        to: '/exercice-liste?family=point',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        -1,
+        to: '/cours/courbe',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'branche'),
+        1,
+        to: '/exercice-liste?family=courbe',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        -1,
+        to: '/cours/crochet',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'branche'),
+        1,
+        to: '/exercice-liste?family=crochet',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        -1,
+        to: '/cours/trait',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'branche'),
+        1,
+        to: '/exercice-liste?family=trait',
+      ),
+      StepEntry(const Step(kind: StepKind.medal), 0, to: '/exercice-liste'),
 
       // ─── PALIER 2 : Combinatoire ───
       StepEntry(
@@ -169,36 +201,117 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     for (var idx = 0; idx < PALIER2_GROUPS.length; idx++) {
       final kind = idx == 0 ? StepKind.active : StepKind.locked;
       final group = PALIER2_GROUPS[idx];
-      steps.add(StepEntry(Step(kind: kind, iconType: 'feuille'), -1, to: '/cours/lettres/formation/${group.chars.first}?pg=${group.id}'));
-      steps.add(StepEntry(Step(kind: kind, iconType: 'branche'), 1, to: '/exercice-liste?group=${group.id}'));
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'feuille'),
+          -1,
+          to: '/cours/lettres/formation/${group.chars.first}?pg=${group.id}',
+        ),
+      );
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'branche'),
+          1,
+          to: '/exercice-liste?group=${group.id}',
+        ),
+      );
     }
     steps.add(StepEntry(const Step(kind: StepKind.medal), 0, to: '/exercice'));
 
-    // ─── PALIER 3 : Les Mots ───
-    steps.add(StepEntry(
-      Step(
-        kind: StepKind.header,
-        title: pal(2, 'title'),
-        subtitle: pal(2, 'subtitle'),
-        tagline: pal(2, 'tagline'),
-        palierNum: 3,
-        bannerBg: const Color(0xFF4A90E2),
-        bannerBorder: const Color(0xFF2D6BBF),
-        bannerIcon: Icons.menu_book_rounded,
+    // ─── PALIER 3 : Les Syllabes (français uniquement — méthode de lecture
+    // "consonne + voyelle" spécifique au français) ───
+    if (lang == Lang.fr) {
+      steps.add(
+        StepEntry(
+          Step(
+            kind: StepKind.header,
+            title: pal(2, 'title'),
+            subtitle: pal(2, 'subtitle'),
+            tagline: pal(2, 'tagline'),
+            palierNum: 3,
+            bannerBg: const Color(0xFFF4F9FD),
+            bannerBorder: const Color(0xFFCFE3F2),
+            bannerIcon: Icons.auto_stories_rounded,
+          ),
+          0,
+        ),
+      );
+
+      for (var idx = 0; idx < SYLLABLE_GROUPS.length; idx++) {
+        final kind = idx == 0 ? StepKind.active : StepKind.locked;
+        final group = SYLLABLE_GROUPS[idx] as Map<String, dynamic>;
+        steps.add(
+          StepEntry(
+            Step(kind: kind, iconType: 'feuille'),
+            -1,
+            to: '/cours/syllabes/${group['consonant']}',
+          ),
+        );
+        steps.add(
+          StepEntry(
+            Step(kind: kind, iconType: 'branche'),
+            1,
+            to: '/exercice/syllabes/${group['consonant']}',
+          ),
+        );
+      }
+      final firstConsonant =
+          (SYLLABLE_GROUPS.first as Map<String, dynamic>)['consonant'];
+      steps.add(
+        StepEntry(
+          const Step(kind: StepKind.medal),
+          0,
+          to: '/exercice/syllabes/$firstConsonant',
+        ),
+      );
+    }
+
+    // ─── PALIER 3/4 : Les Mots (numéro 4 seulement si le palier Syllabes
+    // précède, c'est-à-dire en français) ───
+    steps.add(
+      StepEntry(
+        Step(
+          kind: StepKind.header,
+          title: pal(3, 'title'),
+          subtitle: pal(3, 'subtitle'),
+          tagline: pal(3, 'tagline'),
+          palierNum: lang == Lang.fr ? 4 : 3,
+          bannerBg: const Color(0xFF4A90E2),
+          bannerBorder: const Color(0xFF2D6BBF),
+          bannerIcon: Icons.menu_book_rounded,
+        ),
+        0,
       ),
-      0,
-    ));
+    );
 
     for (var idx = 0; idx < PALIER3_GROUPS.length; idx++) {
       final kind = idx == 0 ? StepKind.active : StepKind.locked;
       final group = PALIER3_GROUPS[idx];
-      steps.add(StepEntry(Step(kind: kind, iconType: 'feuille'), -1, to: '/cours/mots/${group.id}'));
-      steps.add(StepEntry(Step(kind: kind, iconType: 'branche'), 1, to: '/exercice/mots/${group.id}'));
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'feuille'),
+          -1,
+          to: '/cours/mots/${group.id}',
+        ),
+      );
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'branche'),
+          1,
+          to: '/exercice/mots/${group.id}',
+        ),
+      );
       if (idx % 2 == 1) {
         final levelIdx = (idx - 1) ~/ 2;
         if (levelIdx < _crosswordLevels.length) {
           final level = _crosswordLevels[levelIdx];
-          steps.add(StepEntry(const Step(kind: StepKind.crossword), 0, to: '/exercice/mots-croises/lvl$level'));
+          steps.add(
+            StepEntry(
+              const Step(kind: StepKind.crossword),
+              0,
+              to: '/exercice/mots-croises/lvl$level',
+            ),
+          );
         }
       }
     }
@@ -223,8 +336,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   @override
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
-    final steps = _buildSteps(t);
-    final nonHeaderCount = steps.where((s) => s.step.kind != StepKind.header).length;
+    final lang = context.watch<LanguageProvider>().lang;
+    final steps = _buildSteps(t, lang);
+    final nonHeaderCount = steps
+        .where((s) => s.step.kind != StepKind.header)
+        .length;
     final turns = math.max(8, (nonHeaderCount / 2).ceil());
 
     return Container(
@@ -254,17 +370,26 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
                         children: [
                           Text(
                             t['parcours']?['title'] ?? '',
-                            style: AmaniTheme.titleStyle.copyWith(fontSize: 24, height: 1.2),
+                            style: AmaniTheme.titleStyle.copyWith(
+                              fontSize: 24,
+                              height: 1.2,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             t['parcours']?['subtitle'] ?? '',
-                            style: AmaniTheme.bodyStyle.copyWith(color: AmaniColors.textSecondary, fontSize: 14),
+                            style: AmaniTheme.bodyStyle.copyWith(
+                              color: AmaniColors.textSecondary,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const AmaniMascot(pose: AmaniPose.encouragement, size: AmaniSize.small),
+                    const AmaniMascot(
+                      pose: AmaniPose.encouragement,
+                      size: AmaniSize.small,
+                    ),
                   ],
                 ),
               ),
@@ -272,7 +397,8 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
               // Chemin en zigzag
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final width = constraints.maxWidth - 48; // padding horizontal 24+24
+                  final width =
+                      constraints.maxWidth - 48; // padding horizontal 24+24
                   const stepHeight = 62.0;
                   final pathHeight = turns * stepHeight + 40;
 
@@ -282,7 +408,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
                       children: [
                         Positioned.fill(
                           child: CustomPaint(
-                            painter: _ZigzagPainter(turns: turns, stepHeight: stepHeight, width: width),
+                            painter: _ZigzagPainter(
+                              turns: turns,
+                              stepHeight: stepHeight,
+                              width: width,
+                            ),
                           ),
                         ),
                         Column(
@@ -317,7 +447,11 @@ class _ZigzagPainter extends CustomPainter {
   final double stepHeight;
   final double width;
 
-  _ZigzagPainter({required this.turns, required this.stepHeight, required this.width});
+  _ZigzagPainter({
+    required this.turns,
+    required this.stepHeight,
+    required this.width,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -340,7 +474,10 @@ class _ZigzagPainter extends CustomPainter {
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
 
-    final dashed = dashPath(path, dashArray: CircularIntervalList<double>([2, 13]));
+    final dashed = dashPath(
+      path,
+      dashArray: CircularIntervalList<double>([2, 13]),
+    );
     canvas.drawPath(dashed, paint);
   }
 
@@ -415,11 +552,21 @@ class _PalierBanner extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [step.bannerBg ?? AmaniColors.secondary, step.bannerBorder ?? AmaniColors.secondaryDark],
+          colors: [
+            step.bannerBg ?? AmaniColors.secondary,
+            step.bannerBorder ?? AmaniColors.secondaryDark,
+          ],
         ),
         boxShadow: [
-          BoxShadow(color: step.bannerBorder ?? AmaniColors.secondaryDark, offset: const Offset(0, 6)),
-          const BoxShadow(color: Color(0x384A3B2A), offset: Offset(0, 10), blurRadius: 24),
+          BoxShadow(
+            color: step.bannerBorder ?? AmaniColors.secondaryDark,
+            offset: const Offset(0, 6),
+          ),
+          const BoxShadow(
+            color: Color(0x384A3B2A),
+            offset: Offset(0, 10),
+            blurRadius: 24,
+          ),
         ],
       ),
       child: Stack(
@@ -432,7 +579,11 @@ class _PalierBanner extends StatelessWidget {
               opacity: 0.2,
               child: Transform.rotate(
                 angle: 0.2,
-                child: const Icon(Icons.eco_rounded, size: 96, color: Colors.white),
+                child: const Icon(
+                  Icons.eco_rounded,
+                  size: 96,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -447,7 +598,11 @@ class _PalierBanner extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 alignment: Alignment.center,
-                child: Icon(step.bannerIcon ?? Icons.eco_rounded, color: Colors.white, size: 28),
+                child: Icon(
+                  step.bannerIcon ?? Icons.eco_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -456,7 +611,7 @@ class _PalierBanner extends StatelessWidget {
                   children: [
                     Text(
                       (step.subtitle ?? '').toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: kBalooFontFamily,
                         fontWeight: FontWeight.w800,
                         fontSize: 11,
@@ -466,7 +621,7 @@ class _PalierBanner extends StatelessWidget {
                     ),
                     Text(
                       step.title ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: kBalooFontFamily,
                         fontWeight: FontWeight.w800,
                         fontSize: 19,
@@ -481,7 +636,7 @@ class _PalierBanner extends StatelessWidget {
                           step.tagline!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: kBalooFontFamily,
                             fontWeight: FontWeight.w600,
                             fontSize: 12,
@@ -496,11 +651,14 @@ class _PalierBanner extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.25), shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
                 alignment: Alignment.center,
                 child: Text(
                   '${step.palierNum ?? ''}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: kBalooFontFamily,
                     fontWeight: FontWeight.w800,
                     fontSize: 17,
@@ -535,13 +693,17 @@ class _StepNode extends StatefulWidget {
   State<_StepNode> createState() => _StepNodeState();
 }
 
-class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixin {
+class _StepNodeState extends State<_StepNode>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _pingController;
 
   @override
   void initState() {
     super.initState();
-    _pingController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+    _pingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
   }
 
   @override
@@ -552,8 +714,10 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
 
   String get _stepLabel {
     final parcours = widget.t['parcours'] as Map<String, dynamic>? ?? {};
-    if (widget.step.kind == StepKind.crossword) return parcours['crosswordStep'] ?? '';
-    if (widget.step.iconType == 'branche') return parcours['exerciceStep'] ?? '';
+    if (widget.step.kind == StepKind.crossword)
+      return parcours['crosswordStep'] ?? '';
+    if (widget.step.iconType == 'branche')
+      return parcours['exerciceStep'] ?? '';
     return parcours['coursStep'] ?? '';
   }
 
@@ -567,12 +731,17 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
 
       case StepKind.active:
       case StepKind.locked:
-        final bool bigNode = widget.step.kind == StepKind.active || widget.isCurrent;
+        final bool bigNode =
+            widget.step.kind == StepKind.active || widget.isCurrent;
         final double dim = bigNode ? 96 : 64;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (widget.isCurrent) _StartPill(borderColor: widget.borderColor, label: parcours['start'] ?? 'Commencer'),
+            if (widget.isCurrent)
+              _StartPill(
+                borderColor: widget.borderColor,
+                label: parcours['start'] ?? 'Commencer',
+              ),
             if (widget.isCurrent) const SizedBox(height: 10),
             SizedBox(
               width: dim + 24,
@@ -580,7 +749,12 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  if (widget.isCurrent) _PingRing(controller: _pingController, color: widget.color, size: dim),
+                  if (widget.isCurrent)
+                    _PingRing(
+                      controller: _pingController,
+                      color: widget.color,
+                      size: dim,
+                    ),
                   Container(
                     width: dim,
                     height: dim,
@@ -588,7 +762,9 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
                       shape: BoxShape.circle,
                       color: bigNode ? widget.color : AmaniColors.disabled,
                       border: Border.all(
-                        color: bigNode ? widget.borderColor : AmaniColors.disabled,
+                        color: bigNode
+                            ? widget.borderColor
+                            : AmaniColors.disabled,
                         width: 4,
                       ),
                       boxShadow: AmaniShadows.card,
@@ -599,13 +775,21 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
                             svg: _brancheIconSvg,
                             viewBox: const Size(100, 120),
                             size: bigNode ? 46 : 30,
-                            color: bigNode ? Colors.white : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                            color: bigNode
+                                ? Colors.white
+                                : AmaniColors.textSecondary.withValues(
+                                    alpha: 0.7,
+                                  ),
                             fill: true,
                           )
                         : Icon(
                             Icons.eco_rounded,
                             size: bigNode ? 40 : 26,
-                            color: bigNode ? Colors.white : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                            color: bigNode
+                                ? Colors.white
+                                : AmaniColors.textSecondary.withValues(
+                                    alpha: 0.7,
+                                  ),
                           ),
                   ),
                 ],
@@ -619,7 +803,9 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
                 letterSpacing: 0.6,
-                color: bigNode ? widget.borderColor : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                color: bigNode
+                    ? widget.borderColor
+                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -630,7 +816,11 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (widget.isCurrent) _StartPill(borderColor: widget.borderColor, label: parcours['start'] ?? 'Commencer'),
+            if (widget.isCurrent)
+              _StartPill(
+                borderColor: widget.borderColor,
+                label: parcours['start'] ?? 'Commencer',
+              ),
             if (widget.isCurrent) const SizedBox(height: 10),
             Container(
               width: big ? 80 : 56,
@@ -638,14 +828,19 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: big ? widget.color : AmaniColors.disabled,
-                border: Border.all(color: big ? widget.borderColor : AmaniColors.disabled, width: 4),
+                border: Border.all(
+                  color: big ? widget.borderColor : AmaniColors.disabled,
+                  width: 4,
+                ),
                 boxShadow: AmaniShadows.card,
               ),
               alignment: Alignment.center,
               child: Icon(
                 Icons.grid_view_rounded,
                 size: big ? 36 : 24,
-                color: big ? Colors.white : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                color: big
+                    ? Colors.white
+                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 6),
@@ -656,7 +851,9 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
                 fontFamily: kBalooFontFamily,
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
-                color: big ? widget.borderColor : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                color: big
+                    ? widget.borderColor
+                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -683,31 +880,20 @@ class _StepNodeState extends State<_StepNode> with SingleTickerProviderStateMixi
         );
 
       case StepKind.medal:
-        return Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            if (widget.step.showMascot)
-              const Positioned(
-                top: -58,
-                child: AmaniMascot(pose: AmaniPose.victoirePalier, size: AmaniSize.small),
-              ),
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AmaniColors.disabled,
-                border: Border.all(color: AmaniColors.disabled, width: 4),
-                boxShadow: AmaniShadows.card,
-              ),
-              alignment: Alignment.center,
-              child: CustomPaint(
-                size: const Size(40, 40),
-                painter: _MedalPainter(color: AmaniColors.textSecondary),
-              ),
-            ),
-          ],
+        return Container(
+          width: 80,
+          height: 80,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AmaniColors.disabled,
+            border: Border.all(color: AmaniColors.disabled, width: 4),
+            boxShadow: AmaniShadows.card,
+          ),
+          child: Image.asset(
+            'assets/images/amani-victoire-palier-badge.png',
+            fit: BoxFit.cover,
+          ),
         );
     }
   }
@@ -770,7 +956,11 @@ class _PingRing extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _PingRing({required this.controller, required this.color, required this.size});
+  const _PingRing({
+    required this.controller,
+    required this.color,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -785,7 +975,10 @@ class _PingRing extends StatelessWidget {
             child: Container(
               width: size,
               height: size,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.3)),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.3),
+              ),
             ),
           ),
         );
@@ -815,7 +1008,12 @@ class _SvgIcon extends StatelessWidget {
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _SvgPathPainter(svg: svg, viewBox: viewBox, color: color, fill: fill),
+        painter: _SvgPathPainter(
+          svg: svg,
+          viewBox: viewBox,
+          color: color,
+          fill: fill,
+        ),
       ),
     );
   }
@@ -827,11 +1025,19 @@ class _SvgPathPainter extends CustomPainter {
   final Color color;
   final bool fill;
 
-  _SvgPathPainter({required this.svg, required this.viewBox, required this.color, required this.fill});
+  _SvgPathPainter({
+    required this.svg,
+    required this.viewBox,
+    required this.color,
+    required this.fill,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scale = math.min(size.width / viewBox.width, size.height / viewBox.height);
+    final scale = math.min(
+      size.width / viewBox.width,
+      size.height / viewBox.height,
+    );
     canvas.save();
     canvas.translate(
       (size.width - viewBox.width * scale) / 2,
@@ -852,30 +1058,4 @@ class _SvgPathPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SvgPathPainter oldDelegate) =>
       oldDelegate.svg != svg || oldDelegate.color != color;
-}
-
-class _MedalPainter extends CustomPainter {
-  final Color color;
-  _MedalPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final scale = size.width / 40.0;
-    canvas.save();
-    canvas.scale(scale, scale);
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    canvas.drawCircle(const Offset(20, 22), 9, paint);
-    canvas.drawPath(parseSvgPathData(_medalRibbonsSvg), paint);
-    canvas.drawPath(parseSvgPathData(_medalCheckSvg), paint);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _MedalPainter oldDelegate) => oldDelegate.color != color;
 }

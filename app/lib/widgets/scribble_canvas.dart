@@ -50,7 +50,9 @@ class _ScribblePainter extends CustomPainter {
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    final dotPaint = Paint()..color = color..style = PaintingStyle.fill;
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
     for (final stroke in strokes) {
       if (stroke.length < 2) {
         if (stroke.isNotEmpty) canvas.drawCircle(stroke.first, 3, dotPaint);

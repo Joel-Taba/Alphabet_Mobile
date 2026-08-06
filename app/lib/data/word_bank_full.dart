@@ -2,6 +2,7 @@
 /// mots croisés aléatoires du Mode Libre. Port fidèle de
 /// `src/data/word-bank-full.ts`.
 library;
+
 import 'word_catalog.dart';
 
 const List<WordEntry> FULL_WORD_BANK = [

@@ -1,8 +1,34 @@
 import 'package:flutter/material.dart';
 
-/// Nom de la police "Baloo 2", embarquée hors-ligne (voir pubspec.yaml,
-/// assets/fonts/Baloo2-Variable.ttf) — aucune requête réseau au démarrage.
-const String kBalooFontFamily = 'Baloo 2';
+/// Police active de toute l'application, dépendante du format d'écriture
+/// choisi (Profil > Réglages) : Comic Neue en script, Dancing Script en
+/// cursif, Baloo 2 (inchangé) en digital. Nom historique conservé
+/// (`kBalooFontFamily`) mais la valeur suit désormais le style actif —
+/// mise à jour par `WritingStyleProvider` via `setActiveFont`, sans besoin
+/// de BuildContext (utilisée aussi par des CustomPainters/dialogues).
+String _activeFontFamily = 'Comic Neue';
+FontWeight _activeFontWeight = FontWeight.w300;
+
+String get kBalooFontFamily => _activeFontFamily;
+FontWeight get kActiveFontWeight => _activeFontWeight;
+
+void setActiveFont(dynamic style) {
+  final name = style is Enum ? style.name : style.toString();
+  switch (name) {
+    case 'cursive':
+      _activeFontFamily = 'Dancing Script';
+      _activeFontWeight = FontWeight.w700;
+      break;
+    case 'digitale':
+      _activeFontFamily = 'Baloo 2';
+      _activeFontWeight = FontWeight.w400;
+      break;
+    case 'script':
+    default:
+      _activeFontFamily = 'Comic Neue';
+      _activeFontWeight = FontWeight.w300;
+  }
+}
 
 /// Palette de couleurs Amani — exacte copie de la charte graphique React
 class AmaniColors {
@@ -58,19 +84,11 @@ class AmaniShadows {
   AmaniShadows._();
 
   static const card = [
-    BoxShadow(
-      color: Color(0x1F4A3B2A),
-      blurRadius: 6,
-      offset: Offset(0, 2),
-    ),
+    BoxShadow(color: Color(0x1F4A3B2A), blurRadius: 6, offset: Offset(0, 2)),
   ];
 
   static const modal = [
-    BoxShadow(
-      color: Color(0x404A3B2A),
-      blurRadius: 24,
-      offset: Offset(0, 8),
-    ),
+    BoxShadow(color: Color(0x404A3B2A), blurRadius: 24, offset: Offset(0, 8)),
   ];
 }
 
@@ -86,14 +104,14 @@ class AmaniTheme {
     'Segoe UI Emoji',
   ];
 
-  static const TextStyle titleStyle = TextStyle(
+  static TextStyle get titleStyle => TextStyle(
     fontFamily: kBalooFontFamily,
     fontFamilyFallback: _emojiFallback,
     fontWeight: FontWeight.w700,
     color: AmaniColors.textPrimary,
   );
 
-  static const TextStyle bodyStyle = TextStyle(
+  static TextStyle get bodyStyle => TextStyle(
     fontFamily: kBalooFontFamily,
     fontFamilyFallback: _emojiFallback,
     fontWeight: FontWeight.w500,

@@ -115,11 +115,20 @@ class _SignPainter extends CustomPainter {
   void _drawTrait(Canvas canvas, Paint paint) {
     double x1 = _cx, y1 = _pad, x2 = _cx, y2 = 200 - _pad;
     if (variant == 'horizontal') {
-      x1 = _pad; y1 = _cx; x2 = 200 - _pad; y2 = _cx;
+      x1 = _pad;
+      y1 = _cx;
+      x2 = 200 - _pad;
+      y2 = _cx;
     } else if (variant == 'oblique-gauche') {
-      x1 = 40; y1 = 40; x2 = 160; y2 = 160;
+      x1 = 40;
+      y1 = 40;
+      x2 = 160;
+      y2 = 160;
     } else if (variant == 'oblique-droit') {
-      x1 = 160; y1 = 40; x2 = 40; y2 = 160;
+      x1 = 160;
+      y1 = 40;
+      x2 = 40;
+      y2 = 160;
     }
     _drawLine(canvas, paint, Offset(x1, y1), Offset(x2, y2));
   }
@@ -143,8 +152,10 @@ class _SignPainter extends CustomPainter {
   }
 
   void _drawPoint(Canvas canvas, Paint paint) {
-    paint.style = strokeDasharray != null ? PaintingStyle.stroke : PaintingStyle.fill;
-    
+    paint.style = strokeDasharray != null
+        ? PaintingStyle.stroke
+        : PaintingStyle.fill;
+
     if (variant == 'top') {
       canvas.drawCircle(const Offset(_cx, 60), 18, paint);
     } else if (variant == 'bottom') {
@@ -179,8 +190,13 @@ class _SignPainter extends CustomPainter {
 
   void _drawLine(Canvas canvas, Paint paint, Offset p1, Offset p2) {
     if (strokeDasharray != null) {
-      final path = Path()..moveTo(p1.dx, p1.dy)..lineTo(p2.dx, p2.dy);
-      canvas.drawPath(dashPath(path, dashArray: CircularIntervalList<double>([10, 10])), paint);
+      final path = Path()
+        ..moveTo(p1.dx, p1.dy)
+        ..lineTo(p2.dx, p2.dy);
+      canvas.drawPath(
+        dashPath(path, dashArray: CircularIntervalList<double>([10, 10])),
+        paint,
+      );
     } else {
       canvas.drawLine(p1, p2, paint);
     }
@@ -189,7 +205,10 @@ class _SignPainter extends CustomPainter {
   void _drawPath(Canvas canvas, Paint paint, String svgPath) {
     final path = parseSvgPathData(svgPath);
     if (strokeDasharray != null) {
-      canvas.drawPath(dashPath(path, dashArray: CircularIntervalList<double>([10, 10])), paint);
+      canvas.drawPath(
+        dashPath(path, dashArray: CircularIntervalList<double>([10, 10])),
+        paint,
+      );
     } else {
       canvas.drawPath(path, paint);
     }
@@ -198,9 +217,9 @@ class _SignPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SignPainter oldDelegate) {
     return oldDelegate.family != family ||
-           oldDelegate.stroke != stroke ||
-           oldDelegate.variant != variant ||
-           oldDelegate.strokeDasharray != strokeDasharray ||
-           oldDelegate.strokeWidth != strokeWidth;
+        oldDelegate.stroke != stroke ||
+        oldDelegate.variant != variant ||
+        oldDelegate.strokeDasharray != strokeDasharray ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }

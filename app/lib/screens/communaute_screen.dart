@@ -1,10 +1,30 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
+import '../services/profile_auth.dart';
 
-class CommunauteScreen extends StatelessWidget {
+class CommunauteScreen extends StatefulWidget {
   const CommunauteScreen({super.key});
+
+  @override
+  State<CommunauteScreen> createState() => _CommunauteScreenState();
+}
+
+class _CommunauteScreenState extends State<CommunauteScreen> {
+  String? _photoBase64;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPhoto();
+  }
+
+  Future<void> _loadPhoto() async {
+    final photo = await getStoredPhoto();
+    if (mounted) setState(() => _photoBase64 = photo);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,12 +32,48 @@ class CommunauteScreen extends StatelessWidget {
 
     // Hardcoded mock data from web version
     final profiles = [
-      {'id': '1', 'prenom': 'Sami', 'animal': 'hibou', 'score': 240, 'moi': false},
-      {'id': '2', 'prenom': 'Mia', 'animal': 'herisson', 'score': 190, 'moi': false},
-      {'id': '3', 'prenom': 'Lila', 'animal': 'renard', 'score': 150, 'moi': true},
-      {'id': '4', 'prenom': 'Noé', 'animal': 'ecureuil', 'score': 110, 'moi': false},
-      {'id': '5', 'prenom': 'Tao', 'animal': 'biche', 'score': 80, 'moi': false},
-      {'id': '6', 'prenom': 'Ava', 'animal': 'panda', 'score': 45, 'moi': false},
+      {
+        'id': '1',
+        'prenom': 'Sami',
+        'animal': 'hibou',
+        'score': 240,
+        'moi': false,
+      },
+      {
+        'id': '2',
+        'prenom': 'Mia',
+        'animal': 'herisson',
+        'score': 190,
+        'moi': false,
+      },
+      {
+        'id': '3',
+        'prenom': 'Lila',
+        'animal': 'renard',
+        'score': 150,
+        'moi': true,
+      },
+      {
+        'id': '4',
+        'prenom': 'Noé',
+        'animal': 'ecureuil',
+        'score': 110,
+        'moi': false,
+      },
+      {
+        'id': '5',
+        'prenom': 'Tao',
+        'animal': 'biche',
+        'score': 80,
+        'moi': false,
+      },
+      {
+        'id': '6',
+        'prenom': 'Ava',
+        'animal': 'panda',
+        'score': 45,
+        'moi': false,
+      },
     ];
 
     return Scaffold(
@@ -49,7 +105,9 @@ class CommunauteScreen extends StatelessWidget {
                         ),
                         Text(
                           t['community']?['subtitle'] ?? 'Classement local',
-                          style: AmaniTheme.bodyStyle.copyWith(color: AmaniColors.textSecondary),
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            color: AmaniColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -57,7 +115,7 @@ class CommunauteScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
 
             // Podium
@@ -88,31 +146,44 @@ class CommunauteScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final profile = profiles[index + 3];
                     final isMoi = profile['moi'] as bool;
-                    
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: isMoi ? AmaniColors.primary.withValues(alpha: 0.1) : AmaniColors.background,
+                        color: isMoi
+                            ? AmaniColors.primary.withValues(alpha: 0.1)
+                            : AmaniColors.background,
                         borderRadius: BorderRadius.circular(16),
-                        border: isMoi ? Border.all(color: AmaniColors.primary, width: 2) : null,
+                        border: isMoi
+                            ? Border.all(color: AmaniColors.primary, width: 2)
+                            : null,
                       ),
                       child: Row(
                         children: [
                           Text(
                             '${index + 4}',
                             style: AmaniTheme.titleStyle.copyWith(
-                              fontSize: 18, 
-                              color: AmaniColors.textSecondary
+                              fontSize: 18,
+                              color: AmaniColors.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 16),
-                          _buildAvatar(profile['animal'] as String, 40),
+                          _buildAvatar(
+                            profile['animal'] as String,
+                            40,
+                            photoBase64: isMoi ? _photoBase64 : null,
+                          ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
                               profile['prenom'] as String,
-                              style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 18,
+                              ),
                             ),
                           ),
                           Row(
@@ -125,7 +196,11 @@ class CommunauteScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.star_rounded, color: AmaniColors.warning, size: 20),
+                              const Icon(
+                                Icons.star_rounded,
+                                color: AmaniColors.warning,
+                                size: 20,
+                              ),
                             ],
                           ),
                         ],
@@ -141,17 +216,30 @@ class CommunauteScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPodiumSpot(Map<String, dynamic> profile, int rank, double height) {
+  Widget _buildPodiumSpot(
+    Map<String, dynamic> profile,
+    int rank,
+    double height,
+  ) {
     Color rankColor;
     if (rank == 1) {
       rankColor = AmaniColors.warning;
-    } else if (rank == 2) rankColor = AmaniColors.disabled;
-    else rankColor = AmaniColors.signCourbe;
+    } else if (rank == 2)
+      rankColor = AmaniColors.disabled;
+    else
+      rankColor = AmaniColors.signCourbe;
+
+    final isMoi = profile['moi'] as bool;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        _buildAvatar(profile['animal'] as String, 64, rank: rank),
+        _buildAvatar(
+          profile['animal'] as String,
+          64,
+          rank: rank,
+          photoBase64: isMoi ? _photoBase64 : null,
+        ),
         const SizedBox(height: 12),
         Container(
           width: 90,
@@ -160,14 +248,19 @@ class CommunauteScreen extends StatelessWidget {
             color: AmaniColors.primary,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             border: Border.all(color: AmaniColors.primaryDark, width: 3),
-            boxShadow: const [BoxShadow(color: Color(0x2E000000), offset: Offset(0, 4))],
+            boxShadow: const [
+              BoxShadow(color: Color(0x2E000000), offset: Offset(0, 4)),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
                 profile['prenom'] as String,
-                style: AmaniTheme.titleStyle.copyWith(fontSize: 16, color: AmaniColors.textPrimary),
+                style: AmaniTheme.titleStyle.copyWith(
+                  fontSize: 16,
+                  color: AmaniColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 4),
               Container(
@@ -182,7 +275,10 @@ class CommunauteScreen extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '$rank',
-                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16, color: AmaniColors.primaryDark),
+                    style: AmaniTheme.titleStyle.copyWith(
+                      fontSize: 16,
+                      color: AmaniColors.primaryDark,
+                    ),
                   ),
                 ),
               ),
@@ -193,22 +289,41 @@ class CommunauteScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(String animal, double size, {int? rank}) {
+  Widget _buildAvatar(
+    String animal,
+    double size, {
+    int? rank,
+    String? photoBase64,
+  }) {
     String emoji = '🦉';
     switch (animal) {
-      case 'renard': emoji = '🦊'; break;
-      case 'hibou': emoji = '🦉'; break;
-      case 'ecureuil': emoji = '🐿️'; break;
-      case 'herisson': emoji = '🦔'; break;
-      case 'panda': emoji = '🐼'; break;
-      case 'biche': emoji = '🦌'; break;
+      case 'renard':
+        emoji = '🦊';
+        break;
+      case 'hibou':
+        emoji = '🦉';
+        break;
+      case 'ecureuil':
+        emoji = '🐿️';
+        break;
+      case 'herisson':
+        emoji = '🦔';
+        break;
+      case 'panda':
+        emoji = '🐼';
+        break;
+      case 'biche':
+        emoji = '🦌';
+        break;
     }
 
     Color borderColor = AmaniColors.primaryDark;
     if (rank == 1) {
       borderColor = AmaniColors.warning;
-    } else if (rank == 2) borderColor = AmaniColors.disabled;
-    else if (rank == 3) borderColor = AmaniColors.signCourbe;
+    } else if (rank == 2)
+      borderColor = AmaniColors.disabled;
+    else if (rank == 3)
+      borderColor = AmaniColors.signCourbe;
 
     return Container(
       width: size,
@@ -217,11 +332,25 @@ class CommunauteScreen extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
         border: Border.all(color: borderColor, width: rank != null ? 4 : 2),
-        boxShadow: const [BoxShadow(color: Color(0x1A000000), offset: Offset(0, 2), blurRadius: 4)],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+        image: photoBase64 != null
+            ? DecorationImage(
+                image: MemoryImage(base64Decode(photoBase64)),
+                fit: BoxFit.cover,
+              )
+            : null,
       ),
-      child: Center(
-        child: Text(emoji, style: TextStyle(fontSize: size * 0.5)),
-      ),
+      child: photoBase64 == null
+          ? Center(
+              child: Text(emoji, style: TextStyle(fontSize: size * 0.5)),
+            )
+          : null,
     );
   }
 }

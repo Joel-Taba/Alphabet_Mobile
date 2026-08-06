@@ -127,9 +127,10 @@ class _WavingAnimationState extends State<_WavingAnimation>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true);
-    _rotation = Tween<double>(begin: -0.17, end: 0.17).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _rotation = Tween<double>(
+      begin: -0.17,
+      end: 0.17,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

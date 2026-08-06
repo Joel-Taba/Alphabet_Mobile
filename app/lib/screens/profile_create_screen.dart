@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'dart:convert';
 import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
 import '../theme/amani_theme.dart';
+import '../utils/pick_profile_photo.dart';
 
 class ProfileCreateScreen extends StatefulWidget {
   const ProfileCreateScreen({super.key});
@@ -18,6 +20,25 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _isLangDropdownOpen = false;
+  String? _photoBase64;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPhoto();
+  }
+
+  Future<void> _loadPhoto() async {
+    final photo = await getStoredPhoto();
+    if (mounted) setState(() => _photoBase64 = photo);
+  }
+
+  Future<void> _choosePhoto() async {
+    final encoded = await pickAndEncodeProfilePhoto();
+    if (encoded == null) return;
+    await setStoredPhoto(encoded);
+    if (mounted) setState(() => _photoBase64 = encoded);
+  }
 
   @override
   void dispose() {
@@ -58,7 +79,12 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 40.0, left: 24.0, right: 24.0, bottom: 0),
+                  padding: const EdgeInsets.only(
+                    top: 40.0,
+                    left: 24.0,
+                    right: 24.0,
+                    bottom: 0,
+                  ),
                   child: Column(
                     children: [
                       Icon(Icons.eco, color: AmaniColors.secondary, size: 36),
@@ -81,26 +107,71 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Mascotte superposée
+                      // Mascotte (ou photo choisie) superposée
                       Transform.translate(
-                        offset: const Offset(0, 56), // Pour superposer sur la carte
-                        child: Container(
+                        offset: const Offset(
+                          0,
+                          56,
+                        ), // Pour superposer sur la carte
+                        child: SizedBox(
                           width: 140,
                           height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x2E4A3B2A),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              )
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x2E4A3B2A),
+                                      blurRadius: 12,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                  image: DecorationImage(
+                                    image: _photoBase64 != null
+                                        ? MemoryImage(
+                                            base64Decode(_photoBase64!),
+                                          )
+                                        : const AssetImage(
+                                                'assets/images/amani-inscription.jpeg',
+                                              )
+                                              as ImageProvider,
+                                    fit: BoxFit.cover,
+                                    alignment: _photoBase64 != null
+                                        ? Alignment.center
+                                        : Alignment.topCenter,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 2,
+                                right: 2,
+                                child: GestureDetector(
+                                  onTap: _choosePhoto,
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: AmaniColors.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      CupertinoIcons.camera_fill,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
-                            image: const DecorationImage(
-                              image: AssetImage('assets/images/amani-inscription.jpeg'),
-                              fit: BoxFit.cover,
-                              alignment: Alignment.topCenter,
-                            ),
                           ),
                         ),
                       ),
@@ -120,7 +191,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                         color: Color(0x234A3B2A),
                         blurRadius: 28,
                         offset: Offset(0, 8),
-                      )
+                      ),
                     ],
                   ),
                   child: Column(
@@ -139,20 +210,6 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                       const SizedBox(height: 20),
                       // Champ Langue
                       _buildLangDropdown(langProv, t),
-                      const SizedBox(height: 16),
-                      // Je suis un adulte
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          t['onboarding']['imAnAdult'],
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AmaniColors.secondary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 24),
                       // Bouton Commencer
                       _buildStartButton(t),
@@ -199,7 +256,11 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
           Expanded(
             child: TextField(
               controller: controller,
-              style: const TextStyle(fontSize: 16, color: AmaniColors.textPrimary, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontSize: 16,
+                color: AmaniColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: const TextStyle(color: Color(0xFFB8A88A)),
@@ -223,7 +284,9 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(29),
             border: Border.all(
-              color: _passwordController.text.isNotEmpty ? AmaniColors.secondary : AmaniColors.disabled,
+              color: _passwordController.text.isNotEmpty
+                  ? AmaniColors.secondary
+                  : AmaniColors.disabled,
               width: 2,
             ),
           ),
@@ -233,16 +296,27 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(color: AmaniColors.primary, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: AmaniColors.primary,
+                  shape: BoxShape.circle,
+                ),
                 alignment: Alignment.center,
-                child: const Icon(CupertinoIcons.lock_fill, color: Colors.white, size: 18),
+                child: const Icon(
+                  CupertinoIcons.lock_fill,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _passwordController,
                   obscureText: !_showPassword,
-                  style: const TextStyle(fontSize: 16, color: AmaniColors.textPrimary, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AmaniColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
                   decoration: InputDecoration(
                     hintText: t['onboarding']['passwordPlaceholder'],
                     hintStyle: const TextStyle(color: Color(0xFFB8A88A)),
@@ -253,7 +327,9 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               ),
               IconButton(
                 icon: Icon(
-                  _showPassword ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye_fill,
+                  _showPassword
+                      ? CupertinoIcons.eye_slash_fill
+                      : CupertinoIcons.eye_fill,
                   color: AmaniColors.textSecondary,
                 ),
                 onPressed: () => setState(() => _showPassword = !_showPassword),
@@ -266,7 +342,10 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             t['onboarding']['passwordHint'],
-            style: const TextStyle(fontSize: 12, color: AmaniColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AmaniColors.textSecondary,
+            ),
           ),
         ),
       ],
@@ -277,7 +356,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
     return Column(
       children: [
         GestureDetector(
-          onTap: () => setState(() => _isLangDropdownOpen = !_isLangDropdownOpen),
+          onTap: () =>
+              setState(() => _isLangDropdownOpen = !_isLangDropdownOpen),
           child: Container(
             height: 58,
             decoration: BoxDecoration(
@@ -291,19 +371,32 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: const BoxDecoration(color: AmaniColors.primary, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: AmaniColors.primary,
+                    shape: BoxShape.circle,
+                  ),
                   alignment: Alignment.center,
-                  child: const Icon(CupertinoIcons.globe, color: Colors.white, size: 20),
+                  child: const Icon(
+                    CupertinoIcons.globe,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     langProv.lang == Lang.fr ? 'Français' : 'English',
-                    style: const TextStyle(fontSize: 16, color: AmaniColors.textPrimary, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AmaniColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
                 Icon(
-                  _isLangDropdownOpen ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                  _isLangDropdownOpen
+                      ? CupertinoIcons.chevron_up
+                      : CupertinoIcons.chevron_down,
                   color: AmaniColors.textSecondary,
                 ),
                 const SizedBox(width: 16),
@@ -318,7 +411,13 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               color: AmaniColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AmaniColors.disabled, width: 1.5),
-              boxShadow: const [BoxShadow(color: Color(0x284A3B2A), blurRadius: 20, offset: Offset(0, 6))],
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x284A3B2A),
+                  blurRadius: 20,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               children: [

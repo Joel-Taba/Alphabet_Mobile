@@ -5,38 +5,41 @@ import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
-import '../data/word_catalog.dart';
+import '../data/syllable_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
 
-/// Exercice d'écriture des mots du Palier 3 : trace chaque lettre du mot dans
-/// l'ordre. Port fidèle de `src/routes/exercice.mots.$groupId.tsx`.
-class ExerciceMotsScreen extends StatefulWidget {
-  final String groupId;
-  const ExerciceMotsScreen({super.key, required this.groupId});
+/// Exercice d'écriture des syllabes : trace la consonne puis la voyelle pour
+/// former chaque syllabe. Port fidèle de
+/// `src/routes/exercice.syllabes.$consonant.tsx`.
+class ExerciceSyllabesScreen extends StatefulWidget {
+  final String consonant;
+  const ExerciceSyllabesScreen({super.key, required this.consonant});
 
   @override
-  State<ExerciceMotsScreen> createState() => _ExerciceMotsScreenState();
+  State<ExerciceSyllabesScreen> createState() => _ExerciceSyllabesScreenState();
 }
 
-class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
-  final Set<String> _doneWords = {};
+class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
+  final Set<String> _doneSyllables = {};
 
   @override
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
     final lang = context.watch<LanguageProvider>().lang;
     final speech = context.read<SignSpeechService>();
-    final cm = t['coursMots'] as Map<String, dynamic>? ?? {};
-    final em = t['exerciceMots'] as Map<String, dynamic>? ?? {};
+    final cs = t['coursSyllabes'] as Map<String, dynamic>? ?? {};
+    final es = t['exerciceSyllabes'] as Map<String, dynamic>? ?? {};
     final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
 
-    final group = PALIER3_GROUP_MAP[widget.groupId];
-    final groupIdx = PALIER3_GROUPS.indexWhere((g) => g.id == widget.groupId);
-    final nextGroup = groupIdx >= 0 && groupIdx < PALIER3_GROUPS.length - 1
-        ? PALIER3_GROUPS[groupIdx + 1]
+    final group = findSyllableGroupForConsonant(widget.consonant);
+    final groupIdx = SYLLABLE_GROUPS.indexWhere(
+      (g) => g['consonant'] == widget.consonant,
+    );
+    final nextGroup = groupIdx >= 0 && groupIdx < SYLLABLE_GROUPS.length - 1
+        ? SYLLABLE_GROUPS[groupIdx + 1] as Map<String, dynamic>
         : null;
 
     if (group == null) {
@@ -48,7 +51,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '"${widget.groupId}" ${cm['notFound'] ?? ''}',
+                  '"${widget.consonant}" ${cs['notFound'] ?? ''}',
                   style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: 16),
@@ -64,7 +67,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      cm['backToList'] ?? '',
+                      cs['backToList'] ?? '',
                       style: TextStyle(
                         fontFamily: kBalooFontFamily,
                         fontWeight: FontWeight.w700,
@@ -80,8 +83,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
       );
     }
 
-    final groupTitle = group.title[lang.name] ?? '';
-    final allDone = _doneWords.length == group.words.length;
+    final syllables = group['syllables'] as List;
+    final allDone = _doneSyllables.length == syllables.length;
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -101,7 +104,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/cours/mots/${widget.groupId}'),
+                    onTap: () =>
+                        context.go('/cours/syllabes/${widget.consonant}'),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -121,13 +125,15 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          groupTitle,
-                          style: AmaniTheme.titleStyle.copyWith(fontSize: 22),
+                          tFormat(cs['consonantTitle'] ?? '', {
+                            'consonant': '"${widget.consonant}"',
+                          }),
+                          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),
                         Text(
-                          tFormat(em['wordsReady'] ?? '', {
-                            'done': _doneWords.length,
-                            'total': group.words.length,
+                          tFormat(es['syllablesReady'] ?? '', {
+                            'done': _doneSyllables.length,
+                            'total': syllables.length,
                           }),
                           style: AmaniTheme.bodyStyle.copyWith(
                             fontSize: 12,
@@ -168,8 +174,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                             children: [
                               Text(
                                 allDone
-                                    ? (em['allDoneTitle'] ?? '')
-                                    : (em['introTitle'] ?? ''),
+                                    ? (es['allDoneTitle'] ?? '')
+                                    : (es['introTitle'] ?? ''),
                                 style: AmaniTheme.titleStyle.copyWith(
                                   fontSize: 14,
                                 ),
@@ -177,8 +183,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 allDone
-                                    ? (em['allDoneBody'] ?? '')
-                                    : (em['introBody'] ?? ''),
+                                    ? (es['allDoneBody'] ?? '')
+                                    : (es['introBody'] ?? ''),
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 12,
                                   color: AmaniColors.textSecondary,
@@ -192,21 +198,29 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  for (final word in group.words) ...[
-                    _WordTraceRow(
-                      word: word,
-                      lang: lang,
-                      onSpeak: () => speech.speak(word.text(lang.name), lang),
-                      done: _doneWords.contains(word.id),
-                      onDone: () => setState(() => _doneWords.add(word.id)),
+                  for (final syllable in syllables) ...[
+                    _SyllableTraceRow(
+                      entry: syllable as Map<String, dynamic>,
+                      onSpeak: () =>
+                          speech.speak(syllable['syllable'] as String, lang),
+                      done: _doneSyllables.contains(
+                        syllable['syllable'] as String,
+                      ),
+                      onDone: () => setState(
+                        () =>
+                            _doneSyllables.add(syllable['syllable'] as String),
+                      ),
                       doneLabel: el['done'] ?? 'Terminé !',
+                      exampleWordPrefix: es['exampleWordPrefix'] ?? '',
                     ),
                     const SizedBox(height: 12),
                   ],
 
                   if (allDone && nextGroup != null)
                     GestureDetector(
-                      onTap: () => context.go('/cours/mots/${nextGroup.id}'),
+                      onTap: () => context.go(
+                        '/cours/syllabes/${nextGroup['consonant']}',
+                      ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
@@ -225,8 +239,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                           children: [
                             Flexible(
                               child: Text(
-                                tFormat(em['nextGroup'] ?? '', {
-                                  'titre': nextGroup.title[lang.name] ?? '',
+                                tFormat(es['nextGroup'] ?? '', {
+                                  'consonant': nextGroup['consonant'],
                                 }),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -258,35 +272,35 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   }
 }
 
-class _WordTraceRow extends StatefulWidget {
-  final WordEntry word;
-  final Lang lang;
+class _SyllableTraceRow extends StatefulWidget {
+  final Map<String, dynamic> entry;
   final VoidCallback onSpeak;
   final bool done;
   final VoidCallback onDone;
   final String doneLabel;
+  final String exampleWordPrefix;
 
-  const _WordTraceRow({
-    required this.word,
-    required this.lang,
+  const _SyllableTraceRow({
+    required this.entry,
     required this.onSpeak,
     required this.done,
     required this.onDone,
     required this.doneLabel,
+    required this.exampleWordPrefix,
   });
 
   @override
-  State<_WordTraceRow> createState() => _WordTraceRowState();
+  State<_SyllableTraceRow> createState() => _SyllableTraceRowState();
 }
 
-class _WordTraceRowState extends State<_WordTraceRow> {
+class _SyllableTraceRowState extends State<_SyllableTraceRow> {
   final Set<int> _solvedIdx = {};
 
   @override
   Widget build(BuildContext context) {
     final style = context.watch<WritingStyleProvider>().style.name;
-    final text = widget.word.text(widget.lang.name);
-    final letters = text
+    final syllable = widget.entry['syllable'] as String;
+    final letters = syllable
         .split('')
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
@@ -335,14 +349,32 @@ class _WordTraceRowState extends State<_WordTraceRow> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AmaniColors.textPrimary,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        syllable,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: AmaniColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          '${widget.exampleWordPrefix} « ${widget.entry['exampleWord']} »',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
+                            color: AmaniColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (widget.done)
@@ -377,25 +409,23 @@ class _WordTraceRowState extends State<_WordTraceRow> {
           ),
           Padding(
             padding: const EdgeInsets.all(12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (var i = 0; i < letters.length; i++) ...[
-                    LetterTraceCell(
-                      letter: letters[i],
-                      size: 64,
-                      isActive: i == activeIdx,
-                      onSolved: () {
-                        setState(() => _solvedIdx.add(i));
-                        if (_solvedIdx.length == letters.length)
-                          widget.onDone();
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                  ],
+            child: Row(
+              children: [
+                for (var i = 0; i < letters.length; i++) ...[
+                  LetterTraceCell(
+                    letter: letters[i],
+                    size: 72,
+                    isActive: i == activeIdx,
+                    onSolved: () {
+                      setState(() => _solvedIdx.add(i));
+                      if (_solvedIdx.length == letters.length) {
+                        widget.onDone();
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
                 ],
-              ),
+              ],
             ),
           ),
         ],

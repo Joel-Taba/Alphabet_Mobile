@@ -3,6 +3,7 @@
 /// 5 critères (couverture, respect du couloir, ordre, départ, arrivée).
 /// Port fidèle de `src/lib/traceValidation.ts`.
 library;
+
 import 'dart:math' as math;
 import 'dart:ui' show Offset;
 import 'package:path_drawing/path_drawing.dart';
@@ -50,7 +51,11 @@ const double _startEndMultiplier = 1.6;
 const int _minUserPoints = 6;
 
 /// Validation rigoureuse du tracé en 5 critères, tous requis pour valider.
-ValidationResult validateTrace(List<Offset> userPts, List<Offset> refPts, double tolerancePx) {
+ValidationResult validateTrace(
+  List<Offset> userPts,
+  List<Offset> refPts,
+  double tolerancePx,
+) {
   if (userPts.length < _minUserPoints || refPts.length < 2) {
     return const ValidationResult(false, 0, 'too_few_points');
   }
@@ -67,7 +72,11 @@ ValidationResult validateTrace(List<Offset> userPts, List<Offset> refPts, double
   }
   final coverage = coveredCount / refPts.length;
   if (coverage < _coverageMin) {
-    return ValidationResult(false, coverage, 'coverage_${(coverage * 100).round()}%');
+    return ValidationResult(
+      false,
+      coverage,
+      'coverage_${(coverage * 100).round()}%',
+    );
   }
 
   // ── Critère 2 : PROXIMITÉ AU CHEMIN ──
@@ -82,7 +91,11 @@ ValidationResult validateTrace(List<Offset> userPts, List<Offset> refPts, double
   }
   final offRatio = offPath / userPts.length;
   if (offRatio > _offPathMaxRatio) {
-    return ValidationResult(false, coverage, 'off_path_${(offRatio * 100).round()}%');
+    return ValidationResult(
+      false,
+      coverage,
+      'off_path_${(offRatio * 100).round()}%',
+    );
   }
 
   // ── Critère 3 : ORDRE DE TRACÉ ──
@@ -100,11 +113,16 @@ ValidationResult validateTrace(List<Offset> userPts, List<Offset> refPts, double
   }).toList();
   var backwardSteps = 0;
   for (var i = 1; i < refIndices.length; i++) {
-    if (refIndices[i] < refIndices[i - 1] - _orderBackwardTolerance) backwardSteps++;
+    if (refIndices[i] < refIndices[i - 1] - _orderBackwardTolerance)
+      backwardSteps++;
   }
   final orderScore = 1 - backwardSteps / math.max(1, refIndices.length - 1);
   if (orderScore < _orderScoreMin) {
-    return ValidationResult(false, coverage, 'order_${(orderScore * 100).round()}%');
+    return ValidationResult(
+      false,
+      coverage,
+      'order_${(orderScore * 100).round()}%',
+    );
   }
 
   // ── Critère 4 : DÉPART CORRECT ──

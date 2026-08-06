@@ -324,7 +324,7 @@ final List<dynamic> POINTS = jsonDecode(r'''
     "family": "point",
     "variant": "center",
     "scale": "full",
-    "pathD": "M 100 82 A 18 18 0 1 0 100.1 82",
+    "pathD": "M 100 82 A 10 10 0 1 0 100.1 82",
     "startXY": [
       100,
       82
@@ -526,10 +526,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
 ]
 ''');
 
-
 /// Catalogue combiné de tous les signes (toutes familles), pour les écrans
 /// qui parcourent l'ensemble (cours de famille, cahier d'écriture...).
-final List<dynamic> EXERCISE_CATALOG = [...TRAITS, ...COURBES, ...CROCHETS, ...POINTS];
+final List<dynamic> EXERCISE_CATALOG = [
+  ...TRAITS,
+  ...COURBES,
+  ...CROCHETS,
+  ...POINTS,
+];
 
 final Map<String, dynamic> EXERCISE_MAP = {
   for (final e in EXERCISE_CATALOG) e['id'] as String: e,

@@ -164,20 +164,20 @@ class _CanvasPainter extends CustomPainter {
     if (targetPath != null) {
       canvas.save();
       canvas.scale(scale, scale);
-      
+
       final targetPaint = Paint()
         ..color = const Color(0xFFE5E0D8)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16.0
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round;
-        
+
       // Pointillés simulés via path_drawing (ou solid line très claire)
       final dashedPath = dashPath(
-        targetPath!, 
-        dashArray: CircularIntervalList<double>([0.1, 24.0])
+        targetPath!,
+        dashArray: CircularIntervalList<double>([0.1, 24.0]),
       );
-      
+
       canvas.drawPath(dashedPath, targetPaint);
       canvas.restore();
     }
@@ -193,11 +193,11 @@ class _CanvasPainter extends CustomPainter {
 
       final path = Path();
       path.moveTo(drawnPoints.first.dx, drawnPoints.first.dy);
-      
+
       for (int i = 1; i < drawnPoints.length; i++) {
         path.lineTo(drawnPoints[i].dx, drawnPoints[i].dy);
       }
-      
+
       canvas.drawPath(path, userPaint);
     }
   }

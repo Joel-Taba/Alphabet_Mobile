@@ -100,8 +100,9 @@ class _AmaniButtonState extends State<AmaniButton> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
-              mainAxisSize:
-                  widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisSize: widget.fullWidth
+                  ? MainAxisSize.max
+                  : MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (widget.icon != null) ...[

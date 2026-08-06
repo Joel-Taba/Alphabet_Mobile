@@ -30,7 +30,9 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
     final cm = t['coursMots'] as Map<String, dynamic>? ?? {};
 
     final level = _parseLevel(puzzleId);
-    final GeneratedCrossword? crossword = level != null ? generateCrossword(WORD_CATALOG, level, 1000 + level * 37) : null;
+    final GeneratedCrossword? crossword = level != null
+        ? generateCrossword(WORD_CATALOG, level, 1000 + level * 37)
+        : null;
 
     if (level == null || crossword == null) {
       return Scaffold(
@@ -40,14 +42,31 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(mc['generationFailed'] ?? '', style: AmaniTheme.titleStyle.copyWith(fontSize: 16), textAlign: TextAlign.center),
+                Text(
+                  mc['generationFailed'] ?? '',
+                  style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () => context.go('/accueil'),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    decoration: BoxDecoration(color: AmaniColors.secondary, borderRadius: BorderRadius.circular(999)),
-                    child: Text(cm['backToList'] ?? '', style: const TextStyle(fontFamily: kBalooFontFamily, fontWeight: FontWeight.w700, color: Colors.white)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.secondary,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      cm['backToList'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -64,7 +83,14 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              decoration: BoxDecoration(color: AmaniColors.background, border: Border(bottom: BorderSide(color: AmaniColors.textPrimary.withValues(alpha: 0.1)))),
+              decoration: BoxDecoration(
+                color: AmaniColors.background,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
                   GestureDetector(
@@ -72,7 +98,13 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
                     child: Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(color: AmaniColors.surface, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0x1F000000), blurRadius: 6)]),
+                      decoration: const BoxDecoration(
+                        color: AmaniColors.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Color(0x1F000000), blurRadius: 6),
+                        ],
+                      ),
                       child: const Icon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
@@ -81,10 +113,19 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(mc['title'] ?? '', style: AmaniTheme.titleStyle.copyWith(fontSize: 22)),
                         Text(
-                          tFormat(mc['levelSubtitle'] ?? '', {'level': level, 'count': crossword.placed.length}),
-                          style: AmaniTheme.bodyStyle.copyWith(fontSize: 12, color: AmaniColors.textSecondary),
+                          mc['title'] ?? '',
+                          style: AmaniTheme.titleStyle.copyWith(fontSize: 22),
+                        ),
+                        Text(
+                          tFormat(mc['levelSubtitle'] ?? '', {
+                            'level': level,
+                            'count': crossword.placed.length,
+                          }),
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            fontSize: 12,
+                            color: AmaniColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),

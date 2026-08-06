@@ -5,11 +5,130 @@ import '../i18n/translations.dart';
 
 const String _volumeStorageKey = 'amani_setting_volume';
 const String _soundStorageKey = 'amani_setting_sound';
+const String _voiceGenderStorageKey = 'amani_setting_voice_gender';
+
+enum VoiceGender { homme, femme }
+
+Future<VoiceGender> getStoredVoiceGender() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString(_voiceGenderStorageKey);
+  return raw == 'homme' ? VoiceGender.homme : VoiceGender.femme;
+}
+
+Future<void> setStoredVoiceGender(VoiceGender gender) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_voiceGenderStorageKey, gender.name);
+}
+
+/// Indices de genre/qualité dans le nom des voix système (Android/iOS n'ont
+/// pas de convention commune) — même principe que la version web
+/// (`src/hooks/useSignSpeech.ts`), qui doit elle aussi deviner via le nom.
+const List<String> _femaleNameHints = [
+  'amélie',
+  'amelie',
+  'audrey',
+  'aurélie',
+  'aurelie',
+  'céline',
+  'celine',
+  'chantal',
+  'charlotte',
+  'danielle',
+  'denise',
+  'eloise',
+  'éloise',
+  'hortense',
+  'julie',
+  'léa',
+  'lea',
+  'marie',
+  'virginie',
+  'vivienne',
+  'severine',
+  'séverine',
+  'samantha',
+  'karen',
+  'victoria',
+  'zira',
+  'susan',
+  'aria',
+  'jenny',
+  'michelle',
+  'joanna',
+  'salli',
+  'kimberly',
+  'ivy',
+  'kendra',
+  'moira',
+  'tessa',
+  'female',
+  'femme',
+  'mónica',
+  'monica',
+  'paulina',
+  'helena',
+  'elvira',
+  'lucía',
+  'lucia',
+];
+const List<String> _maleNameHints = [
+  'thomas',
+  'nicolas',
+  'paul',
+  'henri',
+  'remy',
+  'rémy',
+  'guillaume',
+  'bruno',
+  'male',
+  'homme',
+  'daniel',
+  'alex',
+  'fred',
+  'david',
+  'mark',
+  'guy',
+  'tony',
+  'matthew',
+  'joey',
+  'justin',
+  'jorge',
+  'diego',
+  'juan',
+  'pablo',
+  'álvaro',
+  'alvaro',
+];
+const List<String> _qualityNameHints = [
+  'enhanced',
+  'premium',
+  'neural',
+  'wavenet',
+  'siri',
+  'natural',
+];
+const List<String> _lowQualityNameHints = ['compact', 'espeak'];
+
+List<String> _tokenize(String name) {
+  return name
+      .toLowerCase()
+      .split(RegExp(r'[^a-zà-ÿ]+'))
+      .where((s) => s.isNotEmpty)
+      .toList();
+}
+
+bool _nameHasAny(String name, List<String> hints) {
+  final tokens = _tokenize(name);
+  return hints.any(
+    (h) => h.contains(' ') ? name.contains(h) : tokens.contains(h),
+  );
+}
 
 class SignSpeechService extends ChangeNotifier {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isSpeaking = false;
-  
+  List<dynamic>? _voicesCache;
+
   bool get isSpeaking => _isSpeaking;
 
   SignSpeechService() {
@@ -46,7 +165,77 @@ class SignSpeechService extends ChangeNotifier {
     return raw ?? true;
   }
 
-  Future<void> speak(String text, Lang lang, {double rate = 0.45, double pitch = 1.05}) async {
+  Future<List<dynamic>> _availableVoices() async {
+    if (_voicesCache != null) return _voicesCache!;
+    try {
+      final raw = await _flutterTts.getVoices;
+      _voicesCache = (raw is List) ? raw : <dynamic>[];
+    } catch (_) {
+      _voicesCache = <dynamic>[];
+    }
+    return _voicesCache!;
+  }
+
+  /// Choisit la meilleure voix disponible pour une locale et un genre donnés,
+  /// selon le même principe de score que la version web : genre déclaré ou
+  /// deviné par le nom, puis indices de qualité, la locale exacte départageant.
+  Future<Map<String, String>?> _pickVoice(
+    String locale,
+    VoiceGender gender,
+  ) async {
+    final voices = await _availableVoices();
+    final base = locale.split('-').first.toLowerCase();
+    final candidates = voices.where((v) {
+      final voiceLocale = (v is Map ? v['locale'] : null)?.toString() ?? '';
+      return voiceLocale.toLowerCase().startsWith(base);
+    }).toList();
+    if (candidates.isEmpty) return null;
+
+    final genderHints = gender == VoiceGender.femme
+        ? _femaleNameHints
+        : _maleNameHints;
+    final oppositeHints = gender == VoiceGender.femme
+        ? _maleNameHints
+        : _femaleNameHints;
+
+    Map<String, String>? best;
+    var bestScore = -1000000;
+    for (final v in candidates) {
+      if (v is! Map) continue;
+      final name = (v['name'] ?? '').toString();
+      final voiceLocale = (v['locale'] ?? '').toString();
+      final declaredGender = (v['gender'] ?? '').toString().toLowerCase();
+      var score = 0;
+
+      if (declaredGender.contains(gender.name == 'femme' ? 'female' : 'male')) {
+        score += 6;
+      } else if (declaredGender.contains(
+        gender.name == 'femme' ? 'male' : 'female',
+      )) {
+        score -= 5;
+      } else if (_nameHasAny(name, genderHints)) {
+        score += 4;
+      } else if (_nameHasAny(name, oppositeHints)) {
+        score -= 3;
+      }
+      if (_nameHasAny(name, _qualityNameHints)) score += 3;
+      if (_nameHasAny(name, _lowQualityNameHints)) score -= 2;
+      if (voiceLocale.toLowerCase() == locale.toLowerCase()) score += 1;
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = {'name': name, 'locale': voiceLocale};
+      }
+    }
+    return best;
+  }
+
+  Future<void> speak(
+    String text,
+    Lang lang, {
+    double rate = 0.45,
+    double? pitch,
+  }) async {
     await stop();
 
     final soundEnabled = await _isSoundEnabled();
@@ -54,11 +243,27 @@ class SignSpeechService extends ChangeNotifier {
 
     final volume = await _getStoredVolume();
     final locale = speechLocale[lang] ?? 'fr-FR';
+    final gender = await getStoredVoiceGender();
+    // Tonalité proche du naturel : les écarts trop marqués sont ce qui fait
+    // sonner une voix "robotisée".
+    final resolvedPitch = pitch ?? (gender == VoiceGender.femme ? 1.05 : 0.95);
 
     await _flutterTts.setLanguage(locale);
-    await _flutterTts.setSpeechRate(rate); // Le rate FlutterTts diffère du Web API (0.5 est normal)
-    await _flutterTts.setPitch(pitch);
+    await _flutterTts.setSpeechRate(
+      rate,
+    ); // Le rate FlutterTts diffère du Web API (0.5 est normal)
+    await _flutterTts.setPitch(resolvedPitch);
     await _flutterTts.setVolume(volume);
+
+    final voice = await _pickVoice(locale, gender);
+    if (voice != null) {
+      try {
+        await _flutterTts.setVoice(voice);
+      } catch (_) {
+        // Certains appareils n'exposent pas setVoice — on garde la voix par
+        // défaut du système plutôt que de bloquer la lecture.
+      }
+    }
 
     await _flutterTts.speak(text);
   }
@@ -68,7 +273,7 @@ class SignSpeechService extends ChangeNotifier {
     _isSpeaking = false;
     notifyListeners();
   }
-  
+
   @override
   void dispose() {
     _flutterTts.stop();
