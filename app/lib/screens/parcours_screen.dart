@@ -10,6 +10,8 @@ import '../widgets/amani_mascot.dart';
 import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
 import '../data/syllable_catalog.dart';
+import '../services/resume_checkpoint_service.dart';
+import '../widgets/amani_button.dart';
 
 /// Décomposition "flore" décorative de la branche d'exercice, port fidèle du
 /// tracé SVG `BrancheExerciseIcon` (src/routes/_app.accueil.tsx).
@@ -70,8 +72,6 @@ class ParcoursScreen extends StatefulWidget {
 }
 
 class _ParcoursScreenState extends State<ParcoursScreen> {
-  static const List<int> _crosswordLevels = [2, 3, 4, 5, 6, 7, 8, 9, 10];
-
   int _activeStepIdx = 1;
   final ScrollController _scrollController = ScrollController();
 
@@ -79,6 +79,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   void initState() {
     super.initState();
     _loadActiveStep();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkResume());
   }
 
   Future<void> _loadActiveStep() async {
@@ -86,6 +87,93 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     final saved = prefs.getInt('accueil_current_step_idx');
     if (saved != null && mounted) {
       setState(() => _activeStepIdx = saved);
+    }
+  }
+
+  /// Propose de reprendre une session (cours/exercice/évaluation) laissée
+  /// inachevée si l'app a été fermée avant qu'elle soit terminée — voir
+  /// ResumeCheckpointService. Ne s'exécute qu'une fois par lancement de
+  /// l'app (le service lui-même ignore les appels suivants).
+  Future<void> _checkResume() async {
+    final checkpoint = context.read<ResumeCheckpointService>();
+    await checkpoint.ready;
+    final route = checkpoint.pendingRoute;
+    checkpoint.markBootCheckDone();
+    if (route == null || !mounted) return;
+
+    final t = context.read<LanguageProvider>().t;
+    final r = t['resumeSession'] as Map<String, dynamic>? ?? {};
+
+    final shouldResume = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 24,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AmaniMascot(
+                pose: AmaniPose.encouragement,
+                size: AmaniSize.medium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                r['title'] ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: AmaniColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                r['body'] ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontSize: 14,
+                  color: AmaniColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              AmaniButton(
+                label: r['resume'] ?? '',
+                fullWidth: true,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+              const SizedBox(height: 10),
+              AmaniButton(
+                label: r['restart'] ?? '',
+                variant: AmaniButtonVariant.ghost,
+                fullWidth: true,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (shouldResume == true) {
+      if (mounted) context.go(route);
+    } else {
+      await checkpoint.clear();
     }
   }
 
@@ -124,6 +212,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     final paliers = (t['parcours']?['paliers'] as List?) ?? [];
     String pal(int i, String key) =>
         (paliers.length > i ? paliers[i][key] : null) ?? '';
+    final palier2Groups = getPalier2Groups(lang.name);
 
     final steps = <StepEntry>[
       // ─── PALIER 1 : Les Signes de base ───
@@ -180,7 +269,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         1,
         to: '/exercice-liste?family=trait',
       ),
-      StepEntry(const Step(kind: StepKind.medal), 0, to: '/exercice-liste'),
+      StepEntry(
+        const Step(kind: StepKind.medal),
+        0,
+        to: '/exercice-liste?amaniEval=1',
+      ),
 
       // ─── PALIER 2 : Combinatoire ───
       StepEntry(
@@ -198,9 +291,9 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       ),
     ];
 
-    for (var idx = 0; idx < PALIER2_GROUPS.length; idx++) {
+    for (var idx = 0; idx < palier2Groups.length; idx++) {
       final kind = idx == 0 ? StepKind.active : StepKind.locked;
-      final group = PALIER2_GROUPS[idx];
+      final group = palier2Groups[idx];
       steps.add(
         StepEntry(
           Step(kind: kind, iconType: 'feuille'),
@@ -216,7 +309,13 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         ),
       );
     }
-    steps.add(StepEntry(const Step(kind: StepKind.medal), 0, to: '/exercice'));
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.medal),
+        0,
+        to: '/exercice/lettre/${palier2Groups[0].chars.first}?pg=${palier2Groups[0].id}&amaniEval=1',
+      ),
+    );
 
     // ─── PALIER 3 : Les Syllabes (français uniquement — méthode de lecture
     // "consonne + voyelle" spécifique au français) ───
@@ -261,7 +360,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         StepEntry(
           const Step(kind: StepKind.medal),
           0,
-          to: '/exercice/syllabes/$firstConsonant',
+          to: '/exercice/syllabes/$firstConsonant?amaniEval=1',
         ),
       );
     }
@@ -303,8 +402,8 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       );
       if (idx % 2 == 1) {
         final levelIdx = (idx - 1) ~/ 2;
-        if (levelIdx < _crosswordLevels.length) {
-          final level = _crosswordLevels[levelIdx];
+        if (levelIdx < PALIER3_CROSSWORD_LEVELS.length) {
+          final level = PALIER3_CROSSWORD_LEVELS[levelIdx];
           steps.add(
             StepEntry(
               const Step(kind: StepKind.crossword),
@@ -315,7 +414,13 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         }
       }
     }
-    steps.add(StepEntry(const Step(kind: StepKind.medal), 0, to: '/exercice'));
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.medal),
+        0,
+        to: '/exercice/mots/${PALIER3_GROUPS[0].id}?amaniEval=1',
+      ),
+    );
 
     // Chaque étape hérite de la couleur du dernier en-tête de palier rencontré.
     Color currentColor = const Color(0xFF8FBF6F);

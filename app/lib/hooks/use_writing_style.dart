@@ -6,7 +6,7 @@ import '../theme/amani_theme.dart';
 /// d'écriture"). Même clé SharedPreferences que l'ancien état local de
 /// `profil_hub_screen.dart`, pour rester compatible avec ce qui est déjà
 /// enregistré sur l'appareil.
-enum WritingStyle { script, cursive, digitale }
+enum WritingStyle { script, cursive }
 
 const _storageKey = 'amani_setting_format';
 

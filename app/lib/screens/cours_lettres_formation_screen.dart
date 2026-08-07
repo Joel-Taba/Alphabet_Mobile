@@ -8,10 +8,12 @@ import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../hooks/use_animation_speed.dart';
 import '../data/palier2_groups.dart';
 import '../data/flores_gong_nota.dart';
 import '../widgets/cahier_frame.dart';
 import '../widgets/sign_glyph.dart';
+import '../services/progress_service.dart';
 
 /// Animation multi-signes qui combine les signes de base pour former une
 /// lettre ou un chiffre, avec navigation dans le groupe de progression. Port
@@ -31,12 +33,15 @@ class _CoursLettresFormationScreenState
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
-  static const int _stepDurationMs = 2000;
-  static const int _pauseDurationMs = 400;
+  late int _stepDurationMs;
+  late int _pauseDurationMs;
 
   @override
   void initState() {
     super.initState();
+    final animSpeed = context.read<AnimationSpeedProvider>().speed;
+    _stepDurationMs = scaleDuration(2000, animSpeed);
+    _pauseDurationMs = scaleDuration(400, animSpeed);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1),
@@ -63,6 +68,22 @@ class _CoursLettresFormationScreenState
     context.read<SignSpeechService>().speak(
       letter['consigne'][lang.name] ?? '',
       lang,
+    );
+
+    // Les points du cours ne sont attribués qu'une fois TOUTES les lettres
+    // du groupe consultées — jamais dès l'ouverture du cours.
+    final progressionGroup = widget.pg != null
+        ? getPalier2GroupMap(lang.name)[widget.pg]
+        : null;
+    final totalItems = progressionGroup != null
+        ? progressionGroup.chars.length
+        : 1;
+    context.read<ProgressProvider>().markCoursItemViewed(
+      typeEtape: 'LETTRE',
+      groupCode: progressionGroup?.id ?? 'own-${widget.char}',
+      itemCode: widget.char,
+      totalItems: totalItems,
+      palier: 2,
     );
   }
 
@@ -125,7 +146,7 @@ class _CoursLettresFormationScreenState
 
     final steps = letter['steps'] as List;
     final progressionGroup = widget.pg != null
-        ? PALIER2_GROUP_MAP[widget.pg]
+        ? getPalier2GroupMap(lang.name)[widget.pg]
         : null;
     final allLetters = progressionGroup != null
         ? progressionGroup.chars
@@ -199,23 +220,6 @@ class _CoursLettresFormationScreenState
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () =>
-                        speech.speak(letter['consigne'][lang.name] ?? '', lang),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: AmaniColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.speaker_2_fill,
-                        size: 18,
-                        color: Colors.white,
-                      ),
                     ),
                   ),
                 ],
@@ -543,7 +547,7 @@ class _CoursLettresFormationScreenState
                     children: [
                       if (prevLetter != null)
                         _NavPill(
-                          label: '"${prevLetter['char']}"',
+                          label: t['common']?['previous'] ?? 'Précédent',
                           leading: true,
                           onTap: () => goTo(prevLetter),
                         )
@@ -551,7 +555,7 @@ class _CoursLettresFormationScreenState
                         const SizedBox(),
                       if (nextLetter != null)
                         _NavPill(
-                          label: '"${nextLetter['char']}"',
+                          label: t['common']?['next'] ?? 'Suivant',
                           leading: false,
                           filled: true,
                           onTap: () => goTo(nextLetter),

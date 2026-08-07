@@ -14,6 +14,10 @@ import '../utils/trace_validation.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/cahier_frame.dart';
 import '../widgets/repetition_row.dart';
+import '../widgets/exercise_complete_popup.dart';
+import '../widgets/evaluation_timer.dart';
+import '../hooks/use_countdown.dart';
+import '../services/progress_service.dart';
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
 /// exercé séparément) puis Phase B (la lettre écrite d'un seul geste continu).
@@ -21,7 +25,13 @@ import '../widgets/repetition_row.dart';
 class ExerciceLettreScreen extends StatefulWidget {
   final String char;
   final String? pg;
-  const ExerciceLettreScreen({super.key, required this.char, this.pg});
+  final String? amaniEval;
+  const ExerciceLettreScreen({
+    super.key,
+    required this.char,
+    this.pg,
+    this.amaniEval,
+  });
 
   @override
   State<ExerciceLettreScreen> createState() => _ExerciceLettreScreenState();
@@ -44,6 +54,16 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   final List<_CompletedStep> _completedSteps = [];
   _StepStatus _stepStatus = _StepStatus.idle;
   bool _letterSuccess = false;
+  // Incrémenté à chaque "Recommencer" pour forcer le remontage des
+  // RepetitionRow de la Phase A (elles gèrent leur propre état interne).
+  int _restartKey = 0;
+  // Vrai entre le clic sur "Recommencer" et la prochaine réussite complète :
+  // le bonus n'est attribué qu'à ce moment-là, jamais au clic lui-même.
+  bool _awaitingRepeatCompletion = false;
+
+  bool get _isEvaluation => widget.amaniEval == '1';
+  CountdownController? _countdown;
+  bool _evaluationExpired = false;
 
   @override
   void initState() {
@@ -51,6 +71,20 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load();
     WidgetsBinding.instance.addPostFrameCallback((_) => _speakStart());
+    if (_isEvaluation) _initEvaluation();
+  }
+
+  Future<void> _initEvaluation() async {
+    final minutes = await readEvaluationDurationMinutes();
+    if (!mounted) return;
+    setState(() {
+      _countdown = CountdownController(
+        durationSeconds: minutes * 60,
+        onExpire: () {
+          if (mounted) setState(() => _evaluationExpired = true);
+        },
+      )..addListener(_onSettingsChanged);
+    });
   }
 
   void _onSettingsChanged() {
@@ -84,6 +118,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   void dispose() {
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
+    _countdown?.dispose();
     super.dispose();
   }
 
@@ -125,7 +160,17 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
         }),
         lang,
       );
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'LETTRE',
+        modalite: 'EXERCICE',
+        etapeCode: widget.char,
+        palier: 2,
+      );
       setState(() => _letterSuccess = true);
+      if (_awaitingRepeatCompletion) {
+        context.read<ProgressProvider>().awardRestartBonus();
+        setState(() => _awaitingRepeatCompletion = false);
+      }
     }
   }
 
@@ -153,8 +198,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final letter = getLetterFormation(widget.char, style);
 
     final progressionGroup =
-        (widget.pg != null ? PALIER2_GROUP_MAP[widget.pg] : null) ??
-        findGroupForChar(widget.char);
+        (widget.pg != null ? getPalier2GroupMap(lang.name)[widget.pg] : null) ??
+        findGroupForChar(widget.char, lang.name);
     final groupId = progressionGroup?.id ?? 'l1';
 
     if (letter == null) {
@@ -211,6 +256,38 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
         : null;
     final allStepsDone = _doneSteps.length == steps.length;
 
+    // Cible du bouton "Suivant" du pop-up de fin d'exercice : la lettre
+    // suivante du même groupe, sinon la première lettre du groupe suivant —
+    // sans boucler à la fin du dernier groupe.
+    final palier2Groups = getPalier2Groups(lang.name);
+    final groupIdx = progressionGroup != null
+        ? palier2Groups.indexWhere((g) => g.id == progressionGroup.id)
+        : -1;
+    final nextGroupForCours =
+        groupIdx >= 0 && groupIdx < palier2Groups.length - 1
+        ? palier2Groups[groupIdx + 1]
+        : null;
+    final nextCoursChar =
+        nextLetter?['char'] as String? ??
+        (nextGroupForCours != null && nextGroupForCours.chars.isNotEmpty
+            ? nextGroupForCours.chars.first
+            : null);
+    final nextCoursPg = nextLetter != null ? groupId : nextGroupForCours?.id;
+
+    // Mode évaluation : à la fin d'un groupe, on enchaîne sur le premier
+    // caractère du groupe suivant (retour au premier groupe une fois le
+    // dernier atteint) — seul le chronomètre décide de la fin de la session.
+    final evalNextGroup = groupIdx >= 0
+        ? palier2Groups[(groupIdx + 1) % palier2Groups.length]
+        : null;
+    final evaluationNextLetter =
+        _isEvaluation && nextLetter == null && evalNextGroup != null
+        ? (evalNextGroup.chars.isNotEmpty
+              ? getLetterFormation(evalNextGroup.chars.first, style)
+              : null)
+        : null;
+    final evaluationNextGroupId = evalNextGroup?.id;
+
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
@@ -218,6 +295,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
           children: [
             Column(
               children: [
+                if (_isEvaluation && !_evaluationExpired && _countdown != null)
+                  EvaluationTimerBadge(remaining: _countdown!.remaining),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
@@ -271,25 +350,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => speech.speak(
-                          letter['consigne'][lang.name] ?? '',
-                          lang,
-                        ),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: AmaniColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.speaker_2_fill,
-                            size: 18,
-                            color: Colors.white,
-                          ),
                         ),
                       ),
                     ],
@@ -359,9 +419,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Phase A
+                      // Phase A — un signe débloque le suivant une fois réussi
                       for (int i = 0; i < steps.length; i++) ...[
                         RepetitionRow(
+                          key: ValueKey(
+                            '${letter['char']}-step-$i-r$_restartKey',
+                          ),
+                          locked: i > 0 && !_doneSteps.contains(i - 1),
                           entry: TraceableEntry(
                             id: '${letter['char']}-step-$i',
                             pathD: steps[i]['pathD'] as String,
@@ -386,23 +450,21 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                           ),
                           onAllDone: () => setState(() => _doneSteps.add(i)),
                           badge: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                            width: 26,
+                            height: 26,
+                            decoration: const BoxDecoration(
+                              color: AmaniColors.primary,
+                              shape: BoxShape.circle,
                             ),
-                            decoration: BoxDecoration(
-                              color: AmaniColors.primary.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
+                            alignment: Alignment.center,
                             child: Text(
-                              '${el['stepPrefix'] ?? 'Signe'} ${i + 1}',
+                              '${i + 1}',
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 10.5,
-                                color: AmaniColors.primary,
+                                fontSize: 14,
+                                color: Colors.white,
+                                height: 1,
                               ),
                             ),
                           ),
@@ -537,48 +599,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                           ),
                         ),
                       ],
-
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: GestureDetector(
-                          onTap: () => setState(_resetAll),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: AmaniColors.secondary.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: AmaniColors.secondary.withValues(
-                                  alpha: 0.3,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  CupertinoIcons.restart,
-                                  size: 16,
-                                  color: AmaniColors.secondaryDark,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  el['resetAll'] ?? '',
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: AmaniColors.secondaryDark,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -586,15 +606,225 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
               ],
             ),
 
-            if (_letterSuccess)
-              _SuccessOverlay(
+            if (_letterSuccess && !_isEvaluation)
+              ExerciseCompletePopup(
+                onBackHome: () => context.go('/accueil'),
+                onNext: nextCoursChar != null
+                    ? () => context.go(
+                        '/cours/lettres/formation/$nextCoursChar${nextCoursPg != null ? '?pg=$nextCoursPg' : ''}',
+                      )
+                    : null,
+                onRestart: () {
+                  setState(() {
+                    _resetAll();
+                    _restartKey++;
+                    _awaitingRepeatCompletion = true;
+                  });
+                },
+              ),
+            // Overlay de célébration finale — uniquement en évaluation, qui
+            // enchaîne les lettres en continu ; hors évaluation, c'est
+            // ExerciseCompletePopup qui gère la fin.
+            if (_letterSuccess && _isEvaluation)
+              _LetterSuccessOverlay(
                 letter: letter,
                 nextLetter: nextLetter,
                 groupId: groupId,
-                onClose: () => setState(() => _letterSuccess = false),
-                onReset: () => setState(_resetAll),
+                isEvaluation: _isEvaluation,
+                evaluationNextLetter: evaluationNextLetter,
+                evaluationNextGroupId: evaluationNextGroupId,
+                onReset: () {
+                  setState(() {
+                    _resetAll();
+                    _restartKey++;
+                    _awaitingRepeatCompletion = true;
+                  });
+                },
               ),
+            if (_isEvaluation && _evaluationExpired)
+              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LetterSuccessOverlay extends StatelessWidget {
+  final dynamic letter;
+  final dynamic nextLetter;
+  final String groupId;
+  final bool isEvaluation;
+  final dynamic evaluationNextLetter;
+  final String? evaluationNextGroupId;
+  final VoidCallback onReset;
+
+  const _LetterSuccessOverlay({
+    required this.letter,
+    required this.nextLetter,
+    required this.groupId,
+    required this.isEvaluation,
+    required this.evaluationNextLetter,
+    required this.evaluationNextGroupId,
+    required this.onReset,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<LanguageProvider>().t;
+    final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
+
+    return Positioned.fill(
+      child: Container(
+        color: const Color(0x66000000),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 320),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 24,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AmaniMascot(
+                pose: AmaniPose.celebration,
+                size: AmaniSize.medium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                el['successTitle'] ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  color: AmaniColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${el['successBody'] ?? ''} "${letter['char']}" !',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontSize: 14,
+                  color: AmaniColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AmaniColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AmaniColors.secondary, width: 2),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  letter['char'] as String,
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 36,
+                    color: AmaniColors.secondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (nextLetter != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.go(
+                      '/exercice/lettre/${nextLetter['char']}?pg=$groupId&amaniEval=1',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AmaniColors.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      '${el['nextLetter'] ?? ''} (${nextLetter['char']})',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                )
+              else if (evaluationNextLetter != null &&
+                  evaluationNextGroupId != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.go(
+                      '/exercice/lettre/${evaluationNextLetter['char']}?pg=$evaluationNextGroupId&amaniEval=1',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AmaniColors.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      '${el['nextLetter'] ?? ''} (${evaluationNextLetter['char']})',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onReset,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AmaniColors.primary,
+                    side: BorderSide.none,
+                    backgroundColor: AmaniColors.primary.withValues(
+                      alpha: 0.15,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    el['practiceAgain'] ?? '',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AmaniColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -938,190 +1168,4 @@ class _LetterCanvasPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LetterCanvasPainter oldDelegate) => true;
-}
-
-class _SuccessOverlay extends StatelessWidget {
-  final dynamic letter;
-  final dynamic nextLetter;
-  final String groupId;
-  final VoidCallback onClose;
-  final VoidCallback onReset;
-
-  const _SuccessOverlay({
-    required this.letter,
-    required this.nextLetter,
-    required this.groupId,
-    required this.onClose,
-    required this.onReset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.watch<LanguageProvider>().t;
-    final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
-
-    return Positioned.fill(
-      child: Container(
-        color: Colors.black.withValues(alpha: 0.4),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 320),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 30,
-                offset: Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AmaniMascot(
-                pose: AmaniPose.celebration,
-                size: AmaniSize.medium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                el['successTitle'] ?? '',
-                style: AmaniTheme.titleStyle.copyWith(fontSize: 22),
-              ),
-              const SizedBox(height: 4),
-              Text.rich(
-                TextSpan(
-                  style: AmaniTheme.bodyStyle.copyWith(
-                    fontSize: 14,
-                    color: AmaniColors.textSecondary,
-                  ),
-                  children: [
-                    TextSpan(text: '${el['successBody'] ?? ''} '),
-                    TextSpan(
-                      text: '"${letter['char']}"',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AmaniColors.textPrimary,
-                      ),
-                    ),
-                    const TextSpan(text: ' !'),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: 80,
-                height: 80,
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                decoration: BoxDecoration(
-                  color: AmaniColors.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AmaniColors.secondary, width: 2),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  letter['char'],
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 44,
-                    color: AmaniColors.secondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (nextLetter != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: GestureDetector(
-                    onTap: () => context.go(
-                      '/exercice/lettre/${nextLetter['char']}?pg=$groupId',
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: AmaniColors.secondary,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x338FBF6F),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${el['nextLetter'] ?? ''} (${nextLetter['char']})',
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            CupertinoIcons.chevron_right,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: GestureDetector(
-                  onTap: onReset,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Text(
-                      el['practiceAgain'] ?? '',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        color: AmaniColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              GestureDetector(
-                onTap: () => context.go('/exercice-liste?group=$groupId'),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    el['backToNotebookLink'] ?? '',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: AmaniColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

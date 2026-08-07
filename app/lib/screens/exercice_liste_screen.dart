@@ -10,8 +10,12 @@ import '../data/sign_exercise_catalog.dart';
 import '../data/palier2_groups.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/repetition_row.dart';
+import '../widgets/exercise_complete_popup.dart';
+import '../widgets/evaluation_timer.dart';
+import '../hooks/use_countdown.dart';
 
 /// "Cahier d'Écriture" : exerce chaque signe d'une famille (répétitions sur
 /// grille Seyès), ou liste les caractères d'un groupe de progression (Palier
@@ -20,7 +24,13 @@ import '../widgets/repetition_row.dart';
 class ExerciceListeScreen extends StatefulWidget {
   final String? family;
   final String? group;
-  const ExerciceListeScreen({super.key, this.family, this.group});
+  final String? amaniEval;
+  const ExerciceListeScreen({
+    super.key,
+    this.family,
+    this.group,
+    this.amaniEval,
+  });
 
   @override
   State<ExerciceListeScreen> createState() => _ExerciceListeScreenState();
@@ -28,12 +38,41 @@ class ExerciceListeScreen extends StatefulWidget {
 
 class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   late ExerciseSettings _settings;
+  final Set<String> _doneSigns = {};
+  int _restartKey = 0;
+  bool _awaitingRepeatCompletion = false;
+
+  bool get _isEvaluation => widget.amaniEval == '1';
+  CountdownController? _countdown;
+  bool _evaluationExpired = false;
 
   @override
   void initState() {
     super.initState();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load();
+    if (_isEvaluation) _initEvaluation();
+  }
+
+  Future<void> _initEvaluation() async {
+    final minutes = await readEvaluationDurationMinutes();
+    if (!mounted) return;
+    setState(() {
+      _countdown = CountdownController(
+        durationSeconds: minutes * 60,
+        onExpire: () {
+          if (mounted) setState(() => _evaluationExpired = true);
+        },
+      )..addListener(_onSettingsChanged);
+    });
+  }
+
+  void _onEntryDone(String id, int totalEntries) {
+    setState(() => _doneSigns.add(id));
+    if (_doneSigns.length >= totalEntries && _awaitingRepeatCompletion) {
+      context.read<ProgressProvider>().awardRestartBonus();
+      setState(() => _awaitingRepeatCompletion = false);
+    }
   }
 
   void _onSettingsChanged() {
@@ -44,6 +83,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   void dispose() {
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
+    _countdown?.dispose();
     super.dispose();
   }
 
@@ -55,7 +95,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
     final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
 
     final progressionGroup = widget.group != null
-        ? PALIER2_GROUP_MAP[widget.group]
+        ? getPalier2GroupMap(lang.name)[widget.group]
         : null;
 
     if (progressionGroup != null) {
@@ -95,12 +135,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 'titre': group.title[lang.name] ?? '',
               }),
               subtitle: subtitle,
-              onSpeak: () => speech.speak(
-                tFormat(el['introGroup'] ?? '', {
-                  'titre': group.title[lang.name] ?? '',
-                }),
-                lang,
-              ),
               onBack: () => context.go('/accueil'),
             ),
             _HintBar(
@@ -283,65 +317,107 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
         ? tFormat(el['titleFamily'] ?? '', {'titre': grouped.first.$2})
         : (el['title'] ?? "Cahier d'Écriture");
 
+    // Pop-up de fin d'exercice : uniquement pour une famille précise (une
+    // vraie étape du parcours), pas pour la vue "toutes familles".
+    final familyEntries = widget.family != null && grouped.isNotEmpty
+        ? grouped.first.$3
+        : const <dynamic>[];
+    final allFamilyDone =
+        widget.family != null &&
+        familyEntries.isNotEmpty &&
+        _doneSigns.length >= familyEntries.length;
+    final familyIdx = widget.family != null
+        ? FAMILY_ORDER.indexOf(widget.family!)
+        : -1;
+    final nextFamily = familyIdx >= 0 && familyIdx < FAMILY_ORDER.length - 1
+        ? FAMILY_ORDER[familyIdx + 1]
+        : null;
+
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _Header(
-              title: headerTitle,
-              subtitle: el['subtitle'] ?? '',
-              onSpeak: () => speech.speak(el['introGeneral'] ?? '', lang),
-              onBack: () => context.go('/accueil'),
-            ),
-            _HintBar(
-              text: el['startHint'] ?? '',
-              bg: const Color(0xCCEAF1FB),
-              fg: const Color(0xFF2D5E8A),
-              dot: true,
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
-                children: [
-                  for (final (_, titre, entries) in grouped)
-                    if (entries.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.family == null)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 4,
-                                  bottom: 10,
-                                ),
-                                child: Text(
-                                  titre,
-                                  style: AmaniTheme.titleStyle.copyWith(
-                                    fontSize: 16,
+            Column(
+              children: [
+                if (_isEvaluation && !_evaluationExpired && _countdown != null)
+                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                _Header(
+                  title: headerTitle,
+                  subtitle: el['subtitle'] ?? '',
+                  onBack: () => context.go('/accueil'),
+                ),
+                _HintBar(
+                  text: el['startHint'] ?? '',
+                  bg: const Color(0xCCEAF1FB),
+                  fg: const Color(0xFF2D5E8A),
+                  dot: true,
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                    children: [
+                      for (final (_, titre, entries) in grouped)
+                        if (entries.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (widget.family == null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      bottom: 10,
+                                    ),
+                                    child: Text(
+                                      titre,
+                                      style: AmaniTheme.titleStyle.copyWith(
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            for (final entry in entries) ...[
-                              _SignExerciseRow(
-                                entry: entry,
-                                repetitions: _settings.repetitions,
-                                tolerance: _settings.tolerance,
-                                hideFamilyBadge: widget.family != null,
-                                el: el,
-                                lang: lang,
-                                speech: speech,
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-                          ],
-                        ),
-                      ),
-                ],
-              ),
+                                for (final entry in entries) ...[
+                                  _SignExerciseRow(
+                                    key: ValueKey(
+                                      '${entry['id']}-r$_restartKey',
+                                    ),
+                                    entry: entry,
+                                    repetitions: _settings.repetitions,
+                                    tolerance: _settings.tolerance,
+                                    hideFamilyBadge: widget.family != null,
+                                    el: el,
+                                    lang: lang,
+                                    speech: speech,
+                                    onEntryDone: (id) =>
+                                        _onEntryDone(id, familyEntries.length),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                              ],
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            if (allFamilyDone && !_isEvaluation)
+              ExerciseCompletePopup(
+                onBackHome: () => context.go('/accueil'),
+                onNext: nextFamily != null
+                    ? () => context.go('/cours/$nextFamily')
+                    : null,
+                onRestart: () {
+                  setState(() {
+                    _doneSigns.clear();
+                    _restartKey++;
+                    _awaitingRepeatCompletion = true;
+                  });
+                },
+              ),
+            if (_isEvaluation && _evaluationExpired)
+              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
           ],
         ),
       ),
@@ -352,13 +428,15 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
 class _SignExerciseRow extends StatelessWidget {
   final dynamic entry;
   final int repetitions;
-  final double tolerance;
+  final num tolerance;
   final bool hideFamilyBadge;
   final Map<String, dynamic> el;
   final Lang lang;
   final SignSpeechService speech;
+  final ValueChanged<String>? onEntryDone;
 
   const _SignExerciseRow({
+    super.key,
     required this.entry,
     required this.repetitions,
     required this.tolerance,
@@ -366,6 +444,7 @@ class _SignExerciseRow extends StatelessWidget {
     required this.el,
     required this.lang,
     required this.speech,
+    this.onEntryDone,
   });
 
   @override
@@ -387,6 +466,12 @@ class _SignExerciseRow extends StatelessWidget {
           (entry['startXY'] as List)[0].toDouble(),
           (entry['startXY'] as List)[1].toDouble(),
         ),
+        endXY: entry['endXY'] != null
+            ? Offset(
+                (entry['endXY'] as List)[0].toDouble(),
+                (entry['endXY'] as List)[1].toDouble(),
+              )
+            : null,
         strokeColor: Color(
           int.parse((entry['strokeColor'] as String).replaceFirst('#', '0xFF')),
         ),
@@ -397,7 +482,16 @@ class _SignExerciseRow extends StatelessWidget {
       tolerance: tolerance,
       doneLabel: el['done'] ?? 'Terminé !',
       onSpeak: () => speech.speak(entry['consigne'][lang.name] ?? '', lang),
-      onAllDone: () => speech.speak(el['rowComplete'] ?? '', lang),
+      onAllDone: () {
+        speech.speak(el['rowComplete'] ?? '', lang);
+        context.read<ProgressProvider>().awardCompletion(
+          typeEtape: 'SIGNE',
+          modalite: 'EXERCICE',
+          etapeCode: entry['id'] as String,
+          palier: 1,
+        );
+        onEntryDone?.call(entry['id'] as String);
+      },
       badge: showBadge
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -431,13 +525,11 @@ class _SignExerciseRow extends StatelessWidget {
 class _Header extends StatelessWidget {
   final String title;
   final String subtitle;
-  final VoidCallback onSpeak;
   final VoidCallback onBack;
 
   const _Header({
     required this.title,
     required this.subtitle,
-    required this.onSpeak,
     required this.onBack,
   });
 
@@ -487,22 +579,6 @@ class _Header extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onSpeak,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                color: AmaniColors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                CupertinoIcons.speaker_2_fill,
-                size: 16,
-                color: Colors.white,
-              ),
             ),
           ),
         ],

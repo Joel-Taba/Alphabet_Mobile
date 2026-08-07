@@ -20,7 +20,13 @@ import 'screens/exercice_mots_croises_screen.dart';
 import 'screens/cours_syllabes_screen.dart';
 import 'screens/exercice_syllabes_screen.dart';
 import 'services/sign_speech.dart';
+import 'services/progress_service.dart';
+import 'services/backend_sync_service.dart';
 import 'hooks/use_writing_style.dart';
+import 'hooks/use_animation_speed.dart';
+import 'screens/plus_screen.dart';
+import 'widgets/points_toast_host.dart';
+import 'services/resume_checkpoint_service.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -28,6 +34,14 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final _router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
+  // Alimente ResumeCheckpointService à chaque navigation, pour pouvoir
+  // proposer de reprendre une session (cours/exercice/évaluation) laissée
+  // inachevée après une fermeture brusque de l'app — voir
+  // resume_checkpoint_service.dart.
+  redirect: (context, state) {
+    context.read<ResumeCheckpointService>().onNavigate(state.uri.toString());
+    return null;
+  },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
     GoRoute(
@@ -44,6 +58,7 @@ final _router = GoRouter(
       builder: (context, state) => ExerciceListeScreen(
         family: state.uri.queryParameters['family'],
         group: state.uri.queryParameters['group'],
+        amaniEval: state.uri.queryParameters['amaniEval'],
       ),
     ),
     GoRoute(path: '/exercice', redirect: (context, state) => '/exercice-liste'),
@@ -59,6 +74,7 @@ final _router = GoRouter(
       builder: (context, state) => ExerciceLettreScreen(
         char: state.pathParameters['char']!,
         pg: state.uri.queryParameters['pg'],
+        amaniEval: state.uri.queryParameters['amaniEval'],
       ),
     ),
     GoRoute(
@@ -68,8 +84,10 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/exercice/syllabes/:consonant',
-      builder: (context, state) =>
-          ExerciceSyllabesScreen(consonant: state.pathParameters['consonant']!),
+      builder: (context, state) => ExerciceSyllabesScreen(
+        consonant: state.pathParameters['consonant']!,
+        amaniEval: state.uri.queryParameters['amaniEval'],
+      ),
     ),
     GoRoute(
       path: '/cours/mots/:groupId',
@@ -78,8 +96,10 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/exercice/mots/:groupId',
-      builder: (context, state) =>
-          ExerciceMotsScreen(groupId: state.pathParameters['groupId']!),
+      builder: (context, state) => ExerciceMotsScreen(
+        groupId: state.pathParameters['groupId']!,
+        amaniEval: state.uri.queryParameters['amaniEval'],
+      ),
     ),
     GoRoute(
       path: '/exercice/mots-croises/:puzzleId',
@@ -124,6 +144,14 @@ final _router = GoRouter(
             ),
           ],
         ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/plus',
+              builder: (context, state) => const PlusScreen(),
+            ),
+          ],
+        ),
       ],
     ),
   ],
@@ -139,6 +167,14 @@ class AmaniApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => SignSpeechService()),
         ChangeNotifierProvider(create: (_) => WritingStyleProvider()),
+        ChangeNotifierProvider(create: (_) => AnimationSpeedProvider()),
+        ChangeNotifierProvider(create: (_) => BackendSyncService()),
+        ChangeNotifierProvider(create: (_) => ResumeCheckpointService()),
+        ChangeNotifierProxyProvider<BackendSyncService, ProgressProvider>(
+          create: (context) =>
+              ProgressProvider(context.read<BackendSyncService>()),
+          update: (context, backend, previous) => previous!,
+        ),
       ],
       // La police de toute l'appli suit le format d'écriture actif : ce
       // Consumer force MaterialApp (et donc son thème) à se reconstruire
@@ -149,6 +185,11 @@ class AmaniApp extends StatelessWidget {
           theme: AmaniTheme.light,
           routerConfig: _router,
           debugShowCheckedModeBanner: false,
+          // Superpose le popup "+N points" au-dessus de l'écran courant, quel
+          // qu'il soit — voir PointsToastHost, monté une seule fois ici pour
+          // flotter sur toute l'app (équivalent de MobileShell côté web).
+          builder: (context, child) =>
+              Stack(children: [?child, const PointsToastHost()]),
         ),
       ),
     );

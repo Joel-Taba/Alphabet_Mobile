@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/sign_speech.dart';
+import '../services/progress_service.dart';
 import '../utils/crossword_generator.dart';
+import '../data/word_catalog.dart';
 import 'amani_mascot.dart';
 import 'letter_trace_cell.dart';
+import 'exercise_complete_popup.dart';
 
 class _GridCell {
   final int row;
@@ -39,9 +43,22 @@ const List<({Color bg, Color text, Color badge})> _cluePalette = [
 /// doté d'un bouton d'écoute (aucun indice caché pendant la résolution) ; le
 /// mot mystère n'est mis en avant qu'en fin de partie, à titre de
 /// célébration. Port fidèle de `src/components/amani/CrosswordPlay.tsx`.
+///
+/// [puzzleId]/[level] ne sont fournis que par l'étape du parcours (voir
+/// exercice_mots_croises_screen.dart) : c'est ce qui déclenche l'attribution
+/// de points et le pop-up de fin d'exercice. Le mode libre de la
+/// bibliothèque (grilles régénérées à la demande) omet ces props et ne
+/// déclenche donc ni l'un ni l'autre, volontairement.
 class CrosswordPlay extends StatefulWidget {
   final GeneratedCrossword crossword;
-  const CrosswordPlay({super.key, required this.crossword});
+  final String? puzzleId;
+  final int? level;
+  const CrosswordPlay({
+    super.key,
+    required this.crossword,
+    this.puzzleId,
+    this.level,
+  });
 
   @override
   State<CrosswordPlay> createState() => _CrosswordPlayState();
@@ -50,6 +67,10 @@ class CrosswordPlay extends StatefulWidget {
 class _CrosswordPlayState extends State<CrosswordPlay> {
   final Set<String> _solved = {};
   bool _justFinished = false;
+  bool _showCompletePopup = false;
+  bool _pointsAwarded = false;
+  int _restartKey = 0;
+  bool _awaitingRepeatCompletion = false;
 
   late Map<String, _GridCell> _cellByPos;
   late List<_GridCell> _sequence;
@@ -68,6 +89,8 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
     if (oldWidget.crossword != widget.crossword) {
       _solved.clear();
       _justFinished = false;
+      _showCompletePopup = false;
+      _pointsAwarded = false;
       _build();
     }
   }
@@ -115,10 +138,39 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
       _solved.add(key);
       if (_solved.length == _sequence.length) {
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) setState(() => _justFinished = true);
+          if (!mounted) return;
+          if (_mysteryWord != null) {
+            setState(() => _justFinished = true);
+          } else {
+            _onFullySolved();
+          }
         });
       }
     });
+  }
+
+  /// Attribue les points (une seule fois) et affiche le pop-up de fin
+  /// d'exercice — seulement pour une grille du parcours ([puzzleId]/[level]
+  /// fournis). Appelé directement si la grille n'a pas de mot mystère à
+  /// révéler, sinon après la fermeture de cette petite célébration.
+  void _onFullySolved() {
+    if (!mounted) return;
+    final lang = context.read<LanguageProvider>().lang;
+    if (widget.puzzleId != null && !_pointsAwarded) {
+      _pointsAwarded = true;
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'MOTS_CROISES',
+        modalite: 'EXERCICE',
+        etapeCode: widget.puzzleId!,
+        palier: lang == Lang.fr ? 4 : 3,
+      );
+    }
+    if (widget.level == null) return;
+    if (_awaitingRepeatCompletion) {
+      context.read<ProgressProvider>().awardRestartBonus();
+      _awaitingRepeatCompletion = false;
+    }
+    setState(() => _showCompletePopup = true);
   }
 
   @override
@@ -156,243 +208,278 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
       }
     }
     final totalWords = widget.crossword.placed.length;
+    final nextWordGroup = widget.level != null
+        ? nextWordGroupAfterCrossword(widget.level!)
+        : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF4A90E2), Color(0xFF2D6BBF)],
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AmaniMascot(
-                pose: allSolved ? AmaniPose.celebration : AmaniPose.curiosite,
-                size: AmaniSize.small,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF4A90E2), Color(0xFF2D6BBF)],
+                ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      allSolved
-                          ? (mc['doneTitle'] ?? '')
-                          : (mc['hintTitle'] ?? ''),
-                      style: AmaniTheme.titleStyle.copyWith(
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      allSolved
-                          ? (mc['doneBody'] ?? '')
-                          : (mc['hintBody'] ?? ''),
-                      style: AmaniTheme.bodyStyle.copyWith(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AmaniMascot(
+                    pose: allSolved
+                        ? AmaniPose.celebration
+                        : AmaniPose.curiosite,
+                    size: AmaniSize.small,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: LinearProgressIndicator(
-                              value: totalWords == 0
-                                  ? 0
-                                  : solvedWordsCount / totalWords,
-                              minHeight: 8,
-                              backgroundColor: Colors.white.withValues(
-                                alpha: 0.25,
-                              ),
-                              valueColor: const AlwaysStoppedAnimation(
-                                Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
                         Text(
-                          '$solvedWordsCount/$totalWords',
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
+                          allSolved
+                              ? (mc['doneTitle'] ?? '')
+                              : (mc['hintTitle'] ?? ''),
+                          style: AmaniTheme.titleStyle.copyWith(
+                            fontSize: 14,
                             color: Colors.white,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        Builder(
-          builder: (context) {
-            final gridWidth = widget.crossword.cols * cellSize + 16;
-            final gridHeight = widget.crossword.rows * cellSize + 16;
-            final viewportHeight = (MediaQuery.of(context).size.height * 0.5)
-                .clamp(200.0, 520.0);
-
-            return Container(
-              width: double.infinity,
-              height: gridHeight < viewportHeight ? gridHeight : viewportHeight,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: AmaniColors.textPrimary.withValues(alpha: 0.08),
-                ),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFFBF6EC), Color(0xFFF0E4CC)],
-                ),
-              ),
-              child: InteractiveViewer(
-                constrained: false,
-                boundaryMargin: const EdgeInsets.all(40),
-                minScale: 0.4,
-                maxScale: 2.5,
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: SizedBox(
-                    width: gridWidth,
-                    height: gridHeight,
-                    child: Column(
-                      children: [
-                        for (var row = 0; row < widget.crossword.rows; row++)
-                          Row(
-                            children: [
-                              for (
-                                var col = 0;
-                                col < widget.crossword.cols;
-                                col++
-                              )
-                                _buildCell(
-                                  row,
-                                  col,
-                                  cellSize,
-                                  activeCell,
-                                  solvedWordCellKeys,
-                                  style,
-                                ),
-                            ],
+                        const SizedBox(height: 2),
+                        Text(
+                          allSolved
+                              ? (mc['doneBody'] ?? '')
+                              : (mc['hintBody'] ?? ''),
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.8),
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
+                                child: LinearProgressIndicator(
+                                  value: totalWords == 0
+                                      ? 0
+                                      : solvedWordsCount / totalWords,
+                                  minHeight: 8,
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  valueColor: const AlwaysStoppedAnimation(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$solvedWordsCount/$totalWords',
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-        for (var i = 0; i < _clues.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Builder(
+            Builder(
               builder: (context) {
-                final clue = _clues[i];
-                final entry = widget.crossword.placed.firstWhere(
-                  (p) => p.word.id == clue.wordId && p.number == clue.number,
-                  orElse: () => widget.crossword.placed.first,
-                );
-                final isWordSolved = _wordCellKeys(
-                  entry,
-                ).every(_solved.contains);
-                final palette = _cluePalette[i % _cluePalette.length];
-                final badgeColor = isWordSolved
-                    ? const Color(0xFF8FBF6F)
-                    : palette.badge;
-                final textColor = isWordSolved
-                    ? const Color(0xFF4A7A30)
-                    : palette.text;
-                return GestureDetector(
-                  onTap: () => speech.speak(entry.word.fr, lang),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                final gridWidth = widget.crossword.cols * cellSize + 16;
+                final gridHeight = widget.crossword.rows * cellSize + 16;
+                final viewportHeight =
+                    (MediaQuery.of(context).size.height * 0.5).clamp(
+                      200.0,
+                      520.0,
+                    );
+
+                return Container(
+                  width: double.infinity,
+                  height: gridHeight < viewportHeight
+                      ? gridHeight
+                      : viewportHeight,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: AmaniColors.textPrimary.withValues(alpha: 0.08),
                     ),
-                    decoration: BoxDecoration(
-                      color: isWordSolved
-                          ? const Color(0x1F8FBF6F)
-                          : palette.bg,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x0D000000), blurRadius: 4),
-                      ],
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFFBF6EC), Color(0xFFF0E4CC)],
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: badgeColor,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: isWordSolved
-                              ? const Icon(
-                                  Icons.check_rounded,
-                                  size: 16,
-                                  color: Colors.white,
-                                )
-                              : Text(
-                                  '${clue.number}',
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                  ),
+                  child: InteractiveViewer(
+                    constrained: false,
+                    boundaryMargin: const EdgeInsets.all(40),
+                    minScale: 0.4,
+                    maxScale: 2.5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: SizedBox(
+                        width: gridWidth,
+                        height: gridHeight,
+                        child: Column(
+                          children: [
+                            for (
+                              var row = 0;
+                              row < widget.crossword.rows;
+                              row++
+                            )
+                              Row(
+                                children: [
+                                  for (
+                                    var col = 0;
+                                    col < widget.crossword.cols;
+                                    col++
+                                  )
+                                    _buildCell(
+                                      row,
+                                      col,
+                                      cellSize,
+                                      activeCell,
+                                      solvedWordCellKeys,
+                                      style,
+                                    ),
+                                ],
+                              ),
+                          ],
                         ),
-                        const SizedBox(width: 10),
-                        Icon(
-                          Icons.volume_up_rounded,
-                          size: 16,
-                          color: badgeColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          entry.direction == CrosswordDirection.across
-                              ? (mc['across'] ?? '')
-                              : (mc['down'] ?? ''),
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 );
               },
             ),
-          ),
+            const SizedBox(height: 20),
 
+            for (var i = 0; i < _clues.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Builder(
+                  builder: (context) {
+                    final clue = _clues[i];
+                    final entry = widget.crossword.placed.firstWhere(
+                      (p) =>
+                          p.word.id == clue.wordId && p.number == clue.number,
+                      orElse: () => widget.crossword.placed.first,
+                    );
+                    final isWordSolved = _wordCellKeys(
+                      entry,
+                    ).every(_solved.contains);
+                    final palette = _cluePalette[i % _cluePalette.length];
+                    final badgeColor = isWordSolved
+                        ? const Color(0xFF8FBF6F)
+                        : palette.badge;
+                    final textColor = isWordSolved
+                        ? const Color(0xFF4A7A30)
+                        : palette.text;
+                    return GestureDetector(
+                      onTap: () => speech.speak(entry.word.fr, lang),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isWordSolved
+                              ? const Color(0x1F8FBF6F)
+                              : palette.bg,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x0D000000), blurRadius: 4),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: badgeColor,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: isWordSolved
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    )
+                                  : Text(
+                                      '${clue.number}',
+                                      style: TextStyle(
+                                        fontFamily: kBalooFontFamily,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: 10),
+                            Icon(
+                              Icons.volume_up_rounded,
+                              size: 16,
+                              color: badgeColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              entry.direction == CrosswordDirection.across
+                                  ? (mc['across'] ?? '')
+                                  : (mc['down'] ?? ''),
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
         if (_justFinished && _mysteryWord != null)
           _buildCelebration(context, t, mc, lang, speech),
+        if (_showCompletePopup)
+          ExerciseCompletePopup(
+            onBackHome: () => context.go('/accueil'),
+            onNext: nextWordGroup != null
+                ? () => context.go('/cours/mots/${nextWordGroup.id}')
+                : null,
+            onRestart: () {
+              setState(() {
+                _solved.clear();
+                _justFinished = false;
+                _showCompletePopup = false;
+                _pointsAwarded = false;
+                _restartKey++;
+                _awaitingRepeatCompletion = true;
+              });
+            },
+          ),
       ],
     );
   }
@@ -471,6 +558,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
               ),
             ),
           LetterTraceCell(
+            key: ValueKey('$key-r$_restartKey'),
             letter: letter,
             size: cellSize,
             isActive: isActive,
@@ -597,7 +685,10 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
-                    onTap: () => setState(() => _justFinished = false),
+                    onTap: () {
+                      setState(() => _justFinished = false);
+                      _onFullySolved();
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(

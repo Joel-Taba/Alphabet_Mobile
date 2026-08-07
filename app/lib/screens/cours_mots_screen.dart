@@ -8,6 +8,7 @@ import '../services/sign_speech.dart';
 import '../data/word_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
 
@@ -128,25 +129,6 @@ class CoursMotsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => speech.speak(
-                      tFormat(cm['introSpeak'] ?? '', {'titre': groupTitle}),
-                      lang,
-                    ),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF4A90E2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.speaker_2_fill,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -200,7 +182,20 @@ class CoursMotsScreen extends StatelessWidget {
                     _WordCard(
                       word: word,
                       lang: lang,
-                      onSpeak: () => speech.speak(word.text(lang.name), lang),
+                      // Le mot n'est considéré "consulté" que lorsque l'enfant
+                      // en écoute la prononciation — pas dès l'affichage de
+                      // la carte, qui se produit pour tous les mots dès
+                      // l'ouverture de la page.
+                      onSpeak: () {
+                        speech.speak(word.text(lang.name), lang);
+                        context.read<ProgressProvider>().markCoursItemViewed(
+                          typeEtape: 'MOT',
+                          groupCode: groupId,
+                          itemCode: word.id,
+                          totalItems: group.words.length,
+                          palier: lang == Lang.fr ? 4 : 3,
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                   ],

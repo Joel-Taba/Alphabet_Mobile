@@ -2,8 +2,13 @@
 ///
 /// Découpe les 26 minuscules, 10 chiffres et 26 majuscules en petits groupes
 /// de 5 caractères (ou moins pour le dernier groupe d'une série), dans l'ordre
-/// exact où ils doivent être enseignés puis exercés sur le chemin en zigzag.
-/// Port fidèle de `src/data/palier2-groups.ts`.
+/// exact où ils doivent être enseignés puis exercés sur le chemin en zigzag :
+/// lettres a→e, chiffres 0→4, lettres f→j, chiffres 5→9, puis le reste des
+/// minuscules, puis les majuscules par groupes de 5.
+///
+/// En espagnol uniquement, "ñ"/"Ñ" s'insèrent juste après "n"/"N" (groupes l3
+/// et u3), l'espagnol étant la seule des trois langues de l'application à
+/// utiliser cette lettre. Port fidèle de `src/data/palier2-groups.ts`.
 enum ProgressionGroupKind { lettres, chiffres }
 
 class ProgressionGroup {
@@ -15,100 +20,239 @@ class ProgressionGroup {
   const ProgressionGroup(this.id, this.kind, this.chars, this.title);
 }
 
-const List<ProgressionGroup> PALIER2_GROUPS = [
+const List<ProgressionGroup> _baseGroups = [
   ProgressionGroup(
     'l1',
     ProgressionGroupKind.lettres,
     ['a', 'b', 'c', 'd', 'e'],
-    {'fr': 'Suivant', 'en': 'Letters a → e'},
+    {'fr': 'Lettres a → e', 'en': 'Letters a → e', 'es': 'Letras a → e'},
   ),
   ProgressionGroup(
     'd1',
     ProgressionGroupKind.chiffres,
     ['0', '1', '2', '3', '4'],
-    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4'},
+    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4', 'es': 'Números 0 → 4'},
   ),
   ProgressionGroup(
     'l2',
     ProgressionGroupKind.lettres,
     ['f', 'g', 'h', 'i', 'j'],
-    {'fr': 'Lettres f → j', 'en': 'Letters f → j'},
+    {'fr': 'Lettres f → j', 'en': 'Letters f → j', 'es': 'Letras f → j'},
   ),
   ProgressionGroup(
     'd2',
     ProgressionGroupKind.chiffres,
     ['5', '6', '7', '8', '9'],
-    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9'},
+    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9', 'es': 'Números 5 → 9'},
   ),
   ProgressionGroup(
     'l3',
     ProgressionGroupKind.lettres,
     ['k', 'l', 'm', 'n', 'o'],
-    {'fr': 'Lettres k → o', 'en': 'Letters k → o'},
+    {'fr': 'Lettres k → o', 'en': 'Letters k → o', 'es': 'Letras k → o'},
   ),
   ProgressionGroup(
     'l4',
     ProgressionGroupKind.lettres,
     ['p', 'q', 'r', 's', 't'],
-    {'fr': 'Lettres p → t', 'en': 'Letters p → t'},
+    {'fr': 'Lettres p → t', 'en': 'Letters p → t', 'es': 'Letras p → t'},
   ),
   ProgressionGroup(
     'l5',
     ProgressionGroupKind.lettres,
     ['u', 'v', 'w', 'x', 'y'],
-    {'fr': 'Lettres u → y', 'en': 'Letters u → y'},
+    {'fr': 'Lettres u → y', 'en': 'Letters u → y', 'es': 'Letras u → y'},
   ),
   ProgressionGroup(
     'l6',
     ProgressionGroupKind.lettres,
     ['z'],
-    {'fr': 'Lettre z', 'en': 'Letter z'},
+    {'fr': 'Lettre z', 'en': 'Letter z', 'es': 'Letra z'},
   ),
   ProgressionGroup(
     'u1',
     ProgressionGroupKind.lettres,
     ['A', 'B', 'C', 'D', 'E'],
-    {'fr': 'Majuscules A → E', 'en': 'Uppercase A → E'},
+    {
+      'fr': 'Majuscules A → E',
+      'en': 'Uppercase A → E',
+      'es': 'Mayúsculas A → E',
+    },
   ),
   ProgressionGroup(
     'u2',
     ProgressionGroupKind.lettres,
     ['F', 'G', 'H', 'I', 'J'],
-    {'fr': 'Majuscules F → J', 'en': 'Uppercase F → J'},
+    {
+      'fr': 'Majuscules F → J',
+      'en': 'Uppercase F → J',
+      'es': 'Mayúsculas F → J',
+    },
   ),
   ProgressionGroup(
     'u3',
     ProgressionGroupKind.lettres,
     ['K', 'L', 'M', 'N', 'O'],
-    {'fr': 'Majuscules K → O', 'en': 'Uppercase K → O'},
+    {
+      'fr': 'Majuscules K → O',
+      'en': 'Uppercase K → O',
+      'es': 'Mayúsculas K → O',
+    },
   ),
   ProgressionGroup(
     'u4',
     ProgressionGroupKind.lettres,
     ['P', 'Q', 'R', 'S', 'T'],
-    {'fr': 'Majuscules P → T', 'en': 'Uppercase P → T'},
+    {
+      'fr': 'Majuscules P → T',
+      'en': 'Uppercase P → T',
+      'es': 'Mayúsculas P → T',
+    },
   ),
   ProgressionGroup(
     'u5',
     ProgressionGroupKind.lettres,
     ['U', 'V', 'W', 'X', 'Y'],
-    {'fr': 'Majuscules U → Y', 'en': 'Uppercase U → Y'},
+    {
+      'fr': 'Majuscules U → Y',
+      'en': 'Uppercase U → Y',
+      'es': 'Mayúsculas U → Y',
+    },
   ),
   ProgressionGroup(
     'u6',
     ProgressionGroupKind.lettres,
     ['Z'],
-    {'fr': 'Majuscule Z', 'en': 'Uppercase Z'},
+    {'fr': 'Majuscule Z', 'en': 'Uppercase Z', 'es': 'Mayúscula Z'},
   ),
 ];
 
-final Map<String, ProgressionGroup> PALIER2_GROUP_MAP = {
-  for (final g in PALIER2_GROUPS) g.id: g,
+/// Variante espagnole : "ñ"/"Ñ" insérés juste après "n"/"N" dans leurs groupes respectifs.
+const List<ProgressionGroup> _esGroups = [
+  ProgressionGroup(
+    'l1',
+    ProgressionGroupKind.lettres,
+    ['a', 'b', 'c', 'd', 'e'],
+    {'fr': 'Lettres a → e', 'en': 'Letters a → e', 'es': 'Letras a → e'},
+  ),
+  ProgressionGroup(
+    'd1',
+    ProgressionGroupKind.chiffres,
+    ['0', '1', '2', '3', '4'],
+    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4', 'es': 'Números 0 → 4'},
+  ),
+  ProgressionGroup(
+    'l2',
+    ProgressionGroupKind.lettres,
+    ['f', 'g', 'h', 'i', 'j'],
+    {'fr': 'Lettres f → j', 'en': 'Letters f → j', 'es': 'Letras f → j'},
+  ),
+  ProgressionGroup(
+    'd2',
+    ProgressionGroupKind.chiffres,
+    ['5', '6', '7', '8', '9'],
+    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9', 'es': 'Números 5 → 9'},
+  ),
+  ProgressionGroup(
+    'l3',
+    ProgressionGroupKind.lettres,
+    ['k', 'l', 'm', 'n', 'ñ', 'o'],
+    {'fr': 'Lettres k → o', 'en': 'Letters k → o', 'es': 'Letras k → o'},
+  ),
+  ProgressionGroup(
+    'l4',
+    ProgressionGroupKind.lettres,
+    ['p', 'q', 'r', 's', 't'],
+    {'fr': 'Lettres p → t', 'en': 'Letters p → t', 'es': 'Letras p → t'},
+  ),
+  ProgressionGroup(
+    'l5',
+    ProgressionGroupKind.lettres,
+    ['u', 'v', 'w', 'x', 'y'],
+    {'fr': 'Lettres u → y', 'en': 'Letters u → y', 'es': 'Letras u → y'},
+  ),
+  ProgressionGroup(
+    'l6',
+    ProgressionGroupKind.lettres,
+    ['z'],
+    {'fr': 'Lettre z', 'en': 'Letter z', 'es': 'Letra z'},
+  ),
+  ProgressionGroup(
+    'u1',
+    ProgressionGroupKind.lettres,
+    ['A', 'B', 'C', 'D', 'E'],
+    {
+      'fr': 'Majuscules A → E',
+      'en': 'Uppercase A → E',
+      'es': 'Mayúsculas A → E',
+    },
+  ),
+  ProgressionGroup(
+    'u2',
+    ProgressionGroupKind.lettres,
+    ['F', 'G', 'H', 'I', 'J'],
+    {
+      'fr': 'Majuscules F → J',
+      'en': 'Uppercase F → J',
+      'es': 'Mayúsculas F → J',
+    },
+  ),
+  ProgressionGroup(
+    'u3',
+    ProgressionGroupKind.lettres,
+    ['K', 'L', 'M', 'N', 'Ñ', 'O'],
+    {
+      'fr': 'Majuscules K → O',
+      'en': 'Uppercase K → O',
+      'es': 'Mayúsculas K → O',
+    },
+  ),
+  ProgressionGroup(
+    'u4',
+    ProgressionGroupKind.lettres,
+    ['P', 'Q', 'R', 'S', 'T'],
+    {
+      'fr': 'Majuscules P → T',
+      'en': 'Uppercase P → T',
+      'es': 'Mayúsculas P → T',
+    },
+  ),
+  ProgressionGroup(
+    'u5',
+    ProgressionGroupKind.lettres,
+    ['U', 'V', 'W', 'X', 'Y'],
+    {
+      'fr': 'Majuscules U → Y',
+      'en': 'Uppercase U → Y',
+      'es': 'Mayúsculas U → Y',
+    },
+  ),
+  ProgressionGroup(
+    'u6',
+    ProgressionGroupKind.lettres,
+    ['Z'],
+    {'fr': 'Majuscule Z', 'en': 'Uppercase Z', 'es': 'Mayúscula Z'},
+  ),
+];
+
+/// Groupes de progression du Palier 2, selon la langue active
+/// ("ñ"/"Ñ" en espagnol uniquement). [langName] attend `Lang.name` ('fr' |
+/// 'en' | 'es').
+List<ProgressionGroup> getPalier2Groups(String langName) =>
+    langName == 'es' ? _esGroups : _baseGroups;
+
+final Map<String, Map<String, ProgressionGroup>> _groupMaps = {
+  'fr': {for (final g in _baseGroups) g.id: g},
+  'en': {for (final g in _baseGroups) g.id: g},
+  'es': {for (final g in _esGroups) g.id: g},
 };
 
+Map<String, ProgressionGroup> getPalier2GroupMap(String langName) =>
+    _groupMaps[langName] ?? _groupMaps['fr']!;
+
 /// Retrouve le groupe de progression auquel appartient un caractère donné.
-ProgressionGroup? findGroupForChar(String char) {
-  for (final g in PALIER2_GROUPS) {
+ProgressionGroup? findGroupForChar(String char, [String langName = 'fr']) {
+  for (final g in getPalier2Groups(langName)) {
     if (g.chars.contains(char)) return g;
   }
   return null;

@@ -4,6 +4,21 @@ import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
+import '../services/progress_service.dart';
+import '../services/backend_sync_service.dart';
+
+/// Avatars disponibles pour représenter un profil réel venu du back-end (qui
+/// ne connaît aucune notion d'"animal" — seuls nom et score existent côté
+/// serveur). Choisi de façon stable par profil via son nom, pour qu'un même
+/// profil garde toujours le même avatar d'un rafraîchissement à l'autre.
+const _backendAvatars = [
+  'renard',
+  'hibou',
+  'ecureuil',
+  'herisson',
+  'panda',
+  'biche',
+];
 
 class CommunauteScreen extends StatefulWidget {
   const CommunauteScreen({super.key});
@@ -14,11 +29,15 @@ class CommunauteScreen extends StatefulWidget {
 
 class _CommunauteScreenState extends State<CommunauteScreen> {
   String? _photoBase64;
+  String? _storedName;
+  List<ClassementEntryDto> _realEntries = [];
 
   @override
   void initState() {
     super.initState();
     _loadPhoto();
+    _loadName();
+    _loadClassement();
   }
 
   Future<void> _loadPhoto() async {
@@ -26,11 +45,25 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
     if (mounted) setState(() => _photoBase64 = photo);
   }
 
+  Future<void> _loadName() async {
+    final name = await getStoredName();
+    if (mounted) setState(() => _storedName = name);
+  }
+
+  /// Ajoute les vrais profils du back-end (voir `BackendSyncService`) au
+  /// classement fictif de remplissage, en best-effort — échec réseau ou
+  /// backend injoignable laisse simplement `_realEntries` vide.
+  Future<void> _loadClassement() async {
+    final entries = await context.read<BackendSyncService>().fetchClassement();
+    if (mounted) setState(() => _realEntries = entries);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
+    final totalPoints = context.watch<ProgressProvider>().stats.totalPoints;
 
-    // Hardcoded mock data from web version
+    // Hardcoded mock data from web version, "moi" overridden with real stats
     final profiles = [
       {
         'id': '1',
@@ -48,9 +81,11 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
       },
       {
         'id': '3',
-        'prenom': 'Lila',
+        'prenom': (_storedName != null && _storedName!.trim().isNotEmpty)
+            ? _storedName!.trim()
+            : 'Lila',
         'animal': 'renard',
-        'score': 150,
+        'score': totalPoints,
         'moi': true,
       },
       {
@@ -75,6 +110,23 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
         'moi': false,
       },
     ];
+
+    // Vrais profils du back-end, en plus des profils fictifs de remplissage
+    // (voir BackendSyncService.fetchClassement) — "moi" en est exclu, son
+    // score affiché reste celui calculé localement ci-dessus.
+    final moiNom = _storedName?.trim().toLowerCase();
+    for (final entry in _realEntries) {
+      if (entry.nom.trim().toLowerCase() == moiNom) continue;
+      profiles.add({
+        'id': 'backend-${entry.nom}',
+        'prenom': entry.nom,
+        'animal':
+            _backendAvatars[entry.nom.hashCode.abs() % _backendAvatars.length],
+        'score': entry.score,
+        'moi': false,
+      });
+    }
+    profiles.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
     return Scaffold(
       backgroundColor: AmaniColors.background,

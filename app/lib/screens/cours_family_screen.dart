@@ -6,10 +6,11 @@ import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
+import '../services/progress_service.dart';
 import '../data/sign_exercise_catalog.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/cahier_frame.dart';
-import '../widgets/amani_mascot.dart';
+import '../hooks/use_animation_speed.dart';
 
 const Map<String, Color> _familyColor = {
   'point': AmaniColors.textPrimary,
@@ -42,6 +43,19 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
   late List<dynamic> _entries;
   dynamic _selectedSign;
   late AnimationController _controller;
+  late int _animDurationMs;
+
+  String? get _prevFamily {
+    final idx = FAMILY_ORDER.indexOf(widget.family);
+    return idx > 0 ? FAMILY_ORDER[idx - 1] : null;
+  }
+
+  String? get _nextFamily {
+    final idx = FAMILY_ORDER.indexOf(widget.family);
+    return idx >= 0 && idx < FAMILY_ORDER.length - 1
+        ? FAMILY_ORDER[idx + 1]
+        : null;
+  }
 
   @override
   void initState() {
@@ -50,9 +64,13 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
         .where((e) => e['family'] == widget.family)
         .toList();
     _selectedSign = _entries.isNotEmpty ? _entries.first : null;
+    _animDurationMs = scaleDuration(
+      4000,
+      context.read<AnimationSpeedProvider>().speed,
+    );
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4000),
+      duration: Duration(milliseconds: _animDurationMs),
     );
     _playAnimation();
   }
@@ -66,6 +84,15 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
     context.read<SignSpeechService>().speak(
       _selectedSign['consigne'][lang.name] ?? '',
       lang,
+    );
+    // Les points du cours ne sont attribués qu'une fois TOUTES les variantes
+    // de la famille consultées — jamais dès l'ouverture du cours.
+    context.read<ProgressProvider>().markCoursItemViewed(
+      typeEtape: 'SIGNE',
+      groupCode: widget.family,
+      itemCode: _selectedSign['id'] as String,
+      totalItems: _entries.length,
+      palier: 1,
     );
   }
 
@@ -134,27 +161,6 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => speech.speak(
-                      tFormat(coursFamily['intro'] ?? '', {'title': title}),
-                      lang,
-                    ),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Color(0x1A000000), blurRadius: 6),
-                        ],
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.speaker_2_fill,
-                        size: 18,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -202,6 +208,12 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                         (_selectedSign['startXY'] as List)[1]
                                             .toDouble(),
                                       ),
+                                      endXY: Offset(
+                                        (_selectedSign['endXY'] as List)[0]
+                                            .toDouble(),
+                                        (_selectedSign['endXY'] as List)[1]
+                                            .toDouble(),
+                                      ),
                                       strokeColor: Color(
                                         int.parse(
                                           (_selectedSign['strokeColor']
@@ -210,6 +222,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                         ),
                                       ),
                                       progress: _controller.value,
+                                      animDurationMs: _animDurationMs,
                                       family:
                                           _selectedSign['family'] as String? ??
                                           '',
@@ -396,60 +409,96 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
                   const SizedBox(height: 24),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const AmaniMascot(
-                        pose: AmaniPose.invitation,
-                        size: AmaniSize.small,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => context.push(
-                            '/exercice-liste?family=${widget.family}',
-                          ),
+                      if (_prevFamily != null)
+                        GestureDetector(
+                          onTap: () => context.go('/cours/${_prevFamily!}'),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
-                              color: AmaniColors.secondary,
-                              borderRadius: BorderRadius.circular(18),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: AmaniColors.textPrimary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Color(0x338FBF6F),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4),
+                                  color: Color(0x0D000000),
+                                  blurRadius: 6,
                                 ),
                               ],
                             ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    tFormat(
-                                      coursFamily['passExercices'] ?? '',
-                                      {'title': title},
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
                                 const Icon(
-                                  CupertinoIcons.chevron_right,
-                                  color: Colors.white,
-                                  size: 20,
+                                  CupertinoIcons.chevron_left,
+                                  size: 16,
+                                  color: AmaniColors.textPrimary,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  t['common']?['previous'] ?? 'Précédent',
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: AmaniColors.textPrimary,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
+                        )
+                      else
+                        const SizedBox(),
+                      if (_nextFamily != null)
+                        GestureDetector(
+                          onTap: () => context.go('/cours/${_nextFamily!}'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x22000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  t['common']?['next'] ?? 'Suivant',
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  CupertinoIcons.chevron_right,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        const SizedBox(),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -519,15 +568,24 @@ class _PillButton extends StatelessWidget {
 class _StrokeAnimPainter extends CustomPainter {
   final String pathD;
   final Offset startXY;
+  final Offset endXY;
   final Color strokeColor;
   final double progress;
   final String family;
 
+  /// Durée totale de l'animation, déjà mise à l'échelle selon le réglage de
+  /// vitesse (voir AnimationController dans _CoursFamilyScreenState) — sert
+  /// à faire alterner la pastille départ/arrivée fusionnée sur un rythme
+  /// stable en temps réel plutôt qu'en fraction de progression.
+  final int animDurationMs;
+
   _StrokeAnimPainter({
     required this.pathD,
     required this.startXY,
+    required this.endXY,
     required this.strokeColor,
     required this.progress,
+    required this.animDurationMs,
     this.family = '',
   });
 
@@ -589,17 +647,48 @@ class _StrokeAnimPainter extends CustomPainter {
       }
     }
 
-    // Pastille de départ (disparaît en fin de tracé)
-    if (progress <= 0.90) {
-      canvas.drawCircle(startXY, 3, Paint()..color = const Color(0xFF8FBF6F));
-      canvas.drawCircle(
-        startXY,
-        3,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
-      );
+    // Pastille(s) départ/arrivée (disparaissent en fin de tracé)
+    final startEndMerged = (startXY - endXY).distance < 0.5;
+    if (startEndMerged) {
+      if (progress <= 0.98) {
+        final elapsedMs = progress * animDurationMs;
+        final cyclePos = (elapsedMs % 2000) / 2000;
+        final markerColor = cyclePos < 0.5
+            ? const Color(0xFF8FBF6F)
+            : const Color(0xFFE05252);
+        canvas.drawCircle(startXY, 3, Paint()..color = markerColor);
+        canvas.drawCircle(
+          startXY,
+          3,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+      }
+    } else {
+      if (progress <= 0.90) {
+        canvas.drawCircle(startXY, 3, Paint()..color = const Color(0xFF8FBF6F));
+        canvas.drawCircle(
+          startXY,
+          3,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+      }
+      if (progress <= 0.98) {
+        canvas.drawCircle(endXY, 3, Paint()..color = const Color(0xFFE05252));
+        canvas.drawCircle(
+          endXY,
+          3,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+      }
     }
 
     // Stylet

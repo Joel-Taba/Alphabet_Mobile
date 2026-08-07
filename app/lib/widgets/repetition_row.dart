@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import '../theme/amani_theme.dart';
@@ -10,6 +11,10 @@ class TraceableEntry {
   final String id;
   final String pathD;
   final Offset startXY;
+
+  /// Où le tracé s'arrête. Null : seule la pastille de départ est affichée
+  /// (comportement historique — utilisé pour les étapes de lettre).
+  final Offset? endXY;
   final Color strokeColor;
 
   /// Le point se remplit (disque) plutôt que de rester un simple contour.
@@ -19,6 +24,7 @@ class TraceableEntry {
     required this.id,
     required this.pathD,
     required this.startXY,
+    this.endXY,
     required this.strokeColor,
     this.family = '',
   });
@@ -38,9 +44,13 @@ class RepetitionRow extends StatefulWidget {
   final VoidCallback onSpeak;
   final Widget? badge;
   final int repetitions;
-  final double tolerance;
+  final num tolerance;
   final String doneLabel;
   final VoidCallback? onAllDone;
+
+  /// Étape verrouillée tant que la précédente n'est pas réussie
+  /// (reproduction dans l'ordre des signes d'une lettre).
+  final bool locked;
 
   const RepetitionRow({
     super.key,
@@ -52,6 +62,7 @@ class RepetitionRow extends StatefulWidget {
     required this.tolerance,
     required this.doneLabel,
     this.onAllDone,
+    this.locked = false,
   });
 
   @override
@@ -108,141 +119,162 @@ class _RepetitionRowState extends State<RepetitionRow> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _allDone
-              ? AmaniColors.secondary.withValues(alpha: 0.6)
-              : AmaniColors.textPrimary.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _allDone ? const Color(0x2E8FBF6F) : const Color(0x144A3B2A),
-            blurRadius: _allDone ? 16 : 8,
-            offset: const Offset(0, 3),
+    return Opacity(
+      opacity: widget.locked ? 0.5 : 1,
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _allDone
+                ? AmaniColors.secondary.withValues(alpha: 0.6)
+                : AmaniColors.textPrimary.withValues(alpha: 0.1),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // En-tête
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: AmaniColors.surface,
-              border: Border(
-                bottom: BorderSide(
-                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+          boxShadow: [
+            BoxShadow(
+              color: _allDone
+                  ? const Color(0x2E8FBF6F)
+                  : const Color(0x144A3B2A),
+              blurRadius: _allDone ? 16 : 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // En-tête
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: AmaniColors.surface,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                  ),
                 ),
               ),
-            ),
-            child: Row(
-              children: [
-                if (widget.badge != null) ...[
-                  widget.badge!,
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AmaniColors.textPrimary,
-                    ),
-                  ),
-                ),
-                if (_allDone)
-                  Text(
-                    '✓ ${widget.doneLabel}',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AmaniColors.secondary,
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: widget.onSpeak,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AmaniColors.primary.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.volume_up_rounded,
-                      size: 16,
-                      color: AmaniColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Zone du cahier, lignes réglées façon Seyès
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: CustomPaint(
-              painter: _SeyesLinesPainter(),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    for (int i = 0; i < _occurrences.length; i++) ...[
-                      if (i > 0) const SizedBox(width: 10),
-                      _OccurrenceCanvas(
-                        entry: widget.entry,
-                        state: _occurrences[i],
-                        isActive: i == _activeIndex && !_allDone,
-                        onSuccess: () => _handleSuccess(i),
-                        onRetry: () => _handleRetry(i),
-                        w: _occW,
-                        h: _occH,
-                        tolerancePct: widget.tolerance,
+              child: Row(
+                children: [
+                  if (widget.badge != null) ...[
+                    widget.badge!,
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AmaniColors.textPrimary,
                       ),
-                    ],
-                    const SizedBox(width: 12),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (int i = 0; i < _occurrences.length; i++)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color:
-                                    _occurrences[i].status ==
-                                        OccurrenceStatus.success
-                                    ? AmaniColors.secondary
-                                    : i == _activeIndex
-                                    ? AmaniColors.primary
-                                    : AmaniColors.textPrimary.withValues(
-                                        alpha: 0.12,
-                                      ),
+                    ),
+                  ),
+                  if (_allDone)
+                    Text(
+                      '✓ ${widget.doneLabel}',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AmaniColors.secondary,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  if (widget.locked)
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lock_rounded,
+                        size: 15,
+                        color: AmaniColors.textSecondary,
+                      ),
+                    )
+                  else
+                    GestureDetector(
+                      onTap: widget.onSpeak,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AmaniColors.primary.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.volume_up_rounded,
+                          size: 16,
+                          color: AmaniColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Zone du cahier, lignes réglées façon Seyès
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: CustomPaint(
+                painter: _SeyesLinesPainter(),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      for (int i = 0; i < _occurrences.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 10),
+                        _OccurrenceCanvas(
+                          entry: widget.entry,
+                          state: _occurrences[i],
+                          isActive:
+                              i == _activeIndex && !_allDone && !widget.locked,
+                          onSuccess: () => _handleSuccess(i),
+                          onRetry: () => _handleRetry(i),
+                          w: _occW,
+                          h: _occH,
+                          tolerancePct: widget.tolerance,
+                        ),
+                      ],
+                      const SizedBox(width: 12),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (int i = 0; i < _occurrences.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      _occurrences[i].status ==
+                                          OccurrenceStatus.success
+                                      ? AmaniColors.secondary
+                                      : i == _activeIndex
+                                      ? AmaniColors.primary
+                                      : AmaniColors.textPrimary.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -277,7 +309,7 @@ class _OccurrenceCanvas extends StatefulWidget {
   final VoidCallback onRetry;
   final double w;
   final double h;
-  final double tolerancePct;
+  final num tolerancePct;
 
   const _OccurrenceCanvas({
     required this.entry,
@@ -298,12 +330,29 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   final List<Offset> _userPoints = [];
   List<Offset> _refPoints = [];
   late OccurrenceStatus _localStatus;
+  Timer? _mergeBlinkTimer;
+  bool _mergeGreenPhase = true;
+
+  bool get _startEndMerged {
+    final end = widget.entry.endXY;
+    if (end == null) return false;
+    return (widget.entry.startXY - end).distance < 0.5;
+  }
 
   @override
   void initState() {
     super.initState();
     _localStatus = widget.state.status;
     _refPoints = sampleSvgPath(widget.entry.pathD, 30);
+    _maybeStartMergeBlink();
+  }
+
+  void _maybeStartMergeBlink() {
+    if (!_startEndMerged) return;
+    _mergeBlinkTimer = Timer.periodic(const Duration(milliseconds: 1000), (_) {
+      if (!mounted) return;
+      setState(() => _mergeGreenPhase = !_mergeGreenPhase);
+    });
   }
 
   @override
@@ -315,6 +364,12 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     if (oldWidget.entry.pathD != widget.entry.pathD) {
       _refPoints = sampleSvgPath(widget.entry.pathD, 30);
     }
+  }
+
+  @override
+  void dispose() {
+    _mergeBlinkTimer?.cancel();
+    super.dispose();
   }
 
   double get _scale => (widget.w < widget.h ? widget.w : widget.h) / 200.0;
@@ -342,7 +397,7 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
 
   void _onPanEnd(DragEndDetails details) {
     if (_localStatus != OccurrenceStatus.drawing) return;
-    final tolerancePx = (widget.tolerancePct) * 200;
+    final tolerancePx = (widget.tolerancePct / 100) * 200;
     final result = validateTrace(_userPoints, _refPoints, tolerancePx);
     if (result.valid) {
       setState(() => _localStatus = OccurrenceStatus.success);
@@ -395,6 +450,7 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
               refPoints: _refPoints,
               scale: _scale,
               origin: _origin,
+              mergeGreenPhase: _mergeGreenPhase,
             ),
           ),
           GestureDetector(
@@ -463,6 +519,7 @@ class _OccurrencePainter extends CustomPainter {
   final List<Offset> refPoints;
   final double scale;
   final Offset origin;
+  final bool mergeGreenPhase;
 
   _OccurrencePainter({
     required this.entry,
@@ -471,6 +528,7 @@ class _OccurrencePainter extends CustomPainter {
     required this.refPoints,
     required this.scale,
     required this.origin,
+    this.mergeGreenPhase = true,
   });
 
   @override
@@ -502,20 +560,53 @@ class _OccurrencePainter extends CustomPainter {
       canvas.drawPath(guidePath, guidePaint);
       canvas.restore();
 
-      // Pastille de départ
+      // Pastille(s) départ/arrivée
       final startPt = Offset(
         entry.startXY.dx * scale + origin.dx,
         entry.startXY.dy * scale + origin.dy,
       );
-      canvas.drawCircle(startPt, 5, Paint()..color = const Color(0xFF5BAA6A));
-      canvas.drawCircle(
-        startPt,
-        5,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
-      );
+      final end = entry.endXY;
+      final merged = end != null && (entry.startXY - end).distance < 0.5;
+
+      if (merged) {
+        final markerColor = mergeGreenPhase
+            ? const Color(0xFF5BAA6A)
+            : const Color(0xFFE05252);
+        canvas.drawCircle(startPt, 5, Paint()..color = markerColor);
+        canvas.drawCircle(
+          startPt,
+          5,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+      } else {
+        canvas.drawCircle(startPt, 5, Paint()..color = const Color(0xFF5BAA6A));
+        canvas.drawCircle(
+          startPt,
+          5,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+        if (end != null) {
+          final endPt = Offset(
+            end.dx * scale + origin.dx,
+            end.dy * scale + origin.dy,
+          );
+          canvas.drawCircle(endPt, 5, Paint()..color = const Color(0xFFE05252));
+          canvas.drawCircle(
+            endPt,
+            5,
+            Paint()
+              ..color = Colors.white
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1,
+          );
+        }
+      }
     }
 
     if (status == OccurrenceStatus.success && refPoints.length >= 2) {

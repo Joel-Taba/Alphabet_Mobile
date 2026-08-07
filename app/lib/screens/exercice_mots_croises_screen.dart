@@ -136,7 +136,11 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: CrosswordPlay(crossword: crossword),
+                child: CrosswordPlay(
+                  crossword: crossword,
+                  puzzleId: puzzleId,
+                  level: level,
+                ),
               ),
             ),
           ],

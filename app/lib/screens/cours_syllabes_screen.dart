@@ -8,6 +8,7 @@ import '../services/sign_speech.dart';
 import '../data/syllable_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/progress_service.dart';
 import '../widgets/letter_trace_cell.dart';
 
 /// Cours du Palier "Les syllabes" : apprend la formation consonne + voyelle
@@ -26,11 +27,55 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
   int _syllableIdx = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onSyllableActivated());
+  }
+
+  @override
   void didUpdateWidget(covariant CoursSyllabesScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.consonant != widget.consonant) {
       setState(() => _syllableIdx = 0);
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _onSyllableActivated(),
+      );
     }
+  }
+
+  /// Parle la syllabe active et journalise sa consultation — les points du
+  /// cours ne sont attribués qu'une fois toutes les syllabes de la consonne
+  /// consultées.
+  void _onSyllableActivated() {
+    final group = findSyllableGroupForConsonant(widget.consonant);
+    if (group == null || !mounted) return;
+    final syllables = group['syllables'] as List;
+    final idx = _syllableIdx.clamp(0, syllables.length - 1);
+    final current = syllables[idx] as Map<String, dynamic>;
+    final lang = context.read<LanguageProvider>().lang;
+    final t = context.read<LanguageProvider>().t;
+    final cs = t['coursSyllabes'] as Map<String, dynamic>? ?? {};
+
+    context.read<SignSpeechService>().speak(
+      tFormat(cs['speakFormation'] ?? '', {
+        'consonant': current['consonant'],
+        'vowel': current['vowel'],
+        'syllable': current['syllable'],
+      }),
+      lang,
+    );
+    context.read<ProgressProvider>().markCoursItemViewed(
+      typeEtape: 'SYLLABE',
+      groupCode: widget.consonant,
+      itemCode: current['syllable'] as String,
+      totalItems: syllables.length,
+      palier: 3,
+    );
+  }
+
+  void _selectSyllable(int i) {
+    setState(() => _syllableIdx = i);
+    _onSyllableActivated();
   }
 
   @override
@@ -103,17 +148,6 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
         .whereType<dynamic>()
         .toList();
 
-    void speakFormation() {
-      speech.speak(
-        tFormat(cs['speakFormation'] ?? '', {
-          'consonant': current['consonant'],
-          'vowel': current['vowel'],
-          'syllable': current['syllable'],
-        }),
-        lang,
-      );
-    }
-
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
@@ -167,22 +201,6 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: speakFormation,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF4A90E2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.speaker_2_fill,
-                        size: 18,
-                        color: Colors.white,
-                      ),
                     ),
                   ),
                 ],
@@ -329,7 +347,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                     children: [
                       for (var i = 0; i < syllables.length; i++)
                         GestureDetector(
-                          onTap: () => setState(() => _syllableIdx = i),
+                          onTap: () => _selectSyllable(i),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
                             padding: const EdgeInsets.symmetric(

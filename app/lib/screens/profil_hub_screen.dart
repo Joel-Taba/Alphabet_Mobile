@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -6,7 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
+import '../services/progress_service.dart';
+import '../services/backend_sync_service.dart';
 import '../services/sign_speech.dart';
+import '../hooks/use_exercise_settings.dart';
+import '../hooks/use_animation_speed.dart';
 import '../widgets/amani_mascot.dart';
 import '../hooks/use_writing_style.dart';
 import '../utils/pick_profile_photo.dart';
@@ -245,8 +250,9 @@ class _UnlockedProfile extends StatefulWidget {
 class _UnlockedProfileState extends State<_UnlockedProfile> {
   bool _soundEnabled = true;
   double _volume = 0.85;
-  int _repetitions = 3;
-  double _tolerance = 0.10;
+  int _repetitions = kDefaultRepetitions;
+  int _tolerance = kDefaultTolerance;
+  int _evaluationDuration = kDefaultEvaluationDuration;
   VoiceGender _voiceGender = VoiceGender.femme;
   String? _photoBase64;
 
@@ -286,8 +292,12 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     setState(() {
       _soundEnabled = prefs.getBool('amani_setting_sound') ?? true;
       _volume = prefs.getDouble('amani_setting_volume') ?? 0.85;
-      _repetitions = prefs.getInt('amani_setting_repetitions') ?? 3;
-      _tolerance = prefs.getDouble('amani_setting_tolerance') ?? 0.10;
+      _repetitions =
+          prefs.getInt(kRepetitionsStorageKey) ?? kDefaultRepetitions;
+      _tolerance = prefs.getInt(kToleranceStorageKey) ?? kDefaultTolerance;
+      _evaluationDuration =
+          prefs.getInt(kEvaluationDurationStorageKey) ??
+          kDefaultEvaluationDuration;
       _voiceGender = gender;
       _photoBase64 = photo;
     });
@@ -300,35 +310,58 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     if (mounted) setState(() => _photoBase64 = encoded);
   }
 
+  Future<void> _removePhoto() async {
+    await removeStoredPhoto();
+    setState(() => _photoBase64 = null);
+  }
+
   Future<void> _updateSound(bool enabled) async {
+    final backend = context.read<BackendSyncService>();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('amani_setting_sound', enabled);
     setState(() => _soundEnabled = enabled);
+    unawaited(backend.pushReglages(sonActif: enabled));
   }
 
   Future<void> _updateVoiceGender(VoiceGender gender) async {
+    // Pas d'équivalent côté back-end (aucun champ "voix" sur le profil) :
+    // réglage volontairement local uniquement.
     await setStoredVoiceGender(gender);
     setState(() => _voiceGender = gender);
   }
 
   Future<void> _updateVolume(double vol) async {
+    final backend = context.read<BackendSyncService>();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('amani_setting_volume', vol);
     setState(() => _volume = vol);
+    unawaited(backend.pushReglages(volume: vol));
   }
 
   Future<void> _updateRepetitions(int value) async {
-    final clamped = value.clamp(1, 5);
+    final backend = context.read<BackendSyncService>();
+    final clamped = value.clamp(kMinRepetitions, kMaxRepetitions);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('amani_setting_repetitions', clamped);
+    await prefs.setInt(kRepetitionsStorageKey, clamped);
     setState(() => _repetitions = clamped);
+    unawaited(backend.pushReglages(repetitions: clamped));
   }
 
-  Future<void> _updateTolerance(double value) async {
-    final clamped = value.clamp(0.05, 0.30);
+  Future<void> _updateEvaluationDuration(int value) async {
+    final clamped = value.clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('amani_setting_tolerance', clamped);
+    await prefs.setInt(kEvaluationDurationStorageKey, clamped);
+    setState(() => _evaluationDuration = clamped);
+  }
+
+  Future<void> _updateTolerance(int value) async {
+    final backend = context.read<BackendSyncService>();
+    final clamped = value.clamp(kMinTolerance, kMaxTolerance);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(kToleranceStorageKey, clamped);
     setState(() => _tolerance = clamped);
+    // Le back-end attend une fraction (0.05-0.30), pas un pourcentage brut.
+    unawaited(backend.pushReglages(tolerance: clamped / 100.0));
   }
 
   Future<void> _handleSavePassword() async {
@@ -340,8 +373,19 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       setState(() => _passwordFeedback = _PasswordFeedback.mismatch);
       return;
     }
-    await setStoredPassword(_newPasswordCtrl.text);
+    final backend = context.read<BackendSyncService>();
+    final nouveau = _newPasswordCtrl.text;
+    final ancien = await getStoredPassword();
+    // S'assure d'un jeton valide AVANT d'écraser l'ancien mot de passe local
+    // (ensureLinked() se connecte avec le mot de passe encore en storage) —
+    // sinon toute tentative de reconnexion ultérieure utiliserait le nouveau
+    // mot de passe alors que le serveur ne connaît encore que l'ancien.
+    await backend.ensureLinked();
+    await setStoredPassword(nouveau);
     markProfileUnlocked();
+    if (ancien != null) {
+      unawaited(backend.pushMotDePasse(ancien: ancien, nouveau: nouveau));
+    }
     _newPasswordCtrl.clear();
     _confirmPasswordCtrl.clear();
     setState(() => _passwordFeedback = _PasswordFeedback.success);
@@ -352,9 +396,12 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final langProvider = context.watch<LanguageProvider>();
     final t = langProvider.t;
     final hub = t['profileHub'] as Map<String, dynamic>? ?? {};
+    final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
     final branches = (hub['branches'] as List?) ?? [];
     final speech = context.read<SignSpeechService>();
     final writingStyle = context.watch<WritingStyleProvider>();
+    final animSpeed = context.watch<AnimationSpeedProvider>();
+    final stats = context.watch<ProgressProvider>().stats;
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -454,13 +501,193 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             ),
             const SizedBox(height: 24),
 
+            // Photo de profil — utilisée dans le classement de la Clairière
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AmaniColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAE2D2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            image: _photoBase64 != null
+                                ? DecorationImage(
+                                    image: MemoryImage(
+                                      base64Decode(_photoBase64!),
+                                    ),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          alignment: Alignment.center,
+                          child: _photoBase64 == null
+                              ? const Icon(
+                                  CupertinoIcons.person_fill,
+                                  color: AmaniColors.secondary,
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: -2,
+                          right: -2,
+                          child: GestureDetector(
+                            onTap: _choosePhoto,
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: AmaniColors.secondary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.camera_fill,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hub['photoTitle'] ?? 'Photo de profil',
+                          style: AmaniTheme.titleStyle.copyWith(fontSize: 14),
+                        ),
+                        Text(
+                          hub['photoHint'] ?? '',
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            fontSize: 12,
+                            color: AmaniColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_photoBase64 != null)
+                    GestureDetector(
+                      onTap: _removePhoto,
+                      child: Text(
+                        hub['photoRemove'] ?? 'Supprimer',
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: AmaniColors.error,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Points totaux — mise en avant du système de notation
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF6C453), Color(0xFFD9A84A)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x59D9A84A),
+                    offset: Offset(0, 6),
+                    blurRadius: 18,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      CupertinoIcons.rosette,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${stats.totalPoints}',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                            color: Colors.white,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          hub['totalPointsLabel'] ?? 'Points totaux',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          hub['totalPointsHint'] ?? '',
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Statistiques
             Row(
               children: [
                 Expanded(
                   child: _StatTile(
                     icon: CupertinoIcons.book_fill,
-                    value: '7',
+                    value: '${stats.signesMaitrises}',
                     label: hub['statsSignes'] ?? '',
                     color: AmaniColors.secondary,
                   ),
@@ -469,7 +696,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 Expanded(
                   child: _StatTile(
                     icon: CupertinoIcons.rosette,
-                    value: '15',
+                    value: '${stats.exercicesReussis}',
                     label: hub['statsExercices'] ?? '',
                     color: AmaniColors.primary,
                   ),
@@ -478,7 +705,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 Expanded(
                   child: _StatTile(
                     icon: CupertinoIcons.calendar,
-                    value: '4',
+                    value: '${stats.joursAventure}',
                     label: hub['statsDays'] ?? '',
                     color: const Color(0xFF4A90E2),
                   ),
@@ -522,8 +749,29 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     title: hub['languageCardTitle'] ?? 'Langue',
                     trailing: SegmentedControl<Lang>(
                       value: langProvider.lang,
-                      items: const {Lang.fr: 'FR', Lang.en: 'EN'},
-                      onChanged: (lang) => langProvider.setLang(lang),
+                      items: const {
+                        Lang.fr: 'FR',
+                        Lang.en: 'EN',
+                        Lang.es: 'ES',
+                      },
+                      onChanged: (lang) {
+                        langProvider.setLang(lang);
+                        // Le back-end ne connaît pas encore l'espagnol (voir
+                        // Langue.java) : dans ce cas on ne pousse rien plutôt
+                        // que d'envoyer une valeur qu'il rejetterait.
+                        final backendLangue = switch (lang) {
+                          Lang.fr => 'FR',
+                          Lang.en => 'EN',
+                          Lang.es => null,
+                        };
+                        if (backendLangue != null) {
+                          unawaited(
+                            context.read<BackendSyncService>().pushReglages(
+                              langue: backendLangue,
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
@@ -535,9 +783,15 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                       items: {
                         WritingStyle.script: 'Script',
                         WritingStyle.cursive: 'Cursive',
-                        WritingStyle.digitale: 'Digitale',
                       },
-                      onChanged: writingStyle.setStyle,
+                      onChanged: (style) {
+                        writingStyle.setStyle(style);
+                        unawaited(
+                          context.read<BackendSyncService>().pushReglages(
+                            formatEcriture: style.name.toUpperCase(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -730,11 +984,11 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    hub['repetitionsLabel'] ?? 'Répétitions par signe',
+                    el['repetitionsLabel'] ?? 'Répétitions par signe',
                     style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
                   ),
                   Text(
-                    hub['repetitionsHint'] ?? '',
+                    el['repetitionsHint'] ?? '',
                     style: AmaniTheme.bodyStyle.copyWith(
                       fontSize: 12,
                       color: AmaniColors.textSecondary,
@@ -748,11 +1002,11 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
                   Text(
-                    hub['toleranceLabel'] ?? 'Tolérance de validation',
+                    el['toleranceLabel'] ?? 'Tolérance de validation',
                     style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
                   ),
                   Text(
-                    hub['toleranceHint'] ?? '',
+                    el['toleranceHint'] ?? '',
                     style: AmaniTheme.bodyStyle.copyWith(
                       fontSize: 12,
                       color: AmaniColors.textSecondary,
@@ -760,9 +1014,87 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   const SizedBox(height: 10),
                   _Stepper(
-                    value: '${(_tolerance * 100).round()}%',
-                    onDecrement: () => _updateTolerance(_tolerance - 0.05),
-                    onIncrement: () => _updateTolerance(_tolerance + 0.05),
+                    value: '$_tolerance%',
+                    onDecrement: () => _updateTolerance(_tolerance - 3),
+                    onIncrement: () => _updateTolerance(_tolerance + 3),
+                  ),
+                  const Divider(color: AmaniColors.disabled, height: 32),
+                  Text(
+                    hub['evaluationDurationLabel'] ?? "Durée d'évaluation",
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    hub['evaluationDurationHint'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Stepper(
+                    value: '$_evaluationDuration min',
+                    onDecrement: () =>
+                        _updateEvaluationDuration(_evaluationDuration - 1),
+                    onIncrement: () =>
+                        _updateEvaluationDuration(_evaluationDuration + 1),
+                  ),
+                  const Divider(color: AmaniColors.disabled, height: 32),
+                  Text(
+                    hub['speedLabel'] ?? "Vitesse d'animation",
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    hub['speedHint'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      for (final speed in AnimationSpeed.values) ...[
+                        if (speed != AnimationSpeed.values.first)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => context
+                                .read<AnimationSpeedProvider>()
+                                .setSpeed(speed),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: animSpeed.speed == speed
+                                    ? AmaniColors.error.withValues(alpha: 0.15)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: animSpeed.speed == speed
+                                      ? AmaniColors.error
+                                      : AmaniColors.disabled,
+                                  width: 2,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                ((hub['speedOptions'] as List?)?[speed.index]
+                                        as Map?)?['label'] ??
+                                    speed.name,
+                                style: TextStyle(
+                                  fontFamily: kBalooFontFamily,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: animSpeed.speed == speed
+                                      ? AmaniColors.error
+                                      : AmaniColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),

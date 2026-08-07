@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
+import '../services/backend_sync_service.dart';
 import '../theme/amani_theme.dart';
 import '../utils/pick_profile_photo.dart';
 
@@ -21,6 +23,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   bool _showPassword = false;
   bool _isLangDropdownOpen = false;
   String? _photoBase64;
+  bool _isSubmitting = false;
+  String? _submitError;
 
   @override
   void initState() {
@@ -48,16 +52,62 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   }
 
   bool get canContinue {
-    return _nameController.text.trim().length >= 2 &&
+    return !_isSubmitting &&
+        _nameController.text.trim().length >= 2 &&
         _passwordController.text.length >= 4;
   }
 
+  /// La création de compte exige une connexion internet réussie — c'est la
+  /// seule action de toute l'app qui n'est pas disponible hors-ligne (voir
+  /// BackendSyncService) : le profil doit exister côté serveur dès sa
+  /// création, pour que la progression future puisse s'y rattacher.
   void _handleStart() async {
     if (!canContinue) return;
-    await setStoredName(_nameController.text.trim());
-    await setStoredPassword(_passwordController.text);
+    final backend = context.read<BackendSyncService>();
+    final lang = context.read<LanguageProvider>().lang;
+    final nom = _nameController.text.trim();
+    final motDePasse = _passwordController.text;
+    final langue = switch (lang) {
+      Lang.fr => 'FR',
+      Lang.en => 'EN',
+      // Le back-end ne connaît pas encore l'espagnol (voir Langue.java) :
+      // FR reste le défaut jusqu'à ce qu'il l'ajoute.
+      Lang.es => 'FR',
+    };
+
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
+
+    final outcome = await backend.register(
+      nom: nom,
+      motDePasse: motDePasse,
+      langue: langue,
+    );
+
     if (!mounted) return;
-    context.go('/accueil');
+
+    if (outcome == RegisterOutcome.success) {
+      await setStoredName(nom);
+      await setStoredPassword(motDePasse);
+      if (!mounted) return;
+      context.go('/accueil');
+      return;
+    }
+
+    final t = context.read<LanguageProvider>().t;
+    final onboarding = t['onboarding'] as Map<String, dynamic>? ?? {};
+    setState(() {
+      _isSubmitting = false;
+      _submitError = switch (outcome) {
+        RegisterOutcome.nameTaken =>
+          onboarding['nameTakenError'] ?? 'Ce prénom est déjà utilisé.',
+        RegisterOutcome.offline =>
+          onboarding['offlineError'] ?? 'Connexion internet requise.',
+        _ => onboarding['genericError'] ?? 'Une erreur est survenue.',
+      };
+    });
   }
 
   @override
@@ -210,6 +260,18 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                       const SizedBox(height: 20),
                       // Champ Langue
                       _buildLangDropdown(langProv, t),
+                      if (_submitError != null) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          _submitError!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFE05252),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 24),
                       // Bouton Commencer
                       _buildStartButton(t),
@@ -385,7 +447,11 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    langProv.lang == Lang.fr ? 'Français' : 'English',
+                    switch (langProv.lang) {
+                      Lang.fr => 'Français',
+                      Lang.en => 'English',
+                      Lang.es => 'Español',
+                    },
                     style: const TextStyle(
                       fontSize: 16,
                       color: AmaniColors.textPrimary,
@@ -424,6 +490,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 _buildLangOption('Français', Lang.fr, langProv),
                 const Divider(height: 1, color: AmaniColors.disabled),
                 _buildLangOption('English', Lang.en, langProv),
+                const Divider(height: 1, color: AmaniColors.disabled),
+                _buildLangOption('Español', Lang.es, langProv),
               ],
             ),
           ),
@@ -454,17 +522,18 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   }
 
   Widget _buildStartButton(Map<String, dynamic> t) {
+    final active = canContinue;
     return GestureDetector(
-      onTap: canContinue ? _handleStart : null,
+      onTap: active ? _handleStart : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 58,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: canContinue ? AmaniColors.secondary : AmaniColors.disabled,
+          color: active ? AmaniColors.secondary : AmaniColors.disabled,
           borderRadius: BorderRadius.circular(29),
           boxShadow: [
-            if (canContinue)
+            if (active)
               const BoxShadow(
                 color: AmaniColors.secondaryDark,
                 offset: Offset(0, 5),
@@ -472,14 +541,39 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
           ],
         ),
         alignment: Alignment.center,
-        child: Text(
-          t['onboarding']['start'],
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: canContinue ? AmaniColors.surface : const Color(0xFFA89880),
-          ),
-        ),
+        child: _isSubmitting
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation(
+                        AmaniColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    t['onboarding']['creatingAccount'] ?? '…',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                t['onboarding']['start'],
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: active ? AmaniColors.surface : const Color(0xFFA89880),
+                ),
+              ),
       ),
     );
   }

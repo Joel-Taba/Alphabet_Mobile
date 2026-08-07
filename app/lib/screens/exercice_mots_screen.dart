@@ -8,14 +8,20 @@ import '../services/sign_speech.dart';
 import '../data/word_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
+import '../widgets/exercise_complete_popup.dart';
+import '../widgets/evaluation_timer.dart';
+import '../hooks/use_countdown.dart';
+import '../hooks/use_exercise_settings.dart';
 
 /// Exercice d'écriture des mots du Palier 3 : trace chaque lettre du mot dans
 /// l'ordre. Port fidèle de `src/routes/exercice.mots.$groupId.tsx`.
 class ExerciceMotsScreen extends StatefulWidget {
   final String groupId;
-  const ExerciceMotsScreen({super.key, required this.groupId});
+  final String? amaniEval;
+  const ExerciceMotsScreen({super.key, required this.groupId, this.amaniEval});
 
   @override
   State<ExerciceMotsScreen> createState() => _ExerciceMotsScreenState();
@@ -23,6 +29,40 @@ class ExerciceMotsScreen extends StatefulWidget {
 
 class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   final Set<String> _doneWords = {};
+  int _restartKey = 0;
+  bool _awaitingRepeatCompletion = false;
+
+  bool get _isEvaluation => widget.amaniEval == '1';
+  CountdownController? _countdown;
+  bool _evaluationExpired = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEvaluation) _initEvaluation();
+  }
+
+  Future<void> _initEvaluation() async {
+    final minutes = await readEvaluationDurationMinutes();
+    if (!mounted) return;
+    setState(() {
+      _countdown =
+          CountdownController(
+            durationSeconds: minutes * 60,
+            onExpire: () {
+              if (mounted) setState(() => _evaluationExpired = true);
+            },
+          )..addListener(() {
+            if (mounted) setState(() {});
+          });
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdown?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +77,11 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
     final groupIdx = PALIER3_GROUPS.indexWhere((g) => g.id == widget.groupId);
     final nextGroup = groupIdx >= 0 && groupIdx < PALIER3_GROUPS.length - 1
         ? PALIER3_GROUPS[groupIdx + 1]
+        : null;
+    // En évaluation, une fois le dernier groupe atteint on reboucle sur le
+    // premier — seul le chronomètre décide de la fin de la session.
+    final evaluationNextGroup = _isEvaluation && groupIdx >= 0
+        ? PALIER3_GROUPS[(groupIdx + 1) % PALIER3_GROUPS.length]
         : null;
 
     if (group == null) {
@@ -83,174 +128,227 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
     final groupTitle = group.title[lang.name] ?? '';
     final allDone = _doneWords.length == group.words.length;
 
+    void onWordDone(String wordId) {
+      setState(() => _doneWords.add(wordId));
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'MOT',
+        modalite: 'EXERCICE',
+        etapeCode: wordId,
+        palier: lang == Lang.fr ? 4 : 3,
+      );
+      if (_doneWords.length >= group.words.length &&
+          _awaitingRepeatCompletion) {
+        context.read<ProgressProvider>().awardRestartBonus();
+        setState(() => _awaitingRepeatCompletion = false);
+      }
+    }
+
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              decoration: BoxDecoration(
-                color: AmaniColors.background,
-                border: Border(
-                  bottom: BorderSide(
-                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.go('/cours/mots/${widget.groupId}'),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        color: AmaniColors.surface,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Color(0x1F000000), blurRadius: 6),
-                        ],
-                      ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          groupTitle,
-                          style: AmaniTheme.titleStyle.copyWith(fontSize: 22),
-                        ),
-                        Text(
-                          tFormat(em['wordsReady'] ?? '', {
-                            'done': _doneWords.length,
-                            'total': group.words.length,
-                          }),
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 12,
-                            color: AmaniColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
+            Column(
+              children: [
+                if (_isEvaluation && !_evaluationExpired && _countdown != null)
+                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  decoration: BoxDecoration(
+                    color: AmaniColors.background,
+                    border: Border(
+                      bottom: BorderSide(
                         color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: allDone
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                allDone
-                                    ? (em['allDoneTitle'] ?? '')
-                                    : (em['introTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                allDone
-                                    ? (em['allDoneBody'] ?? '')
-                                    : (em['introBody'] ?? ''),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () =>
+                            context.go('/cours/mots/${widget.groupId}'),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: AmaniColors.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1F000000),
+                                blurRadius: 6,
                               ),
                             ],
                           ),
+                          child: const Icon(
+                            CupertinoIcons.arrow_left,
+                            size: 20,
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  for (final word in group.words) ...[
-                    _WordTraceRow(
-                      word: word,
-                      lang: lang,
-                      onSpeak: () => speech.speak(word.text(lang.name), lang),
-                      done: _doneWords.contains(word.id),
-                      onDone: () => setState(() => _doneWords.add(word.id)),
-                      doneLabel: el['done'] ?? 'Terminé !',
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  if (allDone && nextGroup != null)
-                    GestureDetector(
-                      onTap: () => context.go('/cours/mots/${nextGroup.id}'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4A90E2),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x334A90E2),
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Flexible(
-                              child: Text(
-                                tFormat(em['nextGroup'] ?? '', {
-                                  'titre': nextGroup.title[lang.name] ?? '',
-                                }),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: kBalooFontFamily,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  color: Colors.white,
-                                ),
+                            Text(
+                              groupTitle,
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 22,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              CupertinoIcons.chevron_right,
-                              color: Colors.white,
-                              size: 18,
+                            Text(
+                              tFormat(em['wordsReady'] ?? '', {
+                                'done': _doneWords.length,
+                                'total': group.words.length,
+                              }),
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 12,
+                                color: AmaniColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  const SizedBox(height: 12),
-                ],
-              ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AmaniColors.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AmaniColors.textPrimary.withValues(
+                              alpha: 0.1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            AmaniMascot(
+                              pose: allDone
+                                  ? AmaniPose.celebration
+                                  : AmaniPose.encouragement,
+                              size: AmaniSize.small,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    allDone
+                                        ? (em['allDoneTitle'] ?? '')
+                                        : (em['introTitle'] ?? ''),
+                                    style: AmaniTheme.titleStyle.copyWith(
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    allDone
+                                        ? (em['allDoneBody'] ?? '')
+                                        : (em['introBody'] ?? ''),
+                                    style: AmaniTheme.bodyStyle.copyWith(
+                                      fontSize: 12,
+                                      color: AmaniColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      for (final word in group.words) ...[
+                        _WordTraceRow(
+                          key: ValueKey('${word.id}-r$_restartKey'),
+                          word: word,
+                          lang: lang,
+                          onSpeak: () =>
+                              speech.speak(word.text(lang.name), lang),
+                          done: _doneWords.contains(word.id),
+                          onDone: () => onWordDone(word.id),
+                          doneLabel: el['done'] ?? 'Terminé !',
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (allDone &&
+                          _isEvaluation &&
+                          evaluationNextGroup != null)
+                        GestureDetector(
+                          onTap: () => context.go(
+                            '/exercice/mots/${evaluationNextGroup.id}?amaniEval=1',
+                          ),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4A90E2),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x334A90E2),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  tFormat(em['nextGroup'] ?? '', {
+                                    'titre':
+                                        evaluationNextGroup.title[lang.name] ??
+                                        '',
+                                  }),
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  CupertinoIcons.chevron_right,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            if (allDone && !_isEvaluation)
+              ExerciseCompletePopup(
+                onBackHome: () => context.go('/accueil'),
+                onNext: nextGroup != null
+                    ? () => context.go('/cours/mots/${nextGroup.id}')
+                    : null,
+                onRestart: () {
+                  setState(() {
+                    _doneWords.clear();
+                    _restartKey++;
+                    _awaitingRepeatCompletion = true;
+                  });
+                },
+              ),
+            if (_isEvaluation && _evaluationExpired)
+              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
           ],
         ),
       ),
@@ -267,6 +365,7 @@ class _WordTraceRow extends StatefulWidget {
   final String doneLabel;
 
   const _WordTraceRow({
+    super.key,
     required this.word,
     required this.lang,
     required this.onSpeak,

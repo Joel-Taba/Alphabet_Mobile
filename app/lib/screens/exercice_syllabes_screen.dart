@@ -8,15 +8,25 @@ import '../services/sign_speech.dart';
 import '../data/syllable_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
+import '../widgets/exercise_complete_popup.dart';
+import '../widgets/evaluation_timer.dart';
+import '../hooks/use_countdown.dart';
+import '../hooks/use_exercise_settings.dart';
 
 /// Exercice d'écriture des syllabes : trace la consonne puis la voyelle pour
 /// former chaque syllabe. Port fidèle de
 /// `src/routes/exercice.syllabes.$consonant.tsx`.
 class ExerciceSyllabesScreen extends StatefulWidget {
   final String consonant;
-  const ExerciceSyllabesScreen({super.key, required this.consonant});
+  final String? amaniEval;
+  const ExerciceSyllabesScreen({
+    super.key,
+    required this.consonant,
+    this.amaniEval,
+  });
 
   @override
   State<ExerciceSyllabesScreen> createState() => _ExerciceSyllabesScreenState();
@@ -24,6 +34,40 @@ class ExerciceSyllabesScreen extends StatefulWidget {
 
 class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
   final Set<String> _doneSyllables = {};
+  int _restartKey = 0;
+  bool _awaitingRepeatCompletion = false;
+
+  bool get _isEvaluation => widget.amaniEval == '1';
+  CountdownController? _countdown;
+  bool _evaluationExpired = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEvaluation) _initEvaluation();
+  }
+
+  Future<void> _initEvaluation() async {
+    final minutes = await readEvaluationDurationMinutes();
+    if (!mounted) return;
+    setState(() {
+      _countdown =
+          CountdownController(
+            durationSeconds: minutes * 60,
+            onExpire: () {
+              if (mounted) setState(() => _evaluationExpired = true);
+            },
+          )..addListener(() {
+            if (mounted) setState(() {});
+          });
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdown?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +84,12 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
     );
     final nextGroup = groupIdx >= 0 && groupIdx < SYLLABLE_GROUPS.length - 1
         ? SYLLABLE_GROUPS[groupIdx + 1] as Map<String, dynamic>
+        : null;
+    // En évaluation, une fois la dernière consonne atteinte on reboucle sur
+    // la première — seul le chronomètre décide de la fin de la session.
+    final evaluationNextGroup = _isEvaluation && groupIdx >= 0
+        ? SYLLABLE_GROUPS[(groupIdx + 1) % SYLLABLE_GROUPS.length]
+              as Map<String, dynamic>
         : null;
 
     if (group == null) {
@@ -86,185 +136,237 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
     final syllables = group['syllables'] as List;
     final allDone = _doneSyllables.length == syllables.length;
 
+    void onSyllableDone(String syllable) {
+      setState(() => _doneSyllables.add(syllable));
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'SYLLABE',
+        modalite: 'EXERCICE',
+        etapeCode: syllable,
+        palier: 3,
+      );
+      if (_doneSyllables.length >= syllables.length &&
+          _awaitingRepeatCompletion) {
+        context.read<ProgressProvider>().awardRestartBonus();
+        setState(() => _awaitingRepeatCompletion = false);
+      }
+    }
+
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              decoration: BoxDecoration(
-                color: AmaniColors.background,
-                border: Border(
-                  bottom: BorderSide(
-                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () =>
-                        context.go('/cours/syllabes/${widget.consonant}'),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        color: AmaniColors.surface,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Color(0x1F000000), blurRadius: 6),
-                        ],
-                      ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tFormat(cs['consonantTitle'] ?? '', {
-                            'consonant': '"${widget.consonant}"',
-                          }),
-                          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
-                        ),
-                        Text(
-                          tFormat(es['syllablesReady'] ?? '', {
-                            'done': _doneSyllables.length,
-                            'total': syllables.length,
-                          }),
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 12,
-                            color: AmaniColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
+            Column(
+              children: [
+                if (_isEvaluation && !_evaluationExpired && _countdown != null)
+                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  decoration: BoxDecoration(
+                    color: AmaniColors.background,
+                    border: Border(
+                      bottom: BorderSide(
                         color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: allDone
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                allDone
-                                    ? (es['allDoneTitle'] ?? '')
-                                    : (es['introTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                allDone
-                                    ? (es['allDoneBody'] ?? '')
-                                    : (es['introBody'] ?? ''),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () =>
+                            context.go('/cours/syllabes/${widget.consonant}'),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: AmaniColors.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1F000000),
+                                blurRadius: 6,
                               ),
                             ],
                           ),
+                          child: const Icon(
+                            CupertinoIcons.arrow_left,
+                            size: 20,
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  for (final syllable in syllables) ...[
-                    _SyllableTraceRow(
-                      entry: syllable as Map<String, dynamic>,
-                      onSpeak: () =>
-                          speech.speak(syllable['syllable'] as String, lang),
-                      done: _doneSyllables.contains(
-                        syllable['syllable'] as String,
                       ),
-                      onDone: () => setState(
-                        () =>
-                            _doneSyllables.add(syllable['syllable'] as String),
-                      ),
-                      doneLabel: el['done'] ?? 'Terminé !',
-                      exampleWordPrefix: es['exampleWordPrefix'] ?? '',
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  if (allDone && nextGroup != null)
-                    GestureDetector(
-                      onTap: () => context.go(
-                        '/cours/syllabes/${nextGroup['consonant']}',
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4A90E2),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x334A90E2),
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Flexible(
-                              child: Text(
-                                tFormat(es['nextGroup'] ?? '', {
-                                  'consonant': nextGroup['consonant'],
-                                }),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: kBalooFontFamily,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  color: Colors.white,
-                                ),
+                            Text(
+                              tFormat(cs['consonantTitle'] ?? '', {
+                                'consonant': '"${widget.consonant}"',
+                              }),
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 20,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              CupertinoIcons.chevron_right,
-                              color: Colors.white,
-                              size: 18,
+                            Text(
+                              tFormat(es['syllablesReady'] ?? '', {
+                                'done': _doneSyllables.length,
+                                'total': syllables.length,
+                              }),
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 12,
+                                color: AmaniColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  const SizedBox(height: 12),
-                ],
-              ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AmaniColors.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AmaniColors.textPrimary.withValues(
+                              alpha: 0.1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            AmaniMascot(
+                              pose: allDone
+                                  ? AmaniPose.celebration
+                                  : AmaniPose.encouragement,
+                              size: AmaniSize.small,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    allDone
+                                        ? (es['allDoneTitle'] ?? '')
+                                        : (es['introTitle'] ?? ''),
+                                    style: AmaniTheme.titleStyle.copyWith(
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    allDone
+                                        ? (es['allDoneBody'] ?? '')
+                                        : (es['introBody'] ?? ''),
+                                    style: AmaniTheme.bodyStyle.copyWith(
+                                      fontSize: 12,
+                                      color: AmaniColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      for (final syllable in syllables) ...[
+                        _SyllableTraceRow(
+                          key: ValueKey(
+                            '${syllable['syllable']}-r$_restartKey',
+                          ),
+                          entry: syllable as Map<String, dynamic>,
+                          onSpeak: () => speech.speak(
+                            syllable['syllable'] as String,
+                            lang,
+                          ),
+                          done: _doneSyllables.contains(
+                            syllable['syllable'] as String,
+                          ),
+                          onDone: () =>
+                              onSyllableDone(syllable['syllable'] as String),
+                          doneLabel: el['done'] ?? 'Terminé !',
+                          exampleWordPrefix: es['exampleWordPrefix'] ?? '',
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (allDone &&
+                          _isEvaluation &&
+                          evaluationNextGroup != null)
+                        GestureDetector(
+                          onTap: () => context.go(
+                            '/exercice/syllabes/${evaluationNextGroup['consonant']}?amaniEval=1',
+                          ),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4A90E2),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x334A90E2),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  tFormat(es['nextGroup'] ?? '', {
+                                    'consonant':
+                                        evaluationNextGroup['consonant'],
+                                  }),
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  CupertinoIcons.chevron_right,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            if (allDone && !_isEvaluation)
+              ExerciseCompletePopup(
+                onBackHome: () => context.go('/accueil'),
+                onNext: nextGroup != null
+                    ? () => context.go(
+                        '/cours/syllabes/${nextGroup['consonant']}',
+                      )
+                    : null,
+                onRestart: () {
+                  setState(() {
+                    _doneSyllables.clear();
+                    _restartKey++;
+                    _awaitingRepeatCompletion = true;
+                  });
+                },
+              ),
+            if (_isEvaluation && _evaluationExpired)
+              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
           ],
         ),
       ),
@@ -281,6 +383,7 @@ class _SyllableTraceRow extends StatefulWidget {
   final String exampleWordPrefix;
 
   const _SyllableTraceRow({
+    super.key,
     required this.entry,
     required this.onSpeak,
     required this.done,

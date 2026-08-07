@@ -10,7 +10,7 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Calcul de l'index courant pour la barre de navigation
-    // 0: /accueil, 1: /bibliotheque, 2: /communaute, 3: /mon-profil
+    // 0: /accueil, 1: /bibliotheque, 2: /communaute, 3: /mon-profil, 4: /plus
     final index = navigationShell.currentIndex;
 
     return Scaffold(

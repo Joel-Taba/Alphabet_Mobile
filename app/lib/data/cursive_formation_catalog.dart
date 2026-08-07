@@ -7,14 +7,11 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
     "char": "a",
     "name": {
       "fr": "a cursif",
-      "en": "cursive a"
+      "en": "cursive a",
+      "es": "a cursiva"
     },
     "category": "voyelle",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"a\" s'écrit d'un geste lié : courbe puis crochet.",
-      "en": "In cursive, the letter \"a\" is written in one connected gesture: curve then hook."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -27,7 +24,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -41,23 +39,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"a\" s'écrit d'un geste lié : courbe puis crochet.",
+      "en": "In cursive, the letter \"a\" is written in one connected gesture: curve then hook.",
+      "es": "En cursiva, la letra \"a\" se escribe en un solo gesto: curva y luego gancho."
+    }
   },
   {
     "char": "c",
     "name": {
       "fr": "c cursif",
-      "en": "cursive c"
+      "en": "cursive c",
+      "es": "c cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"c\" s'écrit d'un geste lié : courbe.",
-      "en": "In cursive, the letter \"c\" is written in one connected gesture: curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -70,23 +71,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"c\" s'écrit d'un geste lié : courbe.",
+      "en": "In cursive, the letter \"c\" is written in one connected gesture: curve.",
+      "es": "En cursiva, la letra \"c\" se escribe en un solo gesto: curva."
+    }
   },
   {
     "char": "d",
     "name": {
       "fr": "d cursif",
-      "en": "cursive d"
+      "en": "cursive d",
+      "es": "d cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"d\" s'écrit d'un geste lié : courbe puis crochet.",
-      "en": "In cursive, the letter \"d\" is written in one connected gesture: curve then hook."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -99,7 +103,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -113,23 +118,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"d\" s'écrit d'un geste lié : courbe puis crochet.",
+      "en": "In cursive, the letter \"d\" is written in one connected gesture: curve then hook.",
+      "es": "En cursiva, la letra \"d\" se escribe en un solo gesto: curva y luego gancho."
+    }
   },
   {
     "char": "e",
     "name": {
       "fr": "e cursif",
-      "en": "cursive e"
+      "en": "cursive e",
+      "es": "e cursiva"
     },
     "category": "voyelle",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"e\" s'écrit d'un geste lié : crochet puis courbe.",
-      "en": "In cursive, the letter \"e\" is written in one connected gesture: hook then curve."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -142,7 +150,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -156,23 +165,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"e\" s'écrit d'un geste lié : crochet puis courbe.",
+      "en": "In cursive, the letter \"e\" is written in one connected gesture: hook then curve.",
+      "es": "En cursiva, la letra \"e\" se escribe en un solo gesto: gancho y luego curva."
+    }
   },
   {
     "char": "h",
     "name": {
       "fr": "h cursif",
-      "en": "cursive h"
+      "en": "cursive h",
+      "es": "h cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"h\" s'écrit d'un geste lié : crochet, trait puis boucle de liaison.",
-      "en": "In cursive, the letter \"h\" is written in one connected gesture: hook, line then connecting loop."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -185,7 +197,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -199,7 +212,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -213,23 +227,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°3",
-          "en": "Trace the connecting loop #3"
+          "en": "Trace the connecting loop #3",
+          "es": "Traza el bucle de enlace n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"h\" s'écrit d'un geste lié : crochet, trait puis boucle de liaison.",
+      "en": "In cursive, the letter \"h\" is written in one connected gesture: hook, line then connecting loop.",
+      "es": "En cursiva, la letra \"h\" se escribe en un solo gesto: gancho, trazo y luego bucle de enlace."
+    }
   },
   {
     "char": "i",
     "name": {
       "fr": "i cursif",
-      "en": "cursive i"
+      "en": "cursive i",
+      "es": "i cursiva"
     },
     "category": "voyelle",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"i\" s'écrit d'un geste lié : crochet puis point.",
-      "en": "In cursive, the letter \"i\" is written in one connected gesture: hook then dot."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -242,7 +259,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -256,23 +274,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le point n°2",
-          "en": "Trace the dot #2"
+          "en": "Trace the dot #2",
+          "es": "Traza el punto n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"i\" s'écrit d'un geste lié : crochet puis point.",
+      "en": "In cursive, the letter \"i\" is written in one connected gesture: hook then dot.",
+      "es": "En cursiva, la letra \"i\" se escribe en un solo gesto: gancho y luego punto."
+    }
   },
   {
     "char": "o",
     "name": {
       "fr": "o cursif",
-      "en": "cursive o"
+      "en": "cursive o",
+      "es": "o cursiva"
     },
     "category": "voyelle",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"o\" s'écrit d'un geste lié : courbe puis crochet.",
-      "en": "In cursive, the letter \"o\" is written in one connected gesture: curve then hook."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -285,7 +306,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -299,23 +321,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"o\" s'écrit d'un geste lié : courbe puis crochet.",
+      "en": "In cursive, the letter \"o\" is written in one connected gesture: curve then hook.",
+      "es": "En cursiva, la letra \"o\" se escribe en un solo gesto: curva y luego gancho."
+    }
   },
   {
     "char": "v",
     "name": {
       "fr": "v cursif",
-      "en": "cursive v"
+      "en": "cursive v",
+      "es": "v cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"v\" s'écrit d'un geste lié : crochet, crochet puis courbe.",
-      "en": "In cursive, the letter \"v\" is written in one connected gesture: hook, hook then curve."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -328,7 +353,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -342,7 +368,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -356,23 +383,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°3",
-          "en": "Trace the curve #3"
+          "en": "Trace the curve #3",
+          "es": "Traza la curva n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"v\" s'écrit d'un geste lié : crochet, crochet puis courbe.",
+      "en": "In cursive, the letter \"v\" is written in one connected gesture: hook, hook then curve.",
+      "es": "En cursiva, la letra \"v\" se escribe en un solo gesto: gancho, gancho y luego curva."
+    }
   },
   {
     "char": "w",
     "name": {
       "fr": "w cursif",
-      "en": "cursive w"
+      "en": "cursive w",
+      "es": "w cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"w\" s'écrit d'un geste lié : boucle de liaison, crochet, crochet puis courbe.",
-      "en": "In cursive, the letter \"w\" is written in one connected gesture: connecting loop, hook, hook then curve."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -385,7 +415,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°1",
-          "en": "Trace the connecting loop #1"
+          "en": "Trace the connecting loop #1",
+          "es": "Traza el bucle de enlace n.º1"
         }
       },
       {
@@ -399,7 +430,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -413,7 +445,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -427,23 +460,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°4",
-          "en": "Trace the curve #4"
+          "en": "Trace the curve #4",
+          "es": "Traza la curva n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"w\" s'écrit d'un geste lié : boucle de liaison, crochet, crochet puis courbe.",
+      "en": "In cursive, the letter \"w\" is written in one connected gesture: connecting loop, hook, hook then curve.",
+      "es": "En cursiva, la letra \"w\" se escribe en un solo gesto: bucle de enlace, gancho, gancho y luego curva."
+    }
   },
   {
     "char": "x",
     "name": {
       "fr": "x cursif",
-      "en": "cursive x"
+      "en": "cursive x",
+      "es": "x cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"x\" s'écrit d'un geste lié : courbe puis courbe.",
-      "en": "In cursive, the letter \"x\" is written in one connected gesture: curve then curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -456,7 +492,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -470,23 +507,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"x\" s'écrit d'un geste lié : courbe puis courbe.",
+      "en": "In cursive, the letter \"x\" is written in one connected gesture: curve then curve.",
+      "es": "En cursiva, la letra \"x\" se escribe en un solo gesto: curva y luego curva."
+    }
   },
   {
     "char": "y",
     "name": {
       "fr": "y cursif",
-      "en": "cursive y"
+      "en": "cursive y",
+      "es": "y cursiva"
     },
     "category": "consonne",
     "zone": "jambe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"y\" s'écrit d'un geste lié : boucle de liaison, trait puis crochet.",
-      "en": "In cursive, the letter \"y\" is written in one connected gesture: connecting loop, line then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -499,7 +539,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°1",
-          "en": "Trace the connecting loop #1"
+          "en": "Trace the connecting loop #1",
+          "es": "Traza el bucle de enlace n.º1"
         }
       },
       {
@@ -513,7 +554,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -527,23 +569,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"y\" s'écrit d'un geste lié : boucle de liaison, trait puis crochet.",
+      "en": "In cursive, the letter \"y\" is written in one connected gesture: connecting loop, line then hook.",
+      "es": "En cursiva, la letra \"y\" se escribe en un solo gesto: bucle de enlace, trazo y luego gancho."
+    }
   },
   {
     "char": "z",
     "name": {
       "fr": "z cursif",
-      "en": "cursive z"
+      "en": "cursive z",
+      "es": "z cursiva"
     },
     "category": "consonne",
     "zone": "jambe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"z\" s'écrit d'un geste lié : trait, crochet, trait, boucle de liaison puis trait.",
-      "en": "In cursive, the letter \"z\" is written in one connected gesture: line, hook, line, connecting loop then line."
-    },
     "steps": [
       {
         "family": "trait",
@@ -556,7 +601,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°1",
-          "en": "Trace the line #1"
+          "en": "Trace the line #1",
+          "es": "Traza el trazo n.º1"
         }
       },
       {
@@ -570,7 +616,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -584,7 +631,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       },
       {
@@ -598,7 +646,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°4",
-          "en": "Trace the connecting loop #4"
+          "en": "Trace the connecting loop #4",
+          "es": "Traza el bucle de enlace n.º4"
         }
       },
       {
@@ -612,23 +661,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°5",
-          "en": "Trace the line #5"
+          "en": "Trace the line #5",
+          "es": "Traza el trazo n.º5"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"z\" s'écrit d'un geste lié : trait, crochet, trait, boucle de liaison puis trait.",
+      "en": "In cursive, the letter \"z\" is written in one connected gesture: line, hook, line, connecting loop then line.",
+      "es": "En cursiva, la letra \"z\" se escribe en un solo gesto: trazo, gancho, trazo, bucle de enlace y luego trazo."
+    }
   },
   {
     "char": "A",
     "name": {
       "fr": "A cursif",
-      "en": "cursive A"
+      "en": "cursive A",
+      "es": "A cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"A\" s'écrit d'un geste lié : crochet, crochet puis trait.",
-      "en": "In cursive, the letter \"A\" is written in one connected gesture: hook, hook then line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -641,7 +693,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -655,7 +708,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -669,23 +723,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"A\" s'écrit d'un geste lié : crochet, crochet puis trait.",
+      "en": "In cursive, the letter \"A\" is written in one connected gesture: hook, hook then line.",
+      "es": "En cursiva, la letra \"A\" se escribe en un solo gesto: gancho, gancho y luego trazo."
+    }
   },
   {
     "char": "B",
     "name": {
       "fr": "B cursif",
-      "en": "cursive B"
+      "en": "cursive B",
+      "es": "B cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"B\" s'écrit d'un geste lié : boucle de liaison, courbe puis courbe.",
-      "en": "In cursive, the letter \"B\" is written in one connected gesture: connecting loop, curve then curve."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -698,7 +755,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°1",
-          "en": "Trace the connecting loop #1"
+          "en": "Trace the connecting loop #1",
+          "es": "Traza el bucle de enlace n.º1"
         }
       },
       {
@@ -712,7 +770,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -726,23 +785,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°3",
-          "en": "Trace the curve #3"
+          "en": "Trace the curve #3",
+          "es": "Traza la curva n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"B\" s'écrit d'un geste lié : boucle de liaison, courbe puis courbe.",
+      "en": "In cursive, the letter \"B\" is written in one connected gesture: connecting loop, curve then curve.",
+      "es": "En cursiva, la letra \"B\" se escribe en un solo gesto: bucle de enlace, curva y luego curva."
+    }
   },
   {
     "char": "C",
     "name": {
       "fr": "C cursif",
-      "en": "cursive C"
+      "en": "cursive C",
+      "es": "C cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"C\" s'écrit d'un geste lié : courbe puis courbe.",
-      "en": "In cursive, the letter \"C\" is written in one connected gesture: curve then curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -755,7 +817,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -769,23 +832,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"C\" s'écrit d'un geste lié : courbe puis courbe.",
+      "en": "In cursive, the letter \"C\" is written in one connected gesture: curve then curve.",
+      "es": "En cursiva, la letra \"C\" se escribe en un solo gesto: curva y luego curva."
+    }
   },
   {
     "char": "D",
     "name": {
       "fr": "D cursif",
-      "en": "cursive D"
+      "en": "cursive D",
+      "es": "D cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"D\" s'écrit d'un geste lié : boucle de liaison puis courbe.",
-      "en": "In cursive, the letter \"D\" is written in one connected gesture: connecting loop then curve."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -798,7 +864,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°1",
-          "en": "Trace the connecting loop #1"
+          "en": "Trace the connecting loop #1",
+          "es": "Traza el bucle de enlace n.º1"
         }
       },
       {
@@ -812,23 +879,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"D\" s'écrit d'un geste lié : boucle de liaison puis courbe.",
+      "en": "In cursive, the letter \"D\" is written in one connected gesture: connecting loop then curve.",
+      "es": "En cursiva, la letra \"D\" se escribe en un solo gesto: bucle de enlace y luego curva."
+    }
   },
   {
     "char": "E",
     "name": {
       "fr": "E cursif",
-      "en": "cursive E"
+      "en": "cursive E",
+      "es": "E cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"E\" s'écrit d'un geste lié : courbe, courbe puis courbe.",
-      "en": "In cursive, the letter \"E\" is written in one connected gesture: curve, curve then curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -841,7 +911,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -855,7 +926,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -869,23 +941,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°3",
-          "en": "Trace the curve #3"
+          "en": "Trace the curve #3",
+          "es": "Traza la curva n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"E\" s'écrit d'un geste lié : courbe, courbe puis courbe.",
+      "en": "In cursive, the letter \"E\" is written in one connected gesture: curve, curve then curve.",
+      "es": "En cursiva, la letra \"E\" se escribe en un solo gesto: curva, curva y luego curva."
+    }
   },
   {
     "char": "F",
     "name": {
       "fr": "F cursif",
-      "en": "cursive F"
+      "en": "cursive F",
+      "es": "F cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"F\" s'écrit d'un geste lié : crochet, crochet puis trait.",
-      "en": "In cursive, the letter \"F\" is written in one connected gesture: hook, hook then line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -898,7 +973,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -912,7 +988,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -926,23 +1003,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"F\" s'écrit d'un geste lié : crochet, crochet puis trait.",
+      "en": "In cursive, the letter \"F\" is written in one connected gesture: hook, hook then line.",
+      "es": "En cursiva, la letra \"F\" se escribe en un solo gesto: gancho, gancho y luego trazo."
+    }
   },
   {
     "char": "G",
     "name": {
       "fr": "G cursif",
-      "en": "cursive G"
+      "en": "cursive G",
+      "es": "G cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"G\" s'écrit d'un geste lié : courbe, courbe, trait puis crochet.",
-      "en": "In cursive, the letter \"G\" is written in one connected gesture: curve, curve, line then hook."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -955,7 +1035,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -969,7 +1050,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -983,7 +1065,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       },
       {
@@ -997,23 +1080,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"G\" s'écrit d'un geste lié : courbe, courbe, trait puis crochet.",
+      "en": "In cursive, the letter \"G\" is written in one connected gesture: curve, curve, line then hook.",
+      "es": "En cursiva, la letra \"G\" se escribe en un solo gesto: curva, curva, trazo y luego gancho."
+    }
   },
   {
     "char": "H",
     "name": {
       "fr": "H cursif",
-      "en": "cursive H"
+      "en": "cursive H",
+      "es": "H cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"H\" s'écrit d'un geste lié : crochet, trait, crochet, crochet, crochet puis crochet.",
-      "en": "In cursive, the letter \"H\" is written in one connected gesture: hook, line, hook, hook, hook then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1026,7 +1112,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1040,7 +1127,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -1054,7 +1142,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -1068,7 +1157,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       },
       {
@@ -1082,7 +1172,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°5",
-          "en": "Trace the hook #5"
+          "en": "Trace the hook #5",
+          "es": "Traza el gancho n.º5"
         }
       },
       {
@@ -1096,23 +1187,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°6",
-          "en": "Trace the hook #6"
+          "en": "Trace the hook #6",
+          "es": "Traza el gancho n.º6"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"H\" s'écrit d'un geste lié : crochet, trait, crochet, crochet, crochet puis crochet.",
+      "en": "In cursive, the letter \"H\" is written in one connected gesture: hook, line, hook, hook, hook then hook.",
+      "es": "En cursiva, la letra \"H\" se escribe en un solo gesto: gancho, trazo, gancho, gancho, gancho y luego gancho."
+    }
   },
   {
     "char": "I",
     "name": {
       "fr": "I cursif",
-      "en": "cursive I"
+      "en": "cursive I",
+      "es": "I cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"I\" s'écrit d'un geste lié : crochet puis crochet.",
-      "en": "In cursive, the letter \"I\" is written in one connected gesture: hook then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1125,7 +1219,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1139,23 +1234,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"I\" s'écrit d'un geste lié : crochet puis crochet.",
+      "en": "In cursive, the letter \"I\" is written in one connected gesture: hook then hook.",
+      "es": "En cursiva, la letra \"I\" se escribe en un solo gesto: gancho y luego gancho."
+    }
   },
   {
     "char": "J",
     "name": {
       "fr": "J cursif",
-      "en": "cursive J"
+      "en": "cursive J",
+      "es": "J cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"J\" s'écrit d'un geste lié : crochet, trait puis crochet.",
-      "en": "In cursive, the letter \"J\" is written in one connected gesture: hook, line then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1168,7 +1266,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1182,7 +1281,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -1196,23 +1296,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"J\" s'écrit d'un geste lié : crochet, trait puis crochet.",
+      "en": "In cursive, the letter \"J\" is written in one connected gesture: hook, line then hook.",
+      "es": "En cursiva, la letra \"J\" se escribe en un solo gesto: gancho, trazo y luego gancho."
+    }
   },
   {
     "char": "K",
     "name": {
       "fr": "K cursif",
-      "en": "cursive K"
+      "en": "cursive K",
+      "es": "K cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"K\" s'écrit d'un geste lié : crochet, crochet, trait, crochet puis crochet.",
-      "en": "In cursive, the letter \"K\" is written in one connected gesture: hook, hook, line, hook then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1225,7 +1328,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1239,7 +1343,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -1253,7 +1358,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       },
       {
@@ -1267,7 +1373,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       },
       {
@@ -1281,23 +1388,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°5",
-          "en": "Trace the hook #5"
+          "en": "Trace the hook #5",
+          "es": "Traza el gancho n.º5"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"K\" s'écrit d'un geste lié : crochet, crochet, trait, crochet puis crochet.",
+      "en": "In cursive, the letter \"K\" is written in one connected gesture: hook, hook, line, hook then hook.",
+      "es": "En cursiva, la letra \"K\" se escribe en un solo gesto: gancho, gancho, trazo, gancho y luego gancho."
+    }
   },
   {
     "char": "L",
     "name": {
       "fr": "L cursif",
-      "en": "cursive L"
+      "en": "cursive L",
+      "es": "L cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"L\" s'écrit d'un geste lié : courbe, crochet, crochet puis crochet.",
-      "en": "In cursive, the letter \"L\" is written in one connected gesture: curve, hook, hook then hook."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -1310,7 +1420,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -1324,7 +1435,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -1338,7 +1450,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -1352,23 +1465,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"L\" s'écrit d'un geste lié : courbe, crochet, crochet puis crochet.",
+      "en": "In cursive, the letter \"L\" is written in one connected gesture: curve, hook, hook then hook.",
+      "es": "En cursiva, la letra \"L\" se escribe en un solo gesto: curva, gancho, gancho y luego gancho."
+    }
   },
   {
     "char": "M",
     "name": {
       "fr": "M cursif",
-      "en": "cursive M"
+      "en": "cursive M",
+      "es": "M cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"M\" s'écrit d'un geste lié : crochet, trait, trait puis crochet.",
-      "en": "In cursive, the letter \"M\" is written in one connected gesture: hook, line, line then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1381,7 +1497,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1395,7 +1512,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -1409,7 +1527,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       },
       {
@@ -1423,23 +1542,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"M\" s'écrit d'un geste lié : crochet, trait, trait puis crochet.",
+      "en": "In cursive, the letter \"M\" is written in one connected gesture: hook, line, line then hook.",
+      "es": "En cursiva, la letra \"M\" se escribe en un solo gesto: gancho, trazo, trazo y luego gancho."
+    }
   },
   {
     "char": "N",
     "name": {
       "fr": "N cursif",
-      "en": "cursive N"
+      "en": "cursive N",
+      "es": "N cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"N\" s'écrit d'un geste lié : crochet, trait puis crochet.",
-      "en": "In cursive, the letter \"N\" is written in one connected gesture: hook, line then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1452,7 +1574,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1466,7 +1589,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -1480,23 +1604,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"N\" s'écrit d'un geste lié : crochet, trait puis crochet.",
+      "en": "In cursive, the letter \"N\" is written in one connected gesture: hook, line then hook.",
+      "es": "En cursiva, la letra \"N\" se escribe en un solo gesto: gancho, trazo y luego gancho."
+    }
   },
   {
     "char": "Ñ",
     "name": {
       "fr": "Ñ cursif",
-      "en": "cursive Ñ"
+      "en": "cursive Ñ",
+      "es": "Ñ cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"Ñ\" s'écrit d'un geste lié : crochet, trait, crochet puis boucle de liaison.",
-      "en": "In cursive, the letter \"Ñ\" is written in one connected gesture: hook, line, hook then connecting loop."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1509,7 +1636,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1523,7 +1651,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -1537,7 +1666,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -1551,23 +1681,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°4",
-          "en": "Trace the connecting loop #4"
+          "en": "Trace the connecting loop #4",
+          "es": "Traza el bucle de enlace n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"Ñ\" s'écrit d'un geste lié : crochet, trait, crochet puis boucle de liaison.",
+      "en": "In cursive, the letter \"Ñ\" is written in one connected gesture: hook, line, hook then connecting loop.",
+      "es": "En cursiva, la letra \"Ñ\" se escribe en un solo gesto: gancho, trazo, gancho y luego bucle de enlace."
+    }
   },
   {
     "char": "O",
     "name": {
       "fr": "O cursif",
-      "en": "cursive O"
+      "en": "cursive O",
+      "es": "O cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"O\" s'écrit d'un geste lié : courbe puis courbe.",
-      "en": "In cursive, the letter \"O\" is written in one connected gesture: curve then curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -1580,7 +1713,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -1594,23 +1728,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"O\" s'écrit d'un geste lié : courbe puis courbe.",
+      "en": "In cursive, the letter \"O\" is written in one connected gesture: curve then curve.",
+      "es": "En cursiva, la letra \"O\" se escribe en un solo gesto: curva y luego curva."
+    }
   },
   {
     "char": "P",
     "name": {
       "fr": "P cursif",
-      "en": "cursive P"
+      "en": "cursive P",
+      "es": "P cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"P\" s'écrit d'un geste lié : crochet puis courbe.",
-      "en": "In cursive, the letter \"P\" is written in one connected gesture: hook then curve."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1623,7 +1760,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1637,23 +1775,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"P\" s'écrit d'un geste lié : crochet puis courbe.",
+      "en": "In cursive, the letter \"P\" is written in one connected gesture: hook then curve.",
+      "es": "En cursiva, la letra \"P\" se escribe en un solo gesto: gancho y luego curva."
+    }
   },
   {
     "char": "Q",
     "name": {
       "fr": "Q cursif",
-      "en": "cursive Q"
+      "en": "cursive Q",
+      "es": "Q cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"Q\" s'écrit d'un geste lié : courbe, courbe puis trait.",
-      "en": "In cursive, the letter \"Q\" is written in one connected gesture: curve, curve then line."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -1666,7 +1807,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -1680,7 +1822,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -1694,23 +1837,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"Q\" s'écrit d'un geste lié : courbe, courbe puis trait.",
+      "en": "In cursive, the letter \"Q\" is written in one connected gesture: curve, curve then line.",
+      "es": "En cursiva, la letra \"Q\" se escribe en un solo gesto: curva, curva y luego trazo."
+    }
   },
   {
     "char": "R",
     "name": {
       "fr": "R cursif",
-      "en": "cursive R"
+      "en": "cursive R",
+      "es": "R cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"R\" s'écrit d'un geste lié : crochet, courbe puis crochet.",
-      "en": "In cursive, the letter \"R\" is written in one connected gesture: hook, curve then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1723,7 +1869,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1737,7 +1884,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -1751,23 +1899,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"R\" s'écrit d'un geste lié : crochet, courbe puis crochet.",
+      "en": "In cursive, the letter \"R\" is written in one connected gesture: hook, curve then hook.",
+      "es": "En cursiva, la letra \"R\" se escribe en un solo gesto: gancho, curva y luego gancho."
+    }
   },
   {
     "char": "S",
     "name": {
       "fr": "S cursif",
-      "en": "cursive S"
+      "en": "cursive S",
+      "es": "S cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"S\" s'écrit d'un geste lié : courbe puis boucle de liaison.",
-      "en": "In cursive, the letter \"S\" is written in one connected gesture: curve then connecting loop."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -1780,7 +1931,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -1794,23 +1946,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°2",
-          "en": "Trace the connecting loop #2"
+          "en": "Trace the connecting loop #2",
+          "es": "Traza el bucle de enlace n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"S\" s'écrit d'un geste lié : courbe puis boucle de liaison.",
+      "en": "In cursive, the letter \"S\" is written in one connected gesture: curve then connecting loop.",
+      "es": "En cursiva, la letra \"S\" se escribe en un solo gesto: curva y luego bucle de enlace."
+    }
   },
   {
     "char": "T",
     "name": {
       "fr": "T cursif",
-      "en": "cursive T"
+      "en": "cursive T",
+      "es": "T cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"T\" s'écrit d'un geste lié : crochet, crochet puis trait.",
-      "en": "In cursive, the letter \"T\" is written in one connected gesture: hook, hook then line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1823,7 +1978,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1837,7 +1993,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -1851,23 +2008,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"T\" s'écrit d'un geste lié : crochet, crochet puis trait.",
+      "en": "In cursive, the letter \"T\" is written in one connected gesture: hook, hook then line.",
+      "es": "En cursiva, la letra \"T\" se escribe en un solo gesto: gancho, gancho y luego trazo."
+    }
   },
   {
     "char": "U",
     "name": {
       "fr": "U cursif",
-      "en": "cursive U"
+      "en": "cursive U",
+      "es": "U cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"U\" s'écrit d'un geste lié : boucle de liaison puis crochet.",
-      "en": "In cursive, the letter \"U\" is written in one connected gesture: connecting loop then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1880,7 +2040,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°1",
-          "en": "Trace the connecting loop #1"
+          "en": "Trace the connecting loop #1",
+          "es": "Traza el bucle de enlace n.º1"
         }
       },
       {
@@ -1894,23 +2055,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"U\" s'écrit d'un geste lié : boucle de liaison puis crochet.",
+      "en": "In cursive, the letter \"U\" is written in one connected gesture: connecting loop then hook.",
+      "es": "En cursiva, la letra \"U\" se escribe en un solo gesto: bucle de enlace y luego gancho."
+    }
   },
   {
     "char": "V",
     "name": {
       "fr": "V cursif",
-      "en": "cursive V"
+      "en": "cursive V",
+      "es": "V cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"V\" s'écrit d'un geste lié : crochet, trait puis trait.",
-      "en": "In cursive, the letter \"V\" is written in one connected gesture: hook, line then line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1923,7 +2087,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1937,7 +2102,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -1951,23 +2117,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"V\" s'écrit d'un geste lié : crochet, trait puis trait.",
+      "en": "In cursive, the letter \"V\" is written in one connected gesture: hook, line then line.",
+      "es": "En cursiva, la letra \"V\" se escribe en un solo gesto: gancho, trazo y luego trazo."
+    }
   },
   {
     "char": "W",
     "name": {
       "fr": "W cursif",
-      "en": "cursive W"
+      "en": "cursive W",
+      "es": "W cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"W\" s'écrit d'un geste lié : crochet, trait, trait, trait puis trait.",
-      "en": "In cursive, the letter \"W\" is written in one connected gesture: hook, line, line, line then line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -1980,7 +2149,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -1994,7 +2164,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2008,7 +2179,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       },
       {
@@ -2022,7 +2194,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°4",
-          "en": "Trace the line #4"
+          "en": "Trace the line #4",
+          "es": "Traza el trazo n.º4"
         }
       },
       {
@@ -2036,23 +2209,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°5",
-          "en": "Trace the line #5"
+          "en": "Trace the line #5",
+          "es": "Traza el trazo n.º5"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"W\" s'écrit d'un geste lié : crochet, trait, trait, trait puis trait.",
+      "en": "In cursive, the letter \"W\" is written in one connected gesture: hook, line, line, line then line.",
+      "es": "En cursiva, la letra \"W\" se escribe en un solo gesto: gancho, trazo, trazo, trazo y luego trazo."
+    }
   },
   {
     "char": "X",
     "name": {
       "fr": "X cursif",
-      "en": "cursive X"
+      "en": "cursive X",
+      "es": "X cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"X\" s'écrit d'un geste lié : courbe puis courbe.",
-      "en": "In cursive, the letter \"X\" is written in one connected gesture: curve then curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -2065,7 +2241,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -2079,23 +2256,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"X\" s'écrit d'un geste lié : courbe puis courbe.",
+      "en": "In cursive, the letter \"X\" is written in one connected gesture: curve then curve.",
+      "es": "En cursiva, la letra \"X\" se escribe en un solo gesto: curva y luego curva."
+    }
   },
   {
     "char": "Y",
     "name": {
       "fr": "Y cursif",
-      "en": "cursive Y"
+      "en": "cursive Y",
+      "es": "Y cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"Y\" s'écrit d'un geste lié : crochet, trait puis crochet.",
-      "en": "In cursive, the letter \"Y\" is written in one connected gesture: hook, line then hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2108,7 +2288,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2122,7 +2303,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2136,23 +2318,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"Y\" s'écrit d'un geste lié : crochet, trait puis crochet.",
+      "en": "In cursive, the letter \"Y\" is written in one connected gesture: hook, line then hook.",
+      "es": "En cursiva, la letra \"Y\" se escribe en un solo gesto: gancho, trazo y luego gancho."
+    }
   },
   {
     "char": "Z",
     "name": {
       "fr": "Z cursif",
-      "en": "cursive Z"
+      "en": "cursive Z",
+      "es": "Z cursiva"
     },
     "category": "majuscule",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"Z\" s'écrit d'un geste lié : crochet, trait, crochet puis trait.",
-      "en": "In cursive, the letter \"Z\" is written in one connected gesture: hook, line, hook then line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2165,7 +2350,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2179,7 +2365,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2193,7 +2380,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -2207,23 +2395,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°4",
-          "en": "Trace the line #4"
+          "en": "Trace the line #4",
+          "es": "Traza el trazo n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"Z\" s'écrit d'un geste lié : crochet, trait, crochet puis trait.",
+      "en": "In cursive, the letter \"Z\" is written in one connected gesture: hook, line, hook then line.",
+      "es": "En cursiva, la letra \"Z\" se escribe en un solo gesto: gancho, trazo, gancho y luego trazo."
+    }
   },
   {
     "char": "b",
     "name": {
       "fr": "b cursif",
-      "en": "cursive b"
+      "en": "cursive b",
+      "es": "b cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"b\" s'écrit d'un geste lié : crochet, crochet, trait.",
-      "en": "In cursive, the letter \"b\" is written in one connected gesture: hook, hook, line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2236,7 +2427,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2250,7 +2442,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -2264,23 +2457,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"b\" s'écrit d'un geste lié : crochet, crochet, trait.",
+      "en": "In cursive, the letter \"b\" is written in one connected gesture: hook, hook, line.",
+      "es": "En cursiva, la letra \"b\" se escribe en un solo gesto: gancho, gancho, trazo."
+    }
   },
   {
     "char": "g",
     "name": {
       "fr": "g cursif",
-      "en": "cursive g"
+      "en": "cursive g",
+      "es": "g cursiva"
     },
     "category": "consonne",
     "zone": "jambe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"g\" s'écrit d'un geste lié : courbe, trait, crochet.",
-      "en": "In cursive, the letter \"g\" is written in one connected gesture: curve, line, hook."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -2293,7 +2489,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -2307,7 +2504,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2321,23 +2519,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"g\" s'écrit d'un geste lié : courbe, trait, crochet.",
+      "en": "In cursive, the letter \"g\" is written in one connected gesture: curve, line, hook.",
+      "es": "En cursiva, la letra \"g\" se escribe en un solo gesto: curva, trazo, gancho."
+    }
   },
   {
     "char": "j",
     "name": {
       "fr": "j cursif",
-      "en": "cursive j"
+      "en": "cursive j",
+      "es": "j cursiva"
     },
     "category": "consonne",
     "zone": "jambe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"j\" s'écrit d'un geste lié : trait, trait, crochet, point.",
-      "en": "In cursive, the letter \"j\" is written in one connected gesture: line, line, hook, dot."
-    },
     "steps": [
       {
         "family": "trait",
@@ -2350,7 +2551,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°1",
-          "en": "Trace the line #1"
+          "en": "Trace the line #1",
+          "es": "Traza el trazo n.º1"
         }
       },
       {
@@ -2364,7 +2566,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2378,7 +2581,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -2392,23 +2596,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le point n°4",
-          "en": "Trace the dot #4"
+          "en": "Trace the dot #4",
+          "es": "Traza el punto n.º4"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"j\" s'écrit d'un geste lié : trait, trait, crochet, point.",
+      "en": "In cursive, the letter \"j\" is written in one connected gesture: line, line, hook, dot.",
+      "es": "En cursiva, la letra \"j\" se escribe en un solo gesto: trazo, trazo, gancho, punto."
+    }
   },
   {
     "char": "m",
     "name": {
       "fr": "m cursif",
-      "en": "cursive m"
+      "en": "cursive m",
+      "es": "m cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"m\" s'écrit d'un geste lié : courbe, courbe, courbe.",
-      "en": "In cursive, the letter \"m\" is written in one connected gesture: curve, curve, curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -2421,7 +2628,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -2435,7 +2643,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -2449,23 +2658,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°3",
-          "en": "Trace the curve #3"
+          "en": "Trace the curve #3",
+          "es": "Traza la curva n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"m\" s'écrit d'un geste lié : courbe, courbe, courbe.",
+      "en": "In cursive, the letter \"m\" is written in one connected gesture: curve, curve, curve.",
+      "es": "En cursiva, la letra \"m\" se escribe en un solo gesto: curva, curva, curva."
+    }
   },
   {
     "char": "n",
     "name": {
       "fr": "n cursif",
-      "en": "cursive n"
+      "en": "cursive n",
+      "es": "n cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"n\" s'écrit d'un geste lié : courbe, courbe.",
-      "en": "In cursive, the letter \"n\" is written in one connected gesture: curve, curve."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -2478,7 +2690,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -2492,23 +2705,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"n\" s'écrit d'un geste lié : courbe, courbe.",
+      "en": "In cursive, the letter \"n\" is written in one connected gesture: curve, curve.",
+      "es": "En cursiva, la letra \"n\" se escribe en un solo gesto: curva, curva."
+    }
   },
   {
     "char": "ñ",
     "name": {
       "fr": "ñ cursif",
-      "en": "cursive ñ"
+      "en": "cursive ñ",
+      "es": "ñ cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"ñ\" s'écrit d'un geste lié : courbe, courbe, boucle de liaison.",
-      "en": "In cursive, the letter \"ñ\" is written in one connected gesture: curve, curve, connecting loop."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -2521,7 +2737,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -2535,7 +2752,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2"
+          "en": "Trace the curve #2",
+          "es": "Traza la curva n.º2"
         }
       },
       {
@@ -2549,23 +2767,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le boucle de liaison n°3",
-          "en": "Trace the connecting loop #3"
+          "en": "Trace the connecting loop #3",
+          "es": "Traza el bucle de enlace n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"ñ\" s'écrit d'un geste lié : courbe, courbe, boucle de liaison.",
+      "en": "In cursive, the letter \"ñ\" is written in one connected gesture: curve, curve, connecting loop.",
+      "es": "En cursiva, la letra \"ñ\" se escribe en un solo gesto: curva, curva, bucle de enlace."
+    }
   },
   {
     "char": "f",
     "name": {
       "fr": "f cursif",
-      "en": "cursive f"
+      "en": "cursive f",
+      "es": "f cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"f\" s'écrit d'un geste lié : crochet, crochet, crochet, crochet, crochet.",
-      "en": "In cursive, the letter \"f\" is written in one connected gesture: hook, hook, hook, hook, hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2578,7 +2799,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2592,7 +2814,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -2606,7 +2829,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       },
       {
@@ -2620,7 +2844,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       },
       {
@@ -2634,23 +2859,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°5",
-          "en": "Trace the hook #5"
+          "en": "Trace the hook #5",
+          "es": "Traza el gancho n.º5"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"f\" s'écrit d'un geste lié : crochet, crochet, crochet, crochet, crochet.",
+      "en": "In cursive, the letter \"f\" is written in one connected gesture: hook, hook, hook, hook, hook.",
+      "es": "En cursiva, la letra \"f\" se escribe en un solo gesto: gancho, gancho, gancho, gancho, gancho."
+    }
   },
   {
     "char": "k",
     "name": {
       "fr": "k cursif",
-      "en": "cursive k"
+      "en": "cursive k",
+      "es": "k cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"k\" s'écrit d'un geste lié : crochet, trait, courbe, crochet, crochet.",
-      "en": "In cursive, the letter \"k\" is written in one connected gesture: hook, line, curve, hook, hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2663,7 +2891,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2677,7 +2906,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2691,7 +2921,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°3",
-          "en": "Trace the curve #3"
+          "en": "Trace the curve #3",
+          "es": "Traza la curva n.º3"
         }
       },
       {
@@ -2705,7 +2936,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4"
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4"
         }
       },
       {
@@ -2719,23 +2951,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°5",
-          "en": "Trace the hook #5"
+          "en": "Trace the hook #5",
+          "es": "Traza el gancho n.º5"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"k\" s'écrit d'un geste lié : crochet, trait, courbe, crochet, crochet.",
+      "en": "In cursive, the letter \"k\" is written in one connected gesture: hook, line, curve, hook, hook.",
+      "es": "En cursiva, la letra \"k\" se escribe en un solo gesto: gancho, trazo, curva, gancho, gancho."
+    }
   },
   {
     "char": "p",
     "name": {
       "fr": "p cursif",
-      "en": "cursive p"
+      "en": "cursive p",
+      "es": "p cursiva"
     },
     "category": "consonne",
     "zone": "jambe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"p\" s'écrit d'un geste lié : trait, trait, courbe.",
-      "en": "In cursive, the letter \"p\" is written in one connected gesture: line, line, curve."
-    },
     "steps": [
       {
         "family": "trait",
@@ -2748,7 +2983,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°1",
-          "en": "Trace the line #1"
+          "en": "Trace the line #1",
+          "es": "Traza el trazo n.º1"
         }
       },
       {
@@ -2762,7 +2998,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -2776,23 +3013,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°3",
-          "en": "Trace the curve #3"
+          "en": "Trace the curve #3",
+          "es": "Traza la curva n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"p\" s'écrit d'un geste lié : trait, trait, courbe.",
+      "en": "In cursive, the letter \"p\" is written in one connected gesture: line, line, curve.",
+      "es": "En cursiva, la letra \"p\" se escribe en un solo gesto: trazo, trazo, curva."
+    }
   },
   {
     "char": "r",
     "name": {
       "fr": "r cursif",
-      "en": "cursive r"
+      "en": "cursive r",
+      "es": "r cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"r\" s'écrit d'un geste lié : trait, crochet, crochet.",
-      "en": "In cursive, the letter \"r\" is written in one connected gesture: line, hook, hook."
-    },
     "steps": [
       {
         "family": "trait",
@@ -2805,7 +3045,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°1",
-          "en": "Trace the line #1"
+          "en": "Trace the line #1",
+          "es": "Traza el trazo n.º1"
         }
       },
       {
@@ -2819,7 +3060,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       },
       {
@@ -2833,23 +3075,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3"
+          "en": "Trace the hook #3",
+          "es": "Traza el gancho n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"r\" s'écrit d'un geste lié : trait, crochet, crochet.",
+      "en": "In cursive, the letter \"r\" is written in one connected gesture: line, hook, hook.",
+      "es": "En cursiva, la letra \"r\" se escribe en un solo gesto: trazo, gancho, gancho."
+    }
   },
   {
     "char": "s",
     "name": {
       "fr": "s cursif",
-      "en": "cursive s"
+      "en": "cursive s",
+      "es": "s cursiva"
     },
     "category": "consonne",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"s\" s'écrit d'un geste lié : trait, crochet.",
-      "en": "In cursive, the letter \"s\" is written in one connected gesture: line, hook."
-    },
     "steps": [
       {
         "family": "trait",
@@ -2862,7 +3107,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°1",
-          "en": "Trace the line #1"
+          "en": "Trace the line #1",
+          "es": "Traza el trazo n.º1"
         }
       },
       {
@@ -2876,23 +3122,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"s\" s'écrit d'un geste lié : trait, crochet.",
+      "en": "In cursive, the letter \"s\" is written in one connected gesture: line, hook.",
+      "es": "En cursiva, la letra \"s\" se escribe en un solo gesto: trazo, gancho."
+    }
   },
   {
     "char": "t",
     "name": {
       "fr": "t cursif",
-      "en": "cursive t"
+      "en": "cursive t",
+      "es": "t cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"t\" s'écrit d'un geste lié : crochet, trait.",
-      "en": "In cursive, the letter \"t\" is written in one connected gesture: hook, line."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2905,7 +3154,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2919,23 +3169,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"t\" s'écrit d'un geste lié : crochet, trait.",
+      "en": "In cursive, the letter \"t\" is written in one connected gesture: hook, line.",
+      "es": "En cursiva, la letra \"t\" se escribe en un solo gesto: gancho, trazo."
+    }
   },
   {
     "char": "u",
     "name": {
       "fr": "u cursif",
-      "en": "cursive u"
+      "en": "cursive u",
+      "es": "u cursiva"
     },
     "category": "voyelle",
     "zone": "corps",
-    "consigne": {
-      "fr": "En cursive, la lettre \"u\" s'écrit d'un geste lié : crochet, crochet.",
-      "en": "In cursive, the letter \"u\" is written in one connected gesture: hook, hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -2948,7 +3201,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -2962,23 +3216,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"u\" s'écrit d'un geste lié : crochet, crochet.",
+      "en": "In cursive, the letter \"u\" is written in one connected gesture: hook, hook.",
+      "es": "En cursiva, la letra \"u\" se escribe en un solo gesto: gancho, gancho."
+    }
   },
   {
     "char": "q",
     "name": {
       "fr": "q cursif",
-      "en": "cursive q"
+      "en": "cursive q",
+      "es": "q cursiva"
     },
     "category": "consonne",
     "zone": "jambe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"q\" s'écrit d'un geste lié : courbe, trait, trait.",
-      "en": "In cursive, the letter \"q\" is written in one connected gesture: curve, line, line."
-    },
     "steps": [
       {
         "family": "courbe",
@@ -2991,7 +3248,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#E05252",
         "description": {
           "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1"
+          "en": "Trace the curve #1",
+          "es": "Traza la curva n.º1"
         }
       },
       {
@@ -3005,7 +3263,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°2",
-          "en": "Trace the line #2"
+          "en": "Trace the line #2",
+          "es": "Traza el trazo n.º2"
         }
       },
       {
@@ -3019,23 +3278,26 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A3B2A",
         "description": {
           "fr": "Trace le trait n°3",
-          "en": "Trace the line #3"
+          "en": "Trace the line #3",
+          "es": "Traza el trazo n.º3"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"q\" s'écrit d'un geste lié : courbe, trait, trait.",
+      "en": "In cursive, the letter \"q\" is written in one connected gesture: curve, line, line.",
+      "es": "En cursiva, la letra \"q\" se escribe en un solo gesto: curva, trazo, trazo."
+    }
   },
   {
     "char": "l",
     "name": {
       "fr": "l cursif",
-      "en": "cursive l"
+      "en": "cursive l",
+      "es": "l cursiva"
     },
     "category": "consonne",
     "zone": "hampe",
-    "consigne": {
-      "fr": "En cursive, la lettre \"l\" s'écrit d'un geste lié : crochet, crochet.",
-      "en": "In cursive, the letter \"l\" is written in one connected gesture: hook, hook."
-    },
     "steps": [
       {
         "family": "crochet",
@@ -3048,7 +3310,8 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1"
+          "en": "Trace the hook #1",
+          "es": "Traza el gancho n.º1"
         }
       },
       {
@@ -3062,10 +3325,16 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         "strokeColor": "#4A90E2",
         "description": {
           "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2"
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2"
         }
       }
-    ]
+    ],
+    "consigne": {
+      "fr": "En cursive, la lettre \"l\" s'écrit d'un geste lié : crochet, crochet.",
+      "en": "In cursive, the letter \"l\" is written in one connected gesture: hook, hook.",
+      "es": "En cursiva, la letra \"l\" se escribe en un solo gesto: gancho, gancho."
+    }
   }
 ]
 ''');

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Police active de toute l'application, dépendante du format d'écriture
 /// choisi (Profil > Réglages) : Comic Neue en script, Dancing Script en
-/// cursif, Baloo 2 (inchangé) en digital. Nom historique conservé
+/// cursif. Nom historique conservé
 /// (`kBalooFontFamily`) mais la valeur suit désormais le style actif —
 /// mise à jour par `WritingStyleProvider` via `setActiveFont`, sans besoin
 /// de BuildContext (utilisée aussi par des CustomPainters/dialogues).
@@ -18,10 +18,6 @@ void setActiveFont(dynamic style) {
     case 'cursive':
       _activeFontFamily = 'Dancing Script';
       _activeFontWeight = FontWeight.w700;
-      break;
-    case 'digitale':
-      _activeFontFamily = 'Baloo 2';
-      _activeFontWeight = FontWeight.w400;
       break;
     case 'script':
     default:

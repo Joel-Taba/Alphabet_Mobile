@@ -17,6 +17,7 @@ const List<_NavItem> _items = [
   _NavItem('/bibliotheque', 'bibliotheque', Icons.palette_rounded),
   _NavItem('/communaute', 'communaute', Icons.groups_rounded),
   _NavItem('/mon-profil', 'profil', Icons.person_rounded),
+  _NavItem('/plus', 'reglages', Icons.more_vert_rounded),
 ];
 
 /// Barre de navigation flottante en pilule, avec un bouton circulaire
@@ -42,7 +43,7 @@ class AmaniBottomNav extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          final tabWidth = width / 4;
+          final tabWidth = width / _items.length;
           final activeCenterX = tabWidth * (currentIndex + 0.5);
 
           return SizedBox(
