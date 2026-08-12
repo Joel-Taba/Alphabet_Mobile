@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
@@ -7,15 +5,6 @@ import 'profile_auth.dart';
 
 const _tokenKey = 'amani_backend_token';
 const _langStorageKey = 'amani_setting_lang';
-const _pendingProgressionKey = 'amani_backend_pending_progression';
-
-/// Intervalle de nouvelle tentative pour la file d'attente hors-ligne, tant
-/// qu'elle n'est pas vide — assez rapproché pour resynchroniser vite après un
-/// retour de connexion, sans marteler le réseau.
-const _retryInterval = Duration(seconds: 45);
-
-/// Résultat d'une tentative d'inscription (voir [BackendSyncService.register]).
-enum RegisterOutcome { success, nameTaken, offline, error }
 
 /// Entrée du classement telle que renvoyée par
 /// `GET /api/v1/communaute/classement` (public, sans authentification).
@@ -56,30 +45,19 @@ class BackendSyncService extends ChangeNotifier {
   final ApiClient _api = ApiClient();
   String? _token;
   bool _loaded = false;
-  Timer? _retryTimer;
 
   BackendSyncService() {
     _restore();
-    _retryTimer = Timer.periodic(_retryInterval, (_) => _syncPending());
   }
 
   bool get isLoaded => _loaded;
   bool get isLinked => _token != null;
-
-  @override
-  void dispose() {
-    _retryTimer?.cancel();
-    super.dispose();
-  }
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(_tokenKey);
     _loaded = true;
     notifyListeners();
-    // Resynchronise tout ce qui a été enregistré hors-ligne depuis le dernier
-    // lancement, dès que l'app redémarre avec une connexion disponible.
-    unawaited(_syncPending());
   }
 
   Future<void> _saveToken(String token) async {
@@ -94,33 +72,6 @@ class BackendSyncService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     notifyListeners();
-  }
-
-  /// Inscription explicite et **bloquante** : contrairement à [ensureLinked],
-  /// qui répare silencieusement la liaison en arrière-plan, cet appel est
-  /// utilisé au moment de la création de compte (voir
-  /// `profile_create_screen.dart`) — l'app y exige une connexion internet
-  /// réussie avant d'enregistrer quoi que ce soit localement, pour garantir
-  /// que chaque profil créé existe bien côté serveur.
-  Future<RegisterOutcome> register({
-    required String nom,
-    required String motDePasse,
-    required String langue,
-  }) async {
-    try {
-      await _api.post(
-        '/api/v1/profils',
-        body: {'nom': nom, 'motDePasse': motDePasse, 'langue': langue},
-      );
-    } on ApiException catch (e) {
-      return e.code == 'NOM_DEJA_UTILISE'
-          ? RegisterOutcome.nameTaken
-          : RegisterOutcome.error;
-    } catch (_) {
-      return RegisterOutcome.offline;
-    }
-    final loggedIn = await _tryLogin(nom, motDePasse);
-    return loggedIn ? RegisterOutcome.success : RegisterOutcome.error;
   }
 
   /// S'assure qu'un jeton valide est disponible, en tentant de se
@@ -174,99 +125,32 @@ class BackendSyncService extends ChangeNotifier {
   }
 
   /// Journalise côté serveur la réussite d'une étape (voir
-  /// `ProgressProvider.awardCompletion`). Le bonus de redémarrage
-  /// (`awardRestartBonus`) n'a pas d'équivalent côté back-end (aucune étape
-  /// associée) et n'est donc jamais synchronisé.
-  ///
-  /// Si le push échoue (hors-ligne, backend injoignable), l'étape est mise
-  /// en file d'attente locale et réessayée automatiquement — au prochain
-  /// lancement de l'app, périodiquement tant que la file n'est pas vide, et
-  /// à chaque fois qu'un autre appel réseau réussit — jusqu'à ce qu'elle
-  /// soit confirmée reçue par le serveur. La progression elle-même reste
-  /// toujours d'abord écrite en local (voir `ProgressProvider`) : cette file
-  /// ne fait que rattraper le serveur, jamais l'inverse.
+  /// `ProgressProvider.awardCompletion`), en best-effort. Le bonus de
+  /// redémarrage (`awardRestartBonus`) n'a pas d'équivalent côté back-end
+  /// (aucune étape associée) et n'est donc jamais synchronisé.
   Future<void> pushProgression({
     required String typeEtape,
     required String modalite,
     required String etapeCode,
     required int palier,
   }) async {
-    final entry = {
-      'palier': palier,
-      'typeEtape': typeEtape,
-      'modalite': modalite,
-      'etapeCode': etapeCode,
-    };
-    if (!await ensureLinked()) {
-      await _enqueuePending(entry);
-      return;
-    }
-    final ok = await _postProgression(entry);
-    if (!ok) {
-      await _enqueuePending(entry);
-    } else {
-      // On vient de prouver qu'on a une connexion : profites-en pour
-      // rattraper tout retard accumulé pendant qu'on était hors-ligne.
-      unawaited(_syncPending());
-    }
-  }
-
-  Future<bool> _postProgression(Map<String, dynamic> entry) async {
+    if (!await ensureLinked()) return;
     try {
-      await _api.post('/api/v1/progressions', token: _token, body: entry);
-      return true;
+      await _api.post(
+        '/api/v1/progressions',
+        token: _token,
+        body: {
+          'palier': palier,
+          'typeEtape': typeEtape,
+          'modalite': modalite,
+          'etapeCode': etapeCode,
+        },
+      );
     } on ApiException catch (e) {
       if (e.status == 401) await _clearToken();
-      return false;
     } catch (_) {
-      return false;
+      // Hors-ligne ou backend injoignable : la progression reste locale.
     }
-  }
-
-  Future<List<Map<String, dynamic>>> _readPending() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_pendingProgressionKey);
-    if (raw == null) return [];
-    try {
-      final parsed = jsonDecode(raw) as List<dynamic>;
-      return parsed.cast<Map<String, dynamic>>();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<void> _writePending(List<Map<String, dynamic>> pending) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_pendingProgressionKey, jsonEncode(pending));
-  }
-
-  Future<void> _enqueuePending(Map<String, dynamic> entry) async {
-    final pending = await _readPending();
-    final alreadyQueued = pending.any(
-      (e) =>
-          e['typeEtape'] == entry['typeEtape'] &&
-          e['modalite'] == entry['modalite'] &&
-          e['etapeCode'] == entry['etapeCode'],
-    );
-    if (alreadyQueued) return;
-    pending.add(entry);
-    await _writePending(pending);
-  }
-
-  /// Rejoue la file d'attente locale des étapes de progression non encore
-  /// confirmées par le serveur. Ne fait rien (ni appel réseau, ni tentative
-  /// de connexion) si la file est déjà vide.
-  Future<void> _syncPending() async {
-    final pending = await _readPending();
-    if (pending.isEmpty) return;
-    if (!await ensureLinked()) return;
-
-    final stillPending = <Map<String, dynamic>>[];
-    for (final entry in pending) {
-      final ok = await _postProgression(entry);
-      if (!ok) stillPending.add(entry);
-    }
-    await _writePending(stillPending);
   }
 
   /// Pousse un sous-ensemble des réglages (seuls les champs non-nuls sont

@@ -698,7 +698,14 @@ class _MultiStepPainter extends CustomPainter {
 
     Offset? penPos;
 
-    for (var i = 0; i < steps.length; i++) {
+    final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
+      ..sort(
+        (a, b) => letterFamilyZIndex(
+          steps[a]['family'] as String,
+        ).compareTo(letterFamilyZIndex(steps[b]['family'] as String)),
+      );
+
+    for (final i in zOrderedIdx) {
       final step = steps[i];
       final path = parseSvgPathData(step['pathD'] as String);
       final isActive = i == currentStepIdx;

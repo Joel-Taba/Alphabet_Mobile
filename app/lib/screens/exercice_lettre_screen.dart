@@ -18,6 +18,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
 import '../services/progress_service.dart';
+import '../widgets/sign_glyph.dart' show letterFamilyZIndex;
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
 /// exercé séparément) puis Phase B (la lettre écrite d'un seul geste continu).
@@ -1074,8 +1075,14 @@ class _LetterCanvasPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final steps = letter['steps'] as List;
+    final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
+      ..sort(
+        (a, b) => letterFamilyZIndex(
+          steps[a]['family'] as String,
+        ).compareTo(letterFamilyZIndex(steps[b]['family'] as String)),
+      );
 
-    for (var i = 0; i < steps.length; i++) {
+    for (final i in zOrderedIdx) {
       final isCompleted = completedSteps.any((c) => c.stepIdx == i);
       if (isCompleted) continue;
       final isActiveStep = i == currentStepIdx;
@@ -1104,7 +1111,13 @@ class _LetterCanvasPainter extends CustomPainter {
       );
     }
 
-    for (final completed in completedSteps) {
+    final zOrderedCompleted = List<_CompletedStep>.from(completedSteps)
+      ..sort(
+        (a, b) => letterFamilyZIndex(
+          steps[a.stepIdx]['family'] as String,
+        ).compareTo(letterFamilyZIndex(steps[b.stepIdx]['family'] as String)),
+      );
+    for (final completed in zOrderedCompleted) {
       final step = steps[completed.stepIdx];
       final pts = sampleSvgPath(step['pathD'] as String, 35);
       if (pts.length < 2) continue;

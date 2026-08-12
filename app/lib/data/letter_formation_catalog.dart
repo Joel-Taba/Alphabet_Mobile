@@ -67,10 +67,10 @@ final List<dynamic> VOWELS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 68 118 L 136 118",
+        "pathD": "M 102.81 126.00 L 62.61 126.00",
         "startXY": [
-          68,
-          118
+          102.81,
+          126
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -82,10 +82,10 @@ final List<dynamic> VOWELS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-right",
-        "pathD": "M 136 118 C 136 98.1 119.9 82 100 82 C 80.1 82 64 98.1 64 118 C 64 137.9 80.1 154 100 154",
+        "pathD": "M 99.34 143.49 A 21.00 21.00 0 1 1 102.59 125.03",
         "startXY": [
-          136,
-          118
+          99.34,
+          143.49
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -114,10 +114,10 @@ final List<dynamic> VOWELS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 100 78 L 100 150",
+        "pathD": "M 90.75 113.00 L 90.75 149.00",
         "startXY": [
-          100,
-          78
+          90.75,
+          113
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -129,10 +129,10 @@ final List<dynamic> VOWELS = jsonDecode(r'''
       {
         "family": "point",
         "variant": "center",
-        "pathD": "M 100 41 A 11 11 0 1 0 100.1 41",
+        "pathD": "M 90.55 102.25 A 3.20 3.20 0 1 0 90.59 102.25",
         "startXY": [
-          100,
-          41
+          90.55,
+          102.25
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -245,10 +245,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 68 27 L 68 149",
+        "pathD": "M 69.78 88.65 L 69.78 148.65",
         "startXY": [
-          68,
-          27
+          69.78,
+          88.65
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -260,10 +260,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-left",
-        "pathD": "M 76 98.3 C 85.6 86.5 101.6 82 116 87.1 C 130.4 92.2 140 105.8 140 121 C 140 136.2 130.4 149.8 116 154.9 C 101.6 160 85.6 155.5 76 143.7",
+        "pathD": "M 69.95 143.94 A 18.00 18.00 0 1 0 69.95 118.04",
         "startXY": [
-          76,
-          98.3
+          69.95,
+          143.94
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -418,10 +418,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-right",
-        "pathD": "M 111.8 77.4 C 104.3 68.2 91.8 64.6 80.7 68.6 C 69.5 72.6 62 83.1 62 95 C 62 106.9 69.5 117.4 80.7 121.4 C 91.8 125.4 104.3 121.8 111.8 112.6",
+        "pathD": "M 97.42 144.68 A 15.00 15.00 0 1 1 97.42 123.10",
         "startXY": [
-          111.8,
-          77.4
+          97.42,
+          144.68
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -433,10 +433,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "bottom-left",
-        "pathD": "M 111.8 77.4 L 111.8 165 C 111.8 172.2 105.9 178 98.8 178 C 91.6 178 85.8 172.2 85.8 165",
+        "pathD": "M 97.77 122.47 L 97.77 168.97 A 13.50 13.50 0 0 1 73.21 176.71",
         "startXY": [
-          111.8,
-          77.4
+          97.77,
+          122.47
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -465,10 +465,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 68 27 L 68 149",
+        "pathD": "M 80.00 101.00 L 80.00 149.00",
         "startXY": [
-          68,
-          27
+          80,
+          101
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -480,10 +480,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "top-left",
-        "pathD": "M 68 90 C 68 76.7 78.7 66 92 66 C 105.3 66 116 76.7 116 90 L 116 149",
+        "pathD": "M 92.00 149.00 L 92.00 131.00 A 6.00 6.00 0 0 0 80.00 131.00",
         "startXY": [
-          68,
-          90
+          92,
+          149
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -512,10 +512,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "bottom-left",
-        "pathD": "M 113 77 L 113 162 C 113 169.2 107.2 175 100 175 C 92.8 175 87 169.2 87 162",
+        "pathD": "M 105.62 115.33 L 105.62 140.08 A 8.25 8.25 0 0 1 89.12 140.08",
         "startXY": [
-          113,
-          77
+          105.62,
+          115.33
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -527,10 +527,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "point",
         "variant": "center",
-        "pathD": "M 113 48 A 7 7 0 1 0 113.1 48",
+        "pathD": "M 105.70 103.50 A 2.80 2.80 0 1 0 105.73 103.50",
         "startXY": [
-          113,
-          48
+          105.7,
+          103.5
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -645,54 +645,54 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
     "category": "consonne",
     "zone": "corps",
     "consigne": {
-      "fr": "La lettre M se forme en trois gestes. D'abord, trace un trait vertical court. Ensuite, ajoute un premier crochet qui s'arrondit vers le haut. Enfin, ajoute un second crochet identique, juste à côté.",
-      "en": "The letter M is formed in three gestures. First, trace a short vertical line. Then, add a first hook arching upward. Finally, add a second matching hook right next to it.",
-      "es": "La letra M se forma en tres gestos. Primero, traza un trazo vertical corto. Luego, añade un primer gancho que se curva hacia arriba. Por último, añade un segundo gancho idéntico, justo al lado."
+      "fr": "La lettre M se forme en trois gestes. D'abord, trace un premier crochet qui s'arrondit vers le haut. Ensuite, ajoute un trait vertical court, accolé au premier crochet. Enfin, ajoute un second crochet identique, juste à côté.",
+      "en": "The letter M is formed in three gestures. First, trace a first hook arching upward. Then, add a short vertical line, attached to the first hook. Finally, add a second matching hook right next to it.",
+      "es": "La letra M se forma en tres gestos. Primero, traza un primer gancho que se curva hacia arriba. Luego, añade un trazo vertical corto, pegado al primer gancho. Por último, añade un segundo gancho idéntico, justo al lado."
     },
     "steps": [
       {
+        "family": "crochet",
+        "variant": "top-left",
+        "pathD": "M 87.50 149.00 L 87.50 118.45 A 8.45 8.45 0 0 0 70.89 116.27",
+        "startXY": [
+          87.5,
+          149
+        ],
+        "strokeColor": "#4A90E2",
+        "description": {
+          "fr": "Premier crochet qui s'arrondit vers le haut",
+          "en": "First hook arching upward",
+          "es": "Primer gancho que se curva hacia arriba"
+        }
+      },
+      {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 55 77 L 55 149",
+        "pathD": "M 70.75 107.50 L 70.75 149.50",
         "startXY": [
-          55,
-          77
+          70.75,
+          107.5
         ],
         "strokeColor": "#4A3B2A",
         "description": {
-          "fr": "Trait vertical court",
-          "en": "Short vertical line",
-          "es": "Trazo vertical corto"
+          "fr": "Trait vertical court, accolé au premier crochet",
+          "en": "Short vertical line, attached to the first hook",
+          "es": "Trazo vertical corto, pegado al primer gancho"
         }
       },
       {
         "family": "crochet",
         "variant": "top-left",
-        "pathD": "M 55 77 C 55 67.6 62.6 60 72 60 C 81.4 60 89 67.6 89 77 L 89 149",
+        "pathD": "M 104.50 149.50 L 104.50 118.95 A 8.45 8.45 0 0 0 87.89 116.77",
         "startXY": [
-          55,
-          77
+          104.5,
+          149.5
         ],
         "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Premier crochet, accolé à droite du trait",
-          "en": "First hook, attached to the right of the line",
-          "es": "Primer gancho, pegado a la derecha del trazo"
-        }
-      },
-      {
-        "family": "crochet",
-        "variant": "top-left",
-        "pathD": "M 89 77 C 89 67.6 96.6 60 106 60 C 115.4 60 123 67.6 123 77 L 123 149",
-        "startXY": [
-          89,
-          77
-        ],
-        "strokeColor": "#4A90E2",
-        "description": {
-          "fr": "Second crochet, accolé au premier",
-          "en": "Second hook, attached to the first",
-          "es": "Segundo gancho, pegado al primero"
+          "fr": "Second crochet, identique au premier",
+          "en": "Second hook, matching the first",
+          "es": "Segundo gancho, idéntico al primero"
         }
       }
     ]
@@ -715,10 +715,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 68 77 L 68 149",
+        "pathD": "M 71.00 107.75 L 71.00 149.75",
         "startXY": [
-          68,
-          77
+          71,
+          107.75
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -730,10 +730,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "top-left",
-        "pathD": "M 68 77 C 68 59.3 82.3 45 100 45 C 117.7 45 132 59.3 132 77 L 132 149",
+        "pathD": "M 93.00 149.50 L 93.00 121.55 A 11.05 11.05 0 0 0 71.28 118.69",
         "startXY": [
-          68,
-          77
+          93,
+          149.5
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -824,10 +824,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 68 62 L 68 179",
+        "pathD": "M 72.00 105.00 L 72.00 153.00",
         "startXY": [
-          68,
-          62
+          72,
+          105
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -839,10 +839,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-left",
-        "pathD": "M 76 67.3 C 85.6 55.5 101.6 51 116 56.1 C 130.4 61.2 140 74.8 140 90 C 140 105.2 130.4 118.8 116 123.9 C 101.6 129 85.6 124.5 76 112.7",
+        "pathD": "M 71.83 128.29 A 15.00 15.00 0 1 0 71.83 106.71",
         "startXY": [
-          76,
-          67.3
+          71.83,
+          128.29
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -2875,10 +2875,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-droit",
-        "pathD": "M 83 89 L 97 77",
+        "pathD": "M 88.50 89.26 L 67.85 118.75",
         "startXY": [
-          83,
-          89
+          88.5,
+          89.26
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -2890,10 +2890,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 97 77 L 97 149",
+        "pathD": "M 88.71 89.64 L 88.71 143.64",
         "startXY": [
-          97,
-          77
+          88.71,
+          89.64
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -2914,48 +2914,33 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 2 se forme en trois gestes. Une courbe en haut qui ressemble à un crochet renversé, une oblique qui descend vers le bas-gauche, puis un trait horizontal à la base.",
-      "en": "The digit 2 is formed in three gestures. A curve at the top like an upside-down hook, a diagonal going down to the lower left, then a horizontal line at the base.",
-      "es": "El número 2 se forma en tres gestos. Una curva arriba que parece un gancho invertido, un oblicuo que baja hacia abajo a la izquierda, luego un trazo horizontal en la base."
+      "fr": "Le chiffre 2 se forme en deux gestes. Un crochet qui part du haut, s'arrondit puis descend vers le bas-gauche, ensuite un trait horizontal à la base.",
+      "en": "The digit 2 is formed in two gestures. A hook starting at the top, curving and going down to the lower left, then a horizontal line at the base.",
+      "es": "El número 2 se forma en dos gestos. Un gancho que parte de arriba, se curva y baja hacia abajo a la izquierda, luego un trazo horizontal en la base."
     },
     "steps": [
       {
-        "family": "courbe",
-        "variant": "top",
-        "pathD": "M 67 85 C 67 68.4 80.4 55 97 55 C 113.6 55 127 68.4 127 85",
+        "family": "crochet",
+        "variant": "top-left",
+        "pathD": "M 83.67 148.45 L 110.72 121.40 A 12.75 12.75 0 0 0 92.69 103.37",
         "startXY": [
-          67,
-          85
+          83.67,
+          148.45
         ],
-        "strokeColor": "#E05252",
+        "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Courbe du haut, en crochet renversé",
-          "en": "Curve at the top, like an upside-down hook",
-          "es": "Curva de arriba, en forma de gancho invertido"
-        }
-      },
-      {
-        "family": "trait",
-        "variant": "oblique-gauche",
-        "pathD": "M 127 85 L 65 149",
-        "startXY": [
-          127,
-          85
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Oblique vers le bas-gauche",
-          "en": "Diagonal toward the lower left",
-          "es": "Oblicuo hacia abajo a la izquierda"
+          "fr": "Crochet qui part du haut et descend vers le bas-gauche",
+          "en": "Hook starting at the top, going down to the lower left",
+          "es": "Gancho que parte de arriba y baja hacia abajo a la izquierda"
         }
       },
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 65 149 L 131 149",
+        "pathD": "M 119.77 148.59 L 83.77 148.59",
         "startXY": [
-          65,
-          149
+          119.77,
+          148.59
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -3031,10 +3016,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-gauche",
-        "pathD": "M 123 77 L 67 123",
+        "pathD": "M 96.49 94.24 L 72.09 149.05",
         "startXY": [
-          123,
-          77
+          96.49,
+          94.24
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -3046,10 +3031,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 67 123 L 131 123",
+        "pathD": "M 132.29 149.12 L 72.29 149.12",
         "startXY": [
-          67,
-          123
+          132.29,
+          149.12
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -3061,10 +3046,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 123 71 L 123 149",
+        "pathD": "M 102.47 119.69 L 102.47 179.69",
         "startXY": [
-          123,
-          71
+          102.47,
+          119.69
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -3155,10 +3140,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "top-right",
-        "pathD": "M 116 101 C 116 88.3 105.7 78 93 78 C 80.3 78 70 88.3 70 101 L 70 138",
+        "pathD": "M 91.50 142.00 L 91.50 115.30 A 9.30 9.30 0 0 1 110.05 114.33",
         "startXY": [
-          116,
-          101
+          91.5,
+          142
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -3170,10 +3155,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "closed",
-        "pathD": "M 70 138 A 21 21 0 1 0 112 138 A 21 21 0 1 0 70 138",
+        "pathD": "M 91.68 134.88 A 10.32 10.32 0 1 1 91.68 142.62",
         "startXY": [
-          80,
-          138
+          91.68,
+          134.88
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -3202,10 +3187,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 65 77 L 131 77",
+        "pathD": "M 116.50 105.75 L 86.50 105.75",
         "startXY": [
-          65,
-          77
+          116.5,
+          105.75
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -3217,10 +3202,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-gauche",
-        "pathD": "M 131 77 L 91 149",
+        "pathD": "M 116.89 106.00 L 96.61 149.50",
         "startXY": [
-          131,
-          77
+          116.89,
+          106
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -3296,10 +3281,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "closed",
-        "pathD": "M 112 108 A 21 21 0 1 0 70 108 A 21 21 0 1 0 112 108",
+        "pathD": "M 119.08 115.92 A 12.00 12.00 0 1 1 119.08 105.58",
         "startXY": [
-          112,
-          108
+          119.08,
+          115.92
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -3311,10 +3296,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "bottom-left",
-        "pathD": "M 112 108 L 112 145 C 112 157.7 101.7 168 89 168 C 76.3 168 66 157.7 66 145",
+        "pathD": "M 119.00 104.25 L 119.00 135.75 A 10.50 10.50 0 0 1 98.63 139.34",
         "startXY": [
-          112,
-          108
+          119,
+          104.25
         ],
         "strokeColor": "#4A90E2",
         "description": {

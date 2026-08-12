@@ -700,7 +700,13 @@ class _LetterPreviewPainter extends CustomPainter {
     final scale = size.width / 200.0;
     canvas.save();
     canvas.scale(scale, scale);
-    for (final step in steps) {
+    final zOrderedSteps = List.from(steps)
+      ..sort(
+        (a, b) => letterFamilyZIndex(
+          a['family'] as String,
+        ).compareTo(letterFamilyZIndex(b['family'] as String)),
+      );
+    for (final step in zOrderedSteps) {
       final paint = Paint()
         ..color = Color(
           int.parse((step['strokeColor'] as String).replaceFirst('#', '0xFF')),

@@ -10,8 +10,6 @@ import '../widgets/amani_mascot.dart';
 import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
 import '../data/syllable_catalog.dart';
-import '../services/resume_checkpoint_service.dart';
-import '../widgets/amani_button.dart';
 
 /// Décomposition "flore" décorative de la branche d'exercice, port fidèle du
 /// tracé SVG `BrancheExerciseIcon` (src/routes/_app.accueil.tsx).
@@ -79,7 +77,6 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   void initState() {
     super.initState();
     _loadActiveStep();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkResume());
   }
 
   Future<void> _loadActiveStep() async {
@@ -87,93 +84,6 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     final saved = prefs.getInt('accueil_current_step_idx');
     if (saved != null && mounted) {
       setState(() => _activeStepIdx = saved);
-    }
-  }
-
-  /// Propose de reprendre une session (cours/exercice/évaluation) laissée
-  /// inachevée si l'app a été fermée avant qu'elle soit terminée — voir
-  /// ResumeCheckpointService. Ne s'exécute qu'une fois par lancement de
-  /// l'app (le service lui-même ignore les appels suivants).
-  Future<void> _checkResume() async {
-    final checkpoint = context.read<ResumeCheckpointService>();
-    await checkpoint.ready;
-    final route = checkpoint.pendingRoute;
-    checkpoint.markBootCheckDone();
-    if (route == null || !mounted) return;
-
-    final t = context.read<LanguageProvider>().t;
-    final r = t['resumeSession'] as Map<String, dynamic>? ?? {};
-
-    final shouldResume = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AmaniMascot(
-                pose: AmaniPose.encouragement,
-                size: AmaniSize.medium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                r['title'] ?? '',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: AmaniColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                r['body'] ?? '',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontSize: 14,
-                  color: AmaniColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              AmaniButton(
-                label: r['resume'] ?? '',
-                fullWidth: true,
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-              ),
-              const SizedBox(height: 10),
-              AmaniButton(
-                label: r['restart'] ?? '',
-                variant: AmaniButtonVariant.ghost,
-                fullWidth: true,
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (shouldResume == true) {
-      if (mounted) context.go(route);
-    } else {
-      await checkpoint.clear();
     }
   }
 

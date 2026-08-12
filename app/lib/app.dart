@@ -26,7 +26,6 @@ import 'hooks/use_writing_style.dart';
 import 'hooks/use_animation_speed.dart';
 import 'screens/plus_screen.dart';
 import 'widgets/points_toast_host.dart';
-import 'services/resume_checkpoint_service.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -34,14 +33,6 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final _router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
-  // Alimente ResumeCheckpointService à chaque navigation, pour pouvoir
-  // proposer de reprendre une session (cours/exercice/évaluation) laissée
-  // inachevée après une fermeture brusque de l'app — voir
-  // resume_checkpoint_service.dart.
-  redirect: (context, state) {
-    context.read<ResumeCheckpointService>().onNavigate(state.uri.toString());
-    return null;
-  },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
     GoRoute(
@@ -169,7 +160,6 @@ class AmaniApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WritingStyleProvider()),
         ChangeNotifierProvider(create: (_) => AnimationSpeedProvider()),
         ChangeNotifierProvider(create: (_) => BackendSyncService()),
-        ChangeNotifierProvider(create: (_) => ResumeCheckpointService()),
         ChangeNotifierProxyProvider<BackendSyncService, ProgressProvider>(
           create: (context) =>
               ProgressProvider(context.read<BackendSyncService>()),

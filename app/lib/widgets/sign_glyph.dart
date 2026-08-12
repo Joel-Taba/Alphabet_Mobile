@@ -18,6 +18,18 @@ const Map<SignFamily, SignFamilyColors> glyphColorByFamily = {
   SignFamily.crochet: SignFamilyColors(Color(0xFF4A90E2), Color(0xFFFFFFFF)),
 };
 
+/// Ordre d'empilement (du bas vers le haut) aux points d'intersection entre
+/// traits d'une même lettre : la courbe passe sous le crochet, qui passe
+/// lui-même sous le trait, le point restant toujours au-dessus de tout.
+const Map<String, int> letterStrokeZOrder = {
+  'courbe': 0,
+  'crochet': 1,
+  'trait': 2,
+  'point': 3,
+};
+
+int letterFamilyZIndex(String family) => letterStrokeZOrder[family] ?? 0;
+
 String signFamilyKey(SignFamily f) => f.name;
 
 const double _sw = 16.0;

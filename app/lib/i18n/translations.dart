@@ -134,11 +134,6 @@ const Map<String, dynamic> fr = {
     'hidePassword': 'Masquer le mot de passe',
     'languageLabel': 'Langue',
     'start': "Commencer l'aventure",
-    'creatingAccount': 'Création du compte…',
-    'offlineError':
-        "Une connexion internet est nécessaire pour créer un compte. Vérifie ta connexion et réessaie.",
-    'nameTakenError': 'Ce prénom est déjà utilisé, essaie un autre.',
-    'genericError': "Une erreur est survenue, réessaie dans un instant.",
   },
   'profileLock': {
     'title': 'Mon Profil est protégé',
@@ -170,13 +165,6 @@ const Map<String, dynamic> fr = {
       'point': 'Le Point',
       'crochet': 'Le Crochet',
     },
-  },
-  'resumeSession': {
-    'title': "On continue l'aventure ?",
-    'body':
-        "Tu n'avais pas terminé ce que tu avais commencé. Veux-tu reprendre exactement là où tu t'étais arrêté ?",
-    'resume': 'Oui, je continue',
-    'restart': 'Non, je repars de l\'accueil',
   },
   'parcours': {
     'title': 'Prêt à commencer ?',
@@ -628,11 +616,6 @@ const Map<String, dynamic> en = {
     'hidePassword': 'Hide password',
     'languageLabel': 'Language',
     'start': 'Start the adventure',
-    'creatingAccount': 'Creating your account…',
-    'offlineError':
-        'An internet connection is needed to create an account. Check your connection and try again.',
-    'nameTakenError': 'That name is already taken, try another one.',
-    'genericError': 'Something went wrong, please try again in a moment.',
   },
   'profileLock': {
     'title': 'My Profile is protected',
@@ -665,13 +648,6 @@ const Map<String, dynamic> en = {
       'point': 'The Dot',
       'crochet': 'The Hook',
     },
-  },
-  'resumeSession': {
-    'title': 'Continue the adventure?',
-    'body':
-        "You hadn't finished what you started. Do you want to pick up exactly where you left off?",
-    'resume': "Yes, let's continue",
-    'restart': 'No, back to home',
   },
   'parcours': {
     'title': 'The Branch Path',
@@ -1121,11 +1097,6 @@ const Map<String, dynamic> es = {
     'hidePassword': 'Ocultar contraseña',
     'languageLabel': 'Idioma',
     'start': 'Comenzar la aventura',
-    'creatingAccount': 'Creando tu cuenta…',
-    'offlineError':
-        'Se necesita conexión a internet para crear una cuenta. Comprueba tu conexión e inténtalo de nuevo.',
-    'nameTakenError': 'Ese nombre ya está en uso, prueba con otro.',
-    'genericError': 'Ocurrió un error, inténtalo de nuevo en un momento.',
   },
   'profileLock': {
     'title': 'Mi Perfil está protegido',
@@ -1159,13 +1130,6 @@ const Map<String, dynamic> es = {
       'point': 'El Punto',
       'crochet': 'El Gancho',
     },
-  },
-  'resumeSession': {
-    'title': '¿Continuamos la aventura?',
-    'body':
-        'No habías terminado lo que empezaste. ¿Quieres continuar exactamente donde lo dejaste?',
-    'resume': 'Sí, continuar',
-    'restart': 'No, volver al inicio',
   },
   'parcours': {
     'title': 'Recorrido de la rama',

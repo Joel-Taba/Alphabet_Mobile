@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/amani_theme.dart';
 import '../utils/trace_validation.dart';
+import 'sign_glyph.dart' show letterFamilyZIndex;
 
 enum _CellStatus { idle, drawing, retry, solved }
 
@@ -215,7 +216,13 @@ class _CellPainter extends CustomPainter {
     final lineWidth = (cellSize / 9).clamp(3.0, 100.0);
 
     if (solved) {
-      for (var i = 0; i < steps.length; i++) {
+      final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
+        ..sort(
+          (a, b) => letterFamilyZIndex(
+            steps[a]['family'] as String,
+          ).compareTo(letterFamilyZIndex(steps[b]['family'] as String)),
+        );
+      for (final i in zOrderedIdx) {
         final pts = sampleSvgPath(steps[i]['pathD'] as String, 35);
         if (pts.length < 2) continue;
         _drawPolyline(
@@ -234,7 +241,13 @@ class _CellPainter extends CustomPainter {
     }
 
     // Guides des étapes non complétées
-    for (var idx = 0; idx < steps.length; idx++) {
+    final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
+      ..sort(
+        (a, b) => letterFamilyZIndex(
+          steps[a]['family'] as String,
+        ).compareTo(letterFamilyZIndex(steps[b]['family'] as String)),
+      );
+    for (final idx in zOrderedIdx) {
       if (completedSteps.contains(idx)) continue;
       final isCurrentStep = idx == currentStepIdx;
       final pts = sampleSvgPath(steps[idx]['pathD'] as String, 30);
@@ -254,7 +267,8 @@ class _CellPainter extends CustomPainter {
     }
 
     // Étapes complétées
-    for (final idx in completedSteps) {
+    final zOrderedCompleted = zOrderedIdx.where(completedSteps.contains);
+    for (final idx in zOrderedCompleted) {
       final pts = sampleSvgPath(steps[idx]['pathD'] as String, 35);
       if (pts.length < 2) continue;
       _drawPolyline(
