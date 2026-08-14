@@ -7,7 +7,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "a",
     "nom": {
       "fr": "a minuscule",
-      "en": "lowercase a"
+      "en": "lowercase a",
+      "es": "a minúscula",
+      "ar": "الحرف a الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -28,7 +30,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "b",
     "nom": {
       "fr": "b minuscule",
-      "en": "lowercase b"
+      "en": "lowercase b",
+      "es": "b minúscula",
+      "ar": "الحرف b الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -49,7 +53,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "c",
     "nom": {
       "fr": "c minuscule",
-      "en": "lowercase c"
+      "en": "lowercase c",
+      "es": "c minúscula",
+      "ar": "الحرف c الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -65,7 +71,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "d",
     "nom": {
       "fr": "d minuscule",
-      "en": "lowercase d"
+      "en": "lowercase d",
+      "es": "d minúscula",
+      "ar": "الحرف d الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -86,7 +94,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "e",
     "nom": {
       "fr": "e minuscule",
-      "en": "lowercase e"
+      "en": "lowercase e",
+      "es": "e minúscula",
+      "ar": "الحرف e الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -107,7 +117,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "f",
     "nom": {
       "fr": "f minuscule",
-      "en": "lowercase f"
+      "en": "lowercase f",
+      "es": "f minúscula",
+      "ar": "الحرف f الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -128,7 +140,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "g",
     "nom": {
       "fr": "g minuscule",
-      "en": "lowercase g"
+      "en": "lowercase g",
+      "es": "g minúscula",
+      "ar": "الحرف g الصغير"
     },
     "zone": "jambe",
     "signes": [
@@ -149,7 +163,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "h",
     "nom": {
       "fr": "h minuscule",
-      "en": "lowercase h"
+      "en": "lowercase h",
+      "es": "h minúscula",
+      "ar": "الحرف h الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -170,7 +186,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "i",
     "nom": {
       "fr": "i minuscule",
-      "en": "lowercase i"
+      "en": "lowercase i",
+      "es": "i minúscula",
+      "ar": "الحرف i الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -191,7 +209,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "j",
     "nom": {
       "fr": "j minuscule",
-      "en": "lowercase j"
+      "en": "lowercase j",
+      "es": "j minúscula",
+      "ar": "الحرف j الصغير"
     },
     "zone": "jambe",
     "signes": [
@@ -212,7 +232,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "k",
     "nom": {
       "fr": "k minuscule",
-      "en": "lowercase k"
+      "en": "lowercase k",
+      "es": "k minúscula",
+      "ar": "الحرف k الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -238,7 +260,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "l",
     "nom": {
       "fr": "l minuscule",
-      "en": "lowercase l"
+      "en": "lowercase l",
+      "es": "l minúscula",
+      "ar": "الحرف l الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -254,7 +278,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "m",
     "nom": {
       "fr": "m minuscule",
-      "en": "lowercase m"
+      "en": "lowercase m",
+      "es": "m minúscula",
+      "ar": "الحرف m الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -280,7 +306,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "n",
     "nom": {
       "fr": "n minuscule",
-      "en": "lowercase n"
+      "en": "lowercase n",
+      "es": "n minúscula",
+      "ar": "الحرف n الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -301,7 +329,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "o",
     "nom": {
       "fr": "o minuscule",
-      "en": "lowercase o"
+      "en": "lowercase o",
+      "es": "o minúscula",
+      "ar": "الحرف o الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -317,7 +347,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "p",
     "nom": {
       "fr": "p minuscule",
-      "en": "lowercase p"
+      "en": "lowercase p",
+      "es": "p minúscula",
+      "ar": "الحرف p الصغير"
     },
     "zone": "jambe",
     "signes": [
@@ -338,7 +370,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "q",
     "nom": {
       "fr": "q minuscule",
-      "en": "lowercase q"
+      "en": "lowercase q",
+      "es": "q minúscula",
+      "ar": "الحرف q الصغير"
     },
     "zone": "jambe",
     "signes": [
@@ -359,7 +393,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "r",
     "nom": {
       "fr": "r minuscule",
-      "en": "lowercase r"
+      "en": "lowercase r",
+      "es": "r minúscula",
+      "ar": "الحرف r الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -380,7 +416,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "s",
     "nom": {
       "fr": "s minuscule",
-      "en": "lowercase s"
+      "en": "lowercase s",
+      "es": "s minúscula",
+      "ar": "الحرف s الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -401,7 +439,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "t",
     "nom": {
       "fr": "t minuscule",
-      "en": "lowercase t"
+      "en": "lowercase t",
+      "es": "t minúscula",
+      "ar": "الحرف t الصغير"
     },
     "zone": "hampe",
     "signes": [
@@ -422,7 +462,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "u",
     "nom": {
       "fr": "u minuscule",
-      "en": "lowercase u"
+      "en": "lowercase u",
+      "es": "u minúscula",
+      "ar": "الحرف u الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -443,7 +485,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "v",
     "nom": {
       "fr": "v minuscule",
-      "en": "lowercase v"
+      "en": "lowercase v",
+      "es": "v minúscula",
+      "ar": "الحرف v الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -464,7 +508,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "w",
     "nom": {
       "fr": "w minuscule",
-      "en": "lowercase w"
+      "en": "lowercase w",
+      "es": "w minúscula",
+      "ar": "الحرف w الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -495,7 +541,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "x",
     "nom": {
       "fr": "x minuscule",
-      "en": "lowercase x"
+      "en": "lowercase x",
+      "es": "x minúscula",
+      "ar": "الحرف x الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -516,7 +564,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "y",
     "nom": {
       "fr": "y minuscule",
-      "en": "lowercase y"
+      "en": "lowercase y",
+      "es": "y minúscula",
+      "ar": "الحرف y الصغير"
     },
     "zone": "jambe",
     "signes": [
@@ -537,7 +587,9 @@ final List<dynamic> MINUSCULES = jsonDecode(r'''
     "caractere": "z",
     "nom": {
       "fr": "z minuscule",
-      "en": "lowercase z"
+      "en": "lowercase z",
+      "es": "z minúscula",
+      "ar": "الحرف z الصغير"
     },
     "zone": "corps",
     "signes": [
@@ -568,7 +620,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "A",
     "nom": {
       "fr": "A majuscule",
-      "en": "uppercase A"
+      "en": "uppercase A",
+      "es": "A mayúscula",
+      "ar": "الحرف A الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -594,7 +648,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "B",
     "nom": {
       "fr": "B majuscule",
-      "en": "uppercase B"
+      "en": "uppercase B",
+      "es": "B mayúscula",
+      "ar": "الحرف B الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -620,7 +676,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "C",
     "nom": {
       "fr": "C majuscule",
-      "en": "uppercase C"
+      "en": "uppercase C",
+      "es": "C mayúscula",
+      "ar": "الحرف C الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -636,7 +694,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "D",
     "nom": {
       "fr": "D majuscule",
-      "en": "uppercase D"
+      "en": "uppercase D",
+      "es": "D mayúscula",
+      "ar": "الحرف D الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -657,7 +717,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "E",
     "nom": {
       "fr": "E majuscule",
-      "en": "uppercase E"
+      "en": "uppercase E",
+      "es": "E mayúscula",
+      "ar": "الحرف E الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -688,7 +750,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "F",
     "nom": {
       "fr": "F majuscule",
-      "en": "uppercase F"
+      "en": "uppercase F",
+      "es": "F mayúscula",
+      "ar": "الحرف F الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -714,7 +778,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "G",
     "nom": {
       "fr": "G majuscule",
-      "en": "uppercase G"
+      "en": "uppercase G",
+      "es": "G mayúscula",
+      "ar": "الحرف G الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -740,7 +806,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "H",
     "nom": {
       "fr": "H majuscule",
-      "en": "uppercase H"
+      "en": "uppercase H",
+      "es": "H mayúscula",
+      "ar": "الحرف H الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -766,7 +834,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "I",
     "nom": {
       "fr": "I majuscule",
-      "en": "uppercase I"
+      "en": "uppercase I",
+      "es": "I mayúscula",
+      "ar": "الحرف I الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -782,7 +852,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "J",
     "nom": {
       "fr": "J majuscule",
-      "en": "uppercase J"
+      "en": "uppercase J",
+      "es": "J mayúscula",
+      "ar": "الحرف J الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -803,7 +875,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "K",
     "nom": {
       "fr": "K majuscule",
-      "en": "uppercase K"
+      "en": "uppercase K",
+      "es": "K mayúscula",
+      "ar": "الحرف K الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -829,7 +903,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "L",
     "nom": {
       "fr": "L majuscule",
-      "en": "uppercase L"
+      "en": "uppercase L",
+      "es": "L mayúscula",
+      "ar": "الحرف L الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -850,7 +926,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "M",
     "nom": {
       "fr": "M majuscule",
-      "en": "uppercase M"
+      "en": "uppercase M",
+      "es": "M mayúscula",
+      "ar": "الحرف M الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -881,7 +959,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "N",
     "nom": {
       "fr": "N majuscule",
-      "en": "uppercase N"
+      "en": "uppercase N",
+      "es": "N mayúscula",
+      "ar": "الحرف N الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -907,7 +987,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "O",
     "nom": {
       "fr": "O majuscule",
-      "en": "uppercase O"
+      "en": "uppercase O",
+      "es": "O mayúscula",
+      "ar": "الحرف O الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -923,7 +1005,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "P",
     "nom": {
       "fr": "P majuscule",
-      "en": "uppercase P"
+      "en": "uppercase P",
+      "es": "P mayúscula",
+      "ar": "الحرف P الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -944,7 +1028,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "Q",
     "nom": {
       "fr": "Q majuscule",
-      "en": "uppercase Q"
+      "en": "uppercase Q",
+      "es": "Q mayúscula",
+      "ar": "الحرف Q الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -965,7 +1051,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "R",
     "nom": {
       "fr": "R majuscule",
-      "en": "uppercase R"
+      "en": "uppercase R",
+      "es": "R mayúscula",
+      "ar": "الحرف R الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -991,7 +1079,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "S",
     "nom": {
       "fr": "S majuscule",
-      "en": "uppercase S"
+      "en": "uppercase S",
+      "es": "S mayúscula",
+      "ar": "الحرف S الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1012,7 +1102,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "T",
     "nom": {
       "fr": "T majuscule",
-      "en": "uppercase T"
+      "en": "uppercase T",
+      "es": "T mayúscula",
+      "ar": "الحرف T الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1033,7 +1125,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "U",
     "nom": {
       "fr": "U majuscule",
-      "en": "uppercase U"
+      "en": "uppercase U",
+      "es": "U mayúscula",
+      "ar": "الحرف U الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1059,7 +1153,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "V",
     "nom": {
       "fr": "V majuscule",
-      "en": "uppercase V"
+      "en": "uppercase V",
+      "es": "V mayúscula",
+      "ar": "الحرف V الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1080,7 +1176,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "W",
     "nom": {
       "fr": "W majuscule",
-      "en": "uppercase W"
+      "en": "uppercase W",
+      "es": "W mayúscula",
+      "ar": "الحرف W الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1111,7 +1209,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "X",
     "nom": {
       "fr": "X majuscule",
-      "en": "uppercase X"
+      "en": "uppercase X",
+      "es": "X mayúscula",
+      "ar": "الحرف X الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1132,7 +1232,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "Y",
     "nom": {
       "fr": "Y majuscule",
-      "en": "uppercase Y"
+      "en": "uppercase Y",
+      "es": "Y mayúscula",
+      "ar": "الحرف Y الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1158,7 +1260,9 @@ final List<dynamic> MAJUSCULES = jsonDecode(r'''
     "caractere": "Z",
     "nom": {
       "fr": "Z majuscule",
-      "en": "uppercase Z"
+      "en": "uppercase Z",
+      "es": "Z mayúscula",
+      "ar": "الحرف Z الكبير"
     },
     "zone": "hampe",
     "signes": [
@@ -1189,7 +1293,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "0",
     "nom": {
       "fr": "Zéro",
-      "en": "Zero"
+      "en": "Zero",
+      "es": "Cero",
+      "ar": "صفر"
     },
     "zone": "corps",
     "signes": [
@@ -1205,7 +1311,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "1",
     "nom": {
       "fr": "Un",
-      "en": "One"
+      "en": "One",
+      "es": "Uno",
+      "ar": "واحد"
     },
     "zone": "corps",
     "signes": [
@@ -1221,7 +1329,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "2",
     "nom": {
       "fr": "Deux",
-      "en": "Two"
+      "en": "Two",
+      "es": "Dos",
+      "ar": "اثنان"
     },
     "zone": "corps",
     "signes": [
@@ -1247,7 +1357,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "3",
     "nom": {
       "fr": "Trois",
-      "en": "Three"
+      "en": "Three",
+      "es": "Tres",
+      "ar": "ثلاثة"
     },
     "zone": "corps",
     "signes": [
@@ -1268,7 +1380,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "4",
     "nom": {
       "fr": "Quatre",
-      "en": "Four"
+      "en": "Four",
+      "es": "Cuatro",
+      "ar": "أربعة"
     },
     "zone": "corps",
     "signes": [
@@ -1294,7 +1408,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "5",
     "nom": {
       "fr": "Cinq",
-      "en": "Five"
+      "en": "Five",
+      "es": "Cinco",
+      "ar": "خمسة"
     },
     "zone": "corps",
     "signes": [
@@ -1320,7 +1436,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "6",
     "nom": {
       "fr": "Six",
-      "en": "Six"
+      "en": "Six",
+      "es": "Seis",
+      "ar": "ستة"
     },
     "zone": "corps",
     "signes": [
@@ -1341,7 +1459,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "7",
     "nom": {
       "fr": "Sept",
-      "en": "Seven"
+      "en": "Seven",
+      "es": "Siete",
+      "ar": "سبعة"
     },
     "zone": "corps",
     "signes": [
@@ -1362,7 +1482,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "8",
     "nom": {
       "fr": "Huit",
-      "en": "Eight"
+      "en": "Eight",
+      "es": "Ocho",
+      "ar": "ثمانية"
     },
     "zone": "corps",
     "signes": [
@@ -1383,7 +1505,9 @@ final List<dynamic> CHIFFRES = jsonDecode(r'''
     "caractere": "9",
     "nom": {
       "fr": "Neuf",
-      "en": "Nine"
+      "en": "Nine",
+      "es": "Nueve",
+      "ar": "تسعة"
     },
     "zone": "corps",
     "signes": [

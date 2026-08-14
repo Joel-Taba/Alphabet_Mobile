@@ -25,49 +25,49 @@ const List<ProgressionGroup> _baseGroups = [
     'l1',
     ProgressionGroupKind.lettres,
     ['a', 'b', 'c', 'd', 'e'],
-    {'fr': 'Lettres a → e', 'en': 'Letters a → e', 'es': 'Letras a → e'},
+    {'fr': 'Lettres a → e', 'en': 'Letters a → e', 'es': 'Letras a → e', 'ar': 'حروف a → e'},
   ),
   ProgressionGroup(
     'd1',
     ProgressionGroupKind.chiffres,
     ['0', '1', '2', '3', '4'],
-    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4', 'es': 'Números 0 → 4'},
+    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4', 'es': 'Números 0 → 4', 'ar': 'أرقام 0 → 4'},
   ),
   ProgressionGroup(
     'l2',
     ProgressionGroupKind.lettres,
     ['f', 'g', 'h', 'i', 'j'],
-    {'fr': 'Lettres f → j', 'en': 'Letters f → j', 'es': 'Letras f → j'},
+    {'fr': 'Lettres f → j', 'en': 'Letters f → j', 'es': 'Letras f → j', 'ar': 'حروف f → j'},
   ),
   ProgressionGroup(
     'd2',
     ProgressionGroupKind.chiffres,
     ['5', '6', '7', '8', '9'],
-    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9', 'es': 'Números 5 → 9'},
+    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9', 'es': 'Números 5 → 9', 'ar': 'أرقام 5 → 9'},
   ),
   ProgressionGroup(
     'l3',
     ProgressionGroupKind.lettres,
     ['k', 'l', 'm', 'n', 'o'],
-    {'fr': 'Lettres k → o', 'en': 'Letters k → o', 'es': 'Letras k → o'},
+    {'fr': 'Lettres k → o', 'en': 'Letters k → o', 'es': 'Letras k → o', 'ar': 'حروف k → o'},
   ),
   ProgressionGroup(
     'l4',
     ProgressionGroupKind.lettres,
     ['p', 'q', 'r', 's', 't'],
-    {'fr': 'Lettres p → t', 'en': 'Letters p → t', 'es': 'Letras p → t'},
+    {'fr': 'Lettres p → t', 'en': 'Letters p → t', 'es': 'Letras p → t', 'ar': 'حروف p → t'},
   ),
   ProgressionGroup(
     'l5',
     ProgressionGroupKind.lettres,
     ['u', 'v', 'w', 'x', 'y'],
-    {'fr': 'Lettres u → y', 'en': 'Letters u → y', 'es': 'Letras u → y'},
+    {'fr': 'Lettres u → y', 'en': 'Letters u → y', 'es': 'Letras u → y', 'ar': 'حروف u → y'},
   ),
   ProgressionGroup(
     'l6',
     ProgressionGroupKind.lettres,
     ['z'],
-    {'fr': 'Lettre z', 'en': 'Letter z', 'es': 'Letra z'},
+    {'fr': 'Lettre z', 'en': 'Letter z', 'es': 'Letra z', 'ar': 'حرف z'},
   ),
   ProgressionGroup(
     'u1',
@@ -77,6 +77,7 @@ const List<ProgressionGroup> _baseGroups = [
       'fr': 'Majuscules A → E',
       'en': 'Uppercase A → E',
       'es': 'Mayúsculas A → E',
+      'ar': 'حروف كبيرة A → E',
     },
   ),
   ProgressionGroup(
@@ -87,6 +88,7 @@ const List<ProgressionGroup> _baseGroups = [
       'fr': 'Majuscules F → J',
       'en': 'Uppercase F → J',
       'es': 'Mayúsculas F → J',
+      'ar': 'حروف كبيرة F → J',
     },
   ),
   ProgressionGroup(
@@ -97,6 +99,7 @@ const List<ProgressionGroup> _baseGroups = [
       'fr': 'Majuscules K → O',
       'en': 'Uppercase K → O',
       'es': 'Mayúsculas K → O',
+      'ar': 'حروف كبيرة K → O',
     },
   ),
   ProgressionGroup(
@@ -107,6 +110,7 @@ const List<ProgressionGroup> _baseGroups = [
       'fr': 'Majuscules P → T',
       'en': 'Uppercase P → T',
       'es': 'Mayúsculas P → T',
+      'ar': 'حروف كبيرة P → T',
     },
   ),
   ProgressionGroup(
@@ -117,13 +121,14 @@ const List<ProgressionGroup> _baseGroups = [
       'fr': 'Majuscules U → Y',
       'en': 'Uppercase U → Y',
       'es': 'Mayúsculas U → Y',
+      'ar': 'حروف كبيرة U → Y',
     },
   ),
   ProgressionGroup(
     'u6',
     ProgressionGroupKind.lettres,
     ['Z'],
-    {'fr': 'Majuscule Z', 'en': 'Uppercase Z', 'es': 'Mayúscula Z'},
+    {'fr': 'Majuscule Z', 'en': 'Uppercase Z', 'es': 'Mayúscula Z', 'ar': 'حرف كبير Z'},
   ),
 ];
 
@@ -133,49 +138,49 @@ const List<ProgressionGroup> _esGroups = [
     'l1',
     ProgressionGroupKind.lettres,
     ['a', 'b', 'c', 'd', 'e'],
-    {'fr': 'Lettres a → e', 'en': 'Letters a → e', 'es': 'Letras a → e'},
+    {'fr': 'Lettres a → e', 'en': 'Letters a → e', 'es': 'Letras a → e', 'ar': 'حروف a → e'},
   ),
   ProgressionGroup(
     'd1',
     ProgressionGroupKind.chiffres,
     ['0', '1', '2', '3', '4'],
-    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4', 'es': 'Números 0 → 4'},
+    {'fr': 'Chiffres 0 → 4', 'en': 'Digits 0 → 4', 'es': 'Números 0 → 4', 'ar': 'أرقام 0 → 4'},
   ),
   ProgressionGroup(
     'l2',
     ProgressionGroupKind.lettres,
     ['f', 'g', 'h', 'i', 'j'],
-    {'fr': 'Lettres f → j', 'en': 'Letters f → j', 'es': 'Letras f → j'},
+    {'fr': 'Lettres f → j', 'en': 'Letters f → j', 'es': 'Letras f → j', 'ar': 'حروف f → j'},
   ),
   ProgressionGroup(
     'd2',
     ProgressionGroupKind.chiffres,
     ['5', '6', '7', '8', '9'],
-    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9', 'es': 'Números 5 → 9'},
+    {'fr': 'Chiffres 5 → 9', 'en': 'Digits 5 → 9', 'es': 'Números 5 → 9', 'ar': 'أرقام 5 → 9'},
   ),
   ProgressionGroup(
     'l3',
     ProgressionGroupKind.lettres,
     ['k', 'l', 'm', 'n', 'ñ', 'o'],
-    {'fr': 'Lettres k → o', 'en': 'Letters k → o', 'es': 'Letras k → o'},
+    {'fr': 'Lettres k → o', 'en': 'Letters k → o', 'es': 'Letras k → o', 'ar': 'حروف k → o'},
   ),
   ProgressionGroup(
     'l4',
     ProgressionGroupKind.lettres,
     ['p', 'q', 'r', 's', 't'],
-    {'fr': 'Lettres p → t', 'en': 'Letters p → t', 'es': 'Letras p → t'},
+    {'fr': 'Lettres p → t', 'en': 'Letters p → t', 'es': 'Letras p → t', 'ar': 'حروف p → t'},
   ),
   ProgressionGroup(
     'l5',
     ProgressionGroupKind.lettres,
     ['u', 'v', 'w', 'x', 'y'],
-    {'fr': 'Lettres u → y', 'en': 'Letters u → y', 'es': 'Letras u → y'},
+    {'fr': 'Lettres u → y', 'en': 'Letters u → y', 'es': 'Letras u → y', 'ar': 'حروف u → y'},
   ),
   ProgressionGroup(
     'l6',
     ProgressionGroupKind.lettres,
     ['z'],
-    {'fr': 'Lettre z', 'en': 'Letter z', 'es': 'Letra z'},
+    {'fr': 'Lettre z', 'en': 'Letter z', 'es': 'Letra z', 'ar': 'حرف z'},
   ),
   ProgressionGroup(
     'u1',
@@ -185,6 +190,7 @@ const List<ProgressionGroup> _esGroups = [
       'fr': 'Majuscules A → E',
       'en': 'Uppercase A → E',
       'es': 'Mayúsculas A → E',
+      'ar': 'حروف كبيرة A → E',
     },
   ),
   ProgressionGroup(
@@ -195,6 +201,7 @@ const List<ProgressionGroup> _esGroups = [
       'fr': 'Majuscules F → J',
       'en': 'Uppercase F → J',
       'es': 'Mayúsculas F → J',
+      'ar': 'حروف كبيرة F → J',
     },
   ),
   ProgressionGroup(
@@ -205,6 +212,7 @@ const List<ProgressionGroup> _esGroups = [
       'fr': 'Majuscules K → O',
       'en': 'Uppercase K → O',
       'es': 'Mayúsculas K → O',
+      'ar': 'حروف كبيرة K → O',
     },
   ),
   ProgressionGroup(
@@ -215,6 +223,7 @@ const List<ProgressionGroup> _esGroups = [
       'fr': 'Majuscules P → T',
       'en': 'Uppercase P → T',
       'es': 'Mayúsculas P → T',
+      'ar': 'حروف كبيرة P → T',
     },
   ),
   ProgressionGroup(
@@ -225,13 +234,14 @@ const List<ProgressionGroup> _esGroups = [
       'fr': 'Majuscules U → Y',
       'en': 'Uppercase U → Y',
       'es': 'Mayúsculas U → Y',
+      'ar': 'حروف كبيرة U → Y',
     },
   ),
   ProgressionGroup(
     'u6',
     ProgressionGroupKind.lettres,
     ['Z'],
-    {'fr': 'Majuscule Z', 'en': 'Uppercase Z', 'es': 'Mayúscula Z'},
+    {'fr': 'Majuscule Z', 'en': 'Uppercase Z', 'es': 'Mayúscula Z', 'ar': 'حرف كبير Z'},
   ),
 ];
 
@@ -245,6 +255,7 @@ final Map<String, Map<String, ProgressionGroup>> _groupMaps = {
   'fr': {for (final g in _baseGroups) g.id: g},
   'en': {for (final g in _baseGroups) g.id: g},
   'es': {for (final g in _esGroups) g.id: g},
+  'ar': {for (final g in _baseGroups) g.id: g},
 };
 
 Map<String, ProgressionGroup> getPalier2GroupMap(String langName) =>

@@ -7,6 +7,7 @@ import '../i18n/translations.dart';
 import '../data/word_catalog.dart';
 import '../utils/crossword_generator.dart';
 import '../widgets/crossword_play.dart';
+import '../widgets/directional_icon.dart';
 
 /// Exercice de mots croisés à difficulté progressive (`lvl2` → 2 mots,
 /// `lvl10` → 10 mots). Port fidèle de
@@ -105,7 +106,7 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),

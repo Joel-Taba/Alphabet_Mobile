@@ -120,13 +120,19 @@ class _PlusScreenState extends State<PlusScreen> {
                 title: hub['languageCardTitle'] ?? 'Langue',
                 trailing: SegmentedControl<Lang>(
                   value: langProvider.lang,
-                  items: const {Lang.fr: 'FR', Lang.en: 'EN', Lang.es: 'ES'},
+                  items: const {
+                    Lang.fr: 'FR',
+                    Lang.en: 'EN',
+                    Lang.es: 'ES',
+                    Lang.ar: 'AR',
+                  },
                   onChanged: (lang) {
                     langProvider.setLang(lang);
                     final backendLangue = switch (lang) {
                       Lang.fr => 'FR',
                       Lang.en => 'EN',
                       Lang.es => null,
+                      Lang.ar => null,
                     };
                     if (backendLangue != null) {
                       unawaited(

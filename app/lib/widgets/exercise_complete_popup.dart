@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import 'amani_mascot.dart';
+import 'directional_icon.dart';
 
 /// Pop-up affiché à la fin de CHAQUE exercice du parcours. Laisse l'enfant
 /// choisir entre recommencer l'exercice, enchaîner directement sur le cours
@@ -150,7 +151,9 @@ class _PopupButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconWidget = icon != null ? Icon(icon, size: 16, color: fg) : null;
+    final iconWidget = icon != null
+        ? DirectionalIcon(icon!, size: 16, color: fg)
+        : null;
     return GestureDetector(
       onTap: onTap,
       child: Container(

@@ -753,16 +753,19 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         Lang.fr: 'FR',
                         Lang.en: 'EN',
                         Lang.es: 'ES',
+                        Lang.ar: 'AR',
                       },
                       onChanged: (lang) {
                         langProvider.setLang(lang);
-                        // Le back-end ne connaît pas encore l'espagnol (voir
-                        // Langue.java) : dans ce cas on ne pousse rien plutôt
-                        // que d'envoyer une valeur qu'il rejetterait.
+                        // Le back-end ne connaît pas encore l'espagnol ni
+                        // l'arabe (voir Langue.java) : dans ce cas on ne
+                        // pousse rien plutôt que d'envoyer une valeur qu'il
+                        // rejetterait.
                         final backendLangue = switch (lang) {
                           Lang.fr => 'FR',
                           Lang.en => 'EN',
                           Lang.es => null,
+                          Lang.ar => null,
                         };
                         if (backendLangue != null) {
                           unawaited(

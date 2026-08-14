@@ -16,6 +16,11 @@ class LetterTraceCell extends StatefulWidget {
   final double size;
   final bool isActive;
   final bool given;
+
+  /// Fond transparent (sans blanc opaque) : pour poser la case sur un cahier
+  /// réglé (CahierFrame/lignes Seyès) et laisser les lignes traverser la
+  /// case, comme les cases de RepetitionRow au Palier 2.
+  final bool transparent;
   final VoidCallback? onSolved;
 
   const LetterTraceCell({
@@ -24,6 +29,7 @@ class LetterTraceCell extends StatefulWidget {
     this.size = 64,
     required this.isActive,
     this.given = false,
+    this.transparent = false,
     this.onSolved,
   });
 
@@ -135,7 +141,11 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
         : widget.isActive
         ? AmaniColors.primary.withValues(alpha: 0.5)
         : AmaniColors.textPrimary.withValues(alpha: 0.12);
-    final bg = widget.given ? AmaniColors.surface : Colors.white;
+    final bg = widget.transparent
+        ? Colors.transparent
+        : widget.given
+        ? AmaniColors.surface
+        : Colors.white;
 
     return Container(
       width: widget.size,
@@ -213,7 +223,7 @@ class _CellPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final scale = cellSize / 200.0;
-    final lineWidth = (cellSize / 9).clamp(3.0, 100.0);
+    final lineWidth = (cellSize / 12).clamp(3.0, 100.0);
 
     if (solved) {
       final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
@@ -262,7 +272,7 @@ class _CellPainter extends CustomPainter {
         pts,
         scale,
         color.withValues(alpha: isCurrentStep ? 0.85 : 0.3),
-        isCurrentStep ? 13 : 10,
+        isCurrentStep ? 10 : 7,
       );
     }
 

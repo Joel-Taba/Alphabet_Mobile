@@ -11,6 +11,7 @@ import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
+import '../widgets/directional_icon.dart';
 
 /// Cours de mots du Palier 3 : chaque mot est déjà écrit avec des lettres
 /// connues, l'enfant écoute et regarde. Port fidèle de
@@ -105,7 +106,7 @@ class CoursMotsScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -182,6 +183,7 @@ class CoursMotsScreen extends StatelessWidget {
                     _WordCard(
                       word: word,
                       lang: lang,
+                      practiceWordAria: cm['practiceWordAria'] ?? '',
                       // Le mot n'est considéré "consulté" que lorsque l'enfant
                       // en écoute la prononciation — pas dès l'affichage de
                       // la carte, qui se produit pour tous les mots dès
@@ -196,6 +198,9 @@ class CoursMotsScreen extends StatelessWidget {
                           palier: lang == Lang.fr ? 4 : 3,
                         );
                       },
+                      onPractice: () => context.push(
+                        '/exercice/mots/$groupId?word=${word.id}',
+                      ),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -295,11 +300,15 @@ class CoursMotsScreen extends StatelessWidget {
 class _WordCard extends StatelessWidget {
   final WordEntry word;
   final Lang lang;
+  final String practiceWordAria;
   final VoidCallback onSpeak;
+  final VoidCallback onPractice;
   const _WordCard({
     required this.word,
     required this.lang,
+    required this.practiceWordAria,
     required this.onSpeak,
+    required this.onPractice,
   });
 
   @override
@@ -312,64 +321,77 @@ class _WordCard extends StatelessWidget {
         .whereType<dynamic>()
         .toList();
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-        ),
-        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 8)],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: letters.isEmpty
-                ? Text(
-                    text,
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      color: AmaniColors.textPrimary,
+    return Semantics(
+      button: true,
+      label: text,
+      child: GestureDetector(
+        onTap: onSpeak,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+            ),
+            boxShadow: const [
+              BoxShadow(color: Color(0x14000000), blurRadius: 8),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: letters.isEmpty
+                    ? Text(
+                        text,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: AmaniColors.textPrimary,
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final letter in letters) ...[
+                              LetterTraceCell(
+                                letter: letter,
+                                size: 48,
+                                isActive: false,
+                                given: true,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                          ],
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Semantics(
+                button: true,
+                label: tFormat(practiceWordAria, {'mot': text}),
+                child: GestureDetector(
+                  onTap: onPractice,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0x264A90E2),
+                      shape: BoxShape.circle,
                     ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        for (final letter in letters) ...[
-                          LetterTraceCell(
-                            letter: letter,
-                            size: 48,
-                            isActive: false,
-                            given: true,
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                      ],
+                    child: const Icon(
+                      Icons.fitness_center,
+                      size: 18,
+                      color: Color(0xFF2D6BBF),
                     ),
                   ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: onSpeak,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0x264A90E2),
-                shape: BoxShape.circle,
+                ),
               ),
-              child: const Icon(
-                CupertinoIcons.speaker_2_fill,
-                size: 18,
-                color: Color(0xFF2D6BBF),
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -389,7 +411,7 @@ class _NavPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = Icon(
+    final icon = DirectionalIcon(
       leading ? CupertinoIcons.chevron_left : CupertinoIcons.chevron_right,
       size: 14,
       color: filled ? Colors.white : AmaniColors.textPrimary,

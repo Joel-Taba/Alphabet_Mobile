@@ -15,13 +15,24 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../widgets/directional_icon.dart';
 
 /// Exercice d'écriture des mots du Palier 3 : trace chaque lettre du mot dans
 /// l'ordre. Port fidèle de `src/routes/exercice.mots.$groupId.tsx`.
 class ExerciceMotsScreen extends StatefulWidget {
   final String groupId;
   final String? amaniEval;
-  const ExerciceMotsScreen({super.key, required this.groupId, this.amaniEval});
+
+  /// Id du mot ciblé par le bouton haltère (page de cours) : l'écran
+  /// n'affiche alors que ce seul mot, au lieu de tout le groupe.
+  final String? onlyWordId;
+
+  const ExerciceMotsScreen({
+    super.key,
+    required this.groupId,
+    this.amaniEval,
+    this.onlyWordId,
+  });
 
   @override
   State<ExerciceMotsScreen> createState() => _ExerciceMotsScreenState();
@@ -126,7 +137,11 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
     }
 
     final groupTitle = group.title[lang.name] ?? '';
-    final allDone = _doneWords.length == group.words.length;
+    final filteredWords = widget.onlyWordId != null
+        ? group.words.where((w) => w.id == widget.onlyWordId).toList()
+        : <WordEntry>[];
+    final wordsToShow = filteredWords.isNotEmpty ? filteredWords : group.words;
+    final allDone = _doneWords.length == wordsToShow.length;
 
     void onWordDone(String wordId) {
       setState(() => _doneWords.add(wordId));
@@ -136,7 +151,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
         etapeCode: wordId,
         palier: lang == Lang.fr ? 4 : 3,
       );
-      if (_doneWords.length >= group.words.length &&
+      if (_doneWords.length >= wordsToShow.length &&
           _awaitingRepeatCompletion) {
         context.read<ProgressProvider>().awardRestartBonus();
         setState(() => _awaitingRepeatCompletion = false);
@@ -180,8 +195,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            CupertinoIcons.arrow_left,
+                          child: DirectionalIcon(CupertinoIcons.arrow_left,
                             size: 20,
                           ),
                         ),
@@ -200,7 +214,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                             Text(
                               tFormat(em['wordsReady'] ?? '', {
                                 'done': _doneWords.length,
-                                'total': group.words.length,
+                                'total': wordsToShow.length,
                               }),
                               style: AmaniTheme.bodyStyle.copyWith(
                                 fontSize: 12,
@@ -267,7 +281,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      for (final word in group.words) ...[
+                      for (final word in wordsToShow) ...[
                         _WordTraceRow(
                           key: ValueKey('${word.id}-r$_restartKey'),
                           word: word,
@@ -318,8 +332,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Icon(
-                                  CupertinoIcons.chevron_right,
+                                DirectionalIcon(CupertinoIcons.chevron_right,
                                   color: Colors.white,
                                   size: 18,
                                 ),
@@ -474,26 +487,37 @@ class _WordTraceRowState extends State<_WordTraceRow> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
+          Container(
+            color: Colors.white,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (var i = 0; i < letters.length; i++) ...[
-                    LetterTraceCell(
-                      letter: letters[i],
-                      size: 64,
-                      isActive: i == activeIdx,
-                      onSolved: () {
-                        setState(() => _solvedIdx.add(i));
-                        if (_solvedIdx.length == letters.length)
-                          widget.onDone();
-                      },
+              child: CustomPaint(
+                painter: _WordSeyesLinesPainter(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 64 + 24),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        for (var i = 0; i < letters.length; i++) ...[
+                          LetterTraceCell(
+                            letter: letters[i],
+                            size: 64,
+                            isActive: i == activeIdx,
+                            transparent: true,
+                            onSolved: () {
+                              setState(() => _solvedIdx.add(i));
+                              if (_solvedIdx.length == letters.length) {
+                                widget.onDone();
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -501,4 +525,33 @@ class _WordTraceRowState extends State<_WordTraceRow> {
       ),
     );
   }
+}
+
+/// Lignes Seyès de référence — mêmes 4 lignes équidistantes (intervalle 60
+/// dans l'espace lettre 0-200) que CahierFrame.dart, converties en pixels ici
+/// via l'échelle des cases carrées de LetterTraceCell (size=64, sc=0.32, pas
+/// de décalage de centrage) plus le padding (12px) de la rangée :
+/// pixelY = 12 + yLettre * 0.32. Le CustomPaint est posé à l'intérieur du
+/// SingleChildScrollView (avant le ConstrainedBox qui dimensionne le
+/// contenu réel) pour que les lignes défilent avec les lettres sur les mots
+/// longs, exactement comme le conteneur inline-block côté web.
+class _WordSeyesLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < _positions.length; i++) {
+      final y = 12 + _positions[i] * 0.32;
+      final isBaseline = i == 2;
+      final paint = Paint()
+        ..color =
+            (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                .withValues(alpha: 0.8)
+        ..strokeWidth = isBaseline ? 1.5 : 1;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WordSeyesLinesPainter oldDelegate) => false;
 }

@@ -16,6 +16,7 @@ import '../widgets/repetition_row.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
+import '../widgets/directional_icon.dart';
 
 /// "Cahier d'Écriture" : exerce chaque signe d'une famille (répétitions sur
 /// grille Seyès), ou liste les caractères d'un groupe de progression (Palier
@@ -260,8 +261,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                               ),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              CupertinoIcons.chevron_right,
+                            child: DirectionalIcon(CupertinoIcons.chevron_right,
                               size: 18,
                               color: AmaniColors.secondaryDark,
                             ),
@@ -557,7 +557,7 @@ class _Header extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(color: Color(0x1F000000), blurRadius: 6)],
               ),
-              child: const Icon(CupertinoIcons.arrow_left, size: 18),
+              child: DirectionalIcon(CupertinoIcons.arrow_left, size: 18),
             ),
           ),
           const SizedBox(width: 12),

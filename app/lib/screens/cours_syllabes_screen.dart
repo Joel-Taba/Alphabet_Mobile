@@ -10,6 +10,7 @@ import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
 import '../widgets/letter_trace_cell.dart';
+import '../widgets/directional_icon.dart';
 
 /// Cours du Palier "Les syllabes" : apprend la formation consonne + voyelle
 /// (ex. "b + a = ba") puis montre un mot-exemple contenant la syllabe.
@@ -177,7 +178,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -467,8 +468,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Icon(
-                                CupertinoIcons.chevron_right,
+                              DirectionalIcon(CupertinoIcons.chevron_right,
                                 size: 14,
                                 color: AmaniColors.textPrimary,
                               ),

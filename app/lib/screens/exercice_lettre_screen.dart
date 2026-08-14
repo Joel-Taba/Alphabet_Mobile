@@ -18,6 +18,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
 import '../services/progress_service.dart';
+import '../widgets/directional_icon.dart';
 import '../widgets/sign_glyph.dart' show letterFamilyZIndex;
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
@@ -326,8 +327,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            CupertinoIcons.arrow_left,
+                          child: DirectionalIcon(CupertinoIcons.arrow_left,
                             size: 20,
                           ),
                         ),
@@ -1106,7 +1106,7 @@ class _LetterCanvasPainter extends CustomPainter {
         Paint()
           ..color = color.withValues(alpha: isActiveStep ? 0.85 : 0.35)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = isActiveStep ? 13 : 11
+          ..strokeWidth = isActiveStep ? 10 : 8
           ..strokeCap = StrokeCap.round,
       );
     }
@@ -1134,7 +1134,7 @@ class _LetterCanvasPainter extends CustomPainter {
         Paint()
           ..color = completed.strokeColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 11
+          ..strokeWidth = 8
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );
@@ -1154,7 +1154,7 @@ class _LetterCanvasPainter extends CustomPainter {
         Paint()
           ..color = const Color(0xFF5BAA6A)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 11
+          ..strokeWidth = 8
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );

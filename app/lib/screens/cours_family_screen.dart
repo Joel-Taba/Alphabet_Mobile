@@ -11,6 +11,7 @@ import '../data/sign_exercise_catalog.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/cahier_frame.dart';
 import '../hooks/use_animation_speed.dart';
+import '../widgets/directional_icon.dart';
 
 const Map<String, Color> _familyColor = {
   'point': AmaniColors.textPrimary,
@@ -146,7 +147,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                           BoxShadow(color: Color(0x1A000000), blurRadius: 6),
                         ],
                       ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -436,8 +437,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                             ),
                             child: Row(
                               children: [
-                                const Icon(
-                                  CupertinoIcons.chevron_left,
+                                DirectionalIcon(CupertinoIcons.chevron_left,
                                   size: 16,
                                   color: AmaniColors.textPrimary,
                                 ),
@@ -488,8 +488,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                const Icon(
-                                  CupertinoIcons.chevron_right,
+                                DirectionalIcon(CupertinoIcons.chevron_right,
                                   size: 16,
                                   color: Colors.white,
                                 ),
@@ -612,7 +611,7 @@ class _StrokeAnimPainter extends CustomPainter {
     final guidePaint = Paint()
       ..color = const Color(0xFF9BB5CC)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 14
+      ..strokeWidth = 10
       ..strokeCap = StrokeCap.round;
     canvas.drawPath(
       dashPath(fullPath, dashArray: CircularIntervalList<double>([6, 8])),
@@ -638,7 +637,7 @@ class _StrokeAnimPainter extends CustomPainter {
         Paint()
           ..color = strokeColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 12
+          ..strokeWidth = 9
           ..strokeCap = StrokeCap.round,
       );
       if (progress < 1) {

@@ -712,7 +712,7 @@ class _LetterPreviewPainter extends CustomPainter {
           int.parse((step['strokeColor'] as String).replaceFirst('#', '0xFF')),
         )
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 14
+        ..strokeWidth = 10
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round;
       canvas.drawPath(_parsePath(step['pathD'] as String), paint);

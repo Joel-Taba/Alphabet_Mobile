@@ -148,17 +148,18 @@ const List<WordEntry> WORD_CATALOG = [
 final Map<String, WordEntry> WORD_MAP = {for (final w in WORD_CATALOG) w.id: w};
 
 const Map<String, Map<String, String>> THEME_TITLES = {
-  'animaux': {'fr': 'Animaux', 'en': 'Animals', 'es': 'Animales'},
-  'nourriture': {'fr': 'Nourriture', 'en': 'Food', 'es': 'Comida'},
-  'maison': {'fr': 'Maison', 'en': 'House', 'es': 'Casa'},
-  'vetements': {'fr': 'Vêtements', 'en': 'Clothes', 'es': 'Ropa'},
-  'ecole': {'fr': 'École', 'en': 'School', 'es': 'Escuela'},
-  'nature': {'fr': 'Nature', 'en': 'Nature', 'es': 'Naturaleza'},
-  'corps': {'fr': 'Corps', 'en': 'Body', 'es': 'Cuerpo'},
+  'animaux': {'fr': 'Animaux', 'en': 'Animals', 'es': 'Animales', 'ar': 'حيوانات'},
+  'nourriture': {'fr': 'Nourriture', 'en': 'Food', 'es': 'Comida', 'ar': 'طعام'},
+  'maison': {'fr': 'Maison', 'en': 'House', 'es': 'Casa', 'ar': 'المنزل'},
+  'vetements': {'fr': 'Vêtements', 'en': 'Clothes', 'es': 'Ropa', 'ar': 'ملابس'},
+  'ecole': {'fr': 'École', 'en': 'School', 'es': 'Escuela', 'ar': 'المدرسة'},
+  'nature': {'fr': 'Nature', 'en': 'Nature', 'es': 'Naturaleza', 'ar': 'الطبيعة'},
+  'corps': {'fr': 'Corps', 'en': 'Body', 'es': 'Cuerpo', 'ar': 'الجسم'},
   'divers': {
     'fr': 'Autour de nous',
     'en': 'All around us',
     'es': 'A nuestro alrededor',
+    'ar': 'من حولنا',
   },
 };
 
@@ -190,12 +191,14 @@ final List<WordGroup> PALIER3_GROUPS = (() {
         ((i + 1) * chunkSize).clamp(0, words.length),
       );
       final base =
-          THEME_TITLES[theme] ?? {'fr': theme, 'en': theme, 'es': theme};
+          THEME_TITLES[theme] ??
+          {'fr': theme, 'en': theme, 'es': theme, 'ar': theme};
       final title = chunkCount > 1
           ? {
               'fr': '${base['fr']} ${i + 1}',
               'en': '${base['en']} ${i + 1}',
               'es': '${base['es']} ${i + 1}',
+              'ar': '${base['ar']} ${i + 1}',
             }
           : base;
       groups.add(

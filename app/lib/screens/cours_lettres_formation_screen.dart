@@ -14,6 +14,7 @@ import '../data/flores_gong_nota.dart';
 import '../widgets/cahier_frame.dart';
 import '../widgets/sign_glyph.dart';
 import '../services/progress_service.dart';
+import '../widgets/directional_icon.dart';
 
 /// Animation multi-signes qui combine les signes de base pour former une
 /// lettre ou un chiffre, avec navigation dans le groupe de progression. Port
@@ -154,8 +155,6 @@ class _CoursLettresFormationScreenState
               .whereType<dynamic>()
               .toList()
         : <dynamic>[letter];
-    final groupTitle =
-        progressionGroup?.title[lang.name] ?? cfc['vowelsTitle'] ?? '';
     final currentIdx = allLetters.indexWhere((l) => l['char'] == widget.char);
     final prevLetter = currentIdx > 0 ? allLetters[currentIdx - 1] : null;
     final nextLetter = currentIdx >= 0 && currentIdx < allLetters.length - 1
@@ -197,7 +196,7 @@ class _CoursLettresFormationScreenState
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: const Icon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -448,8 +447,7 @@ class _CoursLettresFormationScreenState
                                 ],
                               ),
                               if (i < steps.length - 1)
-                                const Icon(
-                                  CupertinoIcons.chevron_right,
+                                DirectionalIcon(CupertinoIcons.chevron_right,
                                   size: 14,
                                   color: AmaniColors.primary,
                                 ),
@@ -483,17 +481,6 @@ class _CoursLettresFormationScreenState
                   const SizedBox(height: 24),
 
                   // Navigation dans le groupe
-                  Text(
-                    groupTitle,
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      letterSpacing: 0.4,
-                      color: AmaniColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -639,7 +626,7 @@ class _NavPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = Icon(
+    final icon = DirectionalIcon(
       leading ? CupertinoIcons.chevron_left : CupertinoIcons.chevron_right,
       size: 14,
       color: filled ? Colors.white : AmaniColors.textPrimary,
@@ -721,7 +708,7 @@ class _MultiStepPainter extends CustomPainter {
           Paint()
             ..color = const Color(0xFF9BB5CC).withValues(alpha: 0.4)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 14
+            ..strokeWidth = 10
             ..strokeCap = StrokeCap.round,
         );
       }
@@ -732,7 +719,7 @@ class _MultiStepPainter extends CustomPainter {
           Paint()
             ..color = color
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 12
+            ..strokeWidth = 9
             ..strokeCap = StrokeCap.round,
         );
       } else if (isActive) {
@@ -743,7 +730,7 @@ class _MultiStepPainter extends CustomPainter {
             Paint()
               ..color = color
               ..style = PaintingStyle.stroke
-              ..strokeWidth = 12
+              ..strokeWidth = 9
               ..strokeCap = StrokeCap.round,
           );
           if (!isFinished) {

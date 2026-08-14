@@ -281,13 +281,17 @@ class _RepetitionRowState extends State<RepetitionRow> {
 }
 
 class _SeyesLinesPainter extends CustomPainter {
-  static const List<double> _positions = [20, 45, 70, 95, 115, 135];
+  // Mêmes 4 lignes équidistantes (intervalle 60 dans l'espace lettre 0-200)
+  // que CahierFrame.dart, converties en pixels ici via l'échelle fixe de
+  // _OccurrenceCanvas (sc=0.5, oy=20) plus le padding vertical (12px) de la
+  // zone d'occurrences : pixelY = 12 + yLettre * 0.5.
+  static const List<double> _positions = [10, 70, 130, 190];
 
   @override
   void paint(Canvas canvas, Size size) {
     for (int i = 0; i < _positions.length; i++) {
-      final y = _positions[i] + 12;
-      final isBaseline = i == 3;
+      final y = 12 + _positions[i] * 0.5;
+      final isBaseline = i == 2;
       final paint = Paint()
         ..color =
             (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
@@ -551,7 +555,7 @@ class _OccurrencePainter extends CustomPainter {
       final guidePaint = Paint()
         ..color = guideColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.5
+        ..strokeWidth = 2.5
         ..strokeCap = StrokeCap.round;
       final guidePath = dashPath(
         parseSvgPathData(entry.pathD),
@@ -631,7 +635,7 @@ class _OccurrencePainter extends CustomPainter {
         Paint()
           ..color = entry.strokeColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 4.5
+          ..strokeWidth = 3.5
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );
@@ -652,7 +656,7 @@ class _OccurrencePainter extends CustomPainter {
         Paint()
           ..color = const Color(0xFF5BAA6A)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 4.5
+          ..strokeWidth = 3.5
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );

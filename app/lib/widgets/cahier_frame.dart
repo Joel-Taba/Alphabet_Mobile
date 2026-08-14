@@ -21,12 +21,16 @@ class CahierFrame extends StatelessWidget {
   static const _ruledLineColor = Color(0xFF4A90E2);
   static const _baselineColor = Color(0xFFE05252);
 
-  // {pct, isBaseline}
+  // {pct, isBaseline} — 4 lignes strictement équidistantes (intervalle 60,
+  // dans le système de coordonnées 200×200 partagé par tout le catalogue de
+  // lettres) : HAMPE_TOP=10, CORPS_TOP=70, BASELINE=130, JAMBE_BOT=190. Pas
+  // de ligne dédiée séparée pour les majuscules : elles rejoignent la même
+  // ligne haute que les lettres à hampe (b/d/f/h/k/l/t).
   static const List<(double, bool)> _ruledLines = [
-    (13.5, false),
-    (38.5, false),
-    (74.5, true),
-    (97, false),
+    (5, false),
+    (35, false),
+    (65, true),
+    (95, false),
   ];
 
   @override

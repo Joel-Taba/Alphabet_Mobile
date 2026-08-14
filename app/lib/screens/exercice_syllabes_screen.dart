@@ -15,6 +15,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../widgets/directional_icon.dart';
 
 /// Exercice d'écriture des syllabes : trace la consonne puis la voyelle pour
 /// former chaque syllabe. Port fidèle de
@@ -188,8 +189,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            CupertinoIcons.arrow_left,
+                          child: DirectionalIcon(CupertinoIcons.arrow_left,
                             size: 20,
                           ),
                         ),
@@ -334,8 +334,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Icon(
-                                  CupertinoIcons.chevron_right,
+                                DirectionalIcon(CupertinoIcons.chevron_right,
                                   color: Colors.white,
                                   size: 18,
                                 ),
@@ -510,29 +509,64 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                for (var i = 0; i < letters.length; i++) ...[
-                  LetterTraceCell(
-                    letter: letters[i],
-                    size: 72,
-                    isActive: i == activeIdx,
-                    onSolved: () {
-                      setState(() => _solvedIdx.add(i));
-                      if (_solvedIdx.length == letters.length) {
-                        widget.onDone();
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ],
+          Container(
+            constraints: const BoxConstraints(minHeight: 72 + 24),
+            color: Colors.white,
+            child: CustomPaint(
+              painter: _SyllableSeyesLinesPainter(),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < letters.length; i++) ...[
+                      LetterTraceCell(
+                        letter: letters[i],
+                        size: 72,
+                        isActive: i == activeIdx,
+                        transparent: true,
+                        onSolved: () {
+                          setState(() => _solvedIdx.add(i));
+                          if (_solvedIdx.length == letters.length) {
+                            widget.onDone();
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Lignes Seyès de référence — mêmes 4 lignes équidistantes (intervalle 60
+/// dans l'espace lettre 0-200) que CahierFrame.dart, converties en pixels ici
+/// via l'échelle des cases carrées de LetterTraceCell (size=72, sc=0.36, pas
+/// de décalage de centrage) plus le padding (12px) de la rangée :
+/// pixelY = 12 + yLettre * 0.36.
+class _SyllableSeyesLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < _positions.length; i++) {
+      final y = 12 + _positions[i] * 0.36;
+      final isBaseline = i == 2;
+      final paint = Paint()
+        ..color =
+            (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                .withValues(alpha: 0.8)
+        ..strokeWidth = isBaseline ? 1.5 : 1;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SyllableSeyesLinesPainter oldDelegate) =>
+      false;
 }

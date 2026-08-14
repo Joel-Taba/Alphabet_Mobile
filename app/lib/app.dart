@@ -90,6 +90,7 @@ final _router = GoRouter(
       builder: (context, state) => ExerciceMotsScreen(
         groupId: state.pathParameters['groupId']!,
         amaniEval: state.uri.queryParameters['amaniEval'],
+        onlyWordId: state.uri.queryParameters['word'],
       ),
     ),
     GoRoute(
@@ -166,11 +167,12 @@ class AmaniApp extends StatelessWidget {
           update: (context, backend, previous) => previous!,
         ),
       ],
-      // La police de toute l'appli suit le format d'écriture actif : ce
-      // Consumer force MaterialApp (et donc son thème) à se reconstruire
-      // dès que WritingStyleProvider change, sans redémarrage.
-      child: Consumer<WritingStyleProvider>(
-        builder: (context, _, _) => MaterialApp.router(
+      // La police de toute l'appli suit le format d'écriture actif, et la
+      // mise en page entière suit la langue active (RTL pour l'arabe) : ces
+      // Consumer forcent MaterialApp à se reconstruire dès que l'un ou
+      // l'autre change, sans redémarrage.
+      child: Consumer2<WritingStyleProvider, LanguageProvider>(
+        builder: (context, _, languageProvider, _) => MaterialApp.router(
           title: 'Gentle Paths Academy',
           theme: AmaniTheme.light,
           routerConfig: _router,
@@ -178,8 +180,12 @@ class AmaniApp extends StatelessWidget {
           // Superpose le popup "+N points" au-dessus de l'écran courant, quel
           // qu'il soit — voir PointsToastHost, monté une seule fois ici pour
           // flotter sur toute l'app (équivalent de MobileShell côté web).
-          builder: (context, child) =>
-              Stack(children: [?child, const PointsToastHost()]),
+          builder: (context, child) => Directionality(
+            textDirection: rtlLangs.contains(languageProvider.lang)
+                ? TextDirection.rtl
+                : TextDirection.ltr,
+            child: Stack(children: [?child, const PointsToastHost()]),
+          ),
         ),
       ),
     );

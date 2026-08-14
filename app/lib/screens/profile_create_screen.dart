@@ -394,6 +394,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                       Lang.fr => 'Français',
                       Lang.en => 'English',
                       Lang.es => 'Español',
+                      Lang.ar => 'العربية',
                     },
                     style: const TextStyle(
                       fontSize: 16,
@@ -435,6 +436,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 _buildLangOption('English', Lang.en, langProv),
                 const Divider(height: 1, color: AmaniColors.disabled),
                 _buildLangOption('Español', Lang.es, langProv),
+                const Divider(height: 1, color: AmaniColors.disabled),
+                _buildLangOption('العربية', Lang.ar, langProv),
               ],
             ),
           ),

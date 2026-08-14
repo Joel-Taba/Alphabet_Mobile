@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Langues supportées
-enum Lang { fr, en, es }
+enum Lang { fr, en, es, ar }
 
 /// Locale BCP-47 pour la synthèse vocale
 const Map<Lang, String> speechLocale = {
   Lang.fr: 'fr-FR',
   Lang.en: 'en-US',
   Lang.es: 'es-ES',
+  Lang.ar: 'ar-SA',
 };
+
+/// Langues qui s'écrivent de droite à gauche : la mise en page entière
+/// (Directionality) s'inverse — voir AmaniApp dans app.dart.
+const Set<Lang> rtlLangs = {Lang.ar};
 
 const _storageKey = 'amani_setting_lang';
 
@@ -25,6 +30,8 @@ class LanguageProvider extends ChangeNotifier {
         return en;
       case Lang.es:
         return es;
+      case Lang.ar:
+        return ar;
     }
   }
 
@@ -40,6 +47,9 @@ class LanguageProvider extends ChangeNotifier {
       notifyListeners();
     } else if (saved == 'es') {
       _lang = Lang.es;
+      notifyListeners();
+    } else if (saved == 'ar') {
+      _lang = Lang.ar;
       notifyListeners();
     }
   }
@@ -502,12 +512,12 @@ const Map<String, dynamic> fr = {
     'notFound': "n'est pas disponible pour le moment.",
     'backToList': "Retour à l'accueil",
     'wordCount': '{count} mot(s) à découvrir',
-    'introSpeak':
-        "Voici le cours sur {titre}. Touche le haut-parleur de chaque mot pour l'écouter.",
+    'introSpeak': "Voici le cours sur {titre}. Touche un mot pour l'écouter.",
     'introTitle': 'Écoute et regarde chaque mot',
     'introBody':
-        "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le haut-parleur pour l'entendre !",
+        "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le mot pour l'entendre, ou l'haltère pour t'exercer dessus !",
     'practiceGroup': "M'exercer sur {titre}",
+    'practiceWordAria': "S'exercer sur « {mot} »",
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} mots écrits',
@@ -983,12 +993,12 @@ const Map<String, dynamic> en = {
     'notFound': 'is not available yet.',
     'backToList': 'Back to home',
     'wordCount': '{count} word(s) to discover',
-    'introSpeak':
-        "Here's the lesson on {titre}. Tap each word's speaker to hear it.",
+    'introSpeak': "Here's the lesson on {titre}. Tap a word to hear it.",
     'introTitle': 'Listen and look at each word',
     'introBody':
-        'Each word is already written with letters you know. Tap the speaker to hear it!',
+        'Each word is already written with letters you know. Tap the word to hear it, or the dumbbell to practice it!',
     'practiceGroup': 'Practice {titre}',
+    'practiceWordAria': 'Practice "{mot}"',
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} words written',
@@ -1473,11 +1483,12 @@ const Map<String, dynamic> es = {
     'backToList': 'Volver al inicio',
     'wordCount': '{count} palabra(s) por descubrir',
     'introSpeak':
-        'Aquí está la lección sobre {titre}. Toca el altavoz de cada palabra para escucharla.',
+        'Aquí está la lección sobre {titre}. Toca una palabra para escucharla.',
     'introTitle': 'Escucha y observa cada palabra',
     'introBody':
-        'Cada palabra ya está escrita con letras que conoces. ¡Toca el altavoz para escucharla!',
+        'Cada palabra ya está escrita con letras que conoces. ¡Toca la palabra para escucharla, o la mancuerna para practicarla!',
     'practiceGroup': 'Practicar {titre}',
+    'practiceWordAria': 'Practicar «{mot}»',
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} palabras escritas',
@@ -1513,4 +1524,486 @@ const Map<String, dynamic> es = {
     'newGame': 'Nueva cuadrícula',
     'generating': 'Preparando la cuadrícula…',
   },
+};
+
+const Map<String, dynamic> ar = {
+  "nav": {
+    "accueil": "الرئيسية",
+    "bibliotheque": "الوضع الحر",
+    "communaute": "الساحة",
+    "profil": "الملف الشخصي",
+    "reglages": "الإعدادات",
+    "mainNavAria": "التنقل الرئيسي"
+  },
+  "common": {
+    "back": "رجوع",
+    "listen": "استماع",
+    "stop": "إيقاف",
+    "continue": "متابعة",
+    "close": "إغلاق",
+    "replay": "إعادة",
+    "instruction": "التعليمة",
+    "settings": "الإعدادات",
+    "tryAgain": "حاول مرة أخرى",
+    "pointsEarnedAria": "نقاط مكتسبة",
+    "next": "التالي",
+    "previous": "السابق",
+    "backToHome": "العودة إلى الرئيسية",
+    "restart": "إعادة البدء"
+  },
+  "evaluation": {
+    "badge": "تقييم",
+    "timeLeft": "الوقت المتبقي",
+    "finishedTitle": "أحسنت، انتهى التقييم!",
+    "finishedMessage": "انتهى الوقت. لقد بذلت جهدًا رائعًا في هذا التقييم.",
+    "backToPath": "العودة إلى المسار"
+  },
+  "mascotPoses": {
+    "accueil": "أماني تحييك",
+    "demonstration": "أماني تريك إشارة",
+    "encouragement": "أماني تشجعك",
+    "celebration": "أماني تحتفل بنجاحك",
+    "reconfort": "أماني تواسيك",
+    "reflexion": "أماني تفكر",
+    "veille": "أماني ترتاح"
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "الصفحة غير موجودة",
+    "body": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
+    "goHome": "العودة إلى الرئيسية"
+  },
+  "errorPage": {
+    "heading": "تعذر تحميل هذه الصفحة",
+    "body": "حدث خطأ ما من جانبنا. يمكنك إعادة المحاولة أو العودة إلى الرئيسية.",
+    "retry": "إعادة المحاولة",
+    "goHome": "الرئيسية"
+  },
+  "welcome": {
+    "title": "مرحبًا",
+    "heading": "مرحبًا! أنا أماني.",
+    "subheading": "هل تريد اللعب معي؟",
+    "start": "ابدأ المغامرة",
+    "imBack": "ها أنا ذا مجددًا! 🐿️"
+  },
+  "onboarding": {
+    "title": "مرحبًا بك!",
+    "subtitle": "أخبرنا من أنت لتبدأ المغامرة",
+    "namePlaceholder": "ما اسمك؟",
+    "passwordPlaceholder": "كلمة المرور (لملفي الشخصي)",
+    "passwordHint": "تحمي كلمة المرور هذه الوصول إلى ملفي الشخصي.",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور",
+    "languageLabel": "اللغة",
+    "start": "ابدأ المغامرة"
+  },
+  "profileLock": {
+    "title": "ملفي الشخصي محمي",
+    "subtitle": "أدخل كلمة المرور التي حددتها عند التسجيل للمتابعة.",
+    "passwordPlaceholder": "كلمة المرور",
+    "wrongPassword": "كلمة مرور خاطئة، حاول مرة أخرى.",
+    "unlockButton": "فتح القفل"
+  },
+  "modeLibre": {
+    "title": "الوضع الحر",
+    "subtitle": "ارسم وتدرّب بحرية، بلا قيود!",
+    "helpText": "اختر نموذجًا إذا أردت الإلهام، ثم ارسمه من الذاكرة على الصفحة الفارغة. امسحه وابدأ من جديد كما تشاء!",
+    "tabs": {
+      "scribble": "خربشة",
+      "sign": "إشارة",
+      "letter": "حرف",
+      "digit": "رقم",
+      "crossword": "الكلمات المتقاطعة"
+    },
+    "modelLabel": "نموذج",
+    "noModelTitle": "ارسم ما تريد!",
+    "noModelBody": "دع إصبعك يتجول بحرية على الصفحة.",
+    "clear": "مسح",
+    "colorLabel": "اللون",
+    "canvasAria": "مساحة الرسم الحر",
+    "signNames": {
+      "trait": "الخط",
+      "courbe": "المنحنى",
+      "point": "النقطة",
+      "crochet": "الخطاف"
+    }
+  },
+  "parcours": {
+    "title": "مسار الغصن",
+    "subtitle": "اتبع المسار المتعرج وافتح البراعم خطوة بخطوة.",
+    "start": "ابدأ",
+    "lockedAria": "خطوة مقفلة",
+    "bonusAria": "مكافأة إضافية مقفلة",
+    "medalAria": "ميدالية نهاية المرحلة",
+    "medalDoneAria": "تم الحصول على ميدالية نهاية المرحلة",
+    "coursStep": "درس",
+    "exerciceStep": "تمرين",
+    "crosswordStep": "الكلمات المتقاطعة",
+    "paliers": [
+      {
+        "title": "الإشارات الأساسية",
+        "subtitle": "المرحلة 1",
+        "tagline": "نقاط، منحنيات، خطاطيف وخطوط"
+      },
+      {
+        "title": "التركيب: الحروف والأرقام",
+        "subtitle": "المرحلة 2",
+        "tagline": "اجمع الإشارات للكتابة"
+      },
+      {
+        "title": "المقاطع",
+        "subtitle": "المرحلة 3",
+        "tagline": "اجمع الحروف الساكنة والمتحركة للقراءة"
+      },
+      {
+        "title": "الكلمات",
+        "subtitle": "المرحلة 4",
+        "tagline": "اربط الحروف ببعضها"
+      }
+    ]
+  },
+  "community": {
+    "title": "مجتمعنا في الساحة",
+    "subtitle": "ترتيب هذا الأسبوع",
+    "othersTitle": "البراعم الأخرى",
+    "you": "أنا",
+    "amaniQuote": "كل واحد ينمو بوتيرته الخاصة، المهم أن تتقدم دائمًا.",
+    "amaniLine": "أحسنتم يا براعم الساحة جميعًا!",
+    "footnote": "هذا الترتيب خاص بهذا الجهاز فقط.",
+    "starsSuffix": "⭐",
+    "stumpAria": "جذع المرتبة {rank}"
+  },
+  "profileHub": {
+    "title": "دفتر مستكشفي",
+    "subtitle": "واصل هكذا، أنت تتعلم بشكل رائع!",
+    "totalPointsLabel": "نقاطي",
+    "totalPointsHint": "مكتسبة من إنهاء دروسك وتمارينك",
+    "statsSignes": "الإشارات المتقنة",
+    "statsExercices": "التمارين المنجزة",
+    "statsDays": "أيام المغامرة",
+    "progressionTitle": "تقدمي في الغابة",
+    "stepsValidated": "من أصل {total} خطوة منجزة",
+    "settingsTitle": "إعداداتي",
+    "languageCardTitle": "لغة المستكشف",
+    "soundCardTitle": "الصوت والحركات",
+    "voiceLabel": "صوت أماني",
+    "voiceOn": "مفعّل",
+    "voiceOff": "معطّل",
+    "volumeLabel": "مستوى الصوت",
+    "volumeTest": "اختبار مستوى الصوت",
+    "volumeTestPhrase": "هكذا يبدو صوتي!",
+    "voiceGenderLabel": "نمط الصوت",
+    "voiceGenderOptions": [
+      {
+        "label": "صوت رجل",
+        "desc": "دافئ ولطيف"
+      },
+      {
+        "label": "صوت امرأة",
+        "desc": "دافئ ولطيف"
+      }
+    ],
+    "voiceGenderTest": "استمع إلى مثال",
+    "voiceGenderTestPhrase": "مرحبًا، أنا أماني! هل نواصل التعلم معًا؟",
+    "photoTitle": "صورتي الشخصية",
+    "photoHint": "ستظهر بجانب اسمك في ترتيب الساحة.",
+    "photoChangeAria": "تغيير الصورة الشخصية",
+    "photoRemove": "حذف",
+    "formatCardTitle": "نمط الكتابة",
+    "formatOptions": [
+      {
+        "label": "مطبوع",
+        "desc": "مطبوع"
+      },
+      {
+        "label": "مربوط",
+        "desc": "متصل"
+      }
+    ],
+    "exercisesCardTitle": "تمارين الكتابة",
+    "evaluationDurationLabel": "مدة التقييم",
+    "evaluationDurationHint": "الوقت المخصص لتقييم نهاية المرحلة المحدد بمؤقت",
+    "speedLabel": "سرعة التكوين",
+    "speedHint": "سرعة الرسم المتحرك الذي يوضح كيفية رسم الإشارة",
+    "speedOptions": [
+      {
+        "label": "بطيئة"
+      },
+      {
+        "label": "عادية"
+      },
+      {
+        "label": "سريعة"
+      }
+    ],
+    "branches": [
+      {
+        "name": "المرحلة 1: النقاط والمنحنيات"
+      },
+      {
+        "name": "المرحلة 2: الخطاطيف والخطوط"
+      },
+      {
+        "name": "المرحلة 3: التركيب"
+      }
+    ],
+    "lockAction": "قفل ملفي الشخصي",
+    "passwordCardTitle": "كلمة مرور ملفي الشخصي",
+    "newPasswordPlaceholder": "كلمة مرور جديدة",
+    "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+    "passwordTooShort": "يجب أن تحتوي كلمة المرور على {count} أحرف على الأقل.",
+    "passwordSaved": "تم تحديث كلمة المرور!",
+    "savePassword": "حفظ كلمة المرور"
+  },
+  "plusScreen": {
+    "title": "المزيد من الخيارات",
+    "subtitle": "إعدادات عملية أخرى، في متناول يدك."
+  },
+  "exerciceComplete": {
+    "title": "انتهى التمرين!",
+    "body": "أحسنت، لقد أنهيت هذا التمرين. ماذا تريد أن تفعل الآن؟"
+  },
+  "coursScreen": {
+    "title": "دروسي",
+    "subtitle": "منهج فلوريس غونغ نوتا",
+    "intro": "إليك الإشارات الأربع الأساسية لمنهج فلوريس غونغ نوتا. المس بطاقة لاستكشاف جميع أشكالها.",
+    "letters": "الحروف والأرقام",
+    "lettersSubtitle": "التركيب — من a إلى z، من A إلى Z، من 0 إلى 9",
+    "signNames": {
+      "trait": "الخط",
+      "crochet": "الخطاف",
+      "courbe": "المنحنيات",
+      "point": "النقطة"
+    }
+  },
+  "coursFamily": {
+    "intro": "إليك درس {title}. المس بطاقة في الأسفل لترى كيفية رسم كل شكل.",
+    "variantsTitle": "جميع الأشكال",
+    "exercer": "تدرّب",
+    "passExercices": "الانتقال إلى التمارين ({title})",
+    "titles": {
+      "point": "النقطة",
+      "courbe": "المنحنيات",
+      "crochet": "الخطاطيف والخطاطيف المزدوجة",
+      "trait": "الخطوط"
+    }
+  },
+  "coursLettres": {
+    "title": "الحروف والأرقام",
+    "subtitle": "المس حرفًا لترى تركيبته",
+    "intro": "الحروف والأرقام. يتكون كل حرف بتجميع الإشارات الأساسية. المس حرفًا لترى تركيبته!",
+    "legendSuffix": "الغالب",
+    "minusculesTitle": "الحروف الصغيرة (a – z)",
+    "minusculesSubtitle": "المصدر: دليل CP1 — تركيبات معتمدة",
+    "chiffresTitle": "الأرقام (0 – 9)",
+    "chiffresSubtitle": "0–4 معتمدة · 5–9 قيد الاعتماد مع السيد موسى",
+    "majusculesTitle": "الحروف الكبيرة (A – Z)",
+    "majusculesSubtitle": "⚠️ تركيبات يجب اعتمادها مع السيد موسى قبل الاستخدام التربوي",
+    "signeCount": "{count} إشارة",
+    "pendingAria": "قيد الاعتماد",
+    "viewAria": "عرض تفاصيل {name}"
+  },
+  "coursLettresChar": {
+    "notFound": "غير موجود",
+    "backToList": "العودة إلى القائمة",
+    "pendingWarning": "هذه التركيبة إعادة بناء بصرية ويجب أن يعتمدها السيد موسى قبل استخدامها في التمارين التربوية.",
+    "seenOnLines": "معاينة على الأسطر",
+    "formulaTitle": "التركيبة",
+    "signeCount": "{count} إشارة · المس إشارة لمعرفة المزيد",
+    "result": "النتيجة",
+    "adqNote": "ملاحظة: الحروف a وd وq تستخدم نفس تركيبة الإشارات. موضع الخط العمودي (الجسم / الساق العلوية / الساق السفلية) هو ما يميزها، وليس الإشارات نفسها.",
+    "practiceLink": "تدرّب في دفتر الكتابة",
+    "seeAll": "عرض جميع الحروف",
+    "families": {
+      "trait": "الخط",
+      "courbe": "المنحنى",
+      "crochet": "الخطاف",
+      "point": "النقطة"
+    },
+    "variants": {
+      "vertical": "عمودي",
+      "horizontal": "أفقي",
+      "oblique-gauche": "مائل إلى اليسار",
+      "oblique-droit": "مائل إلى اليمين",
+      "open-right": "مفتوح إلى اليمين (C)",
+      "open-left": "مفتوح إلى اليسار (Ɔ)",
+      "bridge": "على شكل قنطرة (∩)",
+      "bowl": "على شكل حوض (∪)",
+      "closed": "مغلق (دائرة كاملة)",
+      "top-right": "أعلى اليمين",
+      "top-left": "أعلى اليسار",
+      "bottom-right": "أسفل اليمين",
+      "bottom-left": "أسفل اليسار",
+      "center": "وسط"
+    },
+    "zones": {
+      "corps": "الجسم",
+      "hampe": "↑ الساق العلوية",
+      "jambe": "↓ الساق السفلية"
+    }
+  },
+  "coursFormation": {
+    "title": "تكوين الحروف",
+    "subtitle": "الجمع بين الإشارات الأساسية",
+    "intro": "مرحبًا بك في التركيب! هنا ستتعلم كيفية الجمع بين الإشارات لتكوين الحروف والأرقام.",
+    "magicTitle": "سحر التركيب!",
+    "magicBody": "يتكون كل حرف بتجميع الإشارات التي تعلمتها: الخطوط، المنحنيات، الخطاطيف والنقاط. المس مجموعة للبدء!",
+    "previewTitle": "معاينة",
+    "signeCount": "{count} إشارة"
+  },
+  "coursFormationChar": {
+    "notFound": "غير متوفر حاليًا.",
+    "backToList": "العودة إلى الدروس",
+    "formulaTitle": "التركيبة",
+    "vowelsTitle": "الحروف المتحركة",
+    "practice": "تدرّب على",
+    "families": {
+      "trait": "خط",
+      "courbe": "منحنى",
+      "crochet": "خطاف",
+      "point": "نقطة"
+    }
+  },
+  "exerciceIntro": {
+    "title": "التمرين التالي",
+    "intro": "سنتعرف على الإشارات معًا!",
+    "typeLabel": "نوع التمرين",
+    "typeValue": "التعرف",
+    "typeDesc": "ابحث عن الإشارة الصحيحة ضمن شبكة صغيرة.",
+    "previewLabel": "معاينة",
+    "start": "ابدأ",
+    "demo": "شاهد عرضًا توضيحيًا"
+  },
+  "exercice": {
+    "findPrefix": "ابحث عن",
+    "replay": "إعادة الاستماع",
+    "helpText": "<b>المنحنى</b> قوس ليّن كالجسر، بلون أخضر.",
+    "successTitle": "أحسنت، لقد وجدته!",
+    "successBody": "تفتحت برعمة جديدة على غصنك.",
+    "tryAgain": "حاول مرة أخرى"
+  },
+  "exerciceListe": {
+    "titleGroup": "الدفتر: {titre}",
+    "subtitleGroupLettres": "تدرّب على رسم هذه الحروف",
+    "subtitleGroupDigits": "تدرّب على رسم هذه الأرقام",
+    "introGroup": "إليك دفتر الكتابة لـ{titre}! اختر حرفًا للتدرب على تكوينه إشارة بإشارة.",
+    "groupHint": "المس حرفًا أدناه للتدرب على شبكة سييس مع التحقق من كل حركة!",
+    "letterPrefix": "الحرف",
+    "digitPrefix": "الرقم",
+    "gestureCount": "{count} حركة",
+    "title": "دفتر الكتابة",
+    "titleFamily": "الدفتر: {titre}",
+    "subtitle": "أعد رسم الخط المنقط",
+    "introGeneral": "مرحبًا بك في دفتر الكتابة! أعد رسم الخط المنقط متبعًا النقطة الخضراء لتتعلم رسم كل إشارة بشكل صحيح.",
+    "repetitionsLabel": "التكرارات لكل إشارة",
+    "repetitionsHint": "عدد مرات رسم كل إشارة على السطر",
+    "toleranceLabel": "درجة التسامح في التحقق",
+    "toleranceHint": "أعلى = أسهل على الأصغر سنًا",
+    "startHint": "تشير النقطة الخضراء إلى نقطة البداية. اتبع الخط المنقط مع رفع إصبعك بأقل قدر ممكن.",
+    "done": "تم!",
+    "rowComplete": "أحسنت! لقد رسمت جميع إشارات هذا السطر. عمل ممتاز!",
+    "listenConsigne": "استمع إلى التعليمة: {label}",
+    "reducedLabel": "مصغّر",
+    "settingsAria": "الإعدادات",
+    "backAria": "العودة إلى الرئيسية",
+    "familyNames": {
+      "point": "نقاط",
+      "courbe": "منحنيات",
+      "crochet": "خطاطيف",
+      "trait": "خطوط"
+    }
+  },
+  "exerciceLettre": {
+    "title": "ارسم",
+    "stepPrefix": "إشارة",
+    "signsReady": "{done}/{total} إشارات جاهزة",
+    "practiceStepsTitle": "تدرّب على كل إشارة",
+    "practiceStepsHint": "أنجز كل إشارة {reps} مرات قبل كتابة الحرف كاملاً.",
+    "finalTitle": "اكتب الحرف كاملاً",
+    "finalHint": "ارسم الآن جميع الإشارات تباعًا، كما لو كنت تكتب الحرف الحقيقي.",
+    "finalLocked": "أنجز أولاً جميع الإشارات أعلاه لفتح هذه الخطوة.",
+    "successAll": "تهانينا! الحرف كامل!",
+    "successAllSub": "لقد أتقنت تجميع هذا الحرف.",
+    "formulaTitle": "تركيبة",
+    "validated": "منجزة",
+    "resetAll": "البدء من جديد",
+    "reviewCourse": "مراجعة الدرس",
+    "notFound": "غير موجود.",
+    "backToNotebook": "العودة إلى الدفتر",
+    "successTitle": "رائع!",
+    "successBody": "أصبحت الآن تعرف كتابة",
+    "nextLetter": "الحرف التالي",
+    "practiceAgain": "تدرّب مرة أخرى",
+    "backToNotebookLink": "العودة إلى دفتر الكتابة",
+    "speakStart": "تدرّب على الحرف {name}.",
+    "speakNextStep": "رائع! انتقل الآن إلى الإشارة التالية.",
+    "speakLetterDone": "أحسنت! لقد كوّنت الحرف {name} بشكل مثالي!",
+    "speakRetryStep": "تقريبًا! أعد المحاولة في هذه الحركة فقط: {desc}",
+    "speakReset": "لنبدأ الحرف {name} من جديد."
+  },
+  "coursSyllabes": {
+    "title": "المقاطع",
+    "subtitle": "اجمع الحروف للقراءة",
+    "notFound": "غير متوفر حاليًا.",
+    "backToList": "العودة إلى المسار",
+    "consonantTitle": "مقاطع مع «{consonant}»",
+    "syllableCount": "{count} مقطع",
+    "formingLabel": "{consonant} + {vowel} = {syllable}",
+    "exampleWordLabel": "كلمة تحتوي على «{syllable}»",
+    "speakFormation": "{consonant}... {vowel}... {syllable}!",
+    "practice": "تدرّب على هذه المقاطع",
+    "nextConsonant": "الحرف الساكن التالي: {consonant}"
+  },
+  "exerciceSyllabes": {
+    "title": "ارسم",
+    "syllablesReady": "{done}/{total} مقاطع مرسومة",
+    "introTitle": "اكتب كل مقطع",
+    "introBody": "ارسم الحرف الساكن ثم المتحرك لتكوين كل مقطع.",
+    "allDoneTitle": "أحسنت، جميع المقاطع مرسومة!",
+    "allDoneBody": "لقد أتقنت مقاطع هذا الحرف الساكن.",
+    "nextGroup": "الحرف الساكن التالي: {consonant}",
+    "exampleWordPrefix": "كما في"
+  },
+  "coursMots": {
+    "notFound": "غير متوفر حاليًا.",
+    "backToList": "العودة إلى الرئيسية",
+    "wordCount": "{count} كلمة لاكتشافها",
+    "introSpeak": "إليك درس {titre}. المس الكلمة لسماعها.",
+    "introTitle": "استمع وشاهد كل كلمة",
+    "introBody": "كل كلمة مكتوبة بالفعل بالحروف التي تعرفها. المس الكلمة لسماعها، أو المس الدمبل للتدرّب عليها!",
+    "practiceGroup": "تدرّب على {titre}",
+    "practiceWordAria": "تدرّب على «{mot}»"
+  },
+  "exerciceMots": {
+    "wordsReady": "{done}/{total} كلمات مكتوبة",
+    "introTitle": "اكتب كل كلمة",
+    "introBody": "ارسم الحروف بالترتيب لتكوين كل كلمة.",
+    "allDoneTitle": "أحسنت، جميع الكلمات مكتوبة!",
+    "allDoneBody": "لقد أتقنت هذه المجموعة من الكلمات.",
+    "nextGroup": "المجموعة التالية: {titre}"
+  },
+  "motsCroises": {
+    "title": "الكلمات المتقاطعة",
+    "subtitle": "أكمل الشبكة حرفًا بحرف",
+    "levelSubtitle": "المستوى {level} · {count} كلمات",
+    "hintTitle": "استمع ثم أكمل",
+    "hintBody": "استمع إلى كل كلمة أدناه وارسم حروفها في الشبكة، تمامًا كالكلمات المتقاطعة الحقيقية!",
+    "doneTitle": "اكتملت الشبكة!",
+    "doneBody": "أحسنت، لقد حللت هذه الكلمات المتقاطعة.",
+    "across": "أفقي",
+    "down": "عمودي",
+    "featuredTitle": "اكتملت الشبكة، أحسنت!",
+    "featuredBody": "لقد كتبت ونطقت جميع الكلمات! إليك الكلمة المميزة:",
+    "continueLabel": "متابعة",
+    "generationFailed": "تعذر إنشاء هذه الشبكة، حاول مرة أخرى.",
+    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة"
+  },
+  "modeLibreCroises": {
+    "title": "الكلمات المتقاطعة",
+    "subtitle": "شبكة جديدة في كل مرة",
+    "intro": "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالكلمات المتقاطعة كما تشاء!",
+    "newGame": "شبكة جديدة",
+    "generating": "جارٍ تحضير الشبكة…"
+  }
 };
