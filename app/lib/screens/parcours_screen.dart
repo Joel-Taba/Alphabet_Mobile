@@ -26,7 +26,7 @@ M 81,19 L 90,23 L 77,29 Z M 73,30 L 86,35 L 69,41 Z M 65,42 L 80,48 L 62,53 Z M 
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
 const String _bonusArcSvg = 'M12 16 C14 8 26 8 28 16';
 
-enum StepKind { active, locked, bonus, crossword, medal, header }
+enum StepKind { active, locked, bonus, crossword, wordsearch, medal, header }
 
 class Step {
   final StepKind kind;
@@ -314,11 +314,16 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         final levelIdx = (idx - 1) ~/ 2;
         if (levelIdx < PALIER3_CROSSWORD_LEVELS.length) {
           final level = PALIER3_CROSSWORD_LEVELS[levelIdx];
+          final isWordSearch = levelIdx % 2 == 1;
           steps.add(
             StepEntry(
-              const Step(kind: StepKind.crossword),
+              Step(
+                kind: isWordSearch ? StepKind.wordsearch : StepKind.crossword,
+              ),
               0,
-              to: '/exercice/mots-croises/lvl$level',
+              to: isWordSearch
+                  ? '/exercice/mots-meles/lvl$level'
+                  : '/exercice/mots-croises/lvl$level',
             ),
           );
         }
@@ -731,6 +736,8 @@ class _StepNodeState extends State<_StepNode>
     final parcours = widget.t['parcours'] as Map<String, dynamic>? ?? {};
     if (widget.step.kind == StepKind.crossword)
       return parcours['crosswordStep'] ?? '';
+    if (widget.step.kind == StepKind.wordsearch)
+      return parcours['wordSearchStep'] ?? '';
     if (widget.step.iconType == 'branche')
       return parcours['exerciceStep'] ?? '';
     return parcours['coursStep'] ?? '';
@@ -867,6 +874,54 @@ class _StepNodeState extends State<_StepNode>
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
                 color: big
+                    ? widget.borderColor
+                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        );
+
+      case StepKind.wordsearch:
+        final bool bigWs = widget.isCurrent;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.isCurrent)
+              _StartPill(
+                borderColor: widget.borderColor,
+                label: parcours['start'] ?? 'Commencer',
+              ),
+            if (widget.isCurrent) const SizedBox(height: 10),
+            Container(
+              width: bigWs ? 80 : 56,
+              height: bigWs ? 80 : 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: bigWs ? widget.color : AmaniColors.disabled,
+                border: Border.all(
+                  color: bigWs ? widget.borderColor : AmaniColors.disabled,
+                  width: 4,
+                ),
+                boxShadow: AmaniShadows.card,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.search_rounded,
+                size: bigWs ? 36 : 24,
+                color: bigWs
+                    ? Colors.white
+                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _stepLabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                color: bigWs
                     ? widget.borderColor
                     : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),

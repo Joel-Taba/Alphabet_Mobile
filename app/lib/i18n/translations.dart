@@ -162,6 +162,7 @@ const Map<String, dynamic> fr = {
       'letter': 'Lettre',
       'digit': 'Chiffre',
       'crossword': 'Mots croisés',
+      'wordsearch': 'Mots mêlés',
     },
     'modelLabel': 'Modèle',
     'noModelTitle': 'Laisse libre cours à ton imagination !',
@@ -187,6 +188,7 @@ const Map<String, dynamic> fr = {
     'coursStep': 'Cours',
     'exerciceStep': 'Exercice',
     'crosswordStep': 'Mots croisés',
+    'wordSearchStep': 'Mots mêlés',
     'paliers': [
       {
         'title': 'Les Signes de base',
@@ -553,6 +555,26 @@ const Map<String, dynamic> fr = {
     'newGame': 'Nouvelle grille',
     'generating': 'Préparation de la grille…',
   },
+  'motsMeles': {
+    'title': 'Mots mêlés',
+    'subtitle': 'Trouve tous les mots cachés dans la grille',
+    'levelSubtitle': 'Niveau {level} · {count} mots',
+    'hintTitle': 'Glisse pour trouver',
+    'hintBody':
+        "Glisse ton doigt du début à la fin de chaque mot caché dans la grille : à l'horizontale, à la verticale ou en diagonale !",
+    'doneTitle': 'Grille terminée !',
+    'doneBody': 'Bravo, tu as trouvé tous les mots cachés.',
+    'generationFailed': 'Impossible de créer cette grille, réessaie.',
+    'wordsFoundLabel': '{solved} sur {total} mots trouvés',
+  },
+  'modeLibreMeles': {
+    'title': 'Mots mêlés',
+    'subtitle': 'Une nouvelle grille à chaque partie',
+    'intro':
+        'Touche « Nouvelle grille » pour piocher des mots au hasard et jouer aux mots mêlés autant de fois que tu veux !',
+    'newGame': 'Nouvelle grille',
+    'generating': 'Préparation de la grille…',
+  },
 };
 
 const Map<String, dynamic> en = {
@@ -645,6 +667,7 @@ const Map<String, dynamic> en = {
       'letter': 'Letter',
       'digit': 'Digit',
       'crossword': 'Crossword',
+      'wordsearch': 'Word search',
     },
     'modelLabel': 'Model',
     'noModelTitle': 'Draw whatever you want!',
@@ -670,6 +693,7 @@ const Map<String, dynamic> en = {
     'coursStep': 'Lesson',
     'exerciceStep': 'Exercise',
     'crosswordStep': 'Crossword',
+    'wordSearchStep': 'Word search',
     'paliers': [
       {
         'title': 'The Basic Signs',
@@ -1033,6 +1057,26 @@ const Map<String, dynamic> en = {
     'newGame': 'New grid',
     'generating': 'Building the grid…',
   },
+  'motsMeles': {
+    'title': 'Word search',
+    'subtitle': 'Find every word hidden in the grid',
+    'levelSubtitle': 'Level {level} · {count} words',
+    'hintTitle': 'Drag to find',
+    'hintBody':
+        'Drag your finger from the start to the end of each hidden word: across, down, or diagonally!',
+    'doneTitle': 'Grid complete!',
+    'doneBody': 'Well done, you found every hidden word.',
+    'generationFailed': "Couldn't build this grid, try again.",
+    'wordsFoundLabel': '{solved} of {total} words found',
+  },
+  'modeLibreMeles': {
+    'title': 'Word search',
+    'subtitle': 'A new grid every game',
+    'intro':
+        'Tap "New grid" to draw random words and play word search as many times as you like!',
+    'newGame': 'New grid',
+    'generating': 'Building the grid…',
+  },
 };
 
 const Map<String, dynamic> es = {
@@ -1127,6 +1171,7 @@ const Map<String, dynamic> es = {
       'letter': 'Letra',
       'digit': 'Dígito',
       'crossword': 'Crucigrama',
+      'wordsearch': 'Sopa de letras',
     },
     'modelLabel': 'Modelo',
     'noModelTitle': '¡Dibuja lo que quieras!',
@@ -1153,6 +1198,7 @@ const Map<String, dynamic> es = {
     'coursStep': 'Lección',
     'exerciceStep': 'Ejercicio',
     'crosswordStep': 'Crucigrama',
+    'wordSearchStep': 'Sopa de letras',
     'paliers': [
       {
         'title': 'Los Signos básicos',

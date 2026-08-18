@@ -7,6 +7,7 @@ import '../services/sign_speech.dart';
 import '../widgets/interactive_canvas.dart';
 import '../widgets/scribble_canvas.dart';
 import '../widgets/free_crossword_section.dart';
+import '../widgets/free_word_search_section.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/amani_mascot.dart';
 import '../data/sign_exercise_catalog.dart';
@@ -14,7 +15,7 @@ import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 
-enum ModeLibreTab { scribble, signe, lettre, chiffre, crossword }
+enum ModeLibreTab { scribble, signe, lettre, chiffre, crossword, wordsearch }
 
 const List<SignFamily> _signFamilies = [
   SignFamily.trait,
@@ -202,6 +203,11 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                     ModeLibreTab.crossword,
                     tabs['crossword'] ?? 'Mots croisés',
                   ),
+                  const SizedBox(width: 8),
+                  _buildTab(
+                    ModeLibreTab.wordsearch,
+                    tabs['wordsearch'] ?? 'Mots mêlés',
+                  ),
                 ],
               ),
             ),
@@ -209,6 +215,8 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
 
             if (_currentTab == ModeLibreTab.crossword)
               const FreeCrosswordSection()
+            else if (_currentTab == ModeLibreTab.wordsearch)
+              const FreeWordSearchSection()
             else ...[
               // Sélecteur de famille (uniquement pour l'onglet Signe)
               if (_currentTab == ModeLibreTab.signe) ...[

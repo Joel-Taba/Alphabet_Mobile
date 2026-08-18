@@ -17,6 +17,7 @@ import 'screens/exercice_lettre_screen.dart';
 import 'screens/cours_mots_screen.dart';
 import 'screens/exercice_mots_screen.dart';
 import 'screens/exercice_mots_croises_screen.dart';
+import 'screens/exercice_mots_meles_screen.dart';
 import 'screens/cours_syllabes_screen.dart';
 import 'screens/exercice_syllabes_screen.dart';
 import 'services/sign_speech.dart';
@@ -96,6 +97,12 @@ final _router = GoRouter(
     GoRoute(
       path: '/exercice/mots-croises/:puzzleId',
       builder: (context, state) => ExerciceMotsCroisesScreen(
+        puzzleId: state.pathParameters['puzzleId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/mots-meles/:puzzleId',
+      builder: (context, state) => ExerciceMotsMelesScreen(
         puzzleId: state.pathParameters['puzzleId']!,
       ),
     ),
