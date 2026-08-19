@@ -124,7 +124,7 @@ final List<dynamic> VOWELS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 91.24 86.5 L 91.24 125",
+        "pathD": "M 91.24 75 L 91.24 125",
         "startXY": [
           90.85,
           93.56
@@ -140,10 +140,10 @@ final List<dynamic> VOWELS = jsonDecode(r'''
       {
         "family": "point",
         "variant": "center",
-        "pathD": "M 92.11 75 A 2.33 2.33 0 1 0 92.17 75",
+        "pathD": "M 92.11 57 A 2.33 2.33 0 1 0 92.17 57",
         "startXY": [
           92.11,
-          77
+          59
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -282,10 +282,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-left",
-        "pathD": "M 57.46 68.58 A 32.82 32.82 0 1 1 57.46 115.78",
+        "pathD": "M 57.15 82.21 A 24.66 24.66 0 1 1 57.15 117.1",
         "startXY": [
-          69.95,
-          118.04
+          47.46,
+          87.54
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -352,10 +352,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-right",
-        "pathD": "M 121.86 72.08 C 113.19 61.43 98.78 57.38 85.78 61.97 C 72.82 66.58 64.14 78.84 64.14 92.54 C 64.14 106.25 72.82 118.51 85.78 123.1 C 98.78 127.7 113.19 123.64 121.86 113.01",
+        "pathD": "M 112.77 82.21 A 24.66 24.66 0 1 0 112.77 117.1",
         "startXY": [
-          125,
-          90.3
+          122.46,
+          87.54
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -368,9 +368,9 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 121.86 15 L 121.86 125",
+        "pathD": "M 112.77 15 L 112.77 125",
         "startXY": [
-          125,
+          115.91,
           27
         ],
         "strokeColor": "#4A3B2A",
@@ -419,10 +419,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 66.3 81.34 L 97.73 81.34",
+        "pathD": "M 66.3 75 L 97.73 75",
         "startXY": [
           63,
-          99
+          92.66
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -556,10 +556,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "bottom-left",
-        "pathD": "M 115.54 104.17 L 115.54 165.19 A 20.34 20.34 0 0 1 74.86 165.19",
+        "pathD": "M 115.54 75 L 115.54 165.19 A 20.34 20.34 0 0 1 74.86 165.19",
         "startXY": [
           115.81,
-          95.56
+          66.39
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -572,10 +572,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "point",
         "variant": "center",
-        "pathD": "M 112.22 75 A 3.31 3.31 0 1 0 112.29 75",
+        "pathD": "M 112.22 57 A 3.31 3.31 0 1 0 112.29 57",
         "startXY": [
           112.45,
-          66
+          48
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -623,10 +623,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-droit",
-        "pathD": "M 100.33 60.07 L 69.67 92.54",
+        "pathD": "M 125.9 75 L 69.67 100",
         "startXY": [
-          102,
-          77
+          128,
+          71
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -639,10 +639,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-droit",
-        "pathD": "M 69.67 92.54 L 100.33 125",
+        "pathD": "M 69.67 100 L 125.9 125",
         "startXY": [
           68,
-          113
+          96
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -709,10 +709,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 67.53 75 L 67.53 125",
+        "pathD": "M 82.23 75 L 82.23 125",
         "startXY": [
-          58.69,
-          77
+          68,
+          60
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -724,11 +724,11 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "crochet",
-        "variant": "top-left",
-        "pathD": "M 67.69 85.43 A 10.07 10.07 0 0 1 87.48 88.03 L 87.48 124.4",
+        "variant": "top-right",
+        "pathD": "M 82.23 92.77 C 82.23 80.56 88.89 75 98.89 75 C 108.89 75 117.77 80.56 117.77 92.77 L 117.77 125",
         "startXY": [
-          58.93,
-          92.03
+          68,
+          108
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -740,11 +740,11 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "crochet",
-        "variant": "top-left",
-        "pathD": "M 87.95 86.03 A 10.07 10.07 0 0 1 107.71 88.63 L 107.71 125",
+        "variant": "top-right",
+        "pathD": "M 117.77 92.77 C 117.77 80.56 124.43 75 134.43 75 C 144.43 75 153.31 80.56 153.31 92.77 L 153.31 125",
         "startXY": [
-          88.08,
-          92.89
+          103.54,
+          108
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -776,10 +776,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 68.9 75 L 68.9 125",
+        "pathD": "M 82.23 75 L 82.23 125",
         "startXY": [
-          63.14,
-          77
+          68,
+          60
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -791,11 +791,11 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "crochet",
-        "variant": "top-left",
-        "pathD": "M 69.23 88.03 A 13.16 13.16 0 0 1 95.1 91.43 L 95.1 124.7",
+        "variant": "top-right",
+        "pathD": "M 82.23 92.77 C 82.23 80.56 88.89 75 98.89 75 C 108.89 75 117.77 80.56 117.77 92.77 L 117.77 125",
         "startXY": [
-          63.62,
-          95.75
+          68,
+          108
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -910,10 +910,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-left",
-        "pathD": "M 56.86 84.17 A 32.67 32.67 0 1 1 56.86 131.17",
+        "pathD": "M 57.15 82.21 A 24.66 24.66 0 1 1 57.15 117.1",
         "startXY": [
-          56.35,
-          75.34
+          47.46,
+          87.54
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -945,10 +945,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-right",
-        "pathD": "M 123.09 87.5 C 114.07 76.42 99.01 72.18 85.46 76.98 C 71.94 81.77 62.92 94.55 62.92 108.85 C 62.92 123.14 71.94 135.93 85.46 140.71 C 99.01 145.51 114.07 141.29 123.09 130.18",
+        "pathD": "M 112.77 82.21 A 24.66 24.66 0 1 0 112.77 117.1",
         "startXY": [
-          125,
-          75.3
+          122.46,
+          87.54
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -961,9 +961,9 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "vertical",
-        "pathD": "M 123.09 75 L 123.09 185",
+        "pathD": "M 112.77 75 L 112.77 185",
         "startXY": [
-          125,
+          114.68,
           62
         ],
         "strokeColor": "#4A3B2A",
@@ -2455,10 +2455,10 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-left",
-        "pathD": "M 79.31 23.63 A 30.75 30.75 0 1 1 79.31 67.86",
+        "pathD": "M 79.15 27.56 A 24.66 24.66 0 1 1 79.15 62.45",
         "startXY": [
-          78.49,
-          44.4
+          69.46,
+          32.89
         ],
         "strokeColor": "#E05252",
         "zIndex": 1,
@@ -2559,10 +2559,10 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "open-left",
-        "pathD": "M 79.52 23.59 A 30.65 30.65 0 1 1 79.52 67.71",
+        "pathD": "M 78.67 27.56 A 24.66 24.66 0 1 1 78.67 62.45",
         "startXY": [
-          78.67,
-          44.37
+          68.98,
+          32.89
         ],
         "strokeColor": "#E05252",
         "zIndex": 2,
@@ -2576,10 +2576,10 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-droit",
-        "pathD": "M 105.79 78.89 L 133.61 121.74",
+        "pathD": "M 99.81 71.45 L 127.63 114.3",
         "startXY": [
-          105.78,
-          101.42
+          99.8,
+          93.98
         ],
         "strokeColor": "#4A3B2A",
         "zIndex": 1,

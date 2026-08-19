@@ -1570,6 +1570,26 @@ const Map<String, dynamic> es = {
     'newGame': 'Nueva cuadrícula',
     'generating': 'Preparando la cuadrícula…',
   },
+  'motsMeles': {
+    'title': 'Sopa de letras',
+    'subtitle': 'Encuentra todas las palabras escondidas en la cuadrícula',
+    'levelSubtitle': 'Nivel {level} · {count} palabras',
+    'hintTitle': 'Desliza para encontrar',
+    'hintBody':
+        'Desliza el dedo desde el principio hasta el final de cada palabra escondida en la cuadrícula: en horizontal, en vertical o en diagonal!',
+    'doneTitle': '¡Cuadrícula completada!',
+    'doneBody': 'Bien hecho, has encontrado todas las palabras escondidas.',
+    'generationFailed': 'No se pudo crear esta cuadrícula, inténtalo de nuevo.',
+    'wordsFoundLabel': '{solved} de {total} palabras encontradas',
+  },
+  'modeLibreMeles': {
+    'title': 'Sopa de letras',
+    'subtitle': 'Una cuadrícula nueva en cada partida',
+    'intro':
+        '¡Toca «Nueva cuadrícula» para sacar palabras al azar y jugar a la sopa de letras todas las veces que quieras!',
+    'newGame': 'Nueva cuadrícula',
+    'generating': 'Preparando la cuadrícula…',
+  },
 };
 
 const Map<String, dynamic> ar = {

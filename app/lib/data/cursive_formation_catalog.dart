@@ -1236,7 +1236,7 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 54.75 125 L 68.17 107.11",
+        "pathD": "M 54.75 125 L 80.8 100.01",
         "startXY": [
           54.75,
           125
@@ -1702,15 +1702,15 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       "ar": "f بخط متصل"
     },
     "category": "consonne",
-    "zone": "hampe",
+    "zone": "jambe",
     "steps": [
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 81.33 67.99 L 109.98 38.31 A 13.75 13.75 0 0 0 99.85 15",
+        "pathD": "M 81.33 125 L 109.98 95.32 A 13.75 13.75 0 0 0 99.85 72.01",
         "startXY": [
           81.33,
-          67.99
+          125
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -1723,10 +1723,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 111.13 20.1 A 10.74 10.74 0 0 0 91.27 25.69 L 91.27 69.98",
+        "pathD": "M 111.13 77.11 A 10.74 10.74 0 0 0 91.27 82.7 L 91.27 126.99",
         "startXY": [
           111.13,
-          20.1
+          77.11
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -1739,10 +1739,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 91.27 69.98 L 91.27 111.25 A 13.75 13.75 0 0 0 114.73 120.97",
+        "pathD": "M 91.27 126.99 L 91.27 168.26 A 13.75 13.75 0 0 0 114.73 177.98",
         "startXY": [
           91.27,
-          69.98
+          126.99
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -1755,10 +1755,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 103.26 124.73 A 13.75 13.75 0 0 0 115.77 102.61 L 90.37 70.06",
+        "pathD": "M 103.26 181.74 A 13.75 13.75 0 0 0 115.77 159.62 L 90.37 127.07",
         "startXY": [
           103.26,
-          124.73
+          181.74
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -1771,10 +1771,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 91.42 80.5 A 5.16 5.16 0 0 0 100.3 84.01 L 111.05 72.87",
+        "pathD": "M 91.42 137.51 A 5.16 5.16 0 0 0 100.3 141.02 L 111.05 129.88",
         "startXY": [
           91.42,
-          80.5
+          137.51
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -1937,10 +1937,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 101.2 110.91 C 101.2 87.5 115.27 75 135.56 79.71 C 140.25 81.28 144.92 85.95 146.49 90.63 C 148.07 96.86 148.07 103.14 148.07 109.36 C 148.07 118.72 151.18 123.43 155.84 123.43 C 155.84 123.43 162.11 125 165.25 115.62",
+        "pathD": "M 101.2 84.56 C 101.2 79.26 105.46 75 110.75 75 C 116.02 75 120.29 79.26 120.29 84.56 L 120.29 119.94 C 120.29 123.31 121.98 125 124.24 125.17 C 125.92 125.56 128.74 124.43 129.28 122.76",
         "startXY": [
           101.2,
-          110.91
+          84.56
         ],
         "strokeColor": "#E05252",
         "description": {
@@ -1972,7 +1972,7 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 55.83 113.67 L 71.31 75.01",
+        "pathD": "M 55.83 113.67 L 62.65 75.01",
         "startXY": [
           55.83,
           113.67
@@ -2361,10 +2361,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 99.15 78.33 L 99.15 113.67 C 98.65 118.68 97.14 120.69 96.14 121.71 C 94.64 123.21 92.12 124.21 90.61 124.72 C 87.6 125.22 86.1 125.22 82.08 123.21 C 79.57 121.71 78.57 119.69 78.05 118.2 C 77.55 116.68 77.55 113.67 77.55 113.67",
+        "pathD": "M 77.55 113.67 C 77.55 113.67 77.55 116.68 78.05 118.2 C 78.57 119.69 79.57 121.71 82.08 123.21 C 86.1 125.22 87.6 125.22 90.61 124.72 C 92.12 124.21 94.64 123.21 96.14 121.71 C 97.14 120.69 98.65 118.68 99.15 113.67 L 99.15 78.33",
         "startXY": [
-          99.15,
-          78.33
+          77.55,
+          113.67
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2428,10 +2428,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 109.85 78.33 L 109.85 113.67 C 109.35 118.68 107.85 120.69 106.84 121.71 C 105.34 123.21 102.83 124.21 101.33 124.72 C 98.31 125.22 96.8 125.22 92.78 123.21 C 90.27 121.71 89.27 119.69 88.76 118.2 C 88.26 116.68 88.26 113.67 88.26 113.67",
+        "pathD": "M 88.26 113.67 C 88.26 113.67 88.26 116.68 88.76 118.2 C 89.27 119.69 90.27 121.71 92.78 123.21 C 96.8 125.22 98.31 125.22 101.33 124.72 C 102.83 124.21 105.34 123.21 106.84 121.71 C 107.85 120.69 109.35 118.68 109.85 113.67 L 109.85 78.33",
         "startXY": [
-          109.85,
-          78.33
+          88.26,
+          113.67
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2632,10 +2632,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 95 87.13 L 95 117.71 L 95.03 118.43 L 95.16 119.16 L 95.36 119.86 L 95.64 120.53 L 95.99 121.17 L 96.4 121.77 L 96.89 122.33 L 97.43 122.81 L 98.03 123.23 L 98.66 123.59 L 99.33 123.87 L 100.03 124.09 L 100.74 124.21 L 101.47 124.27 L 102.2 124.23 L 102.92 124.13 L 103.63 123.93 L 104.3 123.67 L 104.96 123.33 L 105.56 122.91 L 106.1 122.43 L 106.6 121.9 L 107.04 121.31 L 107.4 120.67",
+        "pathD": "M 95 78.33 L 95 113.67 C 95.5 118.68 97.01 120.69 98.01 121.71 C 99.51 123.21 102.03 124.21 103.54 124.72 C 106.55 125.22 108.05 125.22 112.07 123.21 C 114.58 121.71 115.58 119.69 116.1 118.2 C 116.6 116.68 116.6 113.67 116.6 113.67",
         "startXY": [
           95,
-          87.13
+          78.33
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2648,10 +2648,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "point",
         "variant": "cursive-point",
-        "pathD": "M 92.56 75 A 2.47 2.47 0 1 0 92.57 75",
+        "pathD": "M 92.56 55 A 2.47 2.47 0 1 0 92.57 55",
         "startXY": [
           92.56,
-          75
+          55
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -2683,7 +2683,7 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 51.01 128.75 L 63.51 116.25",
+        "pathD": "M 51.01 128.75 L 68.28 100.01",
         "startXY": [
           51.01,
           128.75
