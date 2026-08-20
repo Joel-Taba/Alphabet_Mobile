@@ -206,59 +206,46 @@ class CoursMotsScreen extends StatelessWidget {
                   ],
 
                   const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const AmaniMascot(
-                        pose: AmaniPose.invitation,
-                        size: AmaniSize.small,
+                  GestureDetector(
+                    onTap: () => context.push('/exercice/mots/$groupId'),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4A90E2),
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x334A90E2),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => context.push('/exercice/mots/$groupId'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4A90E2),
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x334A90E2),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    tFormat(cm['practiceGroup'] ?? '', {
-                                      'titre': groupTitle,
-                                    }),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  CupertinoIcons.play_fill,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              cm['practiceGroup'] ?? '',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            CupertinoIcons.play_fill,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
 
                   const SizedBox(height: 16),

@@ -119,12 +119,13 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 96.26 15.00 L 95.32 16.31 L 94.53 17.72 L 93.90 19.20 L 93.44 20.75 L 93.16 22.34 L 93.06 23.95 L 93.13 25.57 L 93.39 27.16 L 93.83 28.71 L 94.44 30.21 L 95.21 31.63 L 96.13 32.95 L 97.20 34.16 L 98.39 35.25 L 99.70 36.19 L 101.11 36.98 L 102.60 37.61 L 104.14 38.07 L 105.73 38.35 L 107.35 38.46 L 108.96 38.38 L 110.55 38.12 L 112.11 37.68 L 113.60 37.08 L 115.02 36.31 L 116.34 35.38 L 117.56 34.32 L 118.64 33.12",
+        "pathD": "M 87.05 15.00 A 15.73 18.78 0 1 0 111.13 39.12",
         "startXY": [
-          96.26,
-          15
+          87.05,
+          15.00
         ],
         "strokeColor": "#E05252",
+        "zIndex": 3,
         "description": {
           "fr": "Trace le courbe n°1",
           "en": "Trace the curve #1",
@@ -135,12 +136,13 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 119.00 31.96 L 116.09 29.92 L 112.91 28.31 L 109.54 27.17 L 106.03 26.53 L 102.47 26.39 L 98.93 26.77 L 95.48 27.65 L 92.19 29.01 L 89.13 30.83 L 86.36 33.07 L 83.94 35.68 L 81.92 38.62 L 80.34 41.81 L 79.23 45.19 L 78.62 48.70 L 78.52 52.26 L 78.92 55.80 L 79.83 59.24 L 81.23 62.52 L 83.08 65.57 L 85.34 68.32 L 87.98 70.71 L 90.93 72.71 L 94.13 74.26 L 97.53 75.34 L 101.04 75.92 L 104.60 75.99 L 108.14 75.55",
+        "pathD": "M 110.83 38.35 A 18.60 22.20 0 1 0 100.84 75.09",
         "startXY": [
-          119,
-          31.96
+          110.83,
+          38.35
         ],
         "strokeColor": "#E05252",
+        "zIndex": 2,
         "description": {
           "fr": "Trace le courbe n°2",
           "en": "Trace the curve #2",
@@ -151,12 +153,13 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 107.13 75.39 L 103.71 75.46 L 100.33 76.01 L 97.06 77.01 L 93.96 78.46 L 91.08 80.31 L 88.49 82.55 L 86.23 85.12 L 84.35 87.98 L 82.87 91.07 L 81.84 94.33 L 81.27 97.71 L 81.16 101.13 L 81.53 104.53 L 82.36 107.85 L 83.64 111.03 L 85.34 113.99 L 87.44 116.70 L 89.89 119.09 L 92.64 121.12 L 95.65 122.76 L 98.85 123.96 L 102.19 124.71 L 105.60 125.00 L 109.02 124.81 L 112.38 124.16 L 115.62 123.05 L 118.67 121.50 L 121.48 119.55",
+        "pathD": "M 100.75 75.05 A 20.92 24.98 0 1 0 121.25 96.33",
         "startXY": [
-          107.13,
-          75.39
+          100.75,
+          75.05
         ],
         "strokeColor": "#E05252",
+        "zIndex": 1,
         "description": {
           "fr": "Trace le courbe n°3",
           "en": "Trace the curve #3",
@@ -368,10 +371,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 58.55 51.04 L 56.80 49.69 L 55.21 48.15 L 53.80 46.45 L 52.60 44.59 L 51.60 42.62 L 50.83 40.55 L 50.30 38.40 L 50.02 36.21 L 49.98 34.00 L 50.18 31.79 L 50.63 29.63 L 51.32 27.53 L 52.25 25.52 L 53.39 23.63 L 54.73 21.87 L 56.26 20.28 L 57.96 18.86 L 59.81 17.65 L 61.78 16.65 L 63.86 15.88 L 66.00 15.34 L 68.19 15.05 L 70.40 15.00 L 150.02 17.78",
+        "pathD": "M 59.07 51.78 L 57.25 50.48 L 55.60 48.98 L 54.11 47.31 L 52.83 45.49 L 51.76 43.53 L 50.91 41.46 L 50.30 39.32 L 49.93 37.12 L 49.81 34.89 L 49.94 32.66 L 50.32 30.46 L 50.95 28.31 L 51.80 26.25 L 52.89 24.30 L 54.18 22.48 L 55.67 20.82 L 57.34 19.34 L 59.16 18.05 L 61.12 16.97 L 63.18 16.12 L 65.32 15.50 L 67.52 15.12 L 69.75 15.00 L 150.19 15.00",
         "startXY": [
-          58.55,
-          51.04
+          59.07,
+          51.78
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -1972,10 +1975,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 55.83 113.67 L 62.65 75.01",
+        "pathD": "M 52.22 107.61 L 54.89 76.92",
         "startXY": [
-          55.83,
-          113.67
+          52.22,
+          107.61
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -1988,10 +1991,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 66.88 75 A 3.97 3.97 0 0 0 67.15 81.34 L 100.97 81.34",
+        "pathD": "M 55.61 78.23 A 2.46 2.46 0 0 0 57.36 82.45 L 91.86 82.45",
         "startXY": [
-          66.88,
-          75
+          55.61,
+          78.23
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2004,10 +2007,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 100.96 80.93 L 100.96 117.73 A 8.26 8.26 0 0 0 116.38 120.75",
+        "pathD": "M 91.32 81.36 L 91.32 118.33 A 12.32 12.32 0 0 0 115.08 122.93",
         "startXY": [
-          100.96,
-          80.93
+          91.32,
+          81.36
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2224,10 +2227,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 77.94 124.08 L 86.8 97.52 L 105.4 27.55 A 10.01 10.01 0 0 0 86.8 20.47",
+        "pathD": "M 77.94 116.92 L 106.05 40.74 A 10.91 16.38 0 0 0 91.21 18.47",
         "startXY": [
           77.94,
-          124.08
+          116.92
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2238,27 +2241,27 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         }
       },
       {
-        "family": "crochet",
-        "variant": "cursive-crochet",
-        "pathD": "M 86.8 20.91 L 86.8 113.46 A 10.62 10.62 0 0 0 108.06 115.22",
+        "family": "double-crochet",
+        "variant": "cursive-double-crochet",
+        "pathD": "M 102.09 18.54 A 7.92 11.9 0 0 0 88.54 26.99 L 88.54 70.04 L 88.54 110.36 A 9.76 14.66 0 0 0 108.06 110.36",
         "startXY": [
-          86.8,
-          20.91
+          102.09,
+          18.54
         ],
         "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Trace le crochet n°2",
-          "en": "Trace the hook #2",
-          "es": "Traza el gancho n.º2",
-          "ar": "ارسم خطاف رقم 2"
+          "fr": "Trace le double crochet n°2",
+          "en": "Trace the double hook #2",
+          "es": "Traza el doble gancho n.º2",
+          "ar": "ارسم الخطاف المزدوج رقم 2"
         }
       }
     ],
     "consigne": {
-      "fr": "En cursive, la lettre \"l\" s'écrit d'un geste lié : crochet, crochet.",
-      "en": "In cursive, the letter \"l\" is written in one connected gesture: hook, hook.",
-      "es": "En cursiva, la letra \"l\" se escribe en un solo gesto: gancho, gancho.",
-      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"l\" بحركة واحدة متصلة: خطاف، خطاف."
+      "fr": "En cursive, la lettre \"l\" s'écrit d'un geste lié : crochet, double crochet.",
+      "en": "In cursive, the letter \"l\" is written in one connected gesture: hook, double hook.",
+      "es": "En cursiva, la letra \"l\" se escribe en un solo gesto: gancho, doble gancho.",
+      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"l\" بحركة واحدة متصلة: خطاف، خطاف مزدوج."
     }
   },
   {
@@ -2493,62 +2496,79 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
     "zone": "jambe",
     "steps": [
       {
-        "family": "crochet",
-        "variant": "hd-bg",
-        "pathD": "M 70.31 77.42 A 7.27 7.27 0 0 1 82.71 82.56 L 82.71 99.54 L 82.71 112.46 A 11.31 11.31 0 0 0 104.12 117.62",
-        "startXY": [
-          70.31,
-          77.42
-        ],
-        "strokeColor": "#4A90E2",
-        "zIndex": 1,
-        "description": {
-          "fr": "Trace le boucle de liaison n°1",
-          "en": "Trace the connecting loop #1",
-          "es": "Traza el bucle de enlace n.º1",
-          "ar": "ارسم حلقة وصل رقم 1"
-        }
-      },
-      {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 105.16 75 L 105.16 125",
+        "pathD": "M 92.68 99.23 L 101.32 78.86",
         "startXY": [
-          105.16,
-          75
+          92.68,
+          99.23
         ],
         "strokeColor": "#4A3B2A",
-        "zIndex": 2,
+        "zIndex": 3,
         "description": {
-          "fr": "Trace le trait n°2",
-          "en": "Trace the line #2",
-          "es": "Traza el trazo n.º2",
-          "ar": "ارسم خط رقم 2"
+          "fr": "Trace le trait n°1",
+          "en": "Trace the line #1",
+          "es": "Traza el trazo n.º1",
+          "ar": "ارسم خط رقم 1"
         }
       },
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 105.16 125 A 15.7 15.7 0 0 0 88.46 151.2 L 127.36 185",
+        "pathD": "M 101.72 79.17 L 101.72 100.23 A 16.1 16.1 0 0 0 129.61 111.21",
         "startXY": [
-          105.16,
-          125
+          101.72,
+          79.17
         ],
         "strokeColor": "#4A90E2",
         "zIndex": 3,
+        "description": {
+          "fr": "Trace le crochet n°2",
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2",
+          "ar": "ارسم خطاف رقم 2"
+        }
+      },
+      {
+        "family": "crochet",
+        "variant": "cursive-crochet",
+        "pathD": "M 129.47 78 L 129.47 161.55 A 13.79 13.79 0 0 1 105.93 171.29",
+        "startXY": [
+          129.47,
+          78
+        ],
+        "strokeColor": "#4A90E2",
+        "zIndex": 2,
         "description": {
           "fr": "Trace le crochet n°3",
           "en": "Trace the hook #3",
           "es": "Traza el gancho n.º3",
           "ar": "ارسم خطاف رقم 3"
         }
+      },
+      {
+        "family": "crochet",
+        "variant": "cursive-crochet",
+        "pathD": "M 123.65 173 A 12.91 12.91 0 0 1 106.23 154 L 140.9 119.31",
+        "startXY": [
+          123.65,
+          173
+        ],
+        "strokeColor": "#4A90E2",
+        "zIndex": 4,
+        "description": {
+          "fr": "Trace le crochet n°4",
+          "en": "Trace the hook #4",
+          "es": "Traza el gancho n.º4",
+          "ar": "ارسم خطاف رقم 4"
+        }
       }
     ],
     "consigne": {
-      "fr": "En cursive, la lettre \"y\" s'écrit d'un geste lié : boucle de liaison, trait, crochet.",
-      "en": "In cursive, the letter \"y\" is written in one connected gesture: connecting loop, line, hook.",
-      "es": "En cursiva, la letra \"y\" se escribe en un solo gesto: bucle de enlace, trazo, gancho.",
-      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"y\" بحركة واحدة متصلة: حلقة وصل، خط، خطاف."
+      "fr": "En cursive, la lettre \"y\" s'écrit d'un geste lié : trait, crochet, crochet, crochet.",
+      "en": "In cursive, the letter \"y\" is written in one connected gesture: line, hook, hook, hook.",
+      "es": "En cursiva, la letra \"y\" se escribe en un solo gesto: trazo, gancho, gancho, gancho.",
+      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"y\" بحركة واحدة متصلة: خط، خطاف، خطاف، خطاف."
     }
   },
   {
@@ -2766,10 +2786,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 66.69 102.55 L 86.12 76.77",
+        "pathD": "M 61.33 102.63 L 63.46 78.11",
         "startXY": [
-          66.69,
-          102.55
+          61.33,
+          102.63
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -2780,28 +2800,28 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         }
       },
       {
-        "family": "courbe",
-        "variant": "cursive-courbe",
-        "pathD": "M 87 75 L 86.39 75.77 L 85.9 76.61 L 85.47 77.5 L 85.15 78.42 L 84.96 79.37 L 84.87 80.33 L 84.88 81.32 L 85 82.3 L 85.24 83.25 L 85.55 84.17 L 86.01 85.05 L 86.53 85.86 L 87.16 86.6 L 87.85 87.29 L 88.63 87.9 L 89.44 88.41 L 90.35 88.8 L 91.29 89.13 L 92.22 89.34 L 93.2 89.42 L 94.17 89.41 L 120.26 87.59",
+        "family": "crochet",
+        "variant": "cursive-crochet",
+        "pathD": "M 63.77 78 A 1.64 1.64 0 0 0 64.92 80.8 L 87.89 80.8",
         "startXY": [
-          87,
-          75
+          63.77,
+          78
         ],
         "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2",
-          "es": "Traza la curva n.º2",
-          "ar": "ارسم منحنى رقم 2"
+          "fr": "Trace le crochet n°2",
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2",
+          "ar": "ارسم خطاف رقم 2"
         }
       },
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 120.26 87.59 L 101.81 108.6",
+        "pathD": "M 87.87 80.3 L 83.39 108.64",
         "startXY": [
-          120.26,
-          87.59
+          87.87,
+          80.3
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -2812,43 +2832,43 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         }
       },
       {
-        "family": "crochet",
-        "variant": "cursive-crochet",
-        "pathD": "M 101.81 108.6 C 107.07 106.24 111.71 103.93 118.65 108.55 C 123.28 110.86 125.59 117.8 125.59 122.44 L 125.59 171.01 C 125.59 171.01 125.59 177.96 120.96 182.58 C 114.02 187.22 104.76 184.91 101.3 177.96",
+        "family": "double-crochet",
+        "variant": "cursive-double-crochet",
+        "pathD": "M 83.06 108.23 A 11.11 11.11 0 0 1 97.05 118.96 L 97.05 161.15 M 97.1 127.99 L 97.1 173.92 A 11.48 11.48 0 0 1 76.69 181.13",
         "startXY": [
-          101.81,
-          108.6
+          83.06,
+          108.23
         ],
         "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Trace le crochet n°4",
-          "en": "Trace the hook #4",
-          "es": "Traza el gancho n.º4",
-          "ar": "ارسم خطاف رقم 4"
+          "fr": "Trace le double crochet n°4",
+          "en": "Trace the double hook #4",
+          "es": "Traza el doble gancho n.º4",
+          "ar": "ارسم الخطاف المزدوج رقم 4"
         }
       },
       {
-        "family": "trait",
-        "variant": "cursive-trait",
-        "pathD": "M 101.3 177.96 C 100.14 173.34 100.14 167.55 104.76 161.76 L 140.62 124.75",
+        "family": "crochet",
+        "variant": "cursive-crochet",
+        "pathD": "M 94.24 182 A 12.98 12.98 0 0 1 75.01 164.97 L 112.6 107.08",
         "startXY": [
-          101.3,
-          177.96
+          94.24,
+          182
         ],
         "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Trace le trait n°5",
-          "en": "Trace the line #5",
-          "es": "Traza el trazo n.º5",
-          "ar": "ارسم خط رقم 5"
+          "fr": "Trace le crochet n°5",
+          "en": "Trace the hook #5",
+          "es": "Traza el gancho n.º5",
+          "ar": "ارسم خطاف رقم 5"
         }
       }
     ],
     "consigne": {
-      "fr": "En cursive, la lettre \"z\" s'écrit d'un geste lié : trait, courbe, trait, crochet, trait.",
-      "en": "In cursive, the letter \"z\" is written in one connected gesture: line, curve, line, hook, line.",
-      "es": "En cursiva, la letra \"z\" se escribe en un solo gesto: trazo, curva, trazo, gancho, trazo.",
-      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"z\" بحركة واحدة متصلة: خط، منحنى، خط، خطاف، خط."
+      "fr": "En cursive, la lettre \"z\" s'écrit d'un geste lié : trait, crochet, trait, double crochet, crochet.",
+      "en": "In cursive, the letter \"z\" is written in one connected gesture: line, hook, line, double hook, hook.",
+      "es": "En cursiva, la letra \"z\" se escribe en un solo gesto: trazo, gancho, trazo, doble gancho, gancho.",
+      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"z\" بحركة واحدة متصلة: خط، خطاف، خط، خطاف مزدوج، خطاف."
     }
   },
   {
@@ -2865,10 +2885,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 71.05 125 L 87.91 89.91 L 110.6 33.77 L 111.08 32.34 L 111.39 30.88 L 111.57 29.38 L 111.56 27.88 L 111.39 26.39 L 111.08 24.93 L 110.58 23.51 L 109.95 22.15 L 109.15 20.89 L 108.25 19.69 L 107.19 18.62 L 106.03 17.67 L 104.78 16.83 L 103.43 16.16 L 102.04 15.62 L 100.59 15.26 L 99.1 15.06 L 97.59 15 L 96.1 15.11 L 94.62 15.4 L 93.19 15.84 L 91.83 16.44 L 90.52 17.17 L 89.31 18.07",
+        "pathD": "M 66.42 84.65 L 104.47 39.84 A 11 16 0 0 0 104.47 15",
         "startXY": [
-          71.05,
-          125
+          66.42,
+          84.65
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2879,28 +2899,28 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
         }
       },
       {
-        "family": "trait",
-        "variant": "cursive-trait",
-        "pathD": "M 89.31 18.07 L 89.31 125",
+        "family": "crochet",
+        "variant": "cursive-crochet",
+        "pathD": "M 105.6 16.63 A 12.29 17.86 0 0 0 84.62 29.26 L 84.62 124.25",
         "startXY": [
-          89.31,
-          18.07
+          105.6,
+          16.63
         ],
-        "strokeColor": "#4A3B2A",
+        "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Trace le trait n°2",
-          "en": "Trace the line #2",
-          "es": "Traza el trazo n.º2",
-          "ar": "ارسم خط رقم 2"
+          "fr": "Trace le crochet n°2",
+          "en": "Trace the hook #2",
+          "es": "Traza el gancho n.º2",
+          "ar": "ارسم خطاف رقم 2"
         }
       },
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M 90.18 86.75 C 94 82.91 97.82 80.05 102.61 79.09 C 107.39 79.09 111.22 80.05 116 84.82 L 116.95 87.7 L 116.95 125",
+        "pathD": "M 84.74 89.25 A 13.09 19.03 0 0 1 107.54 100.98 L 108.41 125",
         "startXY": [
-          90.18,
-          86.75
+          84.74,
+          89.25
         ],
         "strokeColor": "#4A90E2",
         "description": {
@@ -2912,10 +2932,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       }
     ],
     "consigne": {
-      "fr": "En cursive, la lettre \"h\" s'écrit d'un geste lié : crochet, trait, crochet.",
-      "en": "In cursive, the letter \"h\" is written in one connected gesture: hook, line, hook.",
-      "es": "En cursiva, la letra \"h\" se escribe en un solo gesto: gancho, trazo, gancho.",
-      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"h\" بحركة واحدة متصلة: خطاف، خط، خطاف."
+      "fr": "En cursive, la lettre \"h\" s'écrit d'un geste lié : crochet, crochet, crochet.",
+      "en": "In cursive, the letter \"h\" is written in one connected gesture: hook, hook, hook.",
+      "es": "En cursiva, la letra \"h\" se escribe en un solo gesto: gancho, gancho, gancho.",
+      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"h\" بحركة واحدة متصلة: خطاف، خطاف، خطاف."
     }
   },
   {
@@ -3352,10 +3372,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 68.51 38.56 A 31.09 31.09 0 1 1 87.01 74.91",
+        "pathD": "M 69.58 37.73 A 30 30 0 1 1 87.43 72.81",
         "startXY": [
-          68.51,
-          38.56
+          69.58,
+          37.73
         ],
         "strokeColor": "#E05252",
         "zIndex": 2,
@@ -3405,10 +3425,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "courbe",
         "variant": "cursive-courbe",
-        "pathD": "M 65.47 38.51 A 31.03 31.03 0 1 1 83.96 74.81",
+        "pathD": "M 66.49 37.73 A 30 30 0 1 1 84.36 72.83",
         "startXY": [
-          65.47,
-          38.51
+          66.49,
+          37.73
         ],
         "strokeColor": "#E05252",
         "zIndex": 2,
@@ -3651,9 +3671,9 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "crochet",
         "variant": "cursive-crochet",
-        "pathD": "M -16.16 33.1 A 31.36 31.36 0 0 1 41.73 35.62 L 73.9 124.05",
+        "pathD": "M 8 33.1 A 24.84 31.36 0 0 1 53.85 35.62 L 79.33 124.05",
         "startXY": [
-          -16.16,
+          8,
           33.1
         ],
         "strokeColor": "#4A90E2",
@@ -3668,9 +3688,9 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 73.7 123.57 L 108.99 15",
+        "pathD": "M 79.17 123.57 L 107.12 15",
         "startXY": [
-          73.7,
+          79.17,
           123.57
         ],
         "strokeColor": "#4A3B2A",
@@ -3685,9 +3705,9 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 109.25 15 L 144.53 123.57",
+        "pathD": "M 107.33 15 L 135.27 123.57",
         "startXY": [
-          109.25,
+          107.33,
           15
         ],
         "strokeColor": "#4A3B2A",
@@ -3702,9 +3722,9 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 184.05 17.74 L 144.99 125",
+        "pathD": "M 166.57 17.74 L 135.63 125",
         "startXY": [
-          184.05,
+          166.57,
           17.74
         ],
         "strokeColor": "#4A3B2A",
@@ -3719,9 +3739,9 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "cursive-trait",
-        "pathD": "M 184.8 17.01 L 216.16 17.01",
+        "pathD": "M 167.16 17.01 L 192 17.01",
         "startXY": [
-          184.8,
+          167.16,
           17.01
         ],
         "strokeColor": "#4A3B2A",

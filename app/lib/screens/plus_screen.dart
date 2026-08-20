@@ -115,39 +115,6 @@ class _PlusScreenState extends State<PlusScreen> {
             const SizedBox(height: 24),
 
             _buildCard(
-              child: _buildSettingRow(
-                icon: CupertinoIcons.globe,
-                title: hub['languageCardTitle'] ?? 'Langue',
-                trailing: SegmentedControl<Lang>(
-                  value: langProvider.lang,
-                  items: const {
-                    Lang.fr: 'FR',
-                    Lang.en: 'EN',
-                    Lang.es: 'ES',
-                    Lang.ar: 'AR',
-                  },
-                  onChanged: (lang) {
-                    langProvider.setLang(lang);
-                    final backendLangue = switch (lang) {
-                      Lang.fr => 'FR',
-                      Lang.en => 'EN',
-                      Lang.es => null,
-                      Lang.ar => null,
-                    };
-                    if (backendLangue != null) {
-                      unawaited(
-                        context.read<BackendSyncService>().pushReglages(
-                          langue: backendLangue,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            _buildCard(
               child: Column(
                 children: [
                   Row(

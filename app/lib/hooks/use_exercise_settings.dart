@@ -16,7 +16,7 @@ const int kDefaultEvaluationDuration = 5;
 
 const int kMinRepetitions = 1;
 const int kMaxRepetitions = 6;
-const int kMinTolerance = 8;
+const int kMinTolerance = 1;
 const int kMaxTolerance = 25;
 const int kMinEvaluationDuration = 2;
 const int kMaxEvaluationDuration = 15;

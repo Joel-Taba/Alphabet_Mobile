@@ -4,6 +4,7 @@ import 'package:path_drawing/path_drawing.dart' as pd;
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
+import '../widgets/cahier_frame.dart';
 import '../widgets/interactive_canvas.dart';
 import '../widgets/scribble_canvas.dart';
 import '../widgets/free_crossword_section.dart';
@@ -238,8 +239,8 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: AmaniColors.disabled, width: 2),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
+                    child: CahierFrame(
+                      rounded: 22,
                       child: ScribbleCanvas(
                         key: _scribbleKey,
                         penColor: _penColor,

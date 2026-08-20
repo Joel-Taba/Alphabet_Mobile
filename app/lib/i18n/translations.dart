@@ -106,13 +106,13 @@ const Map<String, dynamic> fr = {
     'backToPath': 'Retour au parcours',
   },
   'mascotPoses': {
-    'accueil': 'Amani te salue',
-    'demonstration': 'Amani te montre un signe',
-    'encouragement': "Amani t'encourage",
-    'celebration': 'Amani célèbre ta réussite',
-    'reconfort': 'Amani te réconforte',
-    'reflexion': 'Amani réfléchit',
-    'veille': 'Amani se repose',
+    'accueil': 'Flores Gong Nota te salue',
+    'demonstration': 'Flores Gong Nota te montre un signe',
+    'encouragement': "Flores Gong Nota t'encourage",
+    'celebration': 'Flores Gong Nota célèbre ta réussite',
+    'reconfort': 'Flores Gong Nota te réconforte',
+    'reflexion': 'Flores Gong Nota réfléchit',
+    'veille': 'Flores Gong Nota se repose',
   },
   'notFound': {
     'title': '404',
@@ -129,7 +129,7 @@ const Map<String, dynamic> fr = {
   },
   'welcome': {
     'title': 'Bienvenue',
-    'heading': 'Salut ! Je suis Amani.',
+    'heading': 'Salut ! Je suis Flores Gong Nota.',
     'subheading': 'Tu veux bien jouer avec moi ?',
     'start': "Commencer l'aventure",
     'imBack': "C'est encore moi ! 🐿️",
@@ -237,7 +237,7 @@ const Map<String, dynamic> fr = {
     'settingsTitle': 'Mes Réglages',
     'languageCardTitle': "Langue de l'explorateur",
     'soundCardTitle': 'Son & Animations',
-    'voiceLabel': "Voix d'Amani",
+    'voiceLabel': "Voix de Flores Gong Nota",
     'voiceOn': 'Activée',
     'voiceOff': 'Coupée',
     'volumeLabel': 'Volume de la voix',
@@ -250,7 +250,7 @@ const Map<String, dynamic> fr = {
     ],
     'voiceGenderTest': 'Écouter un exemple',
     'voiceGenderTestPhrase':
-        "Coucou, c'est Amani ! On continue à apprendre ensemble ?",
+        "Coucou, c'est Flores Gong Nota ! On continue à apprendre ensemble ?",
     'photoTitle': 'Ma photo de profil',
     'photoHint': '',
     'photoChangeAria': 'Changer la photo de profil',
@@ -518,7 +518,7 @@ const Map<String, dynamic> fr = {
     'introTitle': 'Écoute et regarde chaque mot',
     'introBody':
         "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le mot pour l'entendre, ou l'haltère pour t'exercer dessus !",
-    'practiceGroup': "M'exercer sur {titre}",
+    'practiceGroup': "M'exercer",
     'practiceWordAria': "S'exercer sur « {mot} »",
   },
   'exerciceMots': {
@@ -610,13 +610,13 @@ const Map<String, dynamic> en = {
     'backToPath': 'Back to the path',
   },
   'mascotPoses': {
-    'accueil': 'Amani waves hello',
-    'demonstration': 'Amani shows a sign',
-    'encouragement': 'Amani cheers you on',
-    'celebration': 'Amani celebrates your success',
-    'reconfort': 'Amani comforts you',
-    'reflexion': 'Amani is thinking',
-    'veille': 'Amani is resting',
+    'accueil': 'Flores Gong Nota waves hello',
+    'demonstration': 'Flores Gong Nota shows a sign',
+    'encouragement': 'Flores Gong Nota cheers you on',
+    'celebration': 'Flores Gong Nota celebrates your success',
+    'reconfort': 'Flores Gong Nota comforts you',
+    'reflexion': 'Flores Gong Nota is thinking',
+    'veille': 'Flores Gong Nota is resting',
   },
   'notFound': {
     'title': '404',
@@ -633,7 +633,7 @@ const Map<String, dynamic> en = {
   },
   'welcome': {
     'title': 'Welcome',
-    'heading': "Hi! I'm Amani.",
+    'heading': "Hi! I'm Flores Gong Nota.",
     'subheading': 'Want to play with me?',
     'start': 'Start the adventure',
     'imBack': "It's me again! 🐿️",
@@ -743,7 +743,7 @@ const Map<String, dynamic> en = {
     'settingsTitle': 'My Settings',
     'languageCardTitle': "Explorer's language",
     'soundCardTitle': 'Sound & Animations',
-    'voiceLabel': "Amani's voice",
+    'voiceLabel': "Flores Gong Nota's voice",
     'voiceOn': 'On',
     'voiceOff': 'Off',
     'volumeLabel': 'Voice volume',
@@ -755,7 +755,7 @@ const Map<String, dynamic> en = {
       {'label': 'Female voice', 'desc': 'Soft and warm'},
     ],
     'voiceGenderTest': 'Hear an example',
-    'voiceGenderTestPhrase': "Hi, it's Amani! Shall we keep learning together?",
+    'voiceGenderTestPhrase': "Hi, it's Flores Gong Nota! Shall we keep learning together?",
     'photoTitle': 'My profile photo',
     'photoHint':
         'It will show up next to your name on the Clearing leaderboard.',
@@ -1021,7 +1021,7 @@ const Map<String, dynamic> en = {
     'introTitle': 'Listen and look at each word',
     'introBody':
         'Each word is already written with letters you know. Tap the word to hear it, or the dumbbell to practice it!',
-    'practiceGroup': 'Practice {titre}',
+    'practiceGroup': 'Practice',
     'practiceWordAria': 'Practice "{mot}"',
   },
   'exerciceMots': {
@@ -1113,13 +1113,13 @@ const Map<String, dynamic> es = {
     'backToPath': 'Volver al recorrido',
   },
   'mascotPoses': {
-    'accueil': 'Amani te saluda',
-    'demonstration': 'Amani te muestra un signo',
-    'encouragement': 'Amani te anima',
-    'celebration': 'Amani celebra tu éxito',
-    'reconfort': 'Amani te consuela',
-    'reflexion': 'Amani está pensando',
-    'veille': 'Amani está descansando',
+    'accueil': 'Flores Gong Nota te saluda',
+    'demonstration': 'Flores Gong Nota te muestra un signo',
+    'encouragement': 'Flores Gong Nota te anima',
+    'celebration': 'Flores Gong Nota celebra tu éxito',
+    'reconfort': 'Flores Gong Nota te consuela',
+    'reflexion': 'Flores Gong Nota está pensando',
+    'veille': 'Flores Gong Nota está descansando',
   },
   'notFound': {
     'title': '404',
@@ -1136,7 +1136,7 @@ const Map<String, dynamic> es = {
   },
   'welcome': {
     'title': 'Bienvenido',
-    'heading': '¡Hola! Soy Amani.',
+    'heading': '¡Hola! Soy Flores Gong Nota.',
     'subheading': '¿Quieres jugar conmigo?',
     'start': 'Comenzar la aventura',
     'imBack': '¡Soy yo otra vez! 🐿️',
@@ -1247,7 +1247,7 @@ const Map<String, dynamic> es = {
     'settingsTitle': 'Mis Ajustes',
     'languageCardTitle': 'Idioma del explorador',
     'soundCardTitle': 'Sonido y Animaciones',
-    'voiceLabel': 'Voz de Amani',
+    'voiceLabel': 'Voz de Flores Gong Nota',
     'voiceOn': 'Activada',
     'voiceOff': 'Desactivada',
     'volumeLabel': 'Volumen de la voz',
@@ -1259,7 +1259,7 @@ const Map<String, dynamic> es = {
       {'label': 'Voz femenina', 'desc': 'Suave y cálida'},
     ],
     'voiceGenderTest': 'Escuchar un ejemplo',
-    'voiceGenderTestPhrase': '¡Hola, soy Amani! ¿Seguimos aprendiendo juntos?',
+    'voiceGenderTestPhrase': '¡Hola, soy Flores Gong Nota! ¿Seguimos aprendiendo juntos?',
     'photoTitle': 'Mi foto de perfil',
     'photoHint': 'Aparecerá junto a tu nombre en la clasificación de El Claro.',
     'photoChangeAria': 'Cambiar la foto de perfil',
@@ -1533,7 +1533,7 @@ const Map<String, dynamic> es = {
     'introTitle': 'Escucha y observa cada palabra',
     'introBody':
         'Cada palabra ya está escrita con letras que conoces. ¡Toca la palabra para escucharla, o la mancuerna para practicarla!',
-    'practiceGroup': 'Practicar {titre}',
+    'practiceGroup': 'Practicar',
     'practiceWordAria': 'Practicar «{mot}»',
   },
   'exerciceMots': {
@@ -1625,13 +1625,13 @@ const Map<String, dynamic> ar = {
     "backToPath": "العودة إلى المسار"
   },
   "mascotPoses": {
-    "accueil": "أماني تحييك",
-    "demonstration": "أماني تريك إشارة",
-    "encouragement": "أماني تشجعك",
-    "celebration": "أماني تحتفل بنجاحك",
-    "reconfort": "أماني تواسيك",
-    "reflexion": "أماني تفكر",
-    "veille": "أماني ترتاح"
+    "accueil": "فلوريس غونغ نوتا تحييك",
+    "demonstration": "فلوريس غونغ نوتا تريك إشارة",
+    "encouragement": "فلوريس غونغ نوتا تشجعك",
+    "celebration": "فلوريس غونغ نوتا تحتفل بنجاحك",
+    "reconfort": "فلوريس غونغ نوتا تواسيك",
+    "reflexion": "فلوريس غونغ نوتا تفكر",
+    "veille": "فلوريس غونغ نوتا ترتاح"
   },
   "notFound": {
     "title": "404",
@@ -1647,7 +1647,7 @@ const Map<String, dynamic> ar = {
   },
   "welcome": {
     "title": "مرحبًا",
-    "heading": "مرحبًا! أنا أماني.",
+    "heading": "مرحبًا! أنا فلوريس غونغ نوتا.",
     "subheading": "هل تريد اللعب معي؟",
     "start": "ابدأ المغامرة",
     "imBack": "ها أنا ذا مجددًا! 🐿️"
@@ -1752,7 +1752,7 @@ const Map<String, dynamic> ar = {
     "settingsTitle": "إعداداتي",
     "languageCardTitle": "لغة المستكشف",
     "soundCardTitle": "الصوت والحركات",
-    "voiceLabel": "صوت أماني",
+    "voiceLabel": "صوت فلوريس غونغ نوتا",
     "voiceOn": "مفعّل",
     "voiceOff": "معطّل",
     "volumeLabel": "مستوى الصوت",
@@ -1770,7 +1770,7 @@ const Map<String, dynamic> ar = {
       }
     ],
     "voiceGenderTest": "استمع إلى مثال",
-    "voiceGenderTestPhrase": "مرحبًا، أنا أماني! هل نواصل التعلم معًا؟",
+    "voiceGenderTestPhrase": "مرحبًا، أنا فلوريس غونغ نوتا! هل نواصل التعلم معًا؟",
     "photoTitle": "صورتي الشخصية",
     "photoHint": "ستظهر بجانب اسمك في ترتيب الساحة.",
     "photoChangeAria": "تغيير الصورة الشخصية",
@@ -2038,7 +2038,7 @@ const Map<String, dynamic> ar = {
     "introSpeak": "إليك درس {titre}. المس الكلمة لسماعها.",
     "introTitle": "استمع وشاهد كل كلمة",
     "introBody": "كل كلمة مكتوبة بالفعل بالحروف التي تعرفها. المس الكلمة لسماعها، أو المس الدمبل للتدرّب عليها!",
-    "practiceGroup": "تدرّب على {titre}",
+    "practiceGroup": "تدرّب",
     "practiceWordAria": "تدرّب على «{mot}»"
   },
   "exerciceMots": {

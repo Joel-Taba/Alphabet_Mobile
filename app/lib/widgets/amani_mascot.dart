@@ -22,6 +22,7 @@ enum AmaniPose {
 
 /// Tailles prédéfinies de la mascotte.
 enum AmaniSize {
+  heroLg(288),
   hero(240),
   medium(120),
   small(72),
