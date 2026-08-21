@@ -419,14 +419,6 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     }
   }
 
-  void _handleClear() {
-    if (_localStatus == OccurrenceStatus.success) return;
-    setState(() {
-      _userPoints.clear();
-      _localStatus = OccurrenceStatus.idle;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final borderColor = _localStatus == OccurrenceStatus.success
@@ -486,27 +478,6 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
                 child: const AmaniMascot(
                   pose: AmaniPose.miniReessai,
                   size: AmaniSize.avatar,
-                ),
-              ),
-            ),
-          if (widget.isActive && _localStatus != OccurrenceStatus.success)
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: GestureDetector(
-                onTap: _handleClear,
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: const BoxDecoration(
-                    color: Color(0x33E05252),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.replay_rounded,
-                    size: 12,
-                    color: AmaniColors.error,
-                  ),
                 ),
               ),
             ),

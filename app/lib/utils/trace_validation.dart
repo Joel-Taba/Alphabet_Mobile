@@ -113,8 +113,9 @@ ValidationResult validateTrace(
   }).toList();
   var backwardSteps = 0;
   for (var i = 1; i < refIndices.length; i++) {
-    if (refIndices[i] < refIndices[i - 1] - _orderBackwardTolerance)
+    if (refIndices[i] < refIndices[i - 1] - _orderBackwardTolerance) {
       backwardSteps++;
+    }
   }
   final orderScore = 1 - backwardSteps / math.max(1, refIndices.length - 1);
   if (orderScore < _orderScoreMin) {

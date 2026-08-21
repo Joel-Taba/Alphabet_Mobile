@@ -220,7 +220,7 @@ const Map<String, dynamic> fr = {
     'you': 'moi',
     'amaniQuote': "Chacun grandit à son rythme, l'important est d'y aller.",
     'amaniLine': 'Bravo à toutes les pousses de la clairière !',
-    'footnote': 'Ce classement ne concerne que cette tablette.',
+    'footnote': '',
     'starsSuffix': '⭐',
     'stumpAria': 'Souche rang {rank}',
   },
@@ -278,8 +278,10 @@ const Map<String, dynamic> fr = {
     ],
     'lockAction': 'Verrouiller Mon Profil',
     'passwordCardTitle': 'Mot de passe de Mon Profil',
+    'oldPasswordPlaceholder': 'Ancien mot de passe',
     'newPasswordPlaceholder': 'Nouveau mot de passe',
     'confirmPasswordPlaceholder': 'Confirmer le mot de passe',
+    'passwordWrongOld': 'Ancien mot de passe incorrect.',
     'passwordMismatch': 'Les deux mots de passe ne correspondent pas.',
     'passwordTooShort':
         'Le mot de passe doit contenir au moins {count} caractères.',
@@ -783,8 +785,10 @@ const Map<String, dynamic> en = {
     ],
     'lockAction': 'Lock My Profile',
     'passwordCardTitle': 'My Profile password',
+    'oldPasswordPlaceholder': 'Old password',
     'newPasswordPlaceholder': 'New password',
     'confirmPasswordPlaceholder': 'Confirm password',
+    'passwordWrongOld': 'Old password is incorrect.',
     'passwordMismatch': "The two passwords don't match.",
     'passwordTooShort':
         'The password must be at least {count} characters long.',
@@ -1287,8 +1291,10 @@ const Map<String, dynamic> es = {
     ],
     'lockAction': 'Bloquear Mi Perfil',
     'passwordCardTitle': 'Contraseña de Mi Perfil',
+    'oldPasswordPlaceholder': 'Contraseña actual',
     'newPasswordPlaceholder': 'Nueva contraseña',
     'confirmPasswordPlaceholder': 'Confirmar contraseña',
+    'passwordWrongOld': 'La contraseña actual es incorrecta.',
     'passwordMismatch': 'Las dos contraseñas no coinciden.',
     'passwordTooShort': 'La contraseña debe tener al menos {count} caracteres.',
     'passwordSaved': '¡Contraseña actualizada!',
@@ -1679,7 +1685,8 @@ const Map<String, dynamic> ar = {
       "sign": "إشارة",
       "letter": "حرف",
       "digit": "رقم",
-      "crossword": "الكلمات المتقاطعة"
+      "crossword": "الكلمات المتقاطعة",
+      "wordsearch": "البحث عن الكلمات"
     },
     "modelLabel": "نموذج",
     "noModelTitle": "ارسم ما تريد!",
@@ -1705,6 +1712,7 @@ const Map<String, dynamic> ar = {
     "coursStep": "درس",
     "exerciceStep": "تمرين",
     "crosswordStep": "الكلمات المتقاطعة",
+    "wordSearchStep": "البحث عن الكلمات",
     "paliers": [
       {
         "title": "الإشارات الأساسية",
@@ -1815,8 +1823,10 @@ const Map<String, dynamic> ar = {
     ],
     "lockAction": "قفل ملفي الشخصي",
     "passwordCardTitle": "كلمة مرور ملفي الشخصي",
+    "oldPasswordPlaceholder": "كلمة المرور القديمة",
     "newPasswordPlaceholder": "كلمة مرور جديدة",
     "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+    "passwordWrongOld": "كلمة المرور القديمة غير صحيحة.",
     "passwordMismatch": "كلمتا المرور غير متطابقتين.",
     "passwordTooShort": "يجب أن تحتوي كلمة المرور على {count} أحرف على الأقل.",
     "passwordSaved": "تم تحديث كلمة المرور!",
@@ -2069,6 +2079,24 @@ const Map<String, dynamic> ar = {
     "title": "الكلمات المتقاطعة",
     "subtitle": "شبكة جديدة في كل مرة",
     "intro": "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالكلمات المتقاطعة كما تشاء!",
+    "newGame": "شبكة جديدة",
+    "generating": "جارٍ تحضير الشبكة…"
+  },
+  "motsMeles": {
+    "title": "البحث عن الكلمات",
+    "subtitle": "ابحث عن كل الكلمات المخفية في الشبكة",
+    "levelSubtitle": "المستوى {level} · {count} كلمات",
+    "hintTitle": "اسحب لتجد",
+    "hintBody": "اسحب إصبعك من بداية كل كلمة مخفية في الشبكة إلى نهايتها: أفقيًا أو عموديًا أو قطريًا!",
+    "doneTitle": "اكتملت الشبكة!",
+    "doneBody": "أحسنت، لقد وجدت كل الكلمات المخفية.",
+    "generationFailed": "تعذر إنشاء هذه الشبكة، حاول مرة أخرى.",
+    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة"
+  },
+  "modeLibreMeles": {
+    "title": "البحث عن الكلمات",
+    "subtitle": "شبكة جديدة في كل مرة",
+    "intro": "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالبحث عن الكلمات كما تشاء!",
     "newGame": "شبكة جديدة",
     "generating": "جارٍ تحضير الشبكة…"
   }

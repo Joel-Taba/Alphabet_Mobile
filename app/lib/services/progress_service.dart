@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'backend_sync_service.dart';
@@ -56,6 +57,11 @@ class _EtapeReussie {
   final int palier;
   final int points;
   final String dateReussite;
+  /// `true` une fois que [BackendSyncService.pushProgression] a confirmé la
+  /// journalisation côté serveur — voir [ProgressProvider.syncPendingProgression],
+  /// qui ré-essaie toutes les entrées encore à `false` (ex. journalisées
+  /// hors-ligne) à chaque lancement de l'app et à chaque visite de "Mon Profil".
+  bool synced;
 
   _EtapeReussie({
     required this.typeEtape,
@@ -64,6 +70,7 @@ class _EtapeReussie {
     required this.palier,
     required this.points,
     required this.dateReussite,
+    this.synced = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -73,8 +80,13 @@ class _EtapeReussie {
     'palier': palier,
     'points': points,
     'dateReussite': dateReussite,
+    'synced': synced,
   };
 
+  // `synced` est absent des journaux écrits avant l'introduction de ce champ :
+  // on suppose alors `false` (non synchronisé) plutôt que de perdre ces
+  // entrées — un ré-envoi d'une étape déjà connue du serveur est sans danger
+  // (contrainte d'unicité côté back-end, voir `ProgressionServiceImpl`).
   factory _EtapeReussie.fromJson(Map<String, dynamic> json) => _EtapeReussie(
     typeEtape: json['typeEtape'] as String,
     modalite: json['modalite'] as String,
@@ -82,6 +94,7 @@ class _EtapeReussie {
     palier: json['palier'] as int,
     points: json['points'] as int,
     dateReussite: json['dateReussite'] as String,
+    synced: json['synced'] as bool? ?? false,
   );
 }
 
@@ -94,6 +107,15 @@ class ProgressProvider extends ChangeNotifier {
   bool _loaded = false;
   final Random _random = Random();
 
+  // Dernières statistiques renvoyées par `GET /api/v1/progressions/moi`
+  // (voir `refreshFromBackend`) : source de vérité lorsqu'elles sont
+  // disponibles, le calcul local ci-dessous ne servant plus alors que de
+  // repli hors-ligne (voir `stats`).
+  int? _backendSignesMaitrises;
+  int? _backendCoursTermines;
+  int? _backendExercicesReussis;
+  int? _backendJoursAventure;
+
   /// Dernier nombre de points gagnés, pour un éventuel popup "+N" côté UI —
   /// incrémenté à chaque appel pour que les widgets à l'écoute détectent un
   /// nouvel évènement même si la valeur des points est identique à la précédente.
@@ -101,8 +123,25 @@ class ProgressProvider extends ChangeNotifier {
   int _awardSequence = 0;
   int get awardSequence => _awardSequence;
 
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  bool _syncing = false;
+
   ProgressProvider(this._backend) {
     _load();
+    // Rattrapage "temps réel" : dès que la connexion revient en cours de
+    // session (pas seulement au lancement de l'app ou à la visite de "Mon
+    // Profil"), on retente aussitôt toute progression restée locale.
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (results.any((r) => r != ConnectivityResult.none)) {
+        unawaited(syncPendingProgression());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -121,6 +160,10 @@ class ProgressProvider extends ChangeNotifier {
     _bonusTotal = prefs.getInt(_bonusStorageKey) ?? 0;
     _loaded = true;
     notifyListeners();
+    // Rattrapage au lancement de l'app : toute progression réussie hors-ligne
+    // lors d'une session précédente (jamais confirmée synchronisée) est
+    // ré-essayée dès qu'une connexion est à nouveau disponible.
+    unawaited(syncPendingProgression());
   }
 
   Future<void> _writeLog() async {
@@ -163,27 +206,71 @@ class ProgressProvider extends ChangeNotifier {
     }
 
     final points = pointsParModalite[modalite] ?? 0;
-    _log.add(
-      _EtapeReussie(
-        typeEtape: typeEtape,
-        modalite: modalite,
-        etapeCode: etapeCode,
-        palier: palier,
-        points: points,
-        dateReussite: DateTime.now().toIso8601String(),
-      ),
+    final etape = _EtapeReussie(
+      typeEtape: typeEtape,
+      modalite: modalite,
+      etapeCode: etapeCode,
+      palier: palier,
+      points: points,
+      dateReussite: DateTime.now().toIso8601String(),
     );
+    _log.add(etape);
     await _writeLog();
     _signalPointsAwarded(points);
-    unawaited(
-      _backend.pushProgression(
-        typeEtape: typeEtape,
-        modalite: modalite,
-        etapeCode: etapeCode,
-        palier: palier,
-      ),
-    );
+    unawaited(_pushAndMarkSynced(etape));
     return AwardResult(pointsAwarded: points, alreadyCompleted: false);
+  }
+
+  /// Tente de synchroniser une étape tout juste journalisée et marque
+  /// l'entrée correspondante comme `synced` en cas de succès. En cas
+  /// d'échec (hors-ligne...), l'entrée reste `synced: false` et sera
+  /// reprise par [syncPendingProgression].
+  Future<void> _pushAndMarkSynced(_EtapeReussie etape) async {
+    final ok = await _backend.pushProgression(
+      typeEtape: etape.typeEtape,
+      modalite: etape.modalite,
+      etapeCode: etape.etapeCode,
+      palier: etape.palier,
+    );
+    if (ok) {
+      etape.synced = true;
+      await _writeLog();
+    }
+  }
+
+  /// Ré-essaie de pousser côté serveur toute étape journalisée localement
+  /// mais jamais confirmée synchronisée (ex. réussie hors-ligne) — c'est le
+  /// "rattrapage" qui garantit qu'aucune progression n'est perdue une fois la
+  /// connexion retrouvée, même si l'app n'a pas été relancée entre-temps.
+  /// Appelé au démarrage de l'app et à chaque ouverture de "Mon Profil" (voir
+  /// `profil_hub_screen.dart`) ; best-effort, ne lève jamais d'exception.
+  Future<void> syncPendingProgression() async {
+    // Évite des passes concurrentes (ex. l'app démarre et le réseau revient
+    // au même instant, déclenchant à la fois `_load` et le listener
+    // connectivité) : sans danger en soi (dédoublonné côté serveur), mais
+    // inutile de pousser deux fois la même entrée en parallèle.
+    if (_syncing) return;
+    _syncing = true;
+    try {
+      final pending = _log.where((e) => !e.synced).toList();
+      if (pending.isEmpty) return;
+      var anySynced = false;
+      for (final etape in pending) {
+        final ok = await _backend.pushProgression(
+          typeEtape: etape.typeEtape,
+          modalite: etape.modalite,
+          etapeCode: etape.etapeCode,
+          palier: etape.palier,
+        );
+        if (ok) {
+          etape.synced = true;
+          anySynced = true;
+        }
+      }
+      if (anySynced) await _writeLog();
+    } finally {
+      _syncing = false;
+    }
   }
 
   /// Petit bonus (1 ou 2 points, au hasard) attribué à chaque reprise
@@ -256,16 +343,38 @@ class ProgressProvider extends ChangeNotifier {
 
   bool get isLoaded => _loaded;
 
+  /// Récupère les statistiques calculées côté serveur (voir
+  /// `BackendSyncService.fetchProgressionStats`) et les substitue au calcul
+  /// local dans [stats] tant qu'elles sont disponibles. Best-effort : en cas
+  /// d'échec (hors-ligne, pas encore lié...), les statistiques précédemment
+  /// récupérées — ou à défaut le calcul local — restent affichées.
+  Future<void> refreshFromBackend() async {
+    final backendStats = await _backend.fetchProgressionStats();
+    if (backendStats == null) return;
+    _backendSignesMaitrises = (backendStats['signesMaitrises'] as num?)
+        ?.toInt();
+    _backendCoursTermines = (backendStats['coursTermines'] as num?)?.toInt();
+    _backendExercicesReussis = (backendStats['exercicesReussis'] as num?)
+        ?.toInt();
+    _backendJoursAventure = (backendStats['joursAventure'] as num?)?.toInt();
+    notifyListeners();
+  }
+
   ProgressStats get stats {
+    // Calcul local : repli hors-ligne, et seule source pour `totalPoints`
+    // (système de points sans équivalent côté back-end). Le "jour
+    // d'aventure" est compté en UTC pour rester cohérent avec
+    // `ProgressionServiceImpl.getProgression` côté serveur, une fois
+    // resynchronisé.
     final signesMaitrises = _log
-        .where((e) => e.typeEtape == 'SIGNE' && e.modalite == 'EXERCICE')
+        .where((e) => e.typeEtape == 'SIGNE')
         .map((e) => e.etapeCode)
         .toSet()
         .length;
     final coursTermines = _log.where((e) => e.modalite == 'COURS').length;
     final exercicesReussis = _log.where((e) => e.modalite == 'EXERCICE').length;
     final joursAventure = _log
-        .map((e) => e.dateReussite.substring(0, 10))
+        .map((e) => DateTime.parse(e.dateReussite).toUtc().toIso8601String().substring(0, 10))
         .toSet()
         .length;
     final totalPoints =
@@ -273,10 +382,10 @@ class ProgressProvider extends ChangeNotifier {
 
     return ProgressStats(
       totalPoints: totalPoints,
-      signesMaitrises: signesMaitrises,
-      coursTermines: coursTermines,
-      exercicesReussis: exercicesReussis,
-      joursAventure: joursAventure,
+      signesMaitrises: _backendSignesMaitrises ?? signesMaitrises,
+      coursTermines: _backendCoursTermines ?? coursTermines,
+      exercicesReussis: _backendExercicesReussis ?? exercicesReussis,
+      joursAventure: _backendJoursAventure ?? joursAventure,
     );
   }
 }

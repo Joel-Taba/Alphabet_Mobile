@@ -128,13 +128,18 @@ class BackendSyncService extends ChangeNotifier {
   /// `ProgressProvider.awardCompletion`), en best-effort. Le bonus de
   /// redémarrage (`awardRestartBonus`) n'a pas d'équivalent côté back-end
   /// (aucune étape associée) et n'est donc jamais synchronisé.
-  Future<void> pushProgression({
+  ///
+  /// Retourne `true` si l'étape a bien été journalisée côté serveur (ou
+  /// l'était déjà) : [ProgressProvider] s'en sert pour savoir quelles
+  /// entrées peuvent être marquées "synchronisées" plutôt que ré-essayées
+  /// plus tard par [syncPendingProgression]. Ne lève jamais d'exception.
+  Future<bool> pushProgression({
     required String typeEtape,
     required String modalite,
     required String etapeCode,
     required int palier,
   }) async {
-    if (!await ensureLinked()) return;
+    if (!await ensureLinked()) return false;
     try {
       await _api.post(
         '/api/v1/progressions',
@@ -146,10 +151,14 @@ class BackendSyncService extends ChangeNotifier {
           'etapeCode': etapeCode,
         },
       );
+      return true;
     } on ApiException catch (e) {
       if (e.status == 401) await _clearToken();
+      return false;
     } catch (_) {
-      // Hors-ligne ou backend injoignable : la progression reste locale.
+      // Hors-ligne ou backend injoignable : la progression reste locale, en
+      // attente d'un futur appel à `syncPendingProgression`.
+      return false;
     }
   }
 
@@ -203,6 +212,26 @@ class BackendSyncService extends ChangeNotifier {
       if (e.status == 401) await _clearToken();
     } catch (_) {
       // Le nouveau mot de passe reste valide localement dans tous les cas.
+    }
+  }
+
+  /// Statistiques globales du profil (signes maîtrisés, cours terminés,
+  /// exercices réussis, jours d'aventure), calculées côté serveur à partir
+  /// de TOUTES les étapes journalisées pour ce profil — voir
+  /// `ProgressionServiceImpl.getProgression` côté back-end. Retourne `null`
+  /// en best-effort (hors-ligne, pas encore lié, jeton expiré...) : c'est à
+  /// l'appelant ([ProgressProvider.refreshFromBackend]) de conserver les
+  /// statistiques locales comme repli dans ce cas.
+  Future<Map<String, dynamic>?> fetchProgressionStats() async {
+    if (!await ensureLinked()) return null;
+    try {
+      final res = await _api.get('/api/v1/progressions/moi', token: _token);
+      return res['stats'] as Map<String, dynamic>?;
+    } on ApiException catch (e) {
+      if (e.status == 401) await _clearToken();
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 

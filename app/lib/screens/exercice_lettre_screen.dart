@@ -971,8 +971,9 @@ class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
   void _onPanStart(DragStartDetails d) {
     if (_activeStep == null ||
         widget.stepStatus == _StepStatus.success ||
-        widget.stepStatus == _StepStatus.retry)
+        widget.stepStatus == _StepStatus.retry) {
       return;
+    }
     setState(() {
       widget.onStatusChange(_StepStatus.drawing);
       _userPoints.clear();

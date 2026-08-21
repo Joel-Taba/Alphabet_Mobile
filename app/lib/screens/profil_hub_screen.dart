@@ -236,7 +236,7 @@ class _LockScreenState extends State<_LockScreen> {
   }
 }
 
-enum _PasswordFeedback { mismatch, tooShort, success }
+enum _PasswordFeedback { wrongOld, mismatch, tooShort, success }
 
 class _UnlockedProfile extends StatefulWidget {
   final VoidCallback onLock;
@@ -256,6 +256,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   VoiceGender _voiceGender = VoiceGender.femme;
   String? _photoBase64;
 
+  final _oldPasswordCtrl = TextEditingController();
   final _newPasswordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
   bool _showNewPassword = false;
@@ -276,10 +277,19 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   void initState() {
     super.initState();
     _loadSettings();
+    // Rattrapage de toute progression pas encore synchronisée, PUIS lecture
+    // des statistiques serveur (sinon la lecture pourrait arriver avant que
+    // le rattrapage n'ait mis le serveur à jour) — best-effort dans les deux
+    // cas, voir `ProgressProvider.syncPendingProgression`/`refreshFromBackend`.
+    final progress = context.read<ProgressProvider>();
+    unawaited(
+      progress.syncPendingProgression().then((_) => progress.refreshFromBackend()),
+    );
   }
 
   @override
   void dispose() {
+    _oldPasswordCtrl.dispose();
     _newPasswordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
     super.dispose();
@@ -365,6 +375,12 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   }
 
   Future<void> _handleSavePassword() async {
+    final backend = context.read<BackendSyncService>();
+    final ancien = await getStoredPassword();
+    if (_oldPasswordCtrl.text != ancien) {
+      setState(() => _passwordFeedback = _PasswordFeedback.wrongOld);
+      return;
+    }
     if (_newPasswordCtrl.text.length < 4) {
       setState(() => _passwordFeedback = _PasswordFeedback.tooShort);
       return;
@@ -373,9 +389,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       setState(() => _passwordFeedback = _PasswordFeedback.mismatch);
       return;
     }
-    final backend = context.read<BackendSyncService>();
     final nouveau = _newPasswordCtrl.text;
-    final ancien = await getStoredPassword();
     // S'assure d'un jeton valide AVANT d'écraser l'ancien mot de passe local
     // (ensureLinked() se connecte avec le mot de passe encore en storage) —
     // sinon toute tentative de reconnexion ultérieure utiliserait le nouveau
@@ -386,6 +400,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     if (ancien != null) {
       unawaited(backend.pushMotDePasse(ancien: ancien, nouveau: nouveau));
     }
+    _oldPasswordCtrl.clear();
     _newPasswordCtrl.clear();
     _confirmPasswordCtrl.clear();
     setState(() => _passwordFeedback = _PasswordFeedback.success);
@@ -1116,6 +1131,14 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _PasswordField(
+                    controller: _oldPasswordCtrl,
+                    obscure: true,
+                    placeholder:
+                        hub['oldPasswordPlaceholder'] ?? 'Ancien mot de passe',
+                    onChanged: () => setState(() => _passwordFeedback = null),
+                  ),
+                  const SizedBox(height: 10),
+                  _PasswordField(
                     controller: _newPasswordCtrl,
                     obscure: !_showNewPassword,
                     placeholder:
@@ -1133,6 +1156,18 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         'Confirmer le mot de passe',
                     onChanged: () => setState(() => _passwordFeedback = null),
                   ),
+                  if (_passwordFeedback == _PasswordFeedback.wrongOld) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      hub['passwordWrongOld'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        color: AmaniColors.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                   if (_passwordFeedback == _PasswordFeedback.mismatch) ...[
                     const SizedBox(height: 8),
                     Text(
@@ -1174,7 +1209,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed:
-                          (_newPasswordCtrl.text.isNotEmpty &&
+                          (_oldPasswordCtrl.text.isNotEmpty &&
+                              _newPasswordCtrl.text.isNotEmpty &&
                               _confirmPasswordCtrl.text.isNotEmpty)
                           ? _handleSavePassword
                           : null,

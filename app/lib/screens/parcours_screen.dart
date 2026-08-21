@@ -734,12 +734,15 @@ class _StepNodeState extends State<_StepNode>
 
   String get _stepLabel {
     final parcours = widget.t['parcours'] as Map<String, dynamic>? ?? {};
-    if (widget.step.kind == StepKind.crossword)
+    if (widget.step.kind == StepKind.crossword) {
       return parcours['crosswordStep'] ?? '';
-    if (widget.step.kind == StepKind.wordsearch)
+    }
+    if (widget.step.kind == StepKind.wordsearch) {
       return parcours['wordSearchStep'] ?? '';
-    if (widget.step.iconType == 'branche')
+    }
+    if (widget.step.iconType == 'branche') {
       return parcours['exerciceStep'] ?? '';
+    }
     return parcours['coursStep'] ?? '';
   }
 

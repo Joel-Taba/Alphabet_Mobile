@@ -315,56 +315,71 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                   height: gridHeight < viewportHeight
                       ? gridHeight
                       : viewportHeight,
-                  padding: const EdgeInsets.all(4),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: AmaniColors.textPrimary.withValues(alpha: 0.08),
-                    ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFFFBF6EC), Color(0xFFF0E4CC)],
+                      color: AmaniColors.textPrimary.withValues(
+                        alpha: 0x35 / 0xFF,
+                      ),
+                      width: 2,
                     ),
                   ),
-                  child: InteractiveViewer(
-                    constrained: false,
-                    boundaryMargin: const EdgeInsets.all(40),
-                    minScale: 0.4,
-                    maxScale: 2.5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: SizedBox(
-                        width: gridWidth,
-                        height: gridHeight,
-                        child: Column(
-                          children: [
-                            for (
-                              var row = 0;
-                              row < widget.crossword.rows;
-                              row++
-                            )
-                              Row(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/images/background-MC.jpeg',
+                        fit: BoxFit.cover,
+                      ),
+                      Container(
+                        color: const Color(0xFFFBF6EC).withValues(
+                          alpha: 0.93,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: InteractiveViewer(
+                          constrained: false,
+                          boundaryMargin: const EdgeInsets.all(40),
+                          minScale: 0.4,
+                          maxScale: 2.5,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: gridWidth,
+                              height: gridHeight,
+                              child: Column(
                                 children: [
                                   for (
-                                    var col = 0;
-                                    col < widget.crossword.cols;
-                                    col++
+                                    var row = 0;
+                                    row < widget.crossword.rows;
+                                    row++
                                   )
-                                    _buildCell(
-                                      row,
-                                      col,
-                                      cellSize,
-                                      activeCell,
-                                      solvedWordCellKeys,
-                                      style,
+                                    Row(
+                                      children: [
+                                        for (
+                                          var col = 0;
+                                          col < widget.crossword.cols;
+                                          col++
+                                        )
+                                          _buildCell(
+                                            row,
+                                            col,
+                                            cellSize,
+                                            activeCell,
+                                            solvedWordCellKeys,
+                                            style,
+                                          ),
+                                      ],
                                     ),
                                 ],
                               ),
-                          ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 );
               },
@@ -493,7 +508,23 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
     String style,
   ) {
     final cell = _cellByPos['$row,$col'];
-    if (cell == null) return SizedBox(width: cellSize, height: cellSize);
+    if (cell == null) {
+      return Padding(
+        padding: const EdgeInsets.all(1),
+        child: Container(
+          width: cellSize,
+          height: cellSize,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+              width: 2,
+            ),
+            color: AmaniColors.textPrimary.withValues(alpha: 0x14 / 0xFF),
+          ),
+        ),
+      );
+    }
     final letter = getLetterFormation(cell.char, style);
     if (letter == null) return SizedBox(width: cellSize, height: cellSize);
     final key = '$row,$col';
@@ -563,6 +594,8 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
             size: cellSize,
             isActive: isActive,
             onSolved: () => _handleCellSolved(key),
+            transparent: true,
+            bold: true,
           ),
         ],
       ),

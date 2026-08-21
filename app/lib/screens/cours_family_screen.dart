@@ -76,6 +76,23 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
     _playAnimation();
   }
 
+  @override
+  void didUpdateWidget(CoursFamilyScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // go_router réutilise le même State en changeant seulement `widget.family`
+    // (bouton "Suivant"/"Retour") : sans ça, le signe de la famille
+    // précédente reste affiché dans l'espace d'écriture après la navigation.
+    if (oldWidget.family != widget.family) {
+      _entries = EXERCISE_CATALOG
+          .where((e) => e['family'] == widget.family)
+          .toList();
+      setState(() {
+        _selectedSign = _entries.isNotEmpty ? _entries.first : null;
+      });
+      _playAnimation();
+    }
+  }
+
   void _playAnimation() {
     if (_selectedSign == null) return;
     _controller

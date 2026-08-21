@@ -42,7 +42,7 @@ const Map<AmaniPose, String> _poseAssets = {
   AmaniPose.reflexion: 'assets/images/amani-reflexion.png',
   AmaniPose.veille: 'assets/images/amani-veille.png',
   AmaniPose.miniReussite: 'assets/images/amani-mini-reussite.png',
-  AmaniPose.miniReessai: 'assets/images/amani-mini-reessai.png',
+  AmaniPose.miniReessai: 'assets/images/amani-reessai.png',
   AmaniPose.invitation: 'assets/images/amani-invitation.png',
   AmaniPose.curiosite: 'assets/images/amani-curiosite.png',
   AmaniPose.emerveillement: 'assets/images/amani-emerveillement.png',

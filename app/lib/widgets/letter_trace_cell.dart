@@ -21,6 +21,11 @@ class LetterTraceCell extends StatefulWidget {
   /// réglé (CahierFrame/lignes Seyès) et laisser les lignes traverser la
   /// case, comme les cases de RepetitionRow au Palier 2.
   final bool transparent;
+
+  /// Cadre et signes-guides plus marqués : utilisé pour la grille de mots
+  /// croisés, posée sur une image de fond, où le contraste par défaut est
+  /// trop faible pour bien distinguer chaque case.
+  final bool bold;
   final VoidCallback? onSolved;
 
   const LetterTraceCell({
@@ -30,6 +35,7 @@ class LetterTraceCell extends StatefulWidget {
     required this.isActive,
     this.given = false,
     this.transparent = false,
+    this.bold = false,
     this.onSolved,
   });
 
@@ -78,8 +84,9 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
         !widget.isActive ||
         _activeStep == null ||
         _solved ||
-        _status == _CellStatus.retry)
+        _status == _CellStatus.retry) {
       return;
+    }
     setState(() {
       _status = _CellStatus.drawing;
       _userPoints.clear();
@@ -135,12 +142,12 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
   @override
   Widget build(BuildContext context) {
     final borderColor = widget.given
-        ? AmaniColors.primary.withValues(alpha: 0.4)
+        ? AmaniColors.primary.withValues(alpha: widget.bold ? 0.7 : 0.4)
         : _solved
         ? AmaniColors.secondary
         : widget.isActive
         ? AmaniColors.primary.withValues(alpha: 0.5)
-        : AmaniColors.textPrimary.withValues(alpha: 0.12);
+        : AmaniColors.textPrimary.withValues(alpha: widget.bold ? 0.45 : 0.12);
     final bg = widget.transparent
         ? Colors.transparent
         : widget.given
@@ -153,7 +160,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor, width: 2),
+        border: Border.all(color: borderColor, width: widget.bold ? 3 : 2),
         color: bg,
       ),
       child: widget.given
@@ -181,6 +188,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
                     userPoints: _userPoints,
                     cellSize: widget.size,
                     isActive: widget.isActive,
+                    bold: widget.bold,
                   ),
                 ),
                 GestureDetector(
@@ -208,6 +216,7 @@ class _CellPainter extends CustomPainter {
   final List<Offset> userPoints;
   final double cellSize;
   final bool isActive;
+  final bool bold;
 
   _CellPainter({
     required this.steps,
@@ -218,6 +227,7 @@ class _CellPainter extends CustomPainter {
     required this.userPoints,
     required this.cellSize,
     required this.isActive,
+    this.bold = false,
   });
 
   @override
@@ -265,13 +275,13 @@ class _CellPainter extends CustomPainter {
       final color = isCurrentStep
           ? (status == _CellStatus.retry
                 ? AmaniColors.error
-                : const Color(0xFF9BB5CC))
-          : const Color(0xFFB8CCE0);
+                : (bold ? const Color(0xFF7A99B8) : const Color(0xFF9BB5CC)))
+          : (bold ? const Color(0xFF96AFC7) : const Color(0xFFB8CCE0));
       _drawPolyline(
         canvas,
         pts,
         scale,
-        color.withValues(alpha: isCurrentStep ? 0.85 : 0.3),
+        color.withValues(alpha: isCurrentStep ? 0.85 : (bold ? 0.55 : 0.3)),
         isCurrentStep ? 10 : 7,
       );
     }
