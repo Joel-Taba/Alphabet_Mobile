@@ -18,6 +18,8 @@ enum AmaniPose {
   podium,
   dessin,
   perdu,
+  motsCroises,
+  motsMeles,
 }
 
 /// Tailles prédéfinies de la mascotte.
@@ -50,6 +52,8 @@ const Map<AmaniPose, String> _poseAssets = {
   AmaniPose.podium: 'assets/images/amani-podium.png',
   AmaniPose.dessin: 'assets/images/amani-dessin.png',
   AmaniPose.perdu: 'assets/images/amani-perdu.png',
+  AmaniPose.motsCroises: 'assets/images/amani-mots-croises.png',
+  AmaniPose.motsMeles: 'assets/images/amani-mots-meles.png',
 };
 
 /// Labels d'accessibilité par pose.
@@ -70,6 +74,8 @@ const Map<AmaniPose, String> _poseLabels = {
   AmaniPose.podium: 'Amani te félicite sur le podium',
   AmaniPose.dessin: 'Amani dessine',
   AmaniPose.perdu: 'Amani est perdu',
+  AmaniPose.motsCroises: 'Grille de mots croisés',
+  AmaniPose.motsMeles: 'Grille de mots mêlés',
 };
 
 /// Widget de la mascotte Amani.

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -10,12 +9,13 @@ import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
-import '../widgets/letter_trace_cell.dart';
+import '../widgets/word_trace_attempt.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Exercice d'écriture des syllabes : trace la consonne puis la voyelle pour
 /// former chaque syllabe. Port fidèle de
@@ -42,10 +42,18 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
   CountdownController? _countdown;
   bool _evaluationExpired = false;
 
+  late final ExerciseSettings _settings;
+
   @override
   void initState() {
     super.initState();
+    _settings = ExerciseSettings()..addListener(_onSettingsChanged);
+    _settings.load();
     if (_isEvaluation) _initEvaluation();
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _initEvaluation() async {
@@ -67,6 +75,8 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
   @override
   void dispose() {
     _countdown?.dispose();
+    _settings.removeListener(_onSettingsChanged);
+    _settings.dispose();
     super.dispose();
   }
 
@@ -189,7 +199,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(CupertinoIcons.arrow_left,
+                          child: DirectionalIcon(LucideIcons.arrowLeft,
                             size: 20,
                           ),
                         ),
@@ -294,6 +304,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                               onSyllableDone(syllable['syllable'] as String),
                           doneLabel: el['done'] ?? 'Terminé !',
                           exampleWordPrefix: es['exampleWordPrefix'] ?? '',
+                          repetitions: _settings.repetitions,
                         ),
                         const SizedBox(height: 12),
                       ],
@@ -334,7 +345,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                DirectionalIcon(CupertinoIcons.chevron_right,
+                                DirectionalIcon(LucideIcons.chevronRight,
                                   color: Colors.white,
                                   size: 18,
                                 ),
@@ -380,6 +391,7 @@ class _SyllableTraceRow extends StatefulWidget {
   final VoidCallback onDone;
   final String doneLabel;
   final String exampleWordPrefix;
+  final int repetitions;
 
   const _SyllableTraceRow({
     super.key,
@@ -389,6 +401,7 @@ class _SyllableTraceRow extends StatefulWidget {
     required this.onDone,
     required this.doneLabel,
     required this.exampleWordPrefix,
+    required this.repetitions,
   });
 
   @override
@@ -396,7 +409,28 @@ class _SyllableTraceRow extends StatefulWidget {
 }
 
 class _SyllableTraceRowState extends State<_SyllableTraceRow> {
-  final Set<int> _solvedIdx = {};
+  late List<Set<int>> _solvedByRep;
+  int _activeRep = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetReps();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SyllableTraceRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.repetitions != widget.repetitions ||
+        oldWidget.entry['syllable'] != widget.entry['syllable']) {
+      setState(_resetReps);
+    }
+  }
+
+  void _resetReps() {
+    _solvedByRep = List.generate(widget.repetitions, (_) => <int>{});
+    _activeRep = 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -407,13 +441,6 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
         .toList();
-    var activeIdx = -1;
-    for (var i = 0; i < letters.length; i++) {
-      if (!_solvedIdx.contains(i)) {
-        activeIdx = i;
-        break;
-      }
-    }
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -500,7 +527,7 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      CupertinoIcons.speaker_2_fill,
+                      LucideIcons.volume2,
                       size: 14,
                       color: Color(0xFF2D6BBF),
                     ),
@@ -509,64 +536,34 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
               ],
             ),
           ),
-          Container(
-            constraints: const BoxConstraints(minHeight: 72 + 24),
-            color: Colors.white,
-            child: CustomPaint(
-              painter: _SyllableSeyesLinesPainter(),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < letters.length; i++) ...[
-                      LetterTraceCell(
-                        letter: letters[i],
-                        size: 72,
-                        isActive: i == activeIdx,
-                        transparent: true,
-                        onSolved: () {
-                          setState(() => _solvedIdx.add(i));
-                          if (_solvedIdx.length == letters.length) {
-                            widget.onDone();
-                          }
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ],
-                ),
+          for (var rep = 0; rep < widget.repetitions; rep++) ...[
+            if (rep > 0)
+              Divider(
+                height: 1,
+                color: AmaniColors.textPrimary.withValues(alpha: 0.08),
               ),
+            WordTraceAttempt(
+              letters: letters,
+              cellSize: 72,
+              solved: _solvedByRep[rep],
+              isActive: rep == _activeRep,
+              isFuture: rep > _activeRep,
+              onLetterSolved: (i) {
+                setState(() {
+                  _solvedByRep[rep].add(i);
+                  if (_solvedByRep[rep].length == letters.length) {
+                    if (rep + 1 < widget.repetitions) {
+                      _activeRep = rep + 1;
+                    } else {
+                      widget.onDone();
+                    }
+                  }
+                });
+              },
             ),
-          ),
+          ],
         ],
       ),
     );
   }
-}
-
-/// Lignes Seyès de référence — mêmes 4 lignes équidistantes (intervalle 60
-/// dans l'espace lettre 0-200) que CahierFrame.dart, converties en pixels ici
-/// via l'échelle des cases carrées de LetterTraceCell (size=72, sc=0.36, pas
-/// de décalage de centrage) plus le padding (12px) de la rangée :
-/// pixelY = 12 + yLettre * 0.36.
-class _SyllableSeyesLinesPainter extends CustomPainter {
-  static const List<double> _positions = [10, 70, 130, 190];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < _positions.length; i++) {
-      final y = 12 + _positions[i] * 0.36;
-      final isBaseline = i == 2;
-      final paint = Paint()
-        ..color =
-            (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
-                .withValues(alpha: 0.8)
-        ..strokeWidth = isBaseline ? 1.5 : 1;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SyllableSeyesLinesPainter oldDelegate) =>
-      false;
 }

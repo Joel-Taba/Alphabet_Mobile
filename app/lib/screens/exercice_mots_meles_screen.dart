@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -8,6 +7,7 @@ import '../data/word_catalog.dart';
 import '../utils/word_search_generator.dart';
 import '../widgets/word_search_play.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Exercice de mots mêlés à difficulté progressive (`lvl2` → 2 mots,
 /// `lvl10` → 10 mots), en alternance avec les mots croisés dans le Palier 4.
@@ -106,7 +106,7 @@ class ExerciceMotsMelesScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),

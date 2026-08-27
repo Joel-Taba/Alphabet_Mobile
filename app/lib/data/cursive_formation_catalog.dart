@@ -1,3 +1,7 @@
+// Nommage SCREAMING_SNAKE_CASE volontaire (miroir 1:1 du module TypeScript
+// source) — voir `calcul_catalog.dart` pour l'explication complète.
+// ignore_for_file: constant_identifier_names, non_constant_identifier_names
+
 import 'dart:convert';
 
 /// CATALOGUE CURSIF — extrait/résolu depuis Web (src/data/cursive-formation-catalog.ts), tracés déjà calculés (plus de système de tampons procédural ici).
@@ -808,89 +812,6 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
     }
   },
   {
-    "char": "Ñ",
-    "name": {
-      "fr": "Ñ cursif",
-      "en": "cursive Ñ",
-      "es": "Ñ cursiva",
-      "ar": "Ñ بخط متصل"
-    },
-    "category": "majuscule",
-    "zone": "hampe",
-    "steps": [
-      {
-        "family": "crochet",
-        "variant": "cursive-crochet",
-        "pathD": "M 66.43 118.87 L 66.88 119.84 L 67.44 120.76 L 68.09 121.61 L 68.83 122.39 L 69.66 123.08 L 70.55 123.67 L 71.50 124.16 L 72.51 124.54 L 73.54 124.81 L 74.61 124.96 L 75.68 125.00 L 76.75 124.92 L 77.80 124.72 L 78.83 124.40 L 79.81 123.97 L 80.74 123.44 L 81.61 122.81 L 82.40 122.08 L 83.10 121.27 L 83.72 120.39 L 84.23 119.45 L 84.63 118.46 L 84.93 117.43 L 85.10 116.37 L 85.16 115.30 L 85.16 62.26",
-        "startXY": [
-          66.43,
-          118.87
-        ],
-        "strokeColor": "#4A90E2",
-        "description": {
-          "fr": "Trace le crochet n°1",
-          "en": "Trace the hook #1",
-          "es": "Traza el gancho n.º1",
-          "ar": "ارسم خطاف رقم 1"
-        }
-      },
-      {
-        "family": "trait",
-        "variant": "cursive-trait",
-        "pathD": "M 85.54 62.66 L 115.11 123.29",
-        "startXY": [
-          85.54,
-          62.66
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Trace le trait n°2",
-          "en": "Trace the line #2",
-          "es": "Traza el trazo n.º2",
-          "ar": "ارسم خط رقم 2"
-        }
-      },
-      {
-        "family": "crochet",
-        "variant": "cursive-crochet",
-        "pathD": "M 114.84 122.52 L 114.84 69.48 L 114.90 68.41 L 115.07 67.35 L 115.37 66.32 L 115.77 65.32 L 116.28 64.38 L 116.90 63.50 L 117.60 62.69 L 118.39 61.97 L 119.26 61.34 L 120.19 60.80 L 121.17 60.38 L 122.20 60.06 L 123.25 59.86 L 124.32 59.77 L 125.39 59.81 L 126.46 59.96 L 127.49 60.23 L 128.50 60.61 L 129.45 61.11 L 130.34 61.70 L 131.17 62.39 L 131.91 63.16 L 132.56 64.01 L 133.12 64.93 L 133.57 65.90",
-        "startXY": [
-          114.84,
-          122.52
-        ],
-        "strokeColor": "#4A90E2",
-        "description": {
-          "fr": "Trace le crochet n°3",
-          "en": "Trace the hook #3",
-          "es": "Traza el gancho n.º3",
-          "ar": "ارسم خطاف رقم 3"
-        }
-      },
-      {
-        "family": "crochet",
-        "variant": "hd-bg",
-        "pathD": "M 105.29 26.90 L 105.15 25.57 L 104.71 24.32 L 104.00 23.19 L 103.05 22.25 L 101.93 21.54 L 100.67 21.10 L 99.35 20.95 L 83.79 20.95 L 82.47 20.80 L 81.21 20.36 L 80.08 19.65 L 79.14 18.71 L 78.43 17.58 L 77.99 16.32 L 77.84 15.00",
-        "startXY": [
-          105.29,
-          26.9
-        ],
-        "strokeColor": "#4A90E2",
-        "description": {
-          "fr": "Trace le boucle de liaison n°4",
-          "en": "Trace the connecting loop #4",
-          "es": "Traza el bucle de enlace n.º4",
-          "ar": "ارسم حلقة وصل رقم 4"
-        }
-      }
-    ],
-    "consigne": {
-      "fr": "En cursive, la lettre \"Ñ\" s'écrit d'un geste lié : crochet, trait, crochet puis boucle de liaison.",
-      "en": "In cursive, the letter \"Ñ\" is written in one connected gesture: hook, line, hook then connecting loop.",
-      "es": "En cursiva, la letra \"Ñ\" se escribe en un solo gesto: gancho, trazo, gancho y luego bucle de enlace.",
-      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"Ñ\" بحركة واحدة متصلة: خطاف، خط، خطاف ثم حلقة وصل."
-    }
-  },
-  {
     "char": "T",
     "name": {
       "fr": "T cursif",
@@ -1627,73 +1548,6 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''
       "en": "In cursive, the letter \"n\" is written in one connected gesture: curve, curve.",
       "es": "En cursiva, la letra \"n\" se escribe en un solo gesto: curva, curva.",
       "ar": "بخط الرقعة المتصل، يُكتب الحرف \"n\" بحركة واحدة متصلة: منحنى، منحنى."
-    }
-  },
-  {
-    "char": "ñ",
-    "name": {
-      "fr": "ñ cursif",
-      "en": "cursive ñ",
-      "es": "ñ cursiva",
-      "ar": "ñ بخط متصل"
-    },
-    "category": "consonne",
-    "zone": "corps",
-    "steps": [
-      {
-        "family": "courbe",
-        "variant": "cursive-courbe",
-        "pathD": "M 73.53 84.51 C 73.53 79.24 77.77 75 83.03 75 C 88.27 75 92.53 79.24 92.53 84.51 L 92.53 124.75",
-        "startXY": [
-          73.53,
-          84.51
-        ],
-        "strokeColor": "#E05252",
-        "description": {
-          "fr": "Trace le courbe n°1",
-          "en": "Trace the curve #1",
-          "es": "Traza la curva n.º1",
-          "ar": "ارسم منحنى رقم 1"
-        }
-      },
-      {
-        "family": "courbe",
-        "variant": "cursive-courbe",
-        "pathD": "M 92.53 84.51 C 92.53 79.24 96.77 75 102.03 75 C 107.28 75 111.53 79.24 111.53 84.51 L 111.53 119.72 C 111.53 123.07 113.21 124.75 115.46 124.92 C 117.13 125.31 119.93 124.18 120.47 122.52",
-        "startXY": [
-          92.53,
-          84.51
-        ],
-        "strokeColor": "#E05252",
-        "description": {
-          "fr": "Trace le courbe n°2",
-          "en": "Trace the curve #2",
-          "es": "Traza la curva n.º2",
-          "ar": "ارسم منحنى رقم 2"
-        }
-      },
-      {
-        "family": "crochet",
-        "variant": "cursive-double-crochet",
-        "pathD": "M 98.4 83.68 A 2.54 2.54 0 0 0 95.86 81.16 L 92.53 81.16 L 89.2 81.16 A 2.54 2.54 0 0 1 86.66 78.6",
-        "startXY": [
-          98.4,
-          83.68
-        ],
-        "strokeColor": "#4A90E2",
-        "description": {
-          "fr": "Trace le boucle de liaison n°3",
-          "en": "Trace the connecting loop #3",
-          "es": "Traza el bucle de enlace n.º3",
-          "ar": "ارسم حلقة وصل رقم 3"
-        }
-      }
-    ],
-    "consigne": {
-      "fr": "En cursive, la lettre \"ñ\" s'écrit d'un geste lié : courbe, courbe, boucle de liaison.",
-      "en": "In cursive, the letter \"ñ\" is written in one connected gesture: curve, curve, connecting loop.",
-      "es": "En cursiva, la letra \"ñ\" se escribe en un solo gesto: curva, curva, bucle de enlace.",
-      "ar": "بخط الرقعة المتصل، يُكتب الحرف \"ñ\" بحركة واحدة متصلة: منحنى، منحنى، حلقة وصل."
     }
   },
   {

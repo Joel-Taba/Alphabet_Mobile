@@ -9,8 +9,17 @@ import 'package:flutter/material.dart';
 String _activeFontFamily = 'Comic Neue';
 FontWeight _activeFontWeight = FontWeight.w300;
 
-String get kBalooFontFamily => _activeFontFamily;
-FontWeight get kActiveFontWeight => _activeFontWeight;
+/// Réglage d'accessibilité (Profil > Réglages) : quand actif, remplace la
+/// police générale de l'interface par OpenDyslexic, quel que soit le format
+/// d'écriture choisi — n'affecte jamais le tracé des lettres (chemins SVG,
+/// pas une police) ni la police cursive/script utilisée pour la
+/// *démonstration* d'un signe, seulement le texte d'interface courant.
+bool _dyslexiaFontOverride = false;
+
+String get kBalooFontFamily =>
+    _dyslexiaFontOverride ? 'OpenDyslexic' : _activeFontFamily;
+FontWeight get kActiveFontWeight =>
+    _dyslexiaFontOverride ? FontWeight.w400 : _activeFontWeight;
 
 void setActiveFont(dynamic style) {
   final name = style is Enum ? style.name : style.toString();
@@ -24,6 +33,10 @@ void setActiveFont(dynamic style) {
       _activeFontFamily = 'Comic Neue';
       _activeFontWeight = FontWeight.w300;
   }
+}
+
+void setDyslexiaFontOverride(bool enabled) {
+  _dyslexiaFontOverride = enabled;
 }
 
 /// Palette de couleurs Amani — exacte copie de la charte graphique React
@@ -73,6 +86,9 @@ class AmaniColors {
   static const gold = Color(0xFFF3D07A);
   static const silver = Color(0xFFD8CFC0);
   static const bronze = Color(0xFFE0A98C);
+  // Couleur "diamant" du 2e du podium — nettement plus vive et froide que
+  // le gris/beige de `silver`, pour bien se démarquer sur le fond crème.
+  static const diamond = Color(0xFF5FD4E8);
 }
 
 /// Ombres standardisées

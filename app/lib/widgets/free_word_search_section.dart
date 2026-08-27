@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
@@ -8,6 +7,7 @@ import '../data/word_bank_full.dart';
 import '../utils/word_search_generator.dart';
 import 'amani_mascot.dart';
 import 'word_search_play.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Section "Mots mêlés" du Mode Libre : une grille aléatoire à volonté,
 /// piochée dans la banque complète de mots. Port fidèle de
@@ -59,7 +59,7 @@ class _FreeWordSearchSectionState extends State<FreeWordSearchSection> {
           child: Row(
             children: [
               const AmaniMascot(
-                pose: AmaniPose.curiosite,
+                pose: AmaniPose.motsMeles,
                 size: AmaniSize.small,
               ),
               const SizedBox(width: 14),
@@ -106,7 +106,7 @@ class _FreeWordSearchSectionState extends State<FreeWordSearchSection> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  CupertinoIcons.shuffle,
+                  LucideIcons.shuffle,
                   color: Colors.white,
                   size: 18,
                 ),

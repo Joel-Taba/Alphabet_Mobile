@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../i18n/translations.dart';
 import '../theme/amani_theme.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class _NavItem {
   final String path;
@@ -13,11 +14,10 @@ class _NavItem {
 }
 
 const List<_NavItem> _items = [
-  _NavItem('/accueil', 'accueil', Icons.eco_rounded, isCenter: true),
-  _NavItem('/bibliotheque', 'bibliotheque', Icons.palette_rounded),
-  _NavItem('/communaute', 'communaute', Icons.groups_rounded),
-  _NavItem('/mon-profil', 'profil', Icons.person_rounded),
-  _NavItem('/plus', 'reglages', Icons.more_vert_rounded),
+  _NavItem('/accueil', 'accueil', LucideIcons.leaf, isCenter: true),
+  _NavItem('/bibliotheque', 'bibliotheque', LucideIcons.palette),
+  _NavItem('/communaute', 'communaute', LucideIcons.users),
+  _NavItem('/mon-profil', 'profil', LucideIcons.user),
 ];
 
 /// Barre de navigation flottante en pilule, avec un bouton circulaire
@@ -126,7 +126,8 @@ class AmaniBottomNav extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              nav[_items[currentIndex].key] ?? '',
+                              (nav[_items[currentIndex].key] ?? '')
+                                  .toUpperCase(),
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w800,
@@ -145,6 +146,107 @@ class AmaniBottomNav extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Rail de navigation verticale utilisé à la place de [AmaniBottomNav] sur
+/// grand écran (tablette) — même liste d'onglets et mêmes libellés, mais
+/// disposés le long du bord gauche pour ne pas gâcher la largeur disponible
+/// avec une barre pensée pour un pouce de téléphone.
+class AmaniSideNav extends StatelessWidget {
+  final int currentIndex;
+
+  const AmaniSideNav({super.key, required this.currentIndex});
+
+  void _onTap(BuildContext context, int index) {
+    if (index == currentIndex) return;
+    context.go(_items[index].path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<LanguageProvider>().t;
+    final nav = t['nav'] as Map<String, dynamic>? ?? {};
+
+    return Container(
+      width: 96,
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      decoration: BoxDecoration(
+        color: AmaniColors.surface,
+        border: Border(
+          right: BorderSide(
+            color: AmaniColors.textPrimary.withValues(alpha: 0.08),
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < _items.length; i++) ...[
+            _SideNavIcon(
+              icon: _items[i].icon,
+              label: nav[_items[i].key] ?? '',
+              active: i == currentIndex,
+              onTap: () => _onTap(context, i),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SideNavIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _SideNavIcon({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: active ? AmaniColors.secondary : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                icon,
+                color: active ? AmaniColors.surface : AmaniColors.disabled,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+                color: active ? AmaniColors.primary : AmaniColors.disabled,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'backend_sync_service.dart';
+import 'family_service.dart';
 
 /// Système de points local — port fidèle de `src/lib/progress.ts`. Les noms
 /// et la forme des données (typeEtape, modalite, palier, etapeCode) sont
@@ -146,7 +147,7 @@ class ProgressProvider extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_progressStorageKey);
+    final raw = prefs.getString(scopeKey(_progressStorageKey));
     if (raw != null) {
       try {
         final parsed = jsonDecode(raw) as List<dynamic>;
@@ -156,8 +157,14 @@ class ProgressProvider extends ChangeNotifier {
       } catch (_) {
         _log = [];
       }
+    } else {
+      _log = [];
     }
-    _bonusTotal = prefs.getInt(_bonusStorageKey) ?? 0;
+    _bonusTotal = prefs.getInt(scopeKey(_bonusStorageKey)) ?? 0;
+    _backendSignesMaitrises = null;
+    _backendCoursTermines = null;
+    _backendExercicesReussis = null;
+    _backendJoursAventure = null;
     _loaded = true;
     notifyListeners();
     // Rattrapage au lancement de l'app : toute progression réussie hors-ligne
@@ -166,10 +173,17 @@ class ProgressProvider extends ChangeNotifier {
     unawaited(syncPendingProgression());
   }
 
+  /// À appeler après [FamilyService.switchTo] : recharge entièrement l'état
+  /// (journal, bonus, statistiques serveur mises en cache) depuis les clés
+  /// namespacées du nouvel enfant actif — sans ça, l'écran afficherait
+  /// encore la progression de l'enfant précédent jusqu'au prochain
+  /// redémarrage de l'app.
+  Future<void> rechargerPourEnfantActif() => _load();
+
   Future<void> _writeLog() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      _progressStorageKey,
+      scopeKey(_progressStorageKey),
       jsonEncode(_log.map((e) => e.toJson()).toList()),
     );
     notifyListeners();
@@ -177,7 +191,7 @@ class ProgressProvider extends ChangeNotifier {
 
   Future<void> _writeBonus() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_bonusStorageKey, _bonusTotal);
+    await prefs.setInt(scopeKey(_bonusStorageKey), _bonusTotal);
     notifyListeners();
   }
 
@@ -288,7 +302,7 @@ class ProgressProvider extends ChangeNotifier {
   }
 
   String _viewedKey(String typeEtape, String groupCode) =>
-      '$_viewedStoragePrefix${typeEtape}_$groupCode';
+      scopeKey('$_viewedStoragePrefix${typeEtape}_$groupCode');
 
   Future<Set<String>> _readViewed(String typeEtape, String groupCode) async {
     final prefs = await SharedPreferences.getInstance();
@@ -387,5 +401,50 @@ class ProgressProvider extends ChangeNotifier {
       exercicesReussis: _backendExercicesReussis ?? exercicesReussis,
       joursAventure: _backendJoursAventure ?? joursAventure,
     );
+  }
+
+  Set<DateTime> get _joursActifsUtc => _log
+      .map((e) => DateTime.parse(e.dateReussite).toUtc())
+      .map((d) => DateTime.utc(d.year, d.month, d.day))
+      .toSet();
+
+  /// Nombre de jours consécutifs (UTC) avec au moins une étape réussie,
+  /// en comptant à rebours depuis aujourd'hui. Si aucune étape n'a encore
+  /// été réussie aujourd'hui, la série reste comptée tant qu'hier en avait
+  /// une (délai de grâce d'un jour) — sans quoi elle retomberait à zéro
+  /// dès minuit, avant même que l'enfant n'ait eu la chance de jouer.
+  int get currentStreak {
+    if (_log.isEmpty) return 0;
+    final joursActifs = _joursActifsUtc;
+    final maintenant = DateTime.now().toUtc();
+    var curseur = DateTime.utc(
+      maintenant.year,
+      maintenant.month,
+      maintenant.day,
+    );
+    if (!joursActifs.contains(curseur)) {
+      curseur = curseur.subtract(const Duration(days: 1));
+      if (!joursActifs.contains(curseur)) return 0;
+    }
+    var streak = 0;
+    while (joursActifs.contains(curseur)) {
+      streak++;
+      curseur = curseur.subtract(const Duration(days: 1));
+    }
+    return streak;
+  }
+
+  /// `true` si une série est en cours mais qu'aucune étape n'a encore été
+  /// réussie aujourd'hui — sert de rappel visuel ("ne casse pas ta série !")
+  /// côté UI, voir `profil_hub_screen.dart`.
+  bool get isStreakAtRiskToday {
+    if (currentStreak == 0) return false;
+    final maintenant = DateTime.now().toUtc();
+    final aujourdHui = DateTime.utc(
+      maintenant.year,
+      maintenant.month,
+      maintenant.day,
+    );
+    return !_joursActifsUtc.contains(aujourdHui);
   }
 }

@@ -4,6 +4,7 @@ import 'package:path_drawing/path_drawing.dart';
 import '../theme/amani_theme.dart';
 import '../utils/trace_validation.dart';
 import 'amani_mascot.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Un tracé unique (signe atomique ou étape de lettre/chiffre) pouvant être
 /// exercé en cahier. Port fidèle de `src/components/amani/RepetitionRow.tsx`.
@@ -191,7 +192,7 @@ class _RepetitionRowState extends State<RepetitionRow> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.lock_rounded,
+                        LucideIcons.lock,
                         size: 15,
                         color: AmaniColors.textSecondary,
                       ),
@@ -207,7 +208,7 @@ class _RepetitionRowState extends State<RepetitionRow> {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.volume_up_rounded,
+                          LucideIcons.volume2,
                           size: 16,
                           color: AmaniColors.textPrimary,
                         ),
@@ -217,59 +218,59 @@ class _RepetitionRowState extends State<RepetitionRow> {
               ),
             ),
 
-            // Zone du cahier, lignes réglées façon Seyès
+            // Zone du cahier, lignes réglées façon Seyès — les répétitions
+            // remplissent chaque ligne horizontalement (autant qu'il en
+            // tient, généralement 3) puis passent à la ligne suivante une
+            // fois la largeur disponible pleine, plutôt que de s'étirer sur
+            // une seule ligne à défilement horizontal.
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: CustomPaint(
-                painter: _SeyesLinesPainter(),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      for (int i = 0; i < _occurrences.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 10),
-                        _OccurrenceCanvas(
-                          entry: widget.entry,
-                          state: _occurrences[i],
-                          isActive:
-                              i == _activeIndex && !_allDone && !widget.locked,
-                          onSuccess: () => _handleSuccess(i),
-                          onRetry: () => _handleRetry(i),
-                          w: _occW,
-                          h: _occH,
-                          tolerancePct: widget.tolerance,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              constraints: const BoxConstraints(maxHeight: 330),
+              child: SingleChildScrollView(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 10.0;
+                    final perRow = ((constraints.maxWidth + spacing) /
+                            (_occW + spacing))
+                        .floor()
+                        .clamp(1, _occurrences.isEmpty ? 1 : _occurrences.length);
+                    final rows = (_occurrences.length / perRow).ceil();
+
+                    return SizedBox(
+                      width: constraints.maxWidth,
+                      child: CustomPaint(
+                        painter: _SeyesLinesPainter(
+                          rows: rows,
+                          rowHeight: _occH,
+                          rowSpacing: spacing,
                         ),
-                      ],
-                      const SizedBox(width: 12),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (int i = 0; i < _occurrences.length; i++)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 3),
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                      _occurrences[i].status ==
-                                          OccurrenceStatus.success
-                                      ? AmaniColors.secondary
-                                      : i == _activeIndex
-                                      ? AmaniColors.primary
-                                      : AmaniColors.textPrimary.withValues(
-                                          alpha: 0.12,
-                                        ),
-                                ),
+                        child: Wrap(
+                          spacing: spacing,
+                          runSpacing: spacing,
+                          children: [
+                            for (int i = 0; i < _occurrences.length; i++)
+                              _OccurrenceCanvas(
+                                entry: widget.entry,
+                                state: _occurrences[i],
+                                isActive:
+                                    i == _activeIndex &&
+                                    !_allDone &&
+                                    !widget.locked,
+                                onSuccess: () => _handleSuccess(i),
+                                onRetry: () => _handleRetry(i),
+                                w: _occW,
+                                h: _occH,
+                                tolerancePct: widget.tolerance,
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -283,26 +284,44 @@ class _RepetitionRowState extends State<RepetitionRow> {
 class _SeyesLinesPainter extends CustomPainter {
   // Mêmes 4 lignes équidistantes (intervalle 60 dans l'espace lettre 0-200)
   // que CahierFrame.dart, converties en pixels ici via l'échelle fixe de
-  // _OccurrenceCanvas (sc=0.5, oy=20) plus le padding vertical (12px) de la
-  // zone d'occurrences : pixelY = 12 + yLettre * 0.5.
+  // _OccurrenceCanvas (sc=0.5, oy=20) : pixelY = yLettre * 0.5, répété pour
+  // chaque ligne de répétitions (le Wrap fait autant de lignes qu'il en
+  // tient horizontalement) afin que le quadrillage couvre toute la largeur
+  // réelle, sur toutes les lignes, plutôt que de rester calé sur une seule.
   static const List<double> _positions = [10, 70, 130, 190];
+
+  final int rows;
+  final double rowHeight;
+  final double rowSpacing;
+
+  _SeyesLinesPainter({
+    required this.rows,
+    required this.rowHeight,
+    required this.rowSpacing,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < _positions.length; i++) {
-      final y = 12 + _positions[i] * 0.5;
-      final isBaseline = i == 2;
-      final paint = Paint()
-        ..color =
-            (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
-                .withValues(alpha: 0.8)
-        ..strokeWidth = isBaseline ? 1.5 : 1;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    for (int r = 0; r < rows; r++) {
+      final rowTop = r * (rowHeight + rowSpacing);
+      for (int i = 0; i < _positions.length; i++) {
+        final y = rowTop + _positions[i] * 0.5;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _SeyesLinesPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SeyesLinesPainter oldDelegate) =>
+      oldDelegate.rows != rows ||
+      oldDelegate.rowHeight != rowHeight ||
+      oldDelegate.rowSpacing != rowSpacing;
 }
 
 class _OccurrenceCanvas extends StatefulWidget {
@@ -337,6 +356,13 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   Timer? _mergeBlinkTimer;
   bool _mergeGreenPhase = true;
 
+  /// La mascotte de réussite ne reste affichée que quelques secondes : au-delà,
+  /// elle cachait le signe que l'enfant venait de tracer avec succès, ce qui
+  /// nuit à l'apprentissage (voir `build`, où la teinte verte de fond reste
+  /// affichée, elle, tant que l'occurrence est réussie).
+  bool _showSuccessMascot = false;
+  static const _successMascotDuration = Duration(milliseconds: 1500);
+
   bool get _startEndMerged {
     final end = widget.entry.endXY;
     if (end == null) return false;
@@ -363,11 +389,24 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   void didUpdateWidget(_OccurrenceCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.state.status != widget.state.status) {
-      setState(() => _localStatus = widget.state.status);
+      final enteringSuccess =
+          widget.state.status == OccurrenceStatus.success &&
+          _localStatus != OccurrenceStatus.success;
+      setState(() {
+        _localStatus = widget.state.status;
+        if (enteringSuccess) _showSuccessMascot = true;
+      });
+      if (enteringSuccess) _scheduleSuccessMascotHide();
     }
     if (oldWidget.entry.pathD != widget.entry.pathD) {
       _refPoints = sampleSvgPath(widget.entry.pathD, 30);
     }
+  }
+
+  void _scheduleSuccessMascotHide() {
+    Future.delayed(_successMascotDuration, () {
+      if (mounted) setState(() => _showSuccessMascot = false);
+    });
   }
 
   @override
@@ -404,11 +443,15 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     final tolerancePx = (widget.tolerancePct / 100) * 200;
     final result = validateTrace(_userPoints, _refPoints, tolerancePx);
     if (result.valid) {
-      setState(() => _localStatus = OccurrenceStatus.success);
+      setState(() {
+        _localStatus = OccurrenceStatus.success;
+        _showSuccessMascot = true;
+      });
+      _scheduleSuccessMascotHide();
       Future.delayed(const Duration(milliseconds: 600), widget.onSuccess);
     } else {
       setState(() => _localStatus = OccurrenceStatus.retry);
-      Future.delayed(const Duration(milliseconds: 1200), () {
+      Future.delayed(const Duration(milliseconds: 2400), () {
         if (!mounted) return;
         setState(() {
           _userPoints.clear();
@@ -464,9 +507,17 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
               child: Container(
                 color: const Color(0x1A8FBF6F),
                 alignment: Alignment.center,
-                child: const AmaniMascot(
-                  pose: AmaniPose.miniReussite,
-                  size: AmaniSize.avatar,
+                // La mascotte n'apparaît que brièvement (voir
+                // `_scheduleSuccessMascotHide`) pour ne pas cacher durablement
+                // le signe que l'enfant vient de tracer — seule la teinte
+                // verte ci-dessus reste comme marqueur de réussite.
+                child: AnimatedOpacity(
+                  opacity: _showSuccessMascot ? 1 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: const AmaniMascot(
+                    pose: AmaniPose.miniReussite,
+                    size: AmaniSize.avatar,
+                  ),
                 ),
               ),
             ),

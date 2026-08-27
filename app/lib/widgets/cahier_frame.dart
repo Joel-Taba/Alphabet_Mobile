@@ -60,7 +60,7 @@ class _RuledLinesPainter extends CustomPainter {
             (isBaseline
                     ? CahierFrame._baselineColor
                     : CahierFrame._ruledLineColor)
-                .withValues(alpha: 0.8)
+                .withValues(alpha: 0.5)
         ..strokeWidth = isBaseline ? 1.5 : 1;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }

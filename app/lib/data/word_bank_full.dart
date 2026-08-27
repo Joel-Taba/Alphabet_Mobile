@@ -1,3 +1,7 @@
+// Nommage SCREAMING_SNAKE_CASE volontaire (miroir 1:1 du module TypeScript
+// source) — voir `calcul_catalog.dart` pour l'explication complète.
+// ignore_for_file: constant_identifier_names, non_constant_identifier_names
+
 /// Banque complète de mots (filtrée depuis mots.tex) pour le générateur de
 /// mots croisés aléatoires du Mode Libre. Port fidèle de
 /// `src/data/word-bank-full.ts`.
@@ -272,7 +276,7 @@ const List<WordEntry> FULL_WORD_BANK = [
   WordEntry('cheval', 'cheval', 'horse', 'caballo', 'libre'),
   WordEntry('chien', 'chien', 'dog', 'perro', 'libre'),
   WordEntry('chiot', 'chiot', 'puppy', 'cachorro', 'libre'),
-  WordEntry('cigogne', 'cigogne', 'stork', 'cigueña', 'libre'),
+  WordEntry('cigogne', 'cigogne', 'stork', 'ciguena', 'libre'),
   WordEntry('coche', 'coche', 'sow', 'cerda', 'libre'),
   WordEntry('cochon', 'cochon', 'pig', 'cerdo', 'libre'),
   WordEntry('cocotte', 'cocotte', 'hen', 'gallina', 'libre'),

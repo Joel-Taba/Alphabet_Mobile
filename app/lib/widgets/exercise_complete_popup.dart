@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import 'amani_mascot.dart';
 import 'directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Pop-up affiché à la fin de CHAQUE exercice du parcours. Laisse l'enfant
 /// choisir entre recommencer l'exercice, enchaîner directement sur le cours
@@ -86,7 +86,7 @@ class ExerciseCompletePopup extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: _PopupButton(
-                  icon: CupertinoIcons.restart,
+                  icon: LucideIcons.rotateCcw,
                   label: common['restart'] ?? 'Recommencer',
                   bg: const Color(0x26D9A84A),
                   fg: const Color(0xFF8A6800),
@@ -99,7 +99,7 @@ class ExerciseCompletePopup extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: _PopupButton(
-                    icon: CupertinoIcons.chevron_right,
+                    icon: LucideIcons.chevronRight,
                     iconTrailing: true,
                     label: common['next'] ?? 'Suivant',
                     bg: AmaniColors.secondary,

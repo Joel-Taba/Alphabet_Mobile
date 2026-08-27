@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/amani_theme.dart';
+import '../services/family_service.dart';
 
 /// Réglage partagé du style d'écriture (Profil > Réglages > "Format
 /// d'écriture"). Même clé SharedPreferences que l'ancien état local de
@@ -21,22 +22,27 @@ class WritingStyleProvider extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_storageKey);
+    final saved = prefs.getString(scopeKey(_storageKey));
+    _style = WritingStyle.script;
     for (final s in WritingStyle.values) {
       if (s.name == saved) {
         _style = s;
-        setActiveFont(s);
-        notifyListeners();
         break;
       }
     }
+    setActiveFont(_style);
+    notifyListeners();
   }
+
+  /// À appeler après [FamilyService.switchTo] : le format d'écriture est un
+  /// choix par enfant (cursif pour l'un, script pour l'autre).
+  Future<void> rechargerPourEnfantActif() => _load();
 
   Future<void> setStyle(WritingStyle next) async {
     _style = next;
     setActiveFont(next);
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_storageKey, next.name);
+    await prefs.setString(scopeKey(_storageKey), next.name);
   }
 }

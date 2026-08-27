@@ -44,14 +44,14 @@ class _AmaniButtonState extends State<AmaniButton> {
     } else {
       switch (widget.variant) {
         case AmaniButtonVariant.primary:
-          bg = AmaniColors.secondary; // Le primary en React est vert (#8FBF6F)
-          fg = AmaniColors.surface;
-          shadow = AmaniColors.secondaryDark;
-          break;
-        case AmaniButtonVariant.secondary:
-          bg = AmaniColors.primary; // Le secondary en React est brun (#A9784F)
+          bg = AmaniColors.primary; // bg-primary en React : brun (#A9784F)
           fg = AmaniColors.surface;
           shadow = AmaniColors.primaryDark;
+          break;
+        case AmaniButtonVariant.secondary:
+          bg = AmaniColors.secondary; // bg-secondary en React : vert (#8FBF6F)
+          fg = AmaniColors.surface;
+          shadow = AmaniColors.secondaryDark;
           break;
         case AmaniButtonVariant.danger:
           bg = AmaniColors.error;

@@ -1,3 +1,7 @@
+// Nommage SCREAMING_SNAKE_CASE volontaire (miroir 1:1 du module TypeScript
+// source) — voir `calcul_catalog.dart` pour l'explication complète.
+// ignore_for_file: constant_identifier_names, non_constant_identifier_names
+
 import 'dart:convert';
 
 final List<dynamic> TRAITS = jsonDecode(r'''
@@ -129,13 +133,13 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-oblique-gauche-full",
     "label": {
-      "fr": "Trait oblique à gauche",
+      "fr": "Trait oblique à droite",
       "en": "Diagonal line to the left",
       "es": "Trazo oblicuo a la izquierda",
       "ar": "خط مائل إلى اليسار"
     },
     "consigne": {
-      "fr": "Trace le trait oblique à gauche en partant du haut gauche et en descendant vers le bas droit.",
+      "fr": "Trace le trait oblique à droite en partant du haut droit et en descendant vers le bas gauche.",
       "en": "Trace the left diagonal line, starting at the top left and going down to the bottom right.",
       "es": "Traza el trazo oblicuo a la izquierda, partiendo de arriba a la izquierda y bajando hacia abajo a la derecha.",
       "ar": "ارسم الخط المائل إلى اليسار، بدءًا من أعلى اليسار وانزل نحو أسفل اليمين."
@@ -160,13 +164,13 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-oblique-droit-full",
     "label": {
-      "fr": "Trait oblique à droite",
+      "fr": "Trait oblique à gauche",
       "en": "Diagonal line to the right",
       "es": "Trazo oblicuo a la derecha",
       "ar": "خط مائل إلى اليمين"
     },
     "consigne": {
-      "fr": "Trace le trait oblique à droite en partant du haut droit et en descendant vers le bas gauche.",
+      "fr": "Trace le trait oblique à gauche en partant du haut gauche et en descendant vers le bas droit.",
       "en": "Trace the right diagonal line, starting at the top right and going down to the bottom left.",
       "es": "Traza el trazo oblicuo a la derecha, partiendo de arriba a la derecha y bajando hacia abajo a la izquierda.",
       "ar": "ارسم الخط المائل إلى اليمين، بدءًا من أعلى اليمين وانزل نحو أسفل اليسار."
@@ -191,13 +195,13 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-oblique-gauche-reduced",
     "label": {
-      "fr": "Petit oblique à gauche",
+      "fr": "Petit oblique à droite",
       "en": "Small left diagonal",
       "es": "Oblicuo a la izquierda pequeño",
       "ar": "مائل صغير إلى اليسار"
     },
     "consigne": {
-      "fr": "Trace le petit trait oblique à gauche en partant du haut et en descendant.",
+      "fr": "Trace le petit trait oblique à droite en partant du haut et en descendant.",
       "en": "Trace the small left diagonal line, starting at the top and going down.",
       "es": "Traza el pequeño trazo oblicuo a la izquierda, partiendo de arriba y bajando.",
       "ar": "ارسم الخط المائل الصغير إلى اليسار، بدءًا من الأعلى ونزولًا."
@@ -222,13 +226,13 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-oblique-droit-reduced",
     "label": {
-      "fr": "Petit oblique à droite",
+      "fr": "Petit oblique à gauche",
       "en": "Small right diagonal",
       "es": "Oblicuo a la derecha pequeño",
       "ar": "مائل صغير إلى اليمين"
     },
     "consigne": {
-      "fr": "Trace le petit trait oblique à droite en partant du haut et en descendant.",
+      "fr": "Trace le petit trait oblique à gauche en partant du haut et en descendant.",
       "en": "Trace the small right diagonal line, starting at the top and going down.",
       "es": "Traza el pequeño trazo oblicuo a la derecha, partiendo de arriba y bajando.",
       "ar": "ارسم الخط المائل الصغير إلى اليمين، بدءًا من الأعلى ونزولًا."
@@ -717,4 +721,4 @@ final Map<String, dynamic> EXERCISE_MAP = {
 
 /// Ordre du Palier 1 (voir parcours_screen.dart) : sert à la navigation
 /// entre les cours/exercices de chaque famille.
-const List<String> FAMILY_ORDER = ['point', 'courbe', 'crochet', 'trait'];
+const List<String> FAMILY_ORDER = ['trait', 'crochet', 'courbe', 'point'];

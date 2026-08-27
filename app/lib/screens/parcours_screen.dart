@@ -10,23 +10,23 @@ import '../widgets/amani_mascot.dart';
 import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
 import '../data/syllable_catalog.dart';
-
-/// Décomposition "flore" décorative de la branche d'exercice, port fidèle du
-/// tracé SVG `BrancheExerciseIcon` (src/routes/_app.accueil.tsx).
-const String _brancheIconSvg = '''
-M 45,115 C 47,95 51,70 57,50 C 63,32 75,18 90,10
-C 87,16 77,26 68,41 C 59,56 53,76 49,115 Z
-M 50,78 C 41,64 32,51 22,35 C 20,43 27,53 36,67 C 42,74 46,79 50,78 Z
-M 23,38 L 15,33 L 21,45 Z M 27,47 L 16,45 L 26,54 Z M 32,56 L 20,58 L 31,64 Z M 37,65 L 23,71 L 38,73 Z
-M 26,38 L 35,34 L 29,46 Z M 32,50 L 42,44 L 35,57 Z M 39,61 L 48,55 L 42,67 Z
-M 86,13 L 73,15 L 82,23 Z M 78,21 L 64,25 L 74,32 Z M 70,32 L 54,38 L 66,43 Z M 63,45 L 47,51 L 59,56 Z M 57,58 L 42,64 L 53,68 Z M 51,70 L 37,77 L 48,80 Z
-M 81,19 L 90,23 L 77,29 Z M 73,30 L 86,35 L 69,41 Z M 65,42 L 80,48 L 62,53 Z M 58,54 L 72,61 L 55,65 Z M 52,66 L 66,72 L 49,76 Z
-''';
+import '../data/calcul_catalog.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
 const String _bonusArcSvg = 'M12 16 C14 8 26 8 28 16';
 
-enum StepKind { active, locked, bonus, crossword, wordsearch, medal, header }
+enum StepKind {
+  active,
+  locked,
+  bonus,
+  crossword,
+  wordsearch,
+  vraiFaux,
+  composeNombre,
+  medal,
+  header,
+}
 
 class Step {
   final StepKind kind;
@@ -58,6 +58,7 @@ class StepEntry {
   final String? to;
   Color? color;
   Color? borderColor;
+  int? number;
 
   StepEntry(this.step, this.side, {this.to});
 }
@@ -135,29 +136,19 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
           palierNum: 1,
           bannerBg: const Color(0xFF8FBF6F),
           bannerBorder: const Color(0xFF5E8E3E),
-          bannerIcon: Icons.eco_rounded,
+          bannerIcon: LucideIcons.leaf,
         ),
         0,
       ),
       StepEntry(
         const Step(kind: StepKind.active, iconType: 'feuille'),
         -1,
-        to: '/cours/point',
+        to: '/cours/trait',
       ),
       StepEntry(
         const Step(kind: StepKind.active, iconType: 'branche'),
         1,
-        to: '/exercice-liste?family=point',
-      ),
-      StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'feuille'),
-        -1,
-        to: '/cours/courbe',
-      ),
-      StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'branche'),
-        1,
-        to: '/exercice-liste?family=courbe',
+        to: '/exercice-liste?family=trait',
       ),
       StepEntry(
         const Step(kind: StepKind.locked, iconType: 'feuille'),
@@ -172,12 +163,22 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       StepEntry(
         const Step(kind: StepKind.locked, iconType: 'feuille'),
         -1,
-        to: '/cours/trait',
+        to: '/cours/courbe',
       ),
       StepEntry(
         const Step(kind: StepKind.locked, iconType: 'branche'),
         1,
-        to: '/exercice-liste?family=trait',
+        to: '/exercice-liste?family=courbe',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        -1,
+        to: '/cours/point',
+      ),
+      StepEntry(
+        const Step(kind: StepKind.locked, iconType: 'branche'),
+        1,
+        to: '/exercice-liste?family=point',
       ),
       StepEntry(
         const Step(kind: StepKind.medal),
@@ -195,7 +196,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
           palierNum: 2,
           bannerBg: const Color(0xFFA9784F),
           bannerBorder: const Color(0xFF7A5332),
-          bannerIcon: Icons.edit_note_rounded,
+          bannerIcon: LucideIcons.penLine,
         ),
         0,
       ),
@@ -238,9 +239,9 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
             subtitle: pal(2, 'subtitle'),
             tagline: pal(2, 'tagline'),
             palierNum: 3,
-            bannerBg: const Color(0xFFF4F9FD),
-            bannerBorder: const Color(0xFFCFE3F2),
-            bannerIcon: Icons.auto_stories_rounded,
+            bannerBg: const Color(0xFFD07A04),
+            bannerBorder: const Color(0xFFA25F03),
+            bannerIcon: LucideIcons.bookOpen,
           ),
           0,
         ),
@@ -287,7 +288,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
           palierNum: lang == Lang.fr ? 4 : 3,
           bannerBg: const Color(0xFF4A90E2),
           bannerBorder: const Color(0xFF2D6BBF),
-          bannerIcon: Icons.menu_book_rounded,
+          bannerIcon: LucideIcons.bookOpen,
         ),
         0,
       ),
@@ -337,9 +338,76 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       ),
     );
 
+    // ─── PALIER 5 : Les Calculs (français uniquement — nomenclature CP/CE1/
+    // CE2/CM1/CM2 propre au système scolaire français) ───
+    if (lang == Lang.fr) {
+      steps.add(
+        StepEntry(
+          Step(
+            kind: StepKind.header,
+            title: pal(4, 'title'),
+            subtitle: pal(4, 'subtitle'),
+            tagline: pal(4, 'tagline'),
+            palierNum: 5,
+            bannerBg: const Color(0xFF8B5FBF),
+            bannerBorder: const Color(0xFF6B3F94),
+            bannerIcon: LucideIcons.calculator,
+          ),
+          0,
+        ),
+      );
+
+      for (var idx = 0; idx < CALCUL_TOPICS.length; idx++) {
+        final kind = idx == 0 ? StepKind.active : StepKind.locked;
+        final topic = CALCUL_TOPICS[idx];
+        steps.add(
+          StepEntry(
+            Step(kind: kind, iconType: 'feuille'),
+            -1,
+            to: '/cours/calcul/${topic.id}',
+          ),
+        );
+        steps.add(
+          StepEntry(
+            Step(kind: kind, iconType: 'branche'),
+            1,
+            to: '/exercice/calcul/${topic.id}',
+          ),
+        );
+        if ((idx + 1) % 3 == 0) {
+          final niveauIdx = idx ~/ 3;
+          steps.add(
+            StepEntry(
+              const Step(kind: StepKind.vraiFaux),
+              0,
+              to: '/exercice/calcul-vrai-faux/$niveauIdx',
+            ),
+          );
+          steps.add(
+            StepEntry(
+              const Step(kind: StepKind.composeNombre),
+              0,
+              to: '/exercice/calcul-compose/$niveauIdx',
+            ),
+          );
+        }
+      }
+      steps.add(
+        StepEntry(
+          const Step(kind: StepKind.medal),
+          0,
+          to: '/exercice/calcul/${CALCUL_TOPICS[0].id}?amaniEval=1',
+        ),
+      );
+    }
+
     // Chaque étape hérite de la couleur du dernier en-tête de palier rencontré.
+    // Numérotation continue de toutes les étapes (hors en-têtes de palier),
+    // pour le petit badge rappelant la position dans le parcours — port
+    // fidèle du compteur `stepNumber` de `_app.accueil.tsx`.
     Color currentColor = const Color(0xFF8FBF6F);
     Color currentBorder = const Color(0xFF5E8E3E);
+    int stepNumber = 0;
     for (final entry in steps) {
       if (entry.step.kind == StepKind.header) {
         currentColor = entry.step.bannerBg ?? currentColor;
@@ -347,6 +415,8 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       } else {
         entry.color = currentColor;
         entry.borderColor = currentBorder;
+        stepNumber += 1;
+        entry.number = stepNumber;
       }
     }
 
@@ -498,7 +568,20 @@ class _ZigzagPainter extends CustomPainter {
       path,
       dashArray: CircularIntervalList<double>([2, 13]),
     );
+
+    // Le tracé n'a de sens que sur `turns` tours (une estimation à partir du
+    // nombre d'étapes), mais la colonne réelle des étapes peut être
+    // légèrement plus haute ou plus basse selon la mise en page effective —
+    // on étire verticalement le tracé pour qu'il couvre exactement toute la
+    // hauteur réservée, jusqu'à la dernière étape, comme le
+    // `preserveAspectRatio="none"` du SVG `_app.accueil.tsx`.
+    final naturalHeight = 20 + turns * stepHeight;
+    canvas.save();
+    if (naturalHeight > 0 && size.height > 0) {
+      canvas.scale(1, size.height / naturalHeight);
+    }
     canvas.drawPath(dashed, paint);
+    canvas.restore();
   }
 
   @override
@@ -549,6 +632,7 @@ class _StepRow extends StatelessWidget {
               isCurrent: isCurrent,
               color: entry.color ?? AmaniColors.secondary,
               borderColor: entry.borderColor ?? AmaniColors.secondaryDark,
+              number: entry.number,
               t: t,
             ),
           ),
@@ -600,7 +684,7 @@ class _PalierBanner extends StatelessWidget {
               child: Transform.rotate(
                 angle: 0.2,
                 child: const Icon(
-                  Icons.eco_rounded,
+                  LucideIcons.leaf,
                   size: 96,
                   color: Colors.white,
                 ),
@@ -619,7 +703,7 @@ class _PalierBanner extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Icon(
-                  step.bannerIcon ?? Icons.eco_rounded,
+                  step.bannerIcon ?? LucideIcons.leaf,
                   color: Colors.white,
                   size: 28,
                 ),
@@ -699,6 +783,7 @@ class _StepNode extends StatefulWidget {
   final bool isCurrent;
   final Color color;
   final Color borderColor;
+  final int? number;
   final Map<String, dynamic> t;
 
   const _StepNode({
@@ -706,6 +791,7 @@ class _StepNode extends StatefulWidget {
     required this.isCurrent,
     required this.color,
     required this.borderColor,
+    this.number,
     required this.t,
   });
 
@@ -740,6 +826,12 @@ class _StepNodeState extends State<_StepNode>
     if (widget.step.kind == StepKind.wordsearch) {
       return parcours['wordSearchStep'] ?? '';
     }
+    if (widget.step.kind == StepKind.vraiFaux) {
+      return parcours['vraiFauxStep'] ?? '';
+    }
+    if (widget.step.kind == StepKind.composeNombre) {
+      return parcours['composeStep'] ?? '';
+    }
     if (widget.step.iconType == 'branche') {
       return parcours['exerciceStep'] ?? '';
     }
@@ -772,6 +864,7 @@ class _StepNodeState extends State<_StepNode>
               width: dim + 24,
               height: dim + 24,
               child: Stack(
+                clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
                   if (widget.isCurrent)
@@ -780,6 +873,8 @@ class _StepNodeState extends State<_StepNode>
                       color: widget.color,
                       size: dim,
                     ),
+                  if (widget.isCurrent)
+                    _CurrentSparkles(color: widget.borderColor),
                   Container(
                     width: dim,
                     height: dim,
@@ -795,41 +890,46 @@ class _StepNodeState extends State<_StepNode>
                       boxShadow: AmaniShadows.card,
                     ),
                     alignment: Alignment.center,
-                    child: widget.step.iconType == 'branche'
-                        ? _SvgIcon(
-                            svg: _brancheIconSvg,
-                            viewBox: const Size(100, 120),
-                            size: bigNode ? 46 : 30,
-                            color: bigNode
-                                ? Colors.white
-                                : AmaniColors.textSecondary.withValues(
-                                    alpha: 0.7,
-                                  ),
-                            fill: true,
-                          )
-                        : Icon(
-                            Icons.eco_rounded,
-                            size: bigNode ? 40 : 26,
-                            color: bigNode
-                                ? Colors.white
-                                : AmaniColors.textSecondary.withValues(
-                                    alpha: 0.7,
-                                  ),
-                          ),
+                    child: Icon(
+                      widget.step.iconType == 'branche'
+                          ? LucideIcons.pen
+                          : LucideIcons.bookOpen,
+                      size: bigNode
+                          ? (widget.step.iconType == 'branche' ? 38 : 40)
+                          : (widget.step.iconType == 'branche' ? 24 : 26),
+                      color: bigNode
+                          ? Colors.white
+                          : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                    ),
                   ),
+                  if (widget.number != null)
+                    Positioned(
+                      // Le cercle est centré dans une boîte 24px plus grande
+                      // (padding uniforme de 12px de chaque côté, pour la
+                      // marge du ping-ring) : le badge se cale sur le coin
+                      // haut-droit du cercle, décalé de 4px vers l'extérieur
+                      // — mêmes proportions que "-top-1 -right-1" en React.
+                      top: 8,
+                      right: 8,
+                      child: _NumberBadge(
+                        number: widget.number!,
+                        color: widget.borderColor,
+                        muted: !widget.isCurrent,
+                      ),
+                    ),
                 ],
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              _stepLabel,
+              _stepLabel.toUpperCase(),
               style: TextStyle(
                 fontFamily: kBalooFontFamily,
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
                 letterSpacing: 0.6,
                 color: bigNode
-                    ? widget.borderColor
+                    ? Colors.black
                     : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),
             ),
@@ -847,30 +947,46 @@ class _StepNodeState extends State<_StepNode>
                 label: parcours['start'] ?? 'Commencer',
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
-            Container(
-              width: big ? 80 : 56,
-              height: big ? 80 : 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: big ? widget.color : AmaniColors.disabled,
-                border: Border.all(
-                  color: big ? widget.borderColor : AmaniColors.disabled,
-                  width: 4,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                if (widget.isCurrent) _CurrentSparkles(color: widget.borderColor),
+                Container(
+                  width: big ? 80 : 56,
+                  height: big ? 80 : 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: big ? widget.color : AmaniColors.disabled,
+                    border: Border.all(
+                      color: big ? widget.borderColor : AmaniColors.disabled,
+                      width: 4,
+                    ),
+                    boxShadow: AmaniShadows.card,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    LucideIcons.grid3x3,
+                    size: big ? 36 : 24,
+                    color: big
+                        ? Colors.white
+                        : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                  ),
                 ),
-                boxShadow: AmaniShadows.card,
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.grid_view_rounded,
-                size: big ? 36 : 24,
-                color: big
-                    ? Colors.white
-                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
-              ),
+                if (widget.number != null)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: _NumberBadge(
+                      number: widget.number!,
+                      color: widget.borderColor,
+                      muted: !widget.isCurrent,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              _stepLabel,
+              _stepLabel.toUpperCase(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: kBalooFontFamily,
@@ -895,36 +1011,119 @@ class _StepNodeState extends State<_StepNode>
                 label: parcours['start'] ?? 'Commencer',
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
-            Container(
-              width: bigWs ? 80 : 56,
-              height: bigWs ? 80 : 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: bigWs ? widget.color : AmaniColors.disabled,
-                border: Border.all(
-                  color: bigWs ? widget.borderColor : AmaniColors.disabled,
-                  width: 4,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                if (widget.isCurrent) _CurrentSparkles(color: widget.borderColor),
+                Container(
+                  width: bigWs ? 80 : 56,
+                  height: bigWs ? 80 : 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: bigWs ? widget.color : AmaniColors.disabled,
+                    border: Border.all(
+                      color: bigWs ? widget.borderColor : AmaniColors.disabled,
+                      width: 4,
+                    ),
+                    boxShadow: AmaniShadows.card,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    LucideIcons.search,
+                    size: bigWs ? 36 : 24,
+                    color: bigWs
+                        ? Colors.white
+                        : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                  ),
                 ),
-                boxShadow: AmaniShadows.card,
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.search_rounded,
-                size: bigWs ? 36 : 24,
-                color: bigWs
-                    ? Colors.white
-                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
-              ),
+                if (widget.number != null)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: _NumberBadge(
+                      number: widget.number!,
+                      color: widget.borderColor,
+                      muted: !widget.isCurrent,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              _stepLabel,
+              _stepLabel.toUpperCase(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: kBalooFontFamily,
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
                 color: bigWs
+                    ? widget.borderColor
+                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        );
+
+      case StepKind.vraiFaux:
+      case StepKind.composeNombre:
+        final bool bigGame = widget.isCurrent;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.isCurrent)
+              _StartPill(
+                borderColor: widget.borderColor,
+                label: parcours['start'] ?? 'Commencer',
+              ),
+            if (widget.isCurrent) const SizedBox(height: 10),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                if (widget.isCurrent) _CurrentSparkles(color: widget.borderColor),
+                Container(
+                  width: bigGame ? 80 : 56,
+                  height: bigGame ? 80 : 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: bigGame ? widget.color : AmaniColors.disabled,
+                    border: Border.all(
+                      color: bigGame ? widget.borderColor : AmaniColors.disabled,
+                      width: 4,
+                    ),
+                    boxShadow: AmaniShadows.card,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    widget.step.kind == StepKind.vraiFaux
+                        ? LucideIcons.helpCircle
+                        : LucideIcons.puzzle,
+                    size: bigGame ? 36 : 24,
+                    color: bigGame
+                        ? Colors.white
+                        : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                  ),
+                ),
+                if (widget.number != null)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: _NumberBadge(
+                      number: widget.number!,
+                      color: widget.borderColor,
+                      muted: !widget.isCurrent,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _stepLabel.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                color: bigGame
                     ? widget.borderColor
                     : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),
@@ -998,7 +1197,7 @@ class _StartPill extends StatelessWidget {
               fontWeight: FontWeight.w800,
               fontSize: 13,
               letterSpacing: 0.6,
-              color: borderColor,
+              color: Colors.black,
             ),
           ),
         ),
@@ -1056,6 +1255,102 @@ class _PingRing extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Petit badge numéroté qui rappelle la position de l'étape dans le
+/// parcours — port fidèle de `NumberBadge` (`_app.accueil.tsx`).
+class _NumberBadge extends StatelessWidget {
+  final int number;
+  final Color color;
+  final bool muted;
+
+  const _NumberBadge({
+    required this.number,
+    required this.color,
+    this.muted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = muted ? const Color(0xFF9C8F79) : color;
+    return Container(
+      width: 24,
+      height: 24,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AmaniColors.surface,
+        border: Border.all(
+          color: muted ? const Color(0xFFD8CCB8) : color,
+          width: 2,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x14000000), blurRadius: 2),
+        ],
+      ),
+      child: Text(
+        '$number',
+        style: TextStyle(
+          fontFamily: kBalooFontFamily,
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
+          color: c,
+        ),
+      ),
+    );
+  }
+}
+
+/// Quelques étincelles discrètes autour de l'étape en cours, pour un léger
+/// effet ludique — port fidèle de `CurrentSparkles` (`_app.accueil.tsx`).
+class _CurrentSparkles extends StatelessWidget {
+  final Color color;
+  const _CurrentSparkles({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: -12,
+          left: -20,
+          child: Transform.rotate(
+            angle: -0.21,
+            child: Icon(
+              LucideIcons.sparkle,
+              size: 14,
+              color: color.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: -24,
+          child: Transform.rotate(
+            angle: 0.31,
+            child: Icon(
+              LucideIcons.sparkle,
+              size: 10,
+              color: color.withValues(alpha: 0.5),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: -4,
+          left: -24,
+          child: Transform.rotate(
+            angle: 0.1,
+            child: Icon(
+              LucideIcons.sparkle,
+              size: 8,
+              color: color.withValues(alpha: 0.4),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

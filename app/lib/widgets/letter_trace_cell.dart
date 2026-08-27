@@ -129,7 +129,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
       }
     } else {
       setState(() => _status = _CellStatus.retry);
-      Future.delayed(const Duration(milliseconds: 900), () {
+      Future.delayed(const Duration(milliseconds: 1800), () {
         if (!mounted) return;
         setState(() {
           _userPoints.clear();
@@ -233,7 +233,7 @@ class _CellPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final scale = cellSize / 200.0;
-    final lineWidth = (cellSize / 12).clamp(3.0, 100.0);
+    final lineWidth = (cellSize / 12).clamp(2.0, 100.0);
 
     if (solved) {
       final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
@@ -282,7 +282,11 @@ class _CellPainter extends CustomPainter {
         pts,
         scale,
         color.withValues(alpha: isCurrentStep ? 0.85 : (bold ? 0.55 : 0.3)),
-        isCurrentStep ? 10 : 7,
+        // `pts` est mis à l'échelle dans `_drawPolyline` (coordonnées
+        // 0-200 d'origine) : l'épaisseur doit suivre la même échelle pour
+        // rester proportionnelle à la taille de la cellule, comme le
+        // `viewBox="0 0 200 200"` de `LetterTraceCell.tsx`.
+        (isCurrentStep ? 10 : 7) * scale,
       );
     }
 

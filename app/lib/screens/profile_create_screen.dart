@@ -2,13 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
 import '../services/backend_sync_service.dart';
+import '../services/family_service.dart';
+import '../services/progress_service.dart';
+import '../hooks/use_writing_style.dart';
 import '../theme/amani_theme.dart';
 import '../utils/pick_profile_photo.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ProfileCreateScreen extends StatefulWidget {
   const ProfileCreateScreen({super.key});
@@ -22,23 +25,16 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _isLangDropdownOpen = false;
+  // Volontairement jamais pré-rempli depuis le stockage : cet écran crée
+  // TOUJOURS un nouvel enfant (le premier, ou un de plus pour la fratrie —
+  // voir _handleStart), donc il ne doit jamais reprendre par erreur la
+  // photo d'un enfant précédemment actif. La photo choisie n'est persistée
+  // qu'au moment de la création effective du profil.
   String? _photoBase64;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPhoto();
-  }
-
-  Future<void> _loadPhoto() async {
-    final photo = await getStoredPhoto();
-    if (mounted) setState(() => _photoBase64 = photo);
-  }
 
   Future<void> _choosePhoto() async {
     final encoded = await pickAndEncodeProfilePhoto();
     if (encoded == null) return;
-    await setStoredPhoto(encoded);
     if (mounted) setState(() => _photoBase64 = encoded);
   }
 
@@ -56,9 +52,23 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
 
   void _handleStart() async {
     if (!canContinue) return;
+    final family = context.read<FamilyService>();
     final backend = context.read<BackendSyncService>();
+    final progress = context.read<ProgressProvider>();
+    final writingStyle = context.read<WritingStyleProvider>();
+
+    // Enregistre un nouvel enfant (le premier de l'appareil, ou un
+    // supplémentaire pour la fratrie — cet écran sert les deux cas) AVANT
+    // d'écrire nom/mot de passe, pour que ces derniers atterrissent sous la
+    // bonne clé namespacée (voir FamilyService.scopeKey).
+    await family.createChild(_nameController.text.trim());
     await setStoredName(_nameController.text.trim());
     await setStoredPassword(_passwordController.text);
+    if (_photoBase64 != null) await setStoredPhoto(_photoBase64!);
+
+    await backend.rechargerPourEnfantActif();
+    await progress.rechargerPourEnfantActif();
+    await writingStyle.rechargerPourEnfantActif();
     // Best-effort, ne bloque jamais la navigation : voir BackendSyncService.
     unawaited(backend.ensureLinked());
     if (!mounted) return;
@@ -92,7 +102,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.eco, color: AmaniColors.secondary, size: 36),
+                      Icon(LucideIcons.leaf, color: AmaniColors.secondary, size: 36),
                       const SizedBox(height: 8),
                       Text(
                         t['onboarding']['title'],
@@ -169,7 +179,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                                       ),
                                     ),
                                     child: const Icon(
-                                      CupertinoIcons.camera_fill,
+                                      LucideIcons.camera,
                                       size: 18,
                                       color: Colors.white,
                                     ),
@@ -307,7 +317,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 ),
                 alignment: Alignment.center,
                 child: const Icon(
-                  CupertinoIcons.lock_fill,
+                  LucideIcons.lock,
                   color: Colors.white,
                   size: 18,
                 ),
@@ -333,8 +343,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               IconButton(
                 icon: Icon(
                   _showPassword
-                      ? CupertinoIcons.eye_slash_fill
-                      : CupertinoIcons.eye_fill,
+                      ? LucideIcons.eyeOff
+                      : LucideIcons.eye,
                   color: AmaniColors.textSecondary,
                 ),
                 onPressed: () => setState(() => _showPassword = !_showPassword),
@@ -382,7 +392,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                   ),
                   alignment: Alignment.center,
                   child: const Icon(
-                    CupertinoIcons.globe,
+                    LucideIcons.globe,
                     color: Colors.white,
                     size: 20,
                   ),
@@ -405,8 +415,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 ),
                 Icon(
                   _isLangDropdownOpen
-                      ? CupertinoIcons.chevron_up
-                      : CupertinoIcons.chevron_down,
+                      ? LucideIcons.chevronUp
+                      : LucideIcons.chevronDown,
                   color: AmaniColors.textSecondary,
                 ),
                 const SizedBox(width: 16),

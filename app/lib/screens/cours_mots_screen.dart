@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -12,6 +11,7 @@ import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Cours de mots du Palier 3 : chaque mot est déjà écrit avec des lettres
 /// connues, l'enfant écoute et regarde. Port fidèle de
@@ -28,11 +28,6 @@ class CoursMotsScreen extends StatelessWidget {
     final cm = t['coursMots'] as Map<String, dynamic>? ?? {};
 
     final group = PALIER3_GROUP_MAP[groupId];
-    final groupIdx = PALIER3_GROUPS.indexWhere((g) => g.id == groupId);
-    final prevGroup = groupIdx > 0 ? PALIER3_GROUPS[groupIdx - 1] : null;
-    final nextGroup = groupIdx >= 0 && groupIdx < PALIER3_GROUPS.length - 1
-        ? PALIER3_GROUPS[groupIdx + 1]
-        : null;
 
     if (group == null) {
       return Scaffold(
@@ -106,7 +101,7 @@ class CoursMotsScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -239,39 +234,13 @@ class CoursMotsScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           const Icon(
-                            CupertinoIcons.play_fill,
+                            Icons.play_arrow_rounded,
                             color: Colors.white,
                             size: 18,
                           ),
                         ],
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (prevGroup != null)
-                        _NavPill(
-                          label: prevGroup.title[lang.name] ?? '',
-                          leading: true,
-                          onTap: () =>
-                              context.go('/cours/mots/${prevGroup.id}'),
-                        )
-                      else
-                        const SizedBox(),
-                      if (nextGroup != null)
-                        _NavPill(
-                          label: nextGroup.title[lang.name] ?? '',
-                          leading: false,
-                          filled: true,
-                          onTap: () =>
-                              context.go('/cours/mots/${nextGroup.id}'),
-                        )
-                      else
-                        const SizedBox(),
-                    ],
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -369,7 +338,7 @@ class _WordCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.fitness_center,
+                      LucideIcons.dumbbell,
                       size: 18,
                       color: Color(0xFF2D6BBF),
                     ),
@@ -384,55 +353,3 @@ class _WordCard extends StatelessWidget {
   }
 }
 
-class _NavPill extends StatelessWidget {
-  final String label;
-  final bool leading;
-  final bool filled;
-  final VoidCallback onTap;
-  const _NavPill({
-    required this.label,
-    required this.leading,
-    this.filled = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = DirectionalIcon(
-      leading ? CupertinoIcons.chevron_left : CupertinoIcons.chevron_right,
-      size: 14,
-      color: filled ? Colors.white : AmaniColors.textPrimary,
-    );
-    final text = Text(
-      label,
-      style: TextStyle(
-        fontFamily: kBalooFontFamily,
-        fontWeight: FontWeight.w800,
-        fontSize: 13,
-        color: filled ? Colors.white : AmaniColors.textPrimary,
-      ),
-    );
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 170),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: filled ? const Color(0xFF4A90E2) : AmaniColors.surface,
-          borderRadius: BorderRadius.circular(999),
-          border: filled
-              ? null
-              : Border.all(
-                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: leading
-              ? [icon, const SizedBox(width: 6), Flexible(child: text)]
-              : [Flexible(child: text), const SizedBox(width: 6), icon],
-        ),
-      ),
-    );
-  }
-}

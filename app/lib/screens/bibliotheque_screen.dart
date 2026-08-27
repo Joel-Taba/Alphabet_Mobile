@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:path_drawing/path_drawing.dart' as pd;
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
-import '../services/sign_speech.dart';
 import '../widgets/cahier_frame.dart';
-import '../widgets/interactive_canvas.dart';
 import '../widgets/scribble_canvas.dart';
 import '../widgets/free_crossword_section.dart';
 import '../widgets/free_word_search_section.dart';
@@ -15,6 +13,8 @@ import '../data/sign_exercise_catalog.dart';
 import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/mode_libre_controller.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 enum ModeLibreTab { scribble, signe, lettre, chiffre, crossword, wordsearch }
 
@@ -48,12 +48,17 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
   int _selectedLetterIndex = 0;
   int _selectedDigitIndex = 0;
 
-  Key _canvasKey = UniqueKey();
   Color _penColor = _penColors.first;
   final GlobalKey<ScribbleCanvasState> _scribbleKey =
       GlobalKey<ScribbleCanvasState>();
 
+  /// Incrémenté à chaque remise à zéro (voir `_onLeftModeLibre`) pour forcer
+  /// la reconstruction complète des mini-jeux (mots croisés/mêlés), dont
+  /// l'état interne (grille en cours) n'est pas autrement accessible d'ici.
+  int _resetGeneration = 0;
+
   late List<dynamic> _allLetters;
+  late final ModeLibreController _modeLibreController;
 
   @override
   void initState() {
@@ -64,6 +69,35 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     final uppercase = [...UPPERCASE]
       ..sort((a, b) => (a['char'] as String).compareTo(b['char'] as String));
     _allLetters = [...lowercase, ...uppercase];
+
+    // Toute activité de Mode Libre (dessin, sélection en cours, mini-jeux)
+    // doit repartir de zéro dès qu'on quitte cet onglet — voir `AppShell`,
+    // qui prévient ce contrôleur au changement d'onglet de navigation.
+    _modeLibreController = context.read<ModeLibreController>();
+    _modeLibreController.addListener(_onLeftModeLibre);
+  }
+
+  void _onLeftModeLibre() {
+    if (!mounted) return;
+    _scribbleKey.currentState?.clear();
+    if (_scribbleKey.currentState?.isEraserMode ?? false) {
+      _scribbleKey.currentState?.toggleEraser();
+    }
+    setState(() {
+      _currentTab = ModeLibreTab.scribble;
+      _selectedFamily = SignFamily.trait;
+      _selectedSignIndex = 0;
+      _selectedLetterIndex = 0;
+      _selectedDigitIndex = 0;
+      _penColor = _penColors.first;
+      _resetGeneration++;
+    });
+  }
+
+  @override
+  void dispose() {
+    _modeLibreController.removeListener(_onLeftModeLibre);
+    super.dispose();
   }
 
   List<dynamic> _signsForFamily(SignFamily family) {
@@ -80,9 +114,14 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
   }
 
   void _clearCanvas() {
-    setState(() {
-      _canvasKey = UniqueKey();
-    });
+    _scribbleKey.currentState?.clear();
+  }
+
+  /// Bascule l'outil actif entre crayon et gomme (effacement ciblé, comme un
+  /// logiciel de dessin classique) — un appui long efface tout d'un coup.
+  void _toggleEraser() {
+    _scribbleKey.currentState?.toggleEraser();
+    setState(() {});
   }
 
   /// Résout la forme (script/cursive/digitale) du caractère actuellement
@@ -99,41 +138,6 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     final style = context.read<WritingStyleProvider>().style.name;
     final fallback = DIGITS[_selectedDigitIndex];
     return getLetterFormation(fallback['char'] as String, style) ?? fallback;
-  }
-
-  void _speakInstruction() {
-    final lang = context.read<LanguageProvider>().lang;
-    final speechService = context.read<SignSpeechService>();
-
-    String textToSpeak = '';
-
-    if (_currentTab == ModeLibreTab.signe) {
-      final signs = _signsForFamily(_selectedFamily);
-      final sign = signs[_selectedSignIndex % signs.length];
-      textToSpeak = sign['consigne'][lang.name] ?? '';
-    } else if (_currentTab == ModeLibreTab.lettre) {
-      textToSpeak = _currentLetterFormation()['consigne'][lang.name] ?? '';
-    } else if (_currentTab == ModeLibreTab.chiffre) {
-      textToSpeak = _currentDigitFormation()['consigne'][lang.name] ?? '';
-    }
-
-    if (textToSpeak.isNotEmpty) {
-      speechService.speak(textToSpeak, lang);
-    }
-  }
-
-  String _getCurrentSvgPath() {
-    if (_currentTab == ModeLibreTab.signe) {
-      final signs = _signsForFamily(_selectedFamily);
-      final sign = signs[_selectedSignIndex % signs.length];
-      return sign['pathD'];
-    } else if (_currentTab == ModeLibreTab.lettre) {
-      final letter = _currentLetterFormation();
-      return (letter['steps'] as List).map((s) => s['pathD']).join(' ');
-    } else {
-      final digit = _currentDigitFormation();
-      return (digit['steps'] as List).map((s) => s['pathD']).join(' ');
-    }
   }
 
   @override
@@ -183,6 +187,31 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             ),
             const SizedBox(height: 20),
 
+            // Image plein cadre — bannière décorative inspirée de
+            // `_app.bibliotheque.tsx` (amani-gribouillage.png), agrandie
+            // par rapport au web pour que l'image reste bien visible sur
+            // mobile plutôt que d'être largement rognée par BoxFit.cover.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                height: 280,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                  ),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x24000000), blurRadius: 8),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/amani-gribouillage.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Onglets de modèle
             SizedBox(
               height: 44,
@@ -191,7 +220,7 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                 children: [
                   _buildTab(
                     ModeLibreTab.scribble,
-                    tabs['scribble'] ?? 'Griffonnage',
+                    tabs['scribble'] ?? 'Gribouillage',
                   ),
                   const SizedBox(width: 8),
                   _buildTab(ModeLibreTab.signe, tabs['sign'] ?? 'Signe'),
@@ -215,9 +244,11 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             const SizedBox(height: 16),
 
             if (_currentTab == ModeLibreTab.crossword)
-              const FreeCrosswordSection()
+              FreeCrosswordSection(key: ValueKey('crossword-$_resetGeneration'))
             else if (_currentTab == ModeLibreTab.wordsearch)
-              const FreeWordSearchSection()
+              FreeWordSearchSection(
+                key: ValueKey('wordsearch-$_resetGeneration'),
+              )
             else ...[
               // Sélecteur de famille (uniquement pour l'onglet Signe)
               if (_currentTab == ModeLibreTab.signe) ...[
@@ -229,74 +260,46 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               _buildModelCard(modeLibre),
               const SizedBox(height: 16),
 
-              // Canvas
-              if (_currentTab == ModeLibreTab.scribble)
-                AspectRatio(
-                  aspectRatio: 1.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AmaniColors.disabled, width: 2),
-                    ),
-                    child: CahierFrame(
-                      rounded: 22,
-                      child: ScribbleCanvas(
-                        key: _scribbleKey,
-                        penColor: _penColor,
-                      ),
+              // Canvas — page de dessin libre — uniquement des lignes d'écriture façon
+              // cahier, sans aucun tracé-guide superposé : c'est l'enfant qui
+              // dessine seul, quel que soit l'onglet. Port fidèle du canevas
+              // unique partagé par les 4 onglets dans `_app.bibliotheque.tsx`
+              // (`<CahierFrame ... /><canvas .../>`, sans `targetSvgPath`).
+              AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AmaniColors.disabled, width: 2),
+                  ),
+                  child: CahierFrame(
+                    rounded: 22,
+                    child: ScribbleCanvas(
+                      key: _scribbleKey,
+                      penColor: _penColor,
                     ),
                   ),
-                )
-              else
-                InteractiveCanvas(
-                  key: _canvasKey,
-                  targetSvgPath: _getCurrentSvgPath(),
-                  onDrawingComplete: (success) {},
                 ),
+              ),
               const SizedBox(height: 16),
 
-              // Barre d'outils
-              if (_currentTab == ModeLibreTab.scribble)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        for (final c in _penColors) ...[
-                          _buildColorSwatch(c),
-                          const SizedBox(width: 10),
-                        ],
+              // Barre d'outils : couleurs + effacer, commune à tous les
+              // onglets (même barre que sur le web).
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      for (final c in _penColors) ...[
+                        _buildColorSwatch(c),
+                        const SizedBox(width: 10),
                       ],
-                    ),
-                    _buildToolButton(
-                      icon: Icons.cleaning_services_rounded,
-                      color: AmaniColors.textSecondary,
-                      onTap: () => _scribbleKey.currentState?.clear(),
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildToolButton(
-                      icon: Icons.cleaning_services_rounded,
-                      color: AmaniColors.textSecondary,
-                      onTap: _clearCanvas,
-                    ),
-                    const SizedBox(width: 16),
-                    _buildToolButton(
-                      icon: context.watch<SignSpeechService>().isSpeaking
-                          ? Icons.volume_up_rounded
-                          : Icons.volume_up_outlined,
-                      color: context.watch<SignSpeechService>().isSpeaking
-                          ? AmaniColors.primary
-                          : AmaniColors.textSecondary,
-                      onTap: _speakInstruction,
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  _buildEraserMenu(),
+                ],
+              ),
               const SizedBox(height: 20),
 
               // Sélecteur du modèle courant (carousel horizontal)
@@ -312,7 +315,12 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
   Widget _buildColorSwatch(Color color) {
     final isSel = _penColor == color;
     return GestureDetector(
-      onTap: () => setState(() => _penColor = color),
+      onTap: () => setState(() {
+        _penColor = color;
+        if (_scribbleKey.currentState?.isEraserMode ?? false) {
+          _scribbleKey.currentState?.toggleEraser();
+        }
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         width: 32,
@@ -573,19 +581,63 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     );
   }
 
-  Widget _buildToolButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
+  /// Bouton gomme : au lieu de basculer directement un mode, ouvre un petit
+  /// menu déroulant à deux icônes (sans texte) — effacement complet ou
+  /// effacement ciblé — pour laisser le choix explicite à chaque appui,
+  /// plutôt qu'un mode caché derrière un appui long.
+  Widget _buildEraserMenu() {
+    final active = _scribbleKey.currentState?.isEraserMode ?? false;
+    final modeLibre =
+        context.watch<LanguageProvider>().t['modeLibre']
+            as Map<String, dynamic>? ??
+        {};
+    return PopupMenuButton<String>(
+      tooltip: '',
+      offset: const Offset(0, -110),
+      color: Colors.white,
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      onSelected: (value) {
+        if (value == 'full') {
+          _clearCanvas();
+        } else if (value == 'targeted' && !active) {
+          _toggleEraser();
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'full',
+          child: Center(
+            child: Semantics(
+              label: modeLibre['eraseAllAria'] ?? 'Tout effacer',
+              child: const Icon(
+                LucideIcons.trash2,
+                color: AmaniColors.textSecondary,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+        PopupMenuItem(
+          value: 'targeted',
+          child: Center(
+            child: Semantics(
+              label: modeLibre['eraseTargetedAria'] ?? 'Effacement ciblé',
+              child: const Icon(
+                LucideIcons.eraser,
+                color: AmaniColors.textSecondary,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      ],
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: active ? AmaniColors.primary : Colors.white,
           shape: BoxShape.circle,
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Color(0x1A000000),
               offset: Offset(0, 2),
@@ -593,7 +645,11 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             ),
           ],
         ),
-        child: Icon(icon, color: color, size: 28),
+        child: Icon(
+          LucideIcons.eraser,
+          color: active ? Colors.white : AmaniColors.textSecondary,
+          size: 28,
+        ),
       ),
     );
   }

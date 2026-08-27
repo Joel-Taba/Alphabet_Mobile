@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/family_service.dart';
 
 const String kRepetitionsStorageKey = 'amani_setting_repetitions';
 const String kToleranceStorageKey = 'amani_setting_tolerance';
@@ -21,7 +22,7 @@ const int kMaxTolerance = 25;
 const int kMinEvaluationDuration = 2;
 const int kMaxEvaluationDuration = 30;
 
-/// Réglages d'exercice partagés (répétitions par signe, tolérance de
+/// Réglages d'exercice partagés (Nombre de répétitions , tolérance de
 /// validation, durée d'évaluation chronométrée), persistés en local —
 /// reflète `src/hooks/useExerciseSettings.ts`.
 class ExerciseSettings extends ChangeNotifier {
@@ -31,10 +32,11 @@ class ExerciseSettings extends ChangeNotifier {
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    repetitions = prefs.getInt(kRepetitionsStorageKey) ?? kDefaultRepetitions;
-    tolerance = prefs.getInt(kToleranceStorageKey) ?? kDefaultTolerance;
+    repetitions =
+        prefs.getInt(scopeKey(kRepetitionsStorageKey)) ?? kDefaultRepetitions;
+    tolerance = prefs.getInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance;
     evaluationDuration =
-        prefs.getInt(kEvaluationDurationStorageKey) ??
+        prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
         kDefaultEvaluationDuration;
     notifyListeners();
   }
@@ -43,14 +45,14 @@ class ExerciseSettings extends ChangeNotifier {
     repetitions = value.clamp(kMinRepetitions, kMaxRepetitions);
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(kRepetitionsStorageKey, repetitions);
+    await prefs.setInt(scopeKey(kRepetitionsStorageKey), repetitions);
   }
 
   Future<void> setTolerance(int value) async {
     tolerance = value.clamp(kMinTolerance, kMaxTolerance);
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(kToleranceStorageKey, tolerance);
+    await prefs.setInt(scopeKey(kToleranceStorageKey), tolerance);
   }
 
   Future<void> setEvaluationDuration(int value) async {
@@ -60,7 +62,7 @@ class ExerciseSettings extends ChangeNotifier {
     );
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(kEvaluationDurationStorageKey, evaluationDuration);
+    await prefs.setInt(scopeKey(kEvaluationDurationStorageKey), evaluationDuration);
   }
 }
 
@@ -70,6 +72,7 @@ class ExerciseSettings extends ChangeNotifier {
 Future<int> readEvaluationDurationMinutes() async {
   final prefs = await SharedPreferences.getInstance();
   final v =
-      prefs.getInt(kEvaluationDurationStorageKey) ?? kDefaultEvaluationDuration;
+      prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
+      kDefaultEvaluationDuration;
   return v.clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
 }

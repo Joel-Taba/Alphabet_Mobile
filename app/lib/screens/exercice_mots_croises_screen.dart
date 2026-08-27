@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -8,6 +7,7 @@ import '../data/word_catalog.dart';
 import '../utils/crossword_generator.dart';
 import '../widgets/crossword_play.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Exercice de mots croisés à difficulté progressive (`lvl2` → 2 mots,
 /// `lvl10` → 10 mots). Port fidèle de
@@ -106,7 +106,7 @@ class ExerciceMotsCroisesScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),

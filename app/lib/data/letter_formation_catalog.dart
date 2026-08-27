@@ -1,3 +1,7 @@
+// Nommage SCREAMING_SNAKE_CASE volontaire (miroir 1:1 du module TypeScript
+// source) — voir `calcul_catalog.dart` pour l'explication complète.
+// ignore_for_file: constant_identifier_names, non_constant_identifier_names
+
 import 'dart:convert';
 
 final List<dynamic> VOWELS = jsonDecode(r'''
@@ -572,9 +576,9 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "point",
         "variant": "center",
-        "pathD": "M 112.22 57 A 3.31 3.31 0 1 0 112.29 57",
+        "pathD": "M 115.51 57 A 3.31 3.31 0 1 0 115.58 57",
         "startXY": [
-          112.22,
+          115.51,
           57
         ],
         "strokeColor": "#4A3B2A",
@@ -803,73 +807,6 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
           "en": "Hook attached to the right of the line",
           "es": "Gancho pegado a la derecha del trazo",
           "ar": "خطاف ملاصق يمين الخط"
-        }
-      }
-    ]
-  },
-  {
-    "char": "ñ",
-    "name": {
-      "fr": "n espagnol (eñe) minuscule",
-      "en": "lowercase spanish ñ",
-      "es": "eñe minúscula",
-      "ar": "الحرف الإسباني ñ الصغير"
-    },
-    "category": "consonne",
-    "zone": "corps",
-    "consigne": {
-      "fr": "La lettre ñ se forme comme un n, puis on ajoute un petit tilde ondulé au-dessus.",
-      "en": "The letter ñ is formed like an n, then a small wavy tilde is added above it.",
-      "es": "La letra ñ se forma como una n, y luego se añade una pequeña virgulilla ondulada encima.",
-      "ar": "يتكون الحرف ñ مثل الحرف n، ثم تُضاف فوقه علامة تلدة صغيرة متموجة."
-    },
-    "steps": [
-      {
-        "family": "trait",
-        "variant": "vertical",
-        "pathD": "M 87.31 96.44 L 87.31 125",
-        "startXY": [
-          87.31,
-          96.44
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Trait vertical court",
-          "en": "Short vertical line",
-          "es": "Trazo vertical corto",
-          "ar": "خط عمودي قصير"
-        }
-      },
-      {
-        "family": "crochet",
-        "variant": "top-left",
-        "pathD": "M 87.31 96.44 C 87.31 89.41 92.97 83.74 100 83.74 C 107.03 83.74 112.69 89.41 112.69 96.44 L 112.69 125",
-        "startXY": [
-          87.31,
-          96.44
-        ],
-        "strokeColor": "#4A90E2",
-        "description": {
-          "fr": "Crochet accolé à droite du trait",
-          "en": "Hook attached to the right of the line",
-          "es": "Gancho pegado a la derecha del trazo",
-          "ar": "خطاف ملاصق يمين الخط"
-        }
-      },
-      {
-        "family": "courbe",
-        "variant": "tilde",
-        "pathD": "M 91.67 77.8 C 94.04 74.21 97.23 74.21 100 77 C 102.77 79.77 105.96 79.77 108.33 76.2",
-        "startXY": [
-          91.67,
-          77.8
-        ],
-        "strokeColor": "#E05252",
-        "description": {
-          "fr": "Petit tilde ondulé au-dessus du n",
-          "en": "Small wavy tilde above the n",
-          "es": "Pequeña virgulilla ondulada encima de la n",
-          "ar": "علامة تلدة صغيرة متموجة فوق الحرف n"
         }
       }
     ]
@@ -2328,89 +2265,6 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
           "en": "Right vertical line",
           "es": "Trazo vertical derecho",
           "ar": "خط عمودي أيمن"
-        }
-      }
-    ]
-  },
-  {
-    "char": "Ñ",
-    "name": {
-      "fr": "N espagnol (Eñe) majuscule",
-      "en": "uppercase spanish Ñ",
-      "es": "Eñe mayúscula",
-      "ar": "الحرف الإسباني Ñ الكبير"
-    },
-    "category": "majuscule",
-    "zone": "hampe",
-    "consigne": {
-      "fr": "La lettre Ñ se forme comme un N, puis on ajoute un petit tilde ondulé au-dessus.",
-      "en": "The letter Ñ is formed like an N, then a small wavy tilde is added above it.",
-      "es": "La letra Ñ se forma como una N, y luego se añade una pequeña virgulilla ondulada encima.",
-      "ar": "يتكون الحرف Ñ مثل الحرف N، ثم تُضاف فوقه علامة تلدة صغيرة متموجة."
-    },
-    "steps": [
-      {
-        "family": "trait",
-        "variant": "vertical",
-        "pathD": "M 66.87 26.32 L 66.87 125",
-        "startXY": [
-          66.87,
-          26.32
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Trait vertical gauche",
-          "en": "Left vertical line",
-          "es": "Trazo vertical izquierdo",
-          "ar": "خط عمودي أيسر"
-        }
-      },
-      {
-        "family": "trait",
-        "variant": "oblique-droit",
-        "pathD": "M 66.87 26.32 L 127.13 125",
-        "startXY": [
-          66.87,
-          26.32
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Oblique, sommet gauche vers la base droite",
-          "en": "Diagonal, left top to the right base",
-          "es": "Oblicuo, del vértice izquierdo a la base derecha",
-          "ar": "مائل، من القمة اليسرى نحو القاعدة اليمنى"
-        }
-      },
-      {
-        "family": "trait",
-        "variant": "vertical",
-        "pathD": "M 127.13 26.32 L 127.13 125",
-        "startXY": [
-          127.13,
-          26.32
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Trait vertical droit",
-          "en": "Right vertical line",
-          "es": "Trazo vertical derecho",
-          "ar": "خط عمودي أيمن"
-        }
-      },
-      {
-        "family": "courbe",
-        "variant": "tilde",
-        "pathD": "M 80.43 20.29 C 84.95 13.51 90.97 13.51 96.24 18.78 C 101.51 24.06 107.54 24.06 113.57 17.28",
-        "startXY": [
-          80.43,
-          20.29
-        ],
-        "strokeColor": "#E05252",
-        "description": {
-          "fr": "Petit tilde ondulé au-dessus du N",
-          "en": "Small wavy tilde above the N",
-          "es": "Pequeña virgulilla ondulada encima de la N",
-          "ar": "علامة تلدة صغيرة متموجة فوق الحرف N"
         }
       }
     ]

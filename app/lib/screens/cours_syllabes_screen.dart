@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -10,7 +9,9 @@ import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
 import '../widgets/letter_trace_cell.dart';
+import '../widgets/mini_letter_frame.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Cours du Palier "Les syllabes" : apprend la formation consonne + voyelle
 /// (ex. "b + a = ba") puis montre un mot-exemple contenant la syllabe.
@@ -178,7 +179,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -230,13 +231,10 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (consonantLetter != null)
-                              LetterTraceCell(
-                                letter: consonantLetter,
-                                size: 64,
-                                isActive: false,
-                                given: true,
-                              ),
+                            MiniLetterFrame(
+                              letter: consonantLetter,
+                              delayMs: 0,
+                            ),
                             const SizedBox(width: 10),
                             const Text(
                               '+',
@@ -247,13 +245,10 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            if (vowelLetter != null)
-                              LetterTraceCell(
-                                letter: vowelLetter,
-                                size: 64,
-                                isActive: false,
-                                given: true,
-                              ),
+                            MiniLetterFrame(
+                              letter: vowelLetter,
+                              delayMs: 650,
+                            ),
                             const SizedBox(width: 10),
                             const Text(
                               '=',
@@ -296,20 +291,27 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: [
-                                    for (final l in wordLetters) ...[
-                                      LetterTraceCell(
-                                        letter: l,
-                                        size: 40,
-                                        isActive: false,
-                                        given: true,
-                                      ),
-                                      const SizedBox(width: 4),
+                              // Centré plutôt que collé à gauche, pour que le
+                              // mot d'exemple ressorte bien — le défilement
+                              // horizontal reste un filet de sécurité pour un
+                              // mot trop long pour la largeur disponible.
+                              child: Center(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      for (final l in wordLetters) ...[
+                                        LetterTraceCell(
+                                          letter: l,
+                                          size: 40,
+                                          isActive: false,
+                                          given: true,
+                                        ),
+                                        const SizedBox(width: 4),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -327,7 +329,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  CupertinoIcons.speaker_2_fill,
+                                  LucideIcons.volume2,
                                   size: 16,
                                   color: Color(0xFF2D6BBF),
                                 ),
@@ -421,7 +423,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                             ),
                             const SizedBox(width: 8),
                             const Icon(
-                              CupertinoIcons.play_fill,
+                              Icons.play_arrow_rounded,
                               color: Colors.white,
                               size: 18,
                             ),
@@ -468,7 +470,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              DirectionalIcon(CupertinoIcons.chevron_right,
+                              DirectionalIcon(LucideIcons.chevronRight,
                                 size: 14,
                                 color: AmaniColors.textPrimary,
                               ),

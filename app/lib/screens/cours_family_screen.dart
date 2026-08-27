@@ -12,6 +12,7 @@ import '../widgets/sign_glyph.dart';
 import '../widgets/cahier_frame.dart';
 import '../hooks/use_animation_speed.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 const Map<String, Color> _familyColor = {
   'point': AmaniColors.textPrimary,
@@ -45,18 +46,6 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
   dynamic _selectedSign;
   late AnimationController _controller;
   late int _animDurationMs;
-
-  String? get _prevFamily {
-    final idx = FAMILY_ORDER.indexOf(widget.family);
-    return idx > 0 ? FAMILY_ORDER[idx - 1] : null;
-  }
-
-  String? get _nextFamily {
-    final idx = FAMILY_ORDER.indexOf(widget.family);
-    return idx >= 0 && idx < FAMILY_ORDER.length - 1
-        ? FAMILY_ORDER[idx + 1]
-        : null;
-  }
 
   @override
   void initState() {
@@ -100,7 +89,11 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
       ..forward();
     final lang = context.read<LanguageProvider>().lang;
     context.read<SignSpeechService>().speak(
-      _selectedSign['consigne'][lang.name] ?? '',
+      spokenSignInstruction(
+        lang,
+        _selectedSign['label'][lang.name] ?? '',
+        _selectedSign['consigne'][lang.name] ?? '',
+      ),
       lang,
     );
     // Les points du cours ne sont attribués qu'une fois TOUTES les variantes
@@ -164,7 +157,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                           BoxShadow(color: Color(0x1A000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -256,25 +249,30 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                             children: [
                               Expanded(
                                 child: _PillButton(
-                                  icon: CupertinoIcons.restart,
+                                  icon: LucideIcons.rotateCcw,
                                   label: t['common']?['replay'] ?? 'Revoir',
                                   bg: AmaniColors.secondary.withValues(
                                     alpha: 0.15,
                                   ),
-                                  fg: AmaniColors.secondaryDark,
+                                  fg: const Color(0xFF2F4B1C),
                                   onTap: _playAnimation,
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: _PillButton(
-                                  icon: CupertinoIcons.speaker_2_fill,
+                                  icon: LucideIcons.volume2,
                                   label:
                                       t['common']?['instruction'] ?? 'Consigne',
                                   bg: AmaniColors.background,
-                                  fg: AmaniColors.textPrimary,
+                                  fg: Colors.black,
                                   onTap: () => speech.speak(
-                                    _selectedSign['consigne'][lang.name] ?? '',
+                                    spokenSignInstruction(
+                                      lang,
+                                      _selectedSign['label'][lang.name] ?? '',
+                                      _selectedSign['consigne'][lang.name] ??
+                                          '',
+                                    ),
                                     lang,
                                   ),
                                 ),
@@ -285,8 +283,8 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                           SizedBox(
                             width: double.infinity,
                             child: _PillButton(
-                              icon: CupertinoIcons.play_fill,
-                              label: coursFamily['exercer'] ?? "M'exercer",
+                              icon: Icons.play_arrow_rounded,
+                              label: coursFamily['exercer'] ?? "S'entrainer",
                               bg: AmaniColors.secondary,
                               fg: Colors.white,
                               filled: true,
@@ -301,7 +299,15 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
                   const SizedBox(height: 24),
                   Text(
-                    '${coursFamily['variantsTitle'] ?? ''} (${_entries.length})',
+                    (_entries.length == 1
+                            ? (coursFamily['oneVariant'] ??
+                                  'Une seule variante')
+                            : tFormat(
+                                coursFamily['variantsCount'] ??
+                                    '{count} variantes',
+                                {'count': _entries.length},
+                              ))
+                        .toUpperCase(),
                     style: TextStyle(
                       fontFamily: kBalooFontFamily,
                       fontWeight: FontWeight.w800,
@@ -386,7 +392,18 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                           .replaceFirst('#', '0xFF'),
                                     ),
                                   ),
-                                  size: 50,
+                                  // Les variantes "réduites" (ex. "Petit trait
+                                  // vertical") sont déjà tracées plus petites
+                                  // que les variantes "pleines" pendant le
+                                  // tracé réel (leur chemin SVG occupe moins
+                                  // d'espace dans le viewport 200×200) — ce
+                                  // badge, lui, ne dessine pas ce chemin mais
+                                  // une icône stylisée indépendante de sa
+                                  // taille réelle, d'où ce facteur explicite
+                                  // pour reproduire visuellement le même
+                                  // rapport de taille, uniquement sur cette
+                                  // carte de présentation.
+                                  size: item['scale'] == 'reduced' ? 30 : 50,
                                 ),
                               ),
                               Container(
@@ -426,96 +443,51 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                   ),
 
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (_prevFamily != null)
-                        GestureDetector(
-                          onTap: () => context.go('/cours/${_prevFamily!}'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: AmaniColors.textPrimary.withValues(
-                                  alpha: 0.1,
-                                ),
+                  GestureDetector(
+                    onTap: () =>
+                        context.go('/exercice-liste?family=${widget.family}'),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(999),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x22000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              tFormat(
+                                t['coursFamily']?['passExercices'] ??
+                                    'Passer aux exercices ({title})',
+                                {'title': title},
                               ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x0D000000),
-                                  blurRadius: 6,
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                DirectionalIcon(CupertinoIcons.chevron_left,
-                                  size: 16,
-                                  color: AmaniColors.textPrimary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  t['common']?['previous'] ?? 'Précédent',
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: AmaniColors.textPrimary,
-                                  ),
-                                ),
-                              ],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        )
-                      else
-                        const SizedBox(),
-                      if (_nextFamily != null)
-                        GestureDetector(
-                          onTap: () => context.go('/cours/${_nextFamily!}'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(999),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x22000000),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  t['common']?['next'] ?? 'Suivant',
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                DirectionalIcon(CupertinoIcons.chevron_right,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ],
-                            ),
+                          const SizedBox(width: 6),
+                          DirectionalIcon(
+                            LucideIcons.chevronRight,
+                            size: 16,
+                            color: Colors.white,
                           ),
-                        )
-                      else
-                        const SizedBox(),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],

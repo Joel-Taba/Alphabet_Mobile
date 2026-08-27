@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -20,6 +19,7 @@ import '../hooks/use_countdown.dart';
 import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/sign_glyph.dart' show letterFamilyZIndex;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
 /// exercé séparément) puis Phase B (la lettre écrite d'un seul geste continu).
@@ -327,7 +327,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(CupertinoIcons.arrow_left,
+                          child: DirectionalIcon(LucideIcons.arrowLeft,
                             size: 20,
                           ),
                         ),
@@ -490,7 +490,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                           child: Column(
                             children: [
                               Icon(
-                                CupertinoIcons.lock_fill,
+                                LucideIcons.lock,
                                 size: 22,
                                 color: AmaniColors.textPrimary.withValues(
                                   alpha: 0.4,
@@ -877,7 +877,7 @@ class _FormulaBadge extends StatelessWidget {
             alignment: Alignment.center,
             child: isDone
                 ? const Icon(
-                    CupertinoIcons.check_mark,
+                    LucideIcons.check,
                     size: 10,
                     color: Color(0xFF5E8E3E),
                   )
@@ -995,7 +995,7 @@ class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
     } else {
       widget.onStatusChange(_StepStatus.retry);
       widget.onRetry();
-      Future.delayed(const Duration(milliseconds: 1200), () {
+      Future.delayed(const Duration(milliseconds: 2400), () {
         if (!mounted) return;
         setState(() {
           _userPoints.clear();
@@ -1107,7 +1107,11 @@ class _LetterCanvasPainter extends CustomPainter {
         Paint()
           ..color = color.withValues(alpha: isActiveStep ? 0.85 : 0.35)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = isActiveStep ? 10 : 8
+          // `pts` est déjà en coordonnées finales (pré-multipliées par
+          // `scale` ci-dessus) : l'épaisseur doit l'être aussi pour rester
+          // proportionnelle à la taille du cadre, comme le
+          // `viewBox="0 0 200 200"` de `exercice.lettre.$char.tsx`.
+          ..strokeWidth = (isActiveStep ? 10 : 8) * scale
           ..strokeCap = StrokeCap.round,
       );
     }

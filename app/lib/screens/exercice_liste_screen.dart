@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -17,6 +16,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../hooks/use_countdown.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// "Cahier d'Écriture" : exerce chaque signe d'une famille (répétitions sur
 /// grille Seyès), ou liste les caractères d'un groupe de progression (Palier
@@ -261,7 +261,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                               ),
                               shape: BoxShape.circle,
                             ),
-                            child: DirectionalIcon(CupertinoIcons.chevron_right,
+                            child: DirectionalIcon(LucideIcons.chevronRight,
                               size: 18,
                               color: AmaniColors.secondaryDark,
                             ),
@@ -481,7 +481,14 @@ class _SignExerciseRow extends StatelessWidget {
       repetitions: repetitions,
       tolerance: tolerance,
       doneLabel: el['done'] ?? 'Terminé !',
-      onSpeak: () => speech.speak(entry['consigne'][lang.name] ?? '', lang),
+      onSpeak: () => speech.speak(
+        spokenSignInstruction(
+          lang,
+          entry['label'][lang.name] ?? '',
+          entry['consigne'][lang.name] ?? '',
+        ),
+        lang,
+      ),
       onAllDone: () {
         speech.speak(el['rowComplete'] ?? '', lang);
         context.read<ProgressProvider>().awardCompletion(
@@ -505,9 +512,10 @@ class _SignExerciseRow extends StatelessWidget {
                     : null,
               ),
               child: Text(
-                entry['scale'] == 'reduced'
-                    ? (el['reducedLabel'] ?? 'réduit')
-                    : (familyNames[entry['family']] ?? ''),
+                (entry['scale'] == 'reduced'
+                        ? (el['reducedLabel'] ?? 'réduit')
+                        : (familyNames[entry['family']] ?? ''))
+                    .toUpperCase(),
                 style: TextStyle(
                   fontFamily: kBalooFontFamily,
                   fontWeight: FontWeight.w800,
@@ -557,7 +565,7 @@ class _Header extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(color: Color(0x1F000000), blurRadius: 6)],
               ),
-              child: DirectionalIcon(CupertinoIcons.arrow_left, size: 18),
+              child: DirectionalIcon(LucideIcons.arrowLeft, size: 18),
             ),
           ),
           const SizedBox(width: 12),

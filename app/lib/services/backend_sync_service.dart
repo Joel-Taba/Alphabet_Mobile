@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'profile_auth.dart';
+import 'family_service.dart';
 
 const _tokenKey = 'amani_backend_token';
 const _langStorageKey = 'amani_setting_lang';
@@ -55,22 +56,27 @@ class BackendSyncService extends ChangeNotifier {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString(_tokenKey);
+    _token = prefs.getString(scopeKey(_tokenKey));
     _loaded = true;
     notifyListeners();
   }
 
+  /// À appeler après [FamilyService.switchTo] : chaque enfant a son propre
+  /// compte serveur, donc son propre jeton — sans ce rechargement, les
+  /// appels suivants réutiliseraient le jeton de l'enfant précédent.
+  Future<void> rechargerPourEnfantActif() => _restore();
+
   Future<void> _saveToken(String token) async {
     _token = token;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    await prefs.setString(scopeKey(_tokenKey), token);
     notifyListeners();
   }
 
   Future<void> _clearToken() async {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
+    await prefs.remove(scopeKey(_tokenKey));
     notifyListeners();
   }
 

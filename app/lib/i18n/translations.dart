@@ -70,6 +70,47 @@ String tFormat(String template, Map<String, dynamic> values) {
   );
 }
 
+Map<String, dynamic> _dictFor(Lang lang) {
+  switch (lang) {
+    case Lang.fr:
+      return fr;
+    case Lang.en:
+      return en;
+    case Lang.es:
+      return es;
+    case Lang.ar:
+      return ar;
+  }
+}
+
+/// Phrase prononcée pour toute consigne « comment écrire… » — toujours de la
+/// forme « Pour écrire la lettre {X}, on … » (ou « le chiffre »/« le signe »
+/// selon le contenu), convention voulue pour toute la synthèse vocale de
+/// l'app plutôt que les phrases à l'impératif brut utilisées auparavant.
+String spokenLetterInstruction(Lang lang, String char, String consigne) {
+  final common = _dictFor(lang)['common'] as Map<String, dynamic>? ?? {};
+  return tFormat(common['speakLetterIntro'] ?? '{consigne}', {
+    'char': char,
+    'consigne': consigne,
+  });
+}
+
+String spokenDigitInstruction(Lang lang, String char, String consigne) {
+  final common = _dictFor(lang)['common'] as Map<String, dynamic>? ?? {};
+  return tFormat(common['speakDigitIntro'] ?? '{consigne}', {
+    'char': char,
+    'consigne': consigne,
+  });
+}
+
+String spokenSignInstruction(Lang lang, String label, String consigne) {
+  final common = _dictFor(lang)['common'] as Map<String, dynamic>? ?? {};
+  return tFormat(common['speakSignIntro'] ?? '{consigne}', {
+    'label': label,
+    'consigne': consigne,
+  });
+}
+
 // ─── DICTIONNAIRES ──────────────────────────────────────────────────────────
 
 const Map<String, dynamic> fr = {
@@ -96,6 +137,9 @@ const Map<String, dynamic> fr = {
     'previous': 'Précédent',
     'backToHome': "Retour à l'accueil",
     'restart': 'Recommencer',
+    'speakLetterIntro': 'Pour écrire la lettre {char}, on procède ainsi : {consigne}',
+    'speakDigitIntro': 'Pour écrire le chiffre {char}, on procède ainsi : {consigne}',
+    'speakSignIntro': 'Pour tracer le signe {label}, on procède ainsi : {consigne}',
   },
   'evaluation': {
     'badge': 'Évaluation',
@@ -138,26 +182,26 @@ const Map<String, dynamic> fr = {
     'title': 'Bienvenue !',
     'subtitle': "Dis-nous qui tu es pour commencer l'aventure",
     'namePlaceholder': "Comment tu t'appelles ?",
-    'passwordPlaceholder': 'Mot de passe (pour Mon Profil)',
-    'passwordHint': "Ce mot de passe protège l'accès à Mon Profil.",
+    'passwordPlaceholder': 'Mot de passe',
+    'passwordHint': "Ce mot de passe protège l'accès aux réglages.",
     'showPassword': 'Afficher le mot de passe',
     'hidePassword': 'Masquer le mot de passe',
     'languageLabel': 'Langue',
     'start': "Commencer l'aventure",
   },
   'profileLock': {
-    'title': 'Mon Profil est protégé',
+    'title': 'Mon profil est protégé',
     'subtitle': "Entre le mot de passe défini à l'inscription pour continuer.",
     'passwordPlaceholder': 'Mot de passe',
     'wrongPassword': 'Mot de passe incorrect, réessaie.',
     'unlockButton': 'Déverrouiller',
   },
   'modeLibre': {
-    'title': 'Mode Libre',
-    'subtitle': 'Dessine et exerce-toi librement, sans contrainte !',
+    'title': 'Mode libre',
+    'subtitle': 'Dessine et entraine-toi librement !',
     'helpText': 'À toi de jouer, deviens le maître du dessin !',
     'tabs': {
-      'scribble': 'Griffonnage',
+      'scribble': 'Gribouillage',
       'sign': 'Signe',
       'letter': 'Lettre',
       'digit': 'Chiffre',
@@ -170,16 +214,18 @@ const Map<String, dynamic> fr = {
     'clear': 'Effacer',
     'colorLabel': 'Couleur',
     'canvasAria': 'Espace de dessin libre',
+    'eraseAllAria': 'Tout effacer',
+    'eraseTargetedAria': 'Effacement ciblé',
     'signNames': {
-      'trait': 'Le Trait',
-      'courbe': 'La Courbe',
-      'point': 'Le Point',
-      'crochet': 'Le Crochet',
+      'trait': 'Le trait',
+      'courbe': 'La courbe',
+      'point': 'Le point',
+      'crochet': 'Le crochet',
     },
   },
   'parcours': {
     'title': 'Prêt à commencer ?',
-    'subtitle': 'Je suis tout feu, tout flamme.On y va quand tu veux.',
+    'subtitle': 'Je suis tout feu, tout flamme. On y va quand tu veux !!!',
     'start': 'Commencer',
     'lockedAria': 'Étape verrouillée',
     'bonusAria': 'Récompense bonus verrouillée',
@@ -189,9 +235,11 @@ const Map<String, dynamic> fr = {
     'exerciceStep': 'Exercice',
     'crosswordStep': 'Mots croisés',
     'wordSearchStep': 'Mots mêlés',
+    'vraiFauxStep': 'Vrai ou faux',
+    'composeStep': 'Compose',
     'paliers': [
       {
-        'title': 'Les Signes de base',
+        'title': 'Les signes de base',
         'subtitle': 'PALIER 1',
         'tagline': 'Points, courbes, crochets et traits',
       },
@@ -201,20 +249,25 @@ const Map<String, dynamic> fr = {
         'tagline': 'Assembler les signes',
       },
       {
-        'title': 'Les Syllabes',
+        'title': 'Les syllabes',
         'subtitle': 'PALIER 3',
         'tagline': 'Assemble consonnes et voyelles pour lire',
       },
       {
-        'title': 'Les Mots',
+        'title': 'Les mots',
         'subtitle': 'PALIER 4',
         'tagline': 'Relie les lettres entre elles',
+      },
+      {
+        'title': 'Les calculs',
+        'subtitle': 'PALIER 5',
+        'tagline': "De l'addition CP à la proportionnalité CM2",
       },
     ],
     'comingSoon': 'Cette étape arrive bientôt !',
   },
   'community': {
-    'title': 'Notre Communauté',
+    'title': 'Notre communauté',
     'subtitle': 'Le classement',
     'othersTitle': 'Les autres pousses',
     'you': 'moi',
@@ -227,6 +280,22 @@ const Map<String, dynamic> fr = {
   'profileHub': {
     'title': "Mon carnet d'explorateur",
     'subtitle': 'Continue sur ta lancée, tu apprends magnifiquement bien !',
+    'familySwitch': "Changer d'enfant",
+    'familyTitle': 'Nos profils',
+    'familySubtitle': 'Choisis qui joue en ce moment',
+    'familyAddChild': 'Ajouter un enfant',
+    'familyNewChildName': "Prénom de l'enfant",
+    'familyNewChildPassword': 'Mot de passe (4 caractères min.)',
+    'familyCreate': 'Créer ce profil',
+    'streakDaySingular': '1 jour de suite !',
+    'streakDayPlural': '{count} jours de suite !',
+    'streakAtRisk': "Joue aujourd'hui pour continuer ta série !",
+    'accessibilityCardTitle': 'Accessibilité',
+    'dyslexiaFontLabel': 'Police adaptée dyslexie',
+    'dyslexiaFontHint':
+        'Utilise une police conçue pour faciliter la lecture.',
+    'uiScaleLabel': "Taille de l'interface",
+    'uiScaleHint': 'Agrandit ou réduit le texte dans toute l\'application.',
     'totalPointsLabel': 'Mes points',
     'totalPointsHint': 'Gagnés en terminant tes cours et tes exercices',
     'statsSignes': 'Signes maîtrisés',
@@ -234,9 +303,9 @@ const Map<String, dynamic> fr = {
     'statsDays': "Jours d'aventure",
     'progressionTitle': 'Ma progression dans la forêt',
     'stepsValidated': 'sur {total} étapes validées',
-    'settingsTitle': 'Mes Réglages',
+    'settingsTitle': 'Mes réglages',
     'languageCardTitle': "Langue de l'explorateur",
-    'soundCardTitle': 'Son & Animations',
+    'soundCardTitle': 'Son & animations',
     'voiceLabel': "Voix de Flores Gong Nota",
     'voiceOn': 'Activée',
     'voiceOff': 'Coupée',
@@ -245,8 +314,8 @@ const Map<String, dynamic> fr = {
     'volumeTestPhrase': 'Voici à quoi ressemble ma voix !',
     'voiceGenderLabel': 'Style de voix',
     'voiceGenderOptions': [
-      {'label': 'Voix Homme', 'desc': 'Douce et chaleureuse'},
-      {'label': 'Voix Femme', 'desc': 'Douce et chaleureuse'},
+      {'label': 'Voix homme', 'desc': 'Douce et chaleureuse'},
+      {'label': 'Voix femme', 'desc': 'Douce et chaleureuse'},
     ],
     'voiceGenderTest': 'Écouter un exemple',
     'voiceGenderTestPhrase':
@@ -272,12 +341,12 @@ const Map<String, dynamic> fr = {
       {'label': 'Rapide'},
     ],
     'branches': [
-      {'name': 'Palier 1 : Points & Courbes'},
-      {'name': 'Palier 2 : Crochets & Traits'},
-      {'name': 'Palier 3 : La Combinatoire'},
+      {'name': 'Palier 1 : points & courbes'},
+      {'name': 'Palier 2 : crochets & traits'},
+      {'name': 'Palier 3 : la combinatoire'},
     ],
-    'lockAction': 'Verrouiller Mon Profil',
-    'passwordCardTitle': 'Mot de passe de Mon Profil',
+    'lockAction': 'Verrouiller mon profil',
+    'passwordCardTitle': 'Mot de passe de mon profil',
     'oldPasswordPlaceholder': 'Ancien mot de passe',
     'newPasswordPlaceholder': 'Nouveau mot de passe',
     'confirmPasswordPlaceholder': 'Confirmer le mot de passe',
@@ -297,37 +366,39 @@ const Map<String, dynamic> fr = {
     'body': 'Bravo, tu as terminé cet exercice. Que veux-tu faire maintenant ?',
   },
   'coursScreen': {
-    'title': 'Mes Cours',
+    'title': 'Mes cours',
     'subtitle': 'Méthode Flores Gong Nota',
     'intro':
         'Voici les 4 signes fondamentaux de la méthode Flores Gong Nota. Touche une carte pour explorer toutes ses variantes.',
-    'letters': 'Lettres & Chiffres',
+    'letters': 'Lettres & chiffres',
     'lettersSubtitle': 'Combinatoire — a à z, A à Z, 0 à 9',
     'signNames': {
-      'trait': 'Le Trait',
-      'crochet': 'Le Crochet',
-      'courbe': 'Les Courbes',
-      'point': 'Le Point',
+      'trait': 'Le trait',
+      'crochet': 'Le crochet',
+      'courbe': 'Les courbes',
+      'point': 'Le point',
     },
   },
   'coursFamily': {
     'intro':
         'Voici le cours sur {title}. Touche une carte en bas pour voir comment tracer chaque variante.',
     'variantsTitle': 'Toutes les variantes',
-    'exercer': "M'exercer",
-    'passExercices': 'Passer aux Exercices ({title})',
+    'oneVariant': 'Une seule variante',
+    'variantsCount': '{count} variantes',
+    'exercer': "S'entrainer",
+    'passExercices': 'Passer aux exercices ({title})',
     'titles': {
-      'point': 'Le Point',
-      'courbe': 'Les Courbes',
-      'crochet': 'Les Crochets & Doubles-Crochets',
-      'trait': 'Les Traits',
+      'point': 'Le point',
+      'courbe': 'Les courbes',
+      'crochet': 'Les crochets & doubles-crochets',
+      'trait': 'Les traits',
     },
   },
   'coursLettres': {
-    'title': 'Lettres & Chiffres',
+    'title': 'Lettres & chiffres',
     'subtitle': 'Touche une lettre pour voir sa formule',
     'intro':
-        'Lettres et Chiffres. Chaque lettre est formée en assemblant les signes fondamentaux. Touche une lettre pour voir sa formule !',
+        'Lettres et chiffres. Chaque lettre est formée en assemblant les signes fondamentaux. Touche une lettre pour voir sa formule !',
     'legendSuffix': 'dominant',
     'minusculesTitle': 'Minuscules (a – z)',
     'minusculesSubtitle': 'Source : Manuel CP1 — formules validées',
@@ -352,19 +423,19 @@ const Map<String, dynamic> fr = {
     'result': 'Résultat',
     'adqNote':
         "Attention : Les lettres a, d et q utilisent la même formule de signes. C'est la position du trait vertical (corps / hampe / jambe) qui les distingue — pas les signes eux-mêmes.",
-    'practiceLink': "S'exercer dans le cahier d'écriture",
+    'practiceLink': "S'entrainer dans le cahier d'écriture",
     'seeAll': 'Voir toutes les lettres',
     'families': {
-      'trait': 'Le Trait',
-      'courbe': 'La Courbe',
-      'crochet': 'Le Crochet',
-      'point': 'Le Point',
+      'trait': 'Le trait',
+      'courbe': 'La courbe',
+      'crochet': 'Le crochet',
+      'point': 'Le point',
     },
     'variants': {
       'vertical': 'Vertical',
       'horizontal': 'Horizontal',
-      'oblique-gauche': 'Oblique à gauche',
-      'oblique-droit': 'Oblique à droite',
+      'oblique-gauche': 'Oblique à droite',
+      'oblique-droit': 'Oblique à gauche',
       'open-right': 'Ouvert à droite (C)',
       'open-left': 'Ouvert à gauche (Ɔ)',
       'bridge': 'En pont (∩)',
@@ -379,7 +450,7 @@ const Map<String, dynamic> fr = {
     'zones': {'corps': 'Corps', 'hampe': '↑ Hampe', 'jambe': '↓ Jambe'},
   },
   'coursFormation': {
-    'title': 'Former les Lettres',
+    'title': 'Former les lettres',
     'subtitle': 'Combinaison des signes de base',
     'intro':
         'Bienvenue dans la combinatoire ! Ici, tu vas apprendre à combiner les signes pour former des lettres et des chiffres.',
@@ -393,8 +464,8 @@ const Map<String, dynamic> fr = {
     'notFound': "n'est pas disponible pour le moment.",
     'backToList': 'Retour aux cours',
     'formulaTitle': 'Formule',
-    'vowelsTitle': 'Les Voyelles',
-    'practice': "M'exercer sur",
+    'vowelsTitle': 'Les voyelles',
+    'practice': "S'entrainer sur",
     'families': {
       'trait': 'Trait',
       'courbe': 'Courbe',
@@ -423,8 +494,8 @@ const Map<String, dynamic> fr = {
   },
   'exerciceListe': {
     'titleGroup': 'Cahier : {titre}',
-    'subtitleGroupLettres': 'Exerce-toi à tracer ces lettres',
-    'subtitleGroupDigits': 'Exerce-toi à tracer ces chiffres',
+    'subtitleGroupLettres': 'Entraine-toi à tracer ces lettres',
+    'subtitleGroupDigits': 'Entraine-toi à tracer ces chiffres',
     'introGroup':
         "Voici le cahier d'écriture pour {titre} ! Choisis un caractère pour t'entraîner à le former signe par signe.",
     'groupHint':
@@ -437,12 +508,12 @@ const Map<String, dynamic> fr = {
     'subtitle': 'Repasse sur les pointillés',
     'introGeneral':
         "Bienvenue dans le cahier d'écriture ! Repasse sur les pointillés en suivant la pastille verte pour apprendre à tracer chaque signe correctement.",
-    'repetitionsLabel': 'Répétitions par signe',
+    'repetitionsLabel': 'Nombre de répétitions ',
     'repetitionsHint': 'Nombre de fois à tracer chaque signe sur la ligne',
     'toleranceLabel': 'Tolérance de validation',
     'toleranceHint': 'Plus haute = plus facile pour les plus jeunes',
     'startHint':
-        'Le point vert indique le point de départ. Suis les pointillés en levant le moins possible le doigt.',
+        'Le point vert indique le point de départ et celui en rouge indique la fin. Suis les pointillés sans lever le doigt.',
     'done': 'Terminé !',
     'rowComplete':
         'Bravo ! Tu as tracé tous les signes de cette ligne. Excellent travail !',
@@ -480,9 +551,9 @@ const Map<String, dynamic> fr = {
     'successTitle': 'Magnifique !',
     'successBody': 'Tu sais maintenant écrire',
     'nextLetter': 'Lettre suivante',
-    'practiceAgain': "S'exercer à nouveau",
+    'practiceAgain': "S'entrainer à nouveau",
     'backToNotebookLink': "Retour au cahier d'écriture",
-    'speakStart': 'Exerce-toi sur la lettre {name}.',
+    'speakStart': 'Entraine-toi sur la lettre {name}.',
     'speakNextStep': 'Super ! Passe maintenant au signe suivant.',
     'speakLetterDone': 'Bravo ! Tu as parfaitement formé la lettre {name} !',
     'speakRetryStep': 'Presque ! Réessaie juste ce geste : {desc}',
@@ -498,7 +569,7 @@ const Map<String, dynamic> fr = {
     'formingLabel': '{consonant} + {vowel} = {syllable}',
     'exampleWordLabel': 'Un mot avec « {syllable} »',
     'speakFormation': '{consonant}... {vowel}... {syllable} !',
-    'practice': "M'exercer sur ces syllabes",
+    'practice': "M'entrainer sur ces syllabes",
     'nextConsonant': 'Consonne suivante : {consonant}',
   },
   'exerciceSyllabes': {
@@ -512,6 +583,37 @@ const Map<String, dynamic> fr = {
     'nextGroup': 'Consonne suivante : {consonant}',
     'exampleWordPrefix': 'comme dans',
   },
+  'coursCalcul': {
+    'notFound': "n'est pas disponible pour le moment.",
+    'backToList': "Retour à l'accueil",
+    'practice': "S'entrainer",
+  },
+  'exerciceCalcul': {
+    'problemsReady': '{done}/{total} calculs résolus',
+    'introTitle': 'Écris le résultat',
+    'introBody': 'Trace les chiffres de la réponse pour chaque calcul.',
+    'allDoneTitle': 'Bravo, tous les calculs sont résolus !',
+    'allDoneBody': 'Tu maîtrises ce sujet.',
+    'nextTopic': 'Sujet suivant : {title}',
+  },
+  'calculVraiFaux': {
+    'title': 'Vrai ou faux ?',
+    'instruction': "Ce calcul est-il juste ? À toi de décider !",
+    'true': 'Vrai',
+    'false': 'Faux',
+    'scoreLabel': '{score}/{total} bonnes réponses',
+    'doneTitle': 'Partie terminée !',
+    'doneBody': 'Rejoue pour t\'entrainer encore.',
+  },
+  'calculCompose': {
+    'title': 'Compose le nombre !',
+    'instruction':
+        'Touche les nombres et les signes pour obtenir le nombre demandé, dans l\'ordre, de gauche à droite.',
+    'target': 'Obtiens {target} !',
+    'scoreLabel': '{score}/{total} nombres trouvés',
+    'doneTitle': 'Partie terminée !',
+    'doneBody': 'Rejoue pour t\'entrainer encore.',
+  },
   'coursMots': {
     'notFound': "n'est pas disponible pour le moment.",
     'backToList': "Retour à l'accueil",
@@ -519,9 +621,9 @@ const Map<String, dynamic> fr = {
     'introSpeak': "Voici le cours sur {titre}. Touche un mot pour l'écouter.",
     'introTitle': 'Écoute et regarde chaque mot',
     'introBody':
-        "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le mot pour l'entendre, ou l'haltère pour t'exercer dessus !",
-    'practiceGroup': "M'exercer",
-    'practiceWordAria': "S'exercer sur « {mot} »",
+        "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le mot pour l'entendre, ou l'haltère pour t'entrainer dessus !",
+    'practiceGroup': "S'entrainer",
+    'practiceWordAria': "S'entrainer sur « {mot} »",
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} mots écrits',
@@ -603,6 +705,9 @@ const Map<String, dynamic> en = {
     'previous': 'Previous',
     'backToHome': 'Back to home',
     'restart': 'Start over',
+    'speakLetterIntro': 'To write the letter {char}, here is how: {consigne}',
+    'speakDigitIntro': 'To write the digit {char}, here is how: {consigne}',
+    'speakSignIntro': 'To trace the sign {label}, here is how: {consigne}',
   },
   'evaluation': {
     'badge': 'Evaluation',
@@ -677,6 +782,8 @@ const Map<String, dynamic> en = {
     'clear': 'Clear',
     'colorLabel': 'Color',
     'canvasAria': 'Free drawing area',
+    'eraseAllAria': 'Clear everything',
+    'eraseTargetedAria': 'Targeted erase',
     'signNames': {
       'trait': 'The Line',
       'courbe': 'The Curve',
@@ -735,6 +842,21 @@ const Map<String, dynamic> en = {
   'profileHub': {
     'title': 'My explorer notebook',
     'subtitle': "Keep it up, you're learning wonderfully well!",
+    'familySwitch': 'Switch child',
+    'familyTitle': 'Our profiles',
+    'familySubtitle': "Choose who's playing right now",
+    'familyAddChild': 'Add a child',
+    'familyNewChildName': "Child's first name",
+    'familyNewChildPassword': 'Password (4 characters min.)',
+    'familyCreate': 'Create this profile',
+    'streakDaySingular': '1 day in a row!',
+    'streakDayPlural': '{count} days in a row!',
+    'streakAtRisk': 'Play today to keep your streak going!',
+    'accessibilityCardTitle': 'Accessibility',
+    'dyslexiaFontLabel': 'Dyslexia-friendly font',
+    'dyslexiaFontHint': 'Use a font designed to make reading easier.',
+    'uiScaleLabel': 'Interface size',
+    'uiScaleHint': 'Makes text bigger or smaller throughout the app.',
     'totalPointsLabel': 'My points',
     'totalPointsHint': 'Earned by finishing your lessons and exercises',
     'statsSignes': 'Signs mastered',
@@ -822,6 +944,8 @@ const Map<String, dynamic> en = {
     'intro':
         "Here's the lesson on {title}. Tap a card below to see how to trace each variant.",
     'variantsTitle': 'All variants',
+    'oneVariant': 'One variant only',
+    'variantsCount': '{count} variants',
     'exercer': 'Practice',
     'passExercices': 'Go to Exercises ({title})',
     'titles': {
@@ -1107,6 +1231,9 @@ const Map<String, dynamic> es = {
     'previous': 'Anterior',
     'backToHome': 'Volver al inicio',
     'restart': 'Empezar de nuevo',
+    'speakLetterIntro': 'Para escribir la letra {char}, así es como: {consigne}',
+    'speakDigitIntro': 'Para escribir el número {char}, así es como: {consigne}',
+    'speakSignIntro': 'Para trazar el signo {label}, así es como: {consigne}',
   },
   'evaluation': {
     'badge': 'Evaluación',
@@ -1149,15 +1276,15 @@ const Map<String, dynamic> es = {
     'title': '¡Bienvenido!',
     'subtitle': 'Cuéntanos quién eres para comenzar la aventura',
     'namePlaceholder': '¿Cómo te llamas?',
-    'passwordPlaceholder': 'Contraseña (para Mi Perfil)',
-    'passwordHint': 'Esta contraseña protege el acceso a Mi Perfil.',
+    'passwordPlaceholder': 'Contraseña (para mi perfil)',
+    'passwordHint': 'Esta contraseña protege el acceso a mi perfil.',
     'showPassword': 'Mostrar contraseña',
     'hidePassword': 'Ocultar contraseña',
     'languageLabel': 'Idioma',
     'start': 'Comenzar la aventura',
   },
   'profileLock': {
-    'title': 'Mi Perfil está protegido',
+    'title': 'Mi perfil está protegido',
     'subtitle':
         'Introduce la contraseña definida al registrarte para continuar.',
     'passwordPlaceholder': 'Contraseña',
@@ -1165,7 +1292,7 @@ const Map<String, dynamic> es = {
     'unlockButton': 'Desbloquear',
   },
   'modeLibre': {
-    'title': 'Modo Libre',
+    'title': 'Modo libre',
     'subtitle': '¡Dibuja y practica libremente, sin reglas!',
     'helpText':
         'Elige un modelo si quieres inspirarte, luego dibújalo de memoria en la página en blanco. ¡Bórralo y vuelve a empezar todas las veces que quieras!',
@@ -1183,11 +1310,13 @@ const Map<String, dynamic> es = {
     'clear': 'Borrar',
     'colorLabel': 'Color',
     'canvasAria': 'Área de dibujo libre',
+    'eraseAllAria': 'Borrar todo',
+    'eraseTargetedAria': 'Borrado selectivo',
     'signNames': {
-      'trait': 'El Trazo',
-      'courbe': 'La Curva',
-      'point': 'El Punto',
-      'crochet': 'El Gancho',
+      'trait': 'El trazo',
+      'courbe': 'La curva',
+      'point': 'El punto',
+      'crochet': 'El gancho',
     },
   },
   'parcours': {
@@ -1205,7 +1334,7 @@ const Map<String, dynamic> es = {
     'wordSearchStep': 'Sopa de letras',
     'paliers': [
       {
-        'title': 'Los Signos básicos',
+        'title': 'Los signos básicos',
         'subtitle': 'NIVEL 1',
         'tagline': 'Puntos, curvas, ganchos y trazos',
       },
@@ -1215,12 +1344,12 @@ const Map<String, dynamic> es = {
         'tagline': 'Combina los signos para escribir',
       },
       {
-        'title': 'Las Sílabas',
+        'title': 'Las sílabas',
         'subtitle': 'NIVEL 3',
         'tagline': 'Combina consonantes y vocales para leer',
       },
       {
-        'title': 'Las Palabras',
+        'title': 'Las palabras',
         'subtitle': 'NIVEL 4',
         'tagline': 'Une las letras entre sí',
       },
@@ -1228,7 +1357,7 @@ const Map<String, dynamic> es = {
     'comingSoon': '¡Esta etapa llega pronto!',
   },
   'community': {
-    'title': 'Nuestra Comunidad del Claro',
+    'title': 'Nuestra comunidad del claro',
     'subtitle': 'Clasificación de la semana',
     'othersTitle': 'Los otros brotes',
     'you': 'yo',
@@ -1241,6 +1370,22 @@ const Map<String, dynamic> es = {
   'profileHub': {
     'title': 'Mi cuaderno de explorador',
     'subtitle': '¡Sigue así, estás aprendiendo maravillosamente bien!',
+    'familySwitch': 'Cambiar de niño',
+    'familyTitle': 'Nuestros perfiles',
+    'familySubtitle': 'Elige quién está jugando ahora',
+    'familyAddChild': 'Añadir un niño',
+    'familyNewChildName': 'Nombre del niño',
+    'familyNewChildPassword': 'Contraseña (mín. 4 caracteres)',
+    'familyCreate': 'Crear este perfil',
+    'streakDaySingular': '¡1 día seguido!',
+    'streakDayPlural': '¡{count} días seguidos!',
+    'streakAtRisk': '¡Juega hoy para mantener tu racha!',
+    'accessibilityCardTitle': 'Accesibilidad',
+    'dyslexiaFontLabel': 'Fuente para dislexia',
+    'dyslexiaFontHint':
+        'Usa una fuente diseñada para facilitar la lectura.',
+    'uiScaleLabel': 'Tamaño de la interfaz',
+    'uiScaleHint': 'Agranda o reduce el texto en toda la aplicación.',
     'totalPointsLabel': 'Mis puntos',
     'totalPointsHint': 'Ganados al terminar tus lecciones y ejercicios',
     'statsSignes': 'Signos dominados',
@@ -1248,9 +1393,9 @@ const Map<String, dynamic> es = {
     'statsDays': 'Días de aventura',
     'progressionTitle': 'Mi progreso en el bosque',
     'stepsValidated': 'de {total} etapas superadas',
-    'settingsTitle': 'Mis Ajustes',
+    'settingsTitle': 'Mis ajustes',
     'languageCardTitle': 'Idioma del explorador',
-    'soundCardTitle': 'Sonido y Animaciones',
+    'soundCardTitle': 'Sonido y animaciones',
     'voiceLabel': 'Voz de Flores Gong Nota',
     'voiceOn': 'Activada',
     'voiceOff': 'Desactivada',
@@ -1265,7 +1410,7 @@ const Map<String, dynamic> es = {
     'voiceGenderTest': 'Escuchar un ejemplo',
     'voiceGenderTestPhrase': '¡Hola, soy Flores Gong Nota! ¿Seguimos aprendiendo juntos?',
     'photoTitle': 'Mi foto de perfil',
-    'photoHint': 'Aparecerá junto a tu nombre en la clasificación de El Claro.',
+    'photoHint': 'Aparecerá junto a tu nombre en la clasificación de el claro.',
     'photoChangeAria': 'Cambiar la foto de perfil',
     'photoRemove': 'Eliminar',
     'formatCardTitle': 'Formato de escritura',
@@ -1285,12 +1430,12 @@ const Map<String, dynamic> es = {
       {'label': 'Rápida'},
     ],
     'branches': [
-      {'name': 'Nivel 1: Puntos y Curvas'},
-      {'name': 'Nivel 2: Ganchos y Trazos'},
-      {'name': 'Nivel 3: La Combinatoria'},
+      {'name': 'Nivel 1: puntos y curvas'},
+      {'name': 'Nivel 2: ganchos y trazos'},
+      {'name': 'Nivel 3: la combinatoria'},
     ],
-    'lockAction': 'Bloquear Mi Perfil',
-    'passwordCardTitle': 'Contraseña de Mi Perfil',
+    'lockAction': 'Bloquear mi perfil',
+    'passwordCardTitle': 'Contraseña de mi perfil',
     'oldPasswordPlaceholder': 'Contraseña actual',
     'newPasswordPlaceholder': 'Nueva contraseña',
     'confirmPasswordPlaceholder': 'Confirmar contraseña',
@@ -1309,37 +1454,39 @@ const Map<String, dynamic> es = {
     'body': 'Muy bien, has terminado este ejercicio. ¿Qué quieres hacer ahora?',
   },
   'coursScreen': {
-    'title': 'Mis Lecciones',
+    'title': 'Mis lecciones',
     'subtitle': 'Método Flores Gong Nota',
     'intro':
         'Aquí están los 4 signos fundamentales del método Flores Gong Nota. Toca una tarjeta para explorar todas sus variantes.',
-    'letters': 'Letras y Números',
+    'letters': 'Letras y números',
     'lettersSubtitle': 'Combinatoria — de a a z, de A a Z, de 0 a 9',
     'signNames': {
-      'trait': 'El Trazo',
-      'crochet': 'El Gancho',
-      'courbe': 'Las Curvas',
-      'point': 'El Punto',
+      'trait': 'El trazo',
+      'crochet': 'El gancho',
+      'courbe': 'Las curvas',
+      'point': 'El punto',
     },
   },
   'coursFamily': {
     'intro':
         'Aquí está la lección sobre {title}. Toca una tarjeta abajo para ver cómo trazar cada variante.',
     'variantsTitle': 'Todas las variantes',
+    'oneVariant': 'Una sola variante',
+    'variantsCount': '{count} variantes',
     'exercer': 'Practicar',
-    'passExercices': 'Ir a los Ejercicios ({title})',
+    'passExercices': 'Ir a los ejercicios ({title})',
     'titles': {
-      'point': 'El Punto',
-      'courbe': 'Las Curvas',
-      'crochet': 'Los Ganchos y Dobles Ganchos',
-      'trait': 'Los Trazos',
+      'point': 'El punto',
+      'courbe': 'Las curvas',
+      'crochet': 'Los ganchos y dobles ganchos',
+      'trait': 'Los trazos',
     },
   },
   'coursLettres': {
-    'title': 'Letras y Números',
+    'title': 'Letras y números',
     'subtitle': 'Toca una letra para ver su fórmula',
     'intro':
-        'Letras y Números. Cada letra se forma combinando los signos fundamentales. ¡Toca una letra para ver su fórmula!',
+        'Letras y números. Cada letra se forma combinando los signos fundamentales. ¡Toca una letra para ver su fórmula!',
     'legendSuffix': 'dominante',
     'minusculesTitle': 'Minúsculas (a – z)',
     'minusculesSubtitle': 'Fuente: Manual CP1 — fórmulas validadas',
@@ -1367,10 +1514,10 @@ const Map<String, dynamic> es = {
     'practiceLink': 'Practicar en el cuaderno de escritura',
     'seeAll': 'Ver todas las letras',
     'families': {
-      'trait': 'El Trazo',
-      'courbe': 'La Curva',
-      'crochet': 'El Gancho',
-      'point': 'El Punto',
+      'trait': 'El trazo',
+      'courbe': 'La curva',
+      'crochet': 'El gancho',
+      'point': 'El punto',
     },
     'variants': {
       'vertical': 'Vertical',
@@ -1395,7 +1542,7 @@ const Map<String, dynamic> es = {
     },
   },
   'coursFormation': {
-    'title': 'Formar las Letras',
+    'title': 'Formar las letras',
     'subtitle': 'Combinación de los signos básicos',
     'intro':
         '¡Bienvenido a la combinatoria! Aquí aprenderás a combinar los signos para formar letras y números.',
@@ -1409,7 +1556,7 @@ const Map<String, dynamic> es = {
     'notFound': 'no está disponible por el momento.',
     'backToList': 'Volver a las lecciones',
     'formulaTitle': 'Fórmula',
-    'vowelsTitle': 'Las Vocales',
+    'vowelsTitle': 'Las vocales',
     'practice': 'Practicar',
     'families': {
       'trait': 'Trazo',
@@ -1448,7 +1595,7 @@ const Map<String, dynamic> es = {
     'letterPrefix': 'La letra',
     'digitPrefix': 'El dígito',
     'gestureCount': '{count} gesto(s)',
-    'title': 'Cuaderno de Escritura',
+    'title': 'Cuaderno de escritura',
     'titleFamily': 'Cuaderno: {titre}',
     'subtitle': 'Repasa las líneas punteadas',
     'introGeneral':
@@ -1621,7 +1768,10 @@ const Map<String, dynamic> ar = {
     "next": "التالي",
     "previous": "السابق",
     "backToHome": "العودة إلى الرئيسية",
-    "restart": "إعادة البدء"
+    "restart": "إعادة البدء",
+    "speakLetterIntro": "لكتابة الحرف {char}، إليك الطريقة: {consigne}",
+    "speakDigitIntro": "لكتابة الرقم {char}، إليك الطريقة: {consigne}",
+    "speakSignIntro": "لرسم الإشارة {label}، إليك الطريقة: {consigne}"
   },
   "evaluation": {
     "badge": "تقييم",
@@ -1694,6 +1844,8 @@ const Map<String, dynamic> ar = {
     "clear": "مسح",
     "colorLabel": "اللون",
     "canvasAria": "مساحة الرسم الحر",
+    "eraseAllAria": "مسح الكل",
+    "eraseTargetedAria": "محو دقيق",
     "signNames": {
       "trait": "الخط",
       "courbe": "المنحنى",
@@ -1734,7 +1886,8 @@ const Map<String, dynamic> ar = {
         "subtitle": "المرحلة 4",
         "tagline": "اربط الحروف ببعضها"
       }
-    ]
+    ],
+    "comingSoon": "هذه الخطوة قادمة قريبًا!"
   },
   "community": {
     "title": "مجتمعنا في الساحة",
@@ -1750,6 +1903,21 @@ const Map<String, dynamic> ar = {
   "profileHub": {
     "title": "دفتر مستكشفي",
     "subtitle": "واصل هكذا، أنت تتعلم بشكل رائع!",
+    "familySwitch": "تغيير الطفل",
+    "familyTitle": "ملفاتنا",
+    "familySubtitle": "اختر من يلعب الآن",
+    "familyAddChild": "إضافة طفل",
+    "familyNewChildName": "اسم الطفل",
+    "familyNewChildPassword": "كلمة السر (4 أحرف على الأقل)",
+    "familyCreate": "إنشاء هذا الملف",
+    "streakDaySingular": "يوم واحد متتالٍ!",
+    "streakDayPlural": "{count} أيام متتالية!",
+    "streakAtRisk": "العب اليوم للحفاظ على سلسلتك!",
+    "accessibilityCardTitle": "إمكانية الوصول",
+    "dyslexiaFontLabel": "خط مناسب لعسر القراءة",
+    "dyslexiaFontHint": "استخدم خطًا مصممًا لتسهيل القراءة.",
+    "uiScaleLabel": "حجم الواجهة",
+    "uiScaleHint": "يكبّر أو يصغّر النص في التطبيق بأكمله.",
     "totalPointsLabel": "نقاطي",
     "totalPointsHint": "مكتسبة من إنهاء دروسك وتمارينك",
     "statsSignes": "الإشارات المتقنة",
@@ -1856,6 +2024,8 @@ const Map<String, dynamic> ar = {
   "coursFamily": {
     "intro": "إليك درس {title}. المس بطاقة في الأسفل لترى كيفية رسم كل شكل.",
     "variantsTitle": "جميع الأشكال",
+    "oneVariant": "شكل واحد فقط",
+    "variantsCount": "{count} أشكال",
     "exercer": "تدرّب",
     "passExercices": "الانتقال إلى التمارين ({title})",
     "titles": {

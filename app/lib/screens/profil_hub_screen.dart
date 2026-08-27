@@ -12,9 +12,13 @@ import '../services/backend_sync_service.dart';
 import '../services/sign_speech.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_animation_speed.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../widgets/amani_mascot.dart';
 import '../hooks/use_writing_style.dart';
+import '../services/family_service.dart';
 import '../utils/pick_profile_photo.dart';
+import 'child_switcher_sheet.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ProfilHubScreen extends StatefulWidget {
   const ProfilHubScreen({super.key});
@@ -152,7 +156,7 @@ class _LockScreenState extends State<_LockScreen> {
                   child: Row(
                     children: [
                       const Icon(
-                        CupertinoIcons.lock_fill,
+                        LucideIcons.lock,
                         color: AmaniColors.textSecondary,
                       ),
                       const SizedBox(width: 12),
@@ -174,8 +178,8 @@ class _LockScreenState extends State<_LockScreen> {
                       IconButton(
                         icon: Icon(
                           _showPassword
-                              ? CupertinoIcons.eye_slash_fill
-                              : CupertinoIcons.eye_solid,
+                              ? LucideIcons.eyeOff
+                              : LucideIcons.eye,
                           color: AmaniColors.textSecondary,
                         ),
                         onPressed: () =>
@@ -263,10 +267,10 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   _PasswordFeedback? _passwordFeedback;
 
   static const List<Map<String, Object>> _branchMeta = [
-    {'icon': Icons.eco_rounded, 'color': 0xFF8FBF6F, 'done': 4, 'total': 4},
-    {'icon': Icons.park_rounded, 'color': 0xFFA9784F, 'done': 3, 'total': 4},
+    {'icon': LucideIcons.leaf, 'color': 0xFF8FBF6F, 'done': 4, 'total': 4},
+    {'icon': LucideIcons.trees, 'color': 0xFFA9784F, 'done': 3, 'total': 4},
     {
-      'icon': Icons.auto_awesome_rounded,
+      'icon': LucideIcons.sparkles,
       'color': 0xFF4A90E2,
       'done': 1,
       'total': 6,
@@ -416,7 +420,12 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final speech = context.read<SignSpeechService>();
     final writingStyle = context.watch<WritingStyleProvider>();
     final animSpeed = context.watch<AnimationSpeedProvider>();
-    final stats = context.watch<ProgressProvider>().stats;
+    final progress = context.watch<ProgressProvider>();
+    final stats = progress.stats;
+    final streak = progress.currentStreak;
+    final streakAtRisk = progress.isStreakAtRiskToday;
+    final family = context.watch<FamilyService>();
+    final accessibility = context.watch<AccessibilitySettings>();
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -451,34 +460,10 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         alignment: Alignment.center,
                         child: _photoBase64 == null
                             ? const Icon(
-                                CupertinoIcons.settings,
+                                LucideIcons.settings,
                                 color: AmaniColors.textPrimary,
                               )
                             : null,
-                      ),
-                      Positioned(
-                        bottom: -2,
-                        right: -2,
-                        child: GestureDetector(
-                          onTap: _choosePhoto,
-                          child: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: AmaniColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AmaniColors.background,
-                                width: 2,
-                              ),
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.camera_fill,
-                              size: 11,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -493,7 +478,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         style: AmaniTheme.titleStyle.copyWith(fontSize: 21),
                       ),
                       Text(
-                        hub['subtitle'] ?? '',
+                        family.activeChild != null
+                            ? family.activeChild!.nom
+                            : (hub['subtitle'] ?? ''),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AmaniTheme.bodyStyle.copyWith(
@@ -504,15 +491,49 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     ],
                   ),
                 ),
+                if (family.children.length > 1 || family.hasAnyChild)
+                  IconButton(
+                    tooltip: hub['familySwitch'] ?? "Changer d'enfant",
+                    icon: const Icon(
+                      LucideIcons.users,
+                      color: AmaniColors.textSecondary,
+                    ),
+                    onPressed: () => showChildSwitcherSheet(context),
+                  ),
                 IconButton(
                   tooltip: hub['lockAction'] ?? 'Verrouiller',
                   icon: const Icon(
-                    CupertinoIcons.lock_open_fill,
+                    LucideIcons.lockKeyholeOpen,
                     color: AmaniColors.textSecondary,
                   ),
                   onPressed: widget.onLock,
                 ),
               ],
+            ),
+            const SizedBox(height: 24),
+
+            // Image plein cadre — bannière décorative inspirée de
+            // `_app.mon-profil.tsx` (amani-profil.png), agrandie par
+            // rapport au web pour que l'image reste bien visible sur
+            // mobile plutôt que d'être largement rognée par BoxFit.cover.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                height: 280,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                  ),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x24000000), blurRadius: 8),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/amani-profil.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -553,7 +574,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           alignment: Alignment.center,
                           child: _photoBase64 == null
                               ? const Icon(
-                                  CupertinoIcons.person_fill,
+                                  LucideIcons.user,
                                   color: AmaniColors.secondary,
                                 )
                               : null,
@@ -575,7 +596,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                                 ),
                               ),
                               child: const Icon(
-                                CupertinoIcons.camera_fill,
+                                LucideIcons.camera,
                                 size: 12,
                                 color: Colors.white,
                               ),
@@ -651,7 +672,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
-                      CupertinoIcons.rosette,
+                      LucideIcons.award,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -696,12 +717,109 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             ),
             const SizedBox(height: 20),
 
+            // Série de jours consécutifs — badge flamme mis en valeur, avec
+            // un rappel visuel si l'enfant n'a pas encore joué aujourd'hui
+            // alors qu'une série est en cours.
+            if (streak > 0)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: streakAtRisk
+                        ? const [Color(0xFFFBEFE0), Color(0xFFF7DCC0)]
+                        : const [Color(0xFFFFF6E9), Color(0xFFFFE9C7)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: streakAtRisk
+                        ? AmaniColors.warning
+                        : const Color(0xFFF3D07A),
+                    width: streakAtRisk ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFFFB74D), Color(0xFFF3703A)],
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x66F3703A),
+                            blurRadius: 14,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        LucideIcons.flame,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            streak == 1
+                                ? (hub['streakDaySingular'] ?? '1 jour de suite !')
+                                : tFormat(
+                                    hub['streakDayPlural'] ??
+                                        '{count} jours de suite !',
+                                    {'count': streak},
+                                  ),
+                            style: AmaniTheme.titleStyle.copyWith(
+                              fontSize: 16,
+                              color: const Color(0xFFB85C1E),
+                            ),
+                          ),
+                          if (streakAtRisk) ...[
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                const Icon(
+                                  LucideIcons.alertCircle,
+                                  size: 14,
+                                  color: AmaniColors.warning,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    hub['streakAtRisk'] ??
+                                        "Joue aujourd'hui pour continuer ta série !",
+                                    style: AmaniTheme.bodyStyle.copyWith(
+                                      fontSize: 12,
+                                      color: AmaniColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (streak > 0) const SizedBox(height: 16),
+
             // Statistiques
             Row(
               children: [
                 Expanded(
                   child: _StatTile(
-                    icon: CupertinoIcons.book_fill,
+                    icon: LucideIcons.bookOpen,
                     value: '${stats.signesMaitrises}',
                     label: hub['statsSignes'] ?? '',
                     color: AmaniColors.secondary,
@@ -710,7 +828,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _StatTile(
-                    icon: CupertinoIcons.rosette,
+                    icon: LucideIcons.award,
                     value: '${stats.exercicesReussis}',
                     label: hub['statsExercices'] ?? '',
                     color: AmaniColors.primary,
@@ -719,7 +837,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _StatTile(
-                    icon: CupertinoIcons.calendar,
+                    icon: LucideIcons.calendar,
                     value: '${stats.joursAventure}',
                     label: hub['statsDays'] ?? '',
                     color: const Color(0xFF4A90E2),
@@ -760,7 +878,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
               child: Column(
                 children: [
                   _buildSettingRow(
-                    icon: CupertinoIcons.globe,
+                    icon: LucideIcons.globe,
                     title: hub['languageCardTitle'] ?? 'Langue',
                     trailing: SegmentedControl<Lang>(
                       value: langProvider.lang,
@@ -794,13 +912,15 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
                   _buildSettingRow(
-                    icon: CupertinoIcons.textformat_abc,
+                    icon: LucideIcons.type,
                     title: hub['formatCardTitle'] ?? "Format d'écriture",
                     trailing: SegmentedControl<WritingStyle>(
                       value: writingStyle.style,
                       items: {
-                        WritingStyle.script: 'Script',
-                        WritingStyle.cursive: 'Cursive',
+                        WritingStyle.script:
+                            formatOptionLabel(hub, 0) ?? 'Script',
+                        WritingStyle.cursive:
+                            formatOptionLabel(hub, 1) ?? 'Cursive',
                       },
                       onChanged: (style) {
                         writingStyle.setStyle(style);
@@ -829,8 +949,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 children: [
                   _buildSettingRow(
                     icon: _soundEnabled
-                        ? CupertinoIcons.speaker_2_fill
-                        : CupertinoIcons.speaker_slash_fill,
+                        ? LucideIcons.volume2
+                        : LucideIcons.volumeX,
                     title: hub['voiceLabel'] ?? 'Voix & Sons',
                     trailing: CupertinoSwitch(
                       value: _soundEnabled,
@@ -850,7 +970,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     Row(
                       children: [
                         const Icon(
-                          CupertinoIcons.volume_down,
+                          LucideIcons.volume2,
                           color: AmaniColors.textSecondary,
                         ),
                         Expanded(
@@ -861,7 +981,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           ),
                         ),
                         const Icon(
-                          CupertinoIcons.volume_up,
+                          LucideIcons.volume2,
                           color: AmaniColors.textSecondary,
                         ),
                       ],
@@ -874,7 +994,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           langProvider.lang,
                         ),
                         icon: const Icon(
-                          CupertinoIcons.play_fill,
+                          Icons.play_arrow_rounded,
                           size: 16,
                           color: AmaniColors.primary,
                         ),
@@ -963,7 +1083,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           langProvider.lang,
                         ),
                         icon: const Icon(
-                          CupertinoIcons.play_fill,
+                          Icons.play_arrow_rounded,
                           size: 16,
                           color: AmaniColors.primary,
                         ),
@@ -1112,6 +1232,81 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Text(
+              hub['accessibilityCardTitle'] ?? 'Accessibilité',
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+            ),
+            const SizedBox(height: 16),
+
+            _buildCard(
+              child: Column(
+                children: [
+                  _buildSettingRow(
+                    icon: LucideIcons.type,
+                    title:
+                        hub['dyslexiaFontLabel'] ?? 'Police adaptée dyslexie',
+                    trailing: CupertinoSwitch(
+                      value: accessibility.dyslexiaFont,
+                      activeTrackColor: AmaniColors.primary,
+                      onChanged: (v) =>
+                          context.read<AccessibilitySettings>().setDyslexiaFont(v),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      hub['dyslexiaFontHint'] ??
+                          'Utilise une police conçue pour faciliter la lecture.',
+                      style: AmaniTheme.bodyStyle.copyWith(
+                        fontSize: 12,
+                        color: AmaniColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const Divider(color: AmaniColors.disabled, height: 32),
+                  Text(
+                    hub['uiScaleLabel'] ?? "Taille de l'interface",
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    hub['uiScaleHint'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.type,
+                        size: 16,
+                        color: AmaniColors.textSecondary,
+                      ),
+                      Expanded(
+                        child: CupertinoSlider(
+                          value: accessibility.uiScale,
+                          min: kMinUiScale,
+                          max: kMaxUiScale,
+                          divisions: 11,
+                          activeColor: AmaniColors.primary,
+                          onChanged: (v) =>
+                              context.read<AccessibilitySettings>().setUiScale(v),
+                        ),
+                      ),
+                      const Icon(
+                        LucideIcons.type,
+                        size: 26,
+                        color: AmaniColors.textSecondary,
+                      ),
                     ],
                   ),
                 ],
@@ -1461,7 +1656,7 @@ class _Stepper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _StepperButton(icon: CupertinoIcons.minus, onTap: onDecrement),
+        _StepperButton(icon: LucideIcons.minus, onTap: onDecrement),
         Expanded(
           child: Center(
             child: Text(
@@ -1470,7 +1665,7 @@ class _Stepper extends StatelessWidget {
             ),
           ),
         ),
-        _StepperButton(icon: CupertinoIcons.plus, onTap: onIncrement),
+        _StepperButton(icon: LucideIcons.plus, onTap: onIncrement),
       ],
     );
   }
@@ -1526,7 +1721,7 @@ class _PasswordField extends StatelessWidget {
       child: Row(
         children: [
           const Icon(
-            CupertinoIcons.lock_fill,
+            LucideIcons.lock,
             size: 18,
             color: AmaniColors.textSecondary,
           ),
@@ -1550,8 +1745,8 @@ class _PasswordField extends StatelessWidget {
             IconButton(
               icon: Icon(
                 obscure
-                    ? CupertinoIcons.eye_solid
-                    : CupertinoIcons.eye_slash_fill,
+                    ? LucideIcons.eye
+                    : LucideIcons.eyeOff,
                 size: 18,
                 color: AmaniColors.textSecondary,
               ),
@@ -1564,6 +1759,17 @@ class _PasswordField extends StatelessWidget {
 }
 
 // Simple custom segmented control for standardizing UI
+/// Libellé traduit d'une option de `profileHub.formatOptions` (0 = script,
+/// 1 = cursive) — évite de figer "Script"/"Cursive" en dur, sans traduction,
+/// dans les écrans qui affichent le réglage de format d'écriture.
+String? formatOptionLabel(Map<String, dynamic> hub, int index) {
+  final options = hub['formatOptions'];
+  if (options is! List || index >= options.length) return null;
+  final option = options[index];
+  if (option is! Map) return null;
+  return option['label'] as String?;
+}
+
 class SegmentedControl<T> extends StatelessWidget {
   final T value;
   final Map<T, String> items;

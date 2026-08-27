@@ -12,6 +12,7 @@ import '../data/word_catalog.dart';
 import 'amani_mascot.dart';
 import 'letter_trace_cell.dart';
 import 'exercise_complete_popup.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class _GridCell {
   final int row;
@@ -302,8 +303,14 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
 
             Builder(
               builder: (context) {
-                final gridWidth = widget.crossword.cols * cellSize + 16;
-                final gridHeight = widget.crossword.rows * cellSize + 16;
+                // Chaque case (voir `_buildCell`) est enveloppée dans un
+                // `Padding(all: 1)`, donc occupe réellement `cellSize + 2` —
+                // et non `cellSize` — sur chaque axe. Une marge fixe de 16px
+                // (au lieu de proportionnelle au nombre de lignes/colonnes)
+                // provoquait un débordement (bandes jaune-noir) dès qu'une
+                // grille dépassait 8 cases de côté.
+                final gridWidth = widget.crossword.cols * (cellSize + 2);
+                final gridHeight = widget.crossword.rows * (cellSize + 2);
                 final viewportHeight =
                     (MediaQuery.of(context).size.height * 0.5).clamp(
                       200.0,
@@ -435,7 +442,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                               alignment: Alignment.center,
                               child: isWordSolved
                                   ? const Icon(
-                                      Icons.check_rounded,
+                                      LucideIcons.check,
                                       size: 16,
                                       color: Colors.white,
                                     )
@@ -451,7 +458,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                             ),
                             const SizedBox(width: 10),
                             Icon(
-                              Icons.volume_up_rounded,
+                              LucideIcons.volume2,
                               size: 16,
                               color: badgeColor,
                             ),
@@ -583,7 +590,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
               top: -6,
               right: -6,
               child: Icon(
-                Icons.auto_awesome_rounded,
+                LucideIcons.sparkles,
                 size: 14,
                 color: Color(0xFFD9A84A),
               ),
@@ -696,7 +703,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.volume_up_rounded,
+                          LucideIcons.volume2,
                           size: 16,
                           color: Color(0xFF8A6800),
                         ),

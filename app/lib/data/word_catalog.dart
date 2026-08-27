@@ -1,3 +1,7 @@
+// Nommage SCREAMING_SNAKE_CASE volontaire (miroir 1:1 du module TypeScript
+// source) — voir `calcul_catalog.dart` pour l'explication complète.
+// ignore_for_file: constant_identifier_names, non_constant_identifier_names
+
 /// PALIER 3 — Les Mots
 ///
 /// Banque de mots courts (filtrée depuis mots.tex) : uniquement des mots dont
@@ -6,10 +10,10 @@
 /// trait d'union ou espace), afin que chaque mot reste traçable avec les
 /// signes du Palier 2 — dans les trois langues, la traduction servant ici à
 /// l'internationalisation de l'application plutôt qu'à un exercice de
-/// vocabulaire multilingue. Pour l'espagnol, les accents (á/é/í/ó/ú) sont donc
-/// volontairement omis (ex. "avion" et non "avión") ; le ñ reste autorisé
-/// puisqu'il est enseigné comme lettre à part entière. Port fidèle de
-/// `src/data/word-catalog.ts`.
+/// vocabulaire multilingue. Pour l'espagnol, les accents (á/é/í/ó/ú) et le ñ
+/// sont donc volontairement omis (ex. "avion" et non "avión", "muneca" et non
+/// "muñeca") : le ñ n'est plus enseigné comme lettre à part entière. Port
+/// fidèle de `src/data/word-catalog.ts`.
 class WordEntry {
   final String id;
   final String fr;
@@ -82,7 +86,7 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('verre', 'verre', 'glass', 'vaso', 'maison'),
   WordEntry('bol', 'bol', 'bowl', 'bol', 'maison'),
   WordEntry('clef', 'clef', 'key', 'llave', 'maison'),
-  WordEntry('poupee', 'poupee', 'doll', 'muñeca', 'maison'),
+  WordEntry('poupee', 'poupee', 'doll', 'muneca', 'maison'),
 
   // ─── Vêtements ───
   WordEntry('short', 'short', 'shorts', 'short', 'vetements'),

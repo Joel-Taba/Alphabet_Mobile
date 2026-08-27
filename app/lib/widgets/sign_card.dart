@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import '../widgets/sign_glyph.dart';
 import '../theme/amani_theme.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 enum SignCardState { normal, selected, correct, incorrect, misplaced, locked }
 
@@ -92,7 +92,7 @@ class _SignCardState extends State<SignCard>
         ],
       );
       overlay = const Icon(
-        CupertinoIcons.lock_fill,
+        LucideIcons.lock,
         color: Colors.white,
         size: 16,
       );
@@ -107,18 +107,18 @@ class _SignCardState extends State<SignCard>
           break;
         case SignCardState.correct:
           ringColor = AmaniColors.success;
-          overlay = const Icon(Icons.check, color: Colors.white, size: 18);
+          overlay = const Icon(LucideIcons.check, color: Colors.white, size: 18);
           badgeBg = AmaniColors.success;
           break;
         case SignCardState.incorrect:
           ringColor = AmaniColors.error;
-          overlay = const Icon(Icons.close, color: Colors.white, size: 18);
+          overlay = const Icon(LucideIcons.x, color: Colors.white, size: 18);
           badgeBg = AmaniColors.error;
           break;
         case SignCardState.misplaced:
           ringColor = AmaniColors.warning;
           overlay = const Icon(
-            Icons.arrow_forward,
+            LucideIcons.arrowRight,
             color: Colors.white,
             size: 18,
           );

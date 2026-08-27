@@ -6,6 +6,8 @@ import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
 import '../services/progress_service.dart';
 import '../services/backend_sync_service.dart';
+import '../widgets/amani_mascot.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Avatars disponibles pour représenter un profil réel venu du back-end (qui
 /// ne connaît aucune notion d'"animal" — seuls nom et score existent côté
@@ -138,13 +140,9 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text('🌟', style: TextStyle(fontSize: 20)),
+                  const AmaniMascot(
+                    pose: AmaniPose.podium,
+                    size: AmaniSize.small,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -185,80 +183,154 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
 
             const SizedBox(height: 32),
 
-            // List
+            // Classement, puis mot d'Amani dans une section entièrement
+            // séparée en dessous (et non mêlé aux rangs dans la même liste
+            // comme précédemment) — les deux défilent ensemble sur la page.
             Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                ),
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-                  itemCount: profiles.length - 3,
-                  itemBuilder: (context, index) {
-                    final profile = profiles[index + 3];
-                    final isMoi = profile['moi'] as bool;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: isMoi
-                            ? AmaniColors.primary.withValues(alpha: 0.1)
-                            : AmaniColors.background,
-                        borderRadius: BorderRadius.circular(16),
-                        border: isMoi
-                            ? Border.all(color: AmaniColors.primary, width: 2)
-                            : null,
-                      ),
-                      child: Row(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                      child: Column(
                         children: [
-                          Text(
-                            '${index + 4}',
-                            style: AmaniTheme.titleStyle.copyWith(
-                              fontSize: 18,
-                              color: AmaniColors.textSecondary,
+                          for (
+                            int index = 0;
+                            index < profiles.length - 3;
+                            index++
+                          )
+                            Builder(
+                              builder: (context) {
+                                final profile = profiles[index + 3];
+                                final isMoi = profile['moi'] as bool;
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMoi
+                                        ? AmaniColors.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                        : AmaniColors.background,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: isMoi
+                                        ? Border.all(
+                                            color: AmaniColors.primary,
+                                            width: 2,
+                                          )
+                                        : null,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '${index + 4}',
+                                        style: AmaniTheme.titleStyle.copyWith(
+                                          fontSize: 18,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      _buildAvatar(
+                                        profile['animal'] as String,
+                                        40,
+                                        photoBase64: isMoi
+                                            ? _photoBase64
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          profile['prenom'] as String,
+                                          style: AmaniTheme.titleStyle
+                                              .copyWith(fontSize: 18),
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${profile['score']}',
+                                            style: AmaniTheme.titleStyle
+                                                .copyWith(
+                                                  fontSize: 18,
+                                                  color:
+                                                      AmaniColors.primaryDark,
+                                                ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            LucideIcons.star,
+                                            color: AmaniColors.warning,
+                                            size: 20,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          _buildAvatar(
-                            profile['animal'] as String,
-                            40,
-                            photoBase64: isMoi ? _photoBase64 : null,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              profile['prenom'] as String,
-                              style: AmaniTheme.titleStyle.copyWith(
-                                fontSize: 18,
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                '${profile['score']}',
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 18,
-                                  color: AmaniColors.primaryDark,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.star_rounded,
-                                color: AmaniColors.warning,
-                                size: 20,
-                              ),
-                            ],
-                          ),
                         ],
                       ),
-                    );
-                  },
+                    ),
+
+                    // Mot d'encouragement d'Amani — port fidèle de la carte
+                    // "Mot d'Amani" de `_app.communaute.tsx`, désormais dans
+                    // sa propre section sur le fond crème de la page plutôt
+                    // que dans la carte blanche du classement.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AmaniColors.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: AmaniShadows.card,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const AmaniMascot(
+                              pose: AmaniPose.encouragement,
+                              size: AmaniSize.medium,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t['community']?['amaniLine'] ?? '',
+                                    style: AmaniTheme.bodyStyle.copyWith(
+                                      fontSize: 16,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '— Flores Gong Nota : « ${t['community']?['amaniQuote'] ?? ''} »',
+                                    style: AmaniTheme.bodyStyle.copyWith(
+                                      fontSize: 14,
+                                      color: AmaniColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -275,11 +347,12 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
   ) {
     Color rankColor;
     if (rank == 1) {
-      rankColor = AmaniColors.warning;
-    } else if (rank == 2)
-      rankColor = AmaniColors.disabled;
-    else
-      rankColor = AmaniColors.signCourbe;
+      rankColor = AmaniColors.gold;
+    } else if (rank == 2) {
+      rankColor = AmaniColors.diamond;
+    } else {
+      rankColor = AmaniColors.bronze;
+    }
 
     final isMoi = profile['moi'] as bool;
 
@@ -297,9 +370,9 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
           width: 90,
           height: height,
           decoration: BoxDecoration(
-            color: AmaniColors.primary,
+            color: Colors.grey.shade400,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            border: Border.all(color: AmaniColors.primaryDark, width: 3),
+            border: Border.all(color: Colors.grey.shade600, width: 3),
             boxShadow: const [
               BoxShadow(color: Color(0x2E000000), offset: Offset(0, 4)),
             ],
@@ -371,11 +444,12 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
 
     Color borderColor = AmaniColors.primaryDark;
     if (rank == 1) {
-      borderColor = AmaniColors.warning;
-    } else if (rank == 2)
-      borderColor = AmaniColors.disabled;
-    else if (rank == 3)
-      borderColor = AmaniColors.signCourbe;
+      borderColor = AmaniColors.gold;
+    } else if (rank == 2) {
+      borderColor = AmaniColors.diamond;
+    } else if (rank == 3) {
+      borderColor = AmaniColors.bronze;
+    }
 
     return Container(
       width: size,

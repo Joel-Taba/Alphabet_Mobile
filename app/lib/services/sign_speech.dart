@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -133,6 +134,13 @@ class SignSpeechService extends ChangeNotifier {
 
   SignSpeechService() {
     _initTts();
+    // Précharge la liste des voix dès le démarrage : sur mobile, le moteur
+    // TTS natif s'initialise de façon asynchrone, et un premier appel à
+    // `speak()` trop précoce (juste après le lancement de l'app) pouvait
+    // tomber pendant cette fenêtre et ne jamais retrouver de voix de
+    // qualité ensuite (voir `_availableVoices`, qui ne mémorise plus
+    // désormais une liste vide comme définitive).
+    unawaited(_availableVoices());
   }
 
   void _initTts() {
@@ -150,6 +158,24 @@ class SignSpeechService extends ChangeNotifier {
       _isSpeaking = false;
       notifyListeners();
     });
+
+    // Configuration de la session audio iOS (sans effet sur les autres
+    // plateformes, voir `setIosAudioCategory`) : lecture au haut-parleur,
+    // mélangée avec le reste (musique de fond éventuelle), plutôt que la
+    // catégorie par défaut qui peut router vers l'écouteur interne ou
+    // couper le son selon l'état du commutateur silencieux. Ni l'une ni
+    // l'autre de ces deux méthodes n'est implémentée côté Web (le plugin y
+    // lève une exception pour toute méthode non gérée) : à réserver aux
+    // plateformes natives.
+    if (!kIsWeb) {
+      unawaited(_flutterTts.setSharedInstance(true));
+      unawaited(
+        _flutterTts.setIosAudioCategory(IosTextToSpeechAudioCategory.ambient, [
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+        ]),
+      );
+    }
   }
 
   Future<double> _getStoredVolume() async {
@@ -169,11 +195,17 @@ class SignSpeechService extends ChangeNotifier {
     if (_voicesCache != null) return _voicesCache!;
     try {
       final raw = await _flutterTts.getVoices;
-      _voicesCache = (raw is List) ? raw : <dynamic>[];
+      final list = (raw is List) ? raw : <dynamic>[];
+      // Une liste vide n'est jamais mémorisée : sur mobile, le moteur TTS
+      // natif peut ne pas encore avoir fini de charger ses voix au tout
+      // premier appel (juste après le lancement de l'app) — mémoriser ce
+      // résultat vide condamnerait la sélection de voix à rester dégradée
+      // (voix par défaut du système) pour toute la session.
+      if (list.isNotEmpty) _voicesCache = list;
+      return list;
     } catch (_) {
-      _voicesCache = <dynamic>[];
+      return <dynamic>[];
     }
-    return _voicesCache!;
   }
 
   /// Choisit la meilleure voix disponible pour une locale et un genre donnés,
@@ -242,6 +274,13 @@ class SignSpeechService extends ChangeNotifier {
     if (!soundEnabled) return;
 
     final volume = await _getStoredVolume();
+    // Certains moteurs TTS natifs (notamment sur Android, selon le
+    // fabricant/l'engin installé) n'appliquent pas fidèlement un volume à
+    // 0.0 et laissent filtrer un filet de voix au lieu de couper le son :
+    // en dessous de ce seuil, on considère le volume comme "muet" et on
+    // n'émet même pas la commande de lecture plutôt que de compter sur le
+    // moteur pour le faire correctement.
+    if (volume <= 0.01) return;
     final locale = speechLocale[lang] ?? 'fr-FR';
     final gender = await getStoredVoiceGender();
     // Tonalité proche du naturel : les écarts trop marqués sont ce qui fait

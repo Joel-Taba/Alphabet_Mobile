@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +14,7 @@ import '../widgets/cahier_frame.dart';
 import '../widgets/sign_glyph.dart';
 import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Animation multi-signes qui combine les signes de base pour former une
 /// lettre ou un chiffre, avec navigation dans le groupe de progression. Port
@@ -66,8 +66,11 @@ class _CoursLettresFormationScreenState
       ..reset()
       ..forward();
     final lang = context.read<LanguageProvider>().lang;
+    final consigne = letter['consigne'][lang.name] ?? '';
     context.read<SignSpeechService>().speak(
-      letter['consigne'][lang.name] ?? '',
+      letter['category'] == 'chiffre'
+          ? spokenDigitInstruction(lang, widget.char, consigne)
+          : spokenLetterInstruction(lang, widget.char, consigne),
       lang,
     );
 
@@ -196,7 +199,7 @@ class _CoursLettresFormationScreenState
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(CupertinoIcons.arrow_left, size: 20),
+                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -290,25 +293,35 @@ class _CoursLettresFormationScreenState
                           children: [
                             Expanded(
                               child: _PillButton(
-                                icon: CupertinoIcons.restart,
+                                icon: LucideIcons.rotateCcw,
                                 label: t['common']?['replay'] ?? 'Revoir',
                                 bg: AmaniColors.secondary.withValues(
                                   alpha: 0.15,
                                 ),
-                                fg: AmaniColors.secondaryDark,
+                                fg: const Color(0xFF2F4B1C),
                                 onTap: _playAnimation,
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: _PillButton(
-                                icon: CupertinoIcons.speaker_2_fill,
+                                icon: LucideIcons.volume2,
                                 label:
                                     t['common']?['instruction'] ?? 'Consigne',
                                 bg: AmaniColors.background,
-                                fg: AmaniColors.textPrimary,
+                                fg: Colors.black,
                                 onTap: () => speech.speak(
-                                  letter['consigne'][lang.name] ?? '',
+                                  letter['category'] == 'chiffre'
+                                      ? spokenDigitInstruction(
+                                          lang,
+                                          widget.char,
+                                          letter['consigne'][lang.name] ?? '',
+                                        )
+                                      : spokenLetterInstruction(
+                                          lang,
+                                          widget.char,
+                                          letter['consigne'][lang.name] ?? '',
+                                        ),
                                   lang,
                                 ),
                               ),
@@ -319,9 +332,9 @@ class _CoursLettresFormationScreenState
                         SizedBox(
                           width: double.infinity,
                           child: _PillButton(
-                            icon: CupertinoIcons.play_fill,
+                            icon: Icons.play_arrow_rounded,
                             label:
-                                '${cfc['practice'] ?? "M'exercer sur"} "${letter['char']}"',
+                                '${cfc['practice'] ?? "S'entrainer sur"} "${letter['char']}"',
                             bg: AmaniColors.secondary,
                             fg: Colors.white,
                             onTap: () => context.push(
@@ -447,7 +460,7 @@ class _CoursLettresFormationScreenState
                                 ],
                               ),
                               if (i < steps.length - 1)
-                                DirectionalIcon(CupertinoIcons.chevron_right,
+                                DirectionalIcon(LucideIcons.chevronRight,
                                   size: 14,
                                   color: AmaniColors.primary,
                                 ),
@@ -627,7 +640,7 @@ class _NavPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = DirectionalIcon(
-      leading ? CupertinoIcons.chevron_left : CupertinoIcons.chevron_right,
+      leading ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
       size: 14,
       color: filled ? Colors.white : AmaniColors.textPrimary,
     );

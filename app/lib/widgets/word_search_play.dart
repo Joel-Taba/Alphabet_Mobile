@@ -9,6 +9,7 @@ import '../utils/word_search_generator.dart';
 import '../data/word_catalog.dart';
 import 'amani_mascot.dart';
 import 'exercise_complete_popup.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Palette cyclique — un mot trouvé = une couleur, réutilisée dans la grille
 /// et la liste.
@@ -383,7 +384,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                               alignment: Alignment.center,
                               child: isFound
                                   ? const Icon(
-                                      Icons.check_rounded,
+                                      LucideIcons.check,
                                       size: 16,
                                       color: Colors.white,
                                     )
@@ -391,7 +392,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                             ),
                             const SizedBox(width: 10),
                             Icon(
-                              Icons.volume_up_rounded,
+                              LucideIcons.volume2,
                               size: 16,
                               color: color,
                             ),

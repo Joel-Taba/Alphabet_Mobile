@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'theme/amani_theme.dart';
+import 'services/mode_libre_controller.dart';
 import 'i18n/translations.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/profile_create_screen.dart';
@@ -20,16 +21,20 @@ import 'screens/exercice_mots_croises_screen.dart';
 import 'screens/exercice_mots_meles_screen.dart';
 import 'screens/cours_syllabes_screen.dart';
 import 'screens/exercice_syllabes_screen.dart';
+import 'screens/cours_calcul_screen.dart';
+import 'screens/exercice_calcul_screen.dart';
+import 'screens/exercice_calcul_vrai_faux_screen.dart';
+import 'screens/exercice_calcul_compose_screen.dart';
 import 'services/sign_speech.dart';
 import 'services/progress_service.dart';
 import 'services/backend_sync_service.dart';
+import 'services/family_service.dart';
 import 'hooks/use_writing_style.dart';
 import 'hooks/use_animation_speed.dart';
-import 'screens/plus_screen.dart';
+import 'hooks/use_accessibility_settings.dart';
 import 'widgets/points_toast_host.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final _router = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -82,6 +87,18 @@ final _router = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/cours/calcul/:topicId',
+      builder: (context, state) =>
+          CoursCalculScreen(topicId: state.pathParameters['topicId']!),
+    ),
+    GoRoute(
+      path: '/exercice/calcul/:topicId',
+      builder: (context, state) => ExerciceCalculScreen(
+        topicId: state.pathParameters['topicId']!,
+        amaniEval: state.uri.queryParameters['amaniEval'],
+      ),
+    ),
+    GoRoute(
       path: '/cours/mots/:groupId',
       builder: (context, state) =>
           CoursMotsScreen(groupId: state.pathParameters['groupId']!),
@@ -104,6 +121,18 @@ final _router = GoRouter(
       path: '/exercice/mots-meles/:puzzleId',
       builder: (context, state) => ExerciceMotsMelesScreen(
         puzzleId: state.pathParameters['puzzleId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/calcul-vrai-faux/:levelIndex',
+      builder: (context, state) => ExerciceCalculVraiFauxScreen(
+        levelIndex: state.pathParameters['levelIndex']!,
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/calcul-compose/:levelIndex',
+      builder: (context, state) => ExerciceCalculComposeScreen(
+        levelIndex: state.pathParameters['levelIndex']!,
       ),
     ),
     StatefulShellRoute.indexedStack(
@@ -143,57 +172,92 @@ final _router = GoRouter(
             ),
           ],
         ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/plus',
-              builder: (context, state) => const PlusScreen(),
-            ),
-          ],
-        ),
       ],
     ),
   ],
 );
 
 class AmaniApp extends StatelessWidget {
-  const AmaniApp({super.key});
+  final FamilyService familyService;
+
+  const AmaniApp({super.key, required this.familyService});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Déjà chargé (et migré depuis un éventuel profil unique) avant
+        // `runApp` — voir main.dart — donc tous les autres services par
+        // enfant ci-dessous voient d'emblée le bon espace de nommage.
+        ChangeNotifierProvider.value(value: familyService),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => SignSpeechService()),
-        ChangeNotifierProvider(create: (_) => WritingStyleProvider()),
         ChangeNotifierProvider(create: (_) => AnimationSpeedProvider()),
-        ChangeNotifierProvider(create: (_) => BackendSyncService()),
-        ChangeNotifierProxyProvider<BackendSyncService, ProgressProvider>(
+        ChangeNotifierProvider(create: (_) => AccessibilitySettings()),
+        ChangeNotifierProvider(create: (_) => ModeLibreController()),
+        // Réglages par enfant : rechargés à chaque changement d'enfant actif
+        // (voir FamilyService.switchTo) via ChangeNotifierProxyProvider,
+        // plutôt que recréés — pour ne jamais perdre les autres abonnés.
+        ChangeNotifierProxyProvider<FamilyService, WritingStyleProvider>(
+          create: (_) => WritingStyleProvider(),
+          update: (context, family, previous) {
+            previous!.rechargerPourEnfantActif();
+            return previous;
+          },
+        ),
+        ChangeNotifierProxyProvider<FamilyService, BackendSyncService>(
+          create: (_) => BackendSyncService(),
+          update: (context, family, previous) {
+            previous!.rechargerPourEnfantActif();
+            return previous;
+          },
+        ),
+        ChangeNotifierProxyProvider2<
+          FamilyService,
+          BackendSyncService,
+          ProgressProvider
+        >(
           create: (context) =>
               ProgressProvider(context.read<BackendSyncService>()),
-          update: (context, backend, previous) => previous!,
+          update: (context, family, backend, previous) {
+            previous!.rechargerPourEnfantActif();
+            return previous;
+          },
         ),
       ],
-      // La police de toute l'appli suit le format d'écriture actif, et la
-      // mise en page entière suit la langue active (RTL pour l'arabe) : ces
-      // Consumer forcent MaterialApp à se reconstruire dès que l'un ou
-      // l'autre change, sans redémarrage.
-      child: Consumer2<WritingStyleProvider, LanguageProvider>(
-        builder: (context, _, languageProvider, _) => MaterialApp.router(
-          title: 'Gentle Paths Academy',
-          theme: AmaniTheme.light,
-          routerConfig: _router,
-          debugShowCheckedModeBanner: false,
-          // Superpose le popup "+N points" au-dessus de l'écran courant, quel
-          // qu'il soit — voir PointsToastHost, monté une seule fois ici pour
-          // flotter sur toute l'app (équivalent de MobileShell côté web).
-          builder: (context, child) => Directionality(
-            textDirection: rtlLangs.contains(languageProvider.lang)
-                ? TextDirection.rtl
-                : TextDirection.ltr,
-            child: Stack(children: [?child, const PointsToastHost()]),
-          ),
-        ),
+      // La police de toute l'appli suit le format d'écriture actif (ou
+      // OpenDyslexic si l'accessibilité l'impose) et la mise en page entière
+      // suit la langue active (RTL pour l'arabe) : ce Consumer force
+      // MaterialApp à se reconstruire dès que l'un de ces réglages change,
+      // sans redémarrage.
+      child: Consumer3<WritingStyleProvider, LanguageProvider, AccessibilitySettings>(
+        builder: (context, _, languageProvider, accessibility, _) {
+          setDyslexiaFontOverride(accessibility.dyslexiaFont);
+          return MaterialApp.router(
+            title: 'Gentle Paths Academy',
+            theme: AmaniTheme.light,
+            routerConfig: _router,
+            debugShowCheckedModeBanner: false,
+            // Superpose le popup "+N points" au-dessus de l'écran courant, quel
+            // qu'il soit — voir PointsToastHost, monté une seule fois ici pour
+            // flotter sur toute l'app (équivalent de MobileShell côté web).
+            builder: (context, child) => Directionality(
+              textDirection: rtlLangs.contains(languageProvider.lang)
+                  ? TextDirection.rtl
+                  : TextDirection.ltr,
+              // Réglage "taille de l'interface" (Profil > Réglages) :
+              // agrandit/réduit le texte (et tout ce qui en dépend) dans
+              // toute l'app, sur le même principe que les réglages
+              // d'accessibilité "Taille d'affichage" d'iOS/Android.
+              child: MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(accessibility.uiScale)),
+                child: Stack(children: [?child, const PointsToastHost()]),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

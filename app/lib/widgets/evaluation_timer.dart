@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../hooks/use_countdown.dart';
 import 'amani_mascot.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Délai avant le retour automatique au parcours — assez long pour lire le
 /// message, assez court pour ne pas faire attendre.
@@ -32,7 +32,7 @@ class EvaluationTimerBadge extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(CupertinoIcons.timer, color: Colors.white, size: 16),
+          const Icon(LucideIcons.timer, color: Colors.white, size: 16),
           const SizedBox(width: 8),
           Text(
             '${ev['badge'] ?? ''} · ${ev['timeLeft'] ?? ''} ${formatCountdown(remaining)}',
@@ -112,7 +112,7 @@ class _EvaluationCompleteOverlayState extends State<EvaluationCompleteOverlay> {
               ),
               const SizedBox(height: 12),
               const Icon(
-                CupertinoIcons.gift_fill,
+                LucideIcons.gift,
                 color: Color(0xFFA9784F),
                 size: 26,
               ),
