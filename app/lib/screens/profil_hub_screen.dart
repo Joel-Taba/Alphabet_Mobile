@@ -17,6 +17,13 @@ import '../widgets/amani_mascot.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/family_service.dart';
 import '../utils/pick_profile_photo.dart';
+import '../data/sign_exercise_catalog.dart';
+import '../data/palier2_groups.dart';
+import '../data/syllable_catalog.dart';
+import '../data/word_catalog.dart';
+import '../data/calcul_catalog.dart';
+import '../data/shape_catalog.dart';
+import '../data/tangram_catalog.dart';
 import 'child_switcher_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -177,9 +184,7 @@ class _LockScreenState extends State<_LockScreen> {
                       ),
                       IconButton(
                         icon: Icon(
-                          _showPassword
-                              ? LucideIcons.eyeOff
-                              : LucideIcons.eye,
+                          _showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
                           color: AmaniColors.textSecondary,
                         ),
                         onPressed: () =>
@@ -257,8 +262,10 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   int _repetitions = kDefaultRepetitions;
   int _tolerance = kDefaultTolerance;
   int _evaluationDuration = kDefaultEvaluationDuration;
+  int _mentalCalcDuration = kDefaultMentalCalcDuration;
   VoiceGender _voiceGender = VoiceGender.femme;
   String? _photoBase64;
+  String? _storedName;
 
   final _oldPasswordCtrl = TextEditingController();
   final _newPasswordCtrl = TextEditingController();
@@ -266,16 +273,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   bool _showNewPassword = false;
   _PasswordFeedback? _passwordFeedback;
 
-  static const List<Map<String, Object>> _branchMeta = [
-    {'icon': LucideIcons.leaf, 'color': 0xFF8FBF6F, 'done': 4, 'total': 4},
-    {'icon': LucideIcons.trees, 'color': 0xFFA9784F, 'done': 3, 'total': 4},
-    {
-      'icon': LucideIcons.sparkles,
-      'color': 0xFF4A90E2,
-      'done': 1,
-      'total': 6,
-    },
-  ];
+  bool _editingName = false;
+  final _nameEditCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -287,7 +286,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     // cas, voir `ProgressProvider.syncPendingProgression`/`refreshFromBackend`.
     final progress = context.read<ProgressProvider>();
     unawaited(
-      progress.syncPendingProgression().then((_) => progress.refreshFromBackend()),
+      progress.syncPendingProgression().then(
+        (_) => progress.refreshFromBackend(),
+      ),
     );
   }
 
@@ -296,6 +297,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     _oldPasswordCtrl.dispose();
     _newPasswordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
+    _nameEditCtrl.dispose();
     super.dispose();
   }
 
@@ -303,18 +305,141 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final prefs = await SharedPreferences.getInstance();
     final gender = await getStoredVoiceGender();
     final photo = await getStoredPhoto();
+    final name = await getStoredName();
     setState(() {
       _soundEnabled = prefs.getBool('amani_setting_sound') ?? true;
       _volume = prefs.getDouble('amani_setting_volume') ?? 0.85;
       _repetitions =
-          prefs.getInt(kRepetitionsStorageKey) ?? kDefaultRepetitions;
-      _tolerance = prefs.getInt(kToleranceStorageKey) ?? kDefaultTolerance;
+          prefs.getInt(scopeKey(kRepetitionsStorageKey)) ?? kDefaultRepetitions;
+      _tolerance =
+          prefs.getInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance;
       _evaluationDuration =
-          prefs.getInt(kEvaluationDurationStorageKey) ??
+          prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
           kDefaultEvaluationDuration;
+      _mentalCalcDuration =
+          prefs.getInt(scopeKey(kMentalCalcDurationStorageKey)) ??
+          kDefaultMentalCalcDuration;
       _voiceGender = gender;
       _photoBase64 = photo;
+      _storedName = name;
     });
+  }
+
+  /// "Ma progression dans la forêt" : une entrée par grand palier du
+  /// parcours, avec une progression réelle calculée depuis le journal de
+  /// [ProgressProvider] — plus de chiffres figés. Réutilise les libellés
+  /// déjà traduits des bannières de `parcours_screen.dart` (mêmes clés
+  /// `t['parcours']['paliers']`/`figuresPalier`) plutôt que d'en dupliquer.
+  /// Syllabes et Calculs n'apparaissent qu'en français, comme dans le
+  /// parcours lui-même (nomenclature scolaire française).
+  List<({IconData icon, Color color, String name, int done, int total})>
+  _buildForestBranches(
+    ProgressProvider progress,
+    Map<String, dynamic> t,
+    Lang lang,
+  ) {
+    final paliers = (t['parcours']?['paliers'] as List?) ?? [];
+    String palName(int i) =>
+        (paliers.length > i ? paliers[i]['title'] : null) ?? '';
+    final figuresPalier =
+        t['parcours']?['figuresPalier'] as Map<String, dynamic>?;
+
+    final letterGroups = getPalier2Groups(lang.name);
+    final letterItems = letterGroups.fold<int>(0, (s, g) => s + g.chars.length);
+    final syllableGroups = SYLLABLE_GROUPS;
+    final syllableItems = syllableGroups.fold<int>(
+      0,
+      (s, g) => s + (g['syllables'] as List).length,
+    );
+    final tangramCount = tangramPuzzlesByDifficulty(
+      TangramDifficulty.simple,
+    ).length;
+
+    return [
+      (
+        icon: LucideIcons.sparkles,
+        color: const Color(0xFF8FBF6F),
+        name: palName(0),
+        done: progress.completedCountForType('SIGNE'),
+        total: FAMILY_ORDER.length + EXERCISE_CATALOG.length,
+      ),
+      (
+        icon: LucideIcons.pencilLine,
+        color: const Color(0xFFA9784F),
+        name: palName(1),
+        done: progress.completedCountForType('LETTRE'),
+        total: letterGroups.length + letterItems,
+      ),
+      if (lang == Lang.fr)
+        (
+          icon: LucideIcons.messageCircle,
+          color: const Color(0xFFD07A04),
+          name: palName(2),
+          done: progress.completedCountForType('SYLLABE'),
+          total: syllableGroups.length + syllableItems,
+        ),
+      (
+        icon: LucideIcons.bookOpen,
+        color: const Color(0xFF4A90E2),
+        name: palName(lang == Lang.fr ? 3 : 2),
+        done: progress.completedCountForType('MOT'),
+        total: PALIER3_GROUPS.length + WORD_CATALOG.length,
+      ),
+      if (lang == Lang.fr)
+        (
+          icon: LucideIcons.calculator,
+          color: const Color(0xFF8B5FBF),
+          name: palName(4),
+          done: progress.completedTopicsForType('CALCUL'),
+          total: CALCUL_TOPICS.length * 2,
+        ),
+      (
+        icon: LucideIcons.shapes,
+        color: const Color(0xFFB85454),
+        name: figuresPalier?['title'] ?? '',
+        done:
+            progress.completedTopicsForType('FIGURE') +
+            progress.completedCountForType('TANGRAM'),
+        total: SHAPE_TOPICS.length * 2 + tangramCount * 2,
+      ),
+    ];
+  }
+
+  /// Nom affiché à côté de la photo de profil : `FamilyService.activeChild`
+  /// est réactif (écouté via `context.watch` ailleurs dans ce widget) et se
+  /// met à jour immédiatement après l'inscription, contrairement à
+  /// `_storedName` (lu une seule fois dans `_loadSettings`, potentiellement
+  /// périmé) — ne sert donc plus que de repli si aucun profil actif.
+  String? _displayName(FamilyService family) {
+    final childNom = family.activeChild?.nom.trim();
+    if (childNom != null && childNom.isNotEmpty) return childNom;
+    if (_storedName != null && _storedName!.trim().isNotEmpty) {
+      return _storedName!.trim();
+    }
+    return null;
+  }
+
+  void _startEditingName(String currentName) {
+    _nameEditCtrl.text = currentName;
+    setState(() => _editingName = true);
+  }
+
+  /// Renomme le profil actif : passe par `FamilyService.renameChild` (source
+  /// réactive de `_displayName`, écoutée partout où le nom apparaît — voir
+  /// `communaute_screen.dart`) ET `setStoredName` (repli local), pour que le
+  /// changement se propage immédiatement dans toute l'application sans
+  /// attendre un redémarrage.
+  Future<void> _saveNameEdit() async {
+    final newName = _nameEditCtrl.text.trim();
+    setState(() => _editingName = false);
+    if (newName.isEmpty) return;
+    final family = context.read<FamilyService>();
+    final childId = family.activeChild?.id;
+    if (childId != null) {
+      await family.renameChild(childId, newName);
+    }
+    await setStoredName(newName);
+    if (mounted) setState(() => _storedName = newName);
   }
 
   Future<void> _choosePhoto() async {
@@ -356,7 +481,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final backend = context.read<BackendSyncService>();
     final clamped = value.clamp(kMinRepetitions, kMaxRepetitions);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(kRepetitionsStorageKey, clamped);
+    await prefs.setInt(scopeKey(kRepetitionsStorageKey), clamped);
     setState(() => _repetitions = clamped);
     unawaited(backend.pushReglages(repetitions: clamped));
   }
@@ -364,15 +489,22 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   Future<void> _updateEvaluationDuration(int value) async {
     final clamped = value.clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(kEvaluationDurationStorageKey, clamped);
+    await prefs.setInt(scopeKey(kEvaluationDurationStorageKey), clamped);
     setState(() => _evaluationDuration = clamped);
+  }
+
+  Future<void> _updateMentalCalcDuration(int value) async {
+    final clamped = value.clamp(kMinMentalCalcDuration, kMaxMentalCalcDuration);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(scopeKey(kMentalCalcDurationStorageKey), clamped);
+    setState(() => _mentalCalcDuration = clamped);
   }
 
   Future<void> _updateTolerance(int value) async {
     final backend = context.read<BackendSyncService>();
     final clamped = value.clamp(kMinTolerance, kMaxTolerance);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(kToleranceStorageKey, clamped);
+    await prefs.setInt(scopeKey(kToleranceStorageKey), clamped);
     setState(() => _tolerance = clamped);
     // Le back-end attend une fraction (0.05-0.30), pas un pourcentage brut.
     unawaited(backend.pushReglages(tolerance: clamped / 100.0));
@@ -416,7 +548,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final t = langProvider.t;
     final hub = t['profileHub'] as Map<String, dynamic>? ?? {};
     final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
-    final branches = (hub['branches'] as List?) ?? [];
     final speech = context.read<SignSpeechService>();
     final writingStyle = context.watch<WritingStyleProvider>();
     final animSpeed = context.watch<AnimationSpeedProvider>();
@@ -426,6 +557,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final streakAtRisk = progress.isStreakAtRiskToday;
     final family = context.watch<FamilyService>();
     final accessibility = context.watch<AccessibilitySettings>();
+    final forestBranches = _buildForestBranches(progress, t, langProvider.lang);
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -608,24 +740,80 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          hub['photoTitle'] ?? 'Photo de profil',
-                          style: AmaniTheme.titleStyle.copyWith(fontSize: 14),
-                        ),
-                        Text(
-                          hub['photoHint'] ?? '',
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 12,
-                            color: AmaniColors.textSecondary,
+                    child: _editingName
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _nameEditCtrl,
+                                  autofocus: true,
+                                  maxLength: 24,
+                                  textAlign: TextAlign.center,
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    counterText: '',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  style: AmaniTheme.titleStyle.copyWith(
+                                    fontSize: 16,
+                                  ),
+                                  onSubmitted: (_) => _saveNameEdit(),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _RoundIconButton(
+                                icon: LucideIcons.check,
+                                onTap: _saveNameEdit,
+                                tooltip: hub['nameSave'] ?? 'Valider',
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      _displayName(family) ??
+                                          (hub['photoTitle'] ??
+                                              'Photo de profil'),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AmaniTheme.titleStyle.copyWith(
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _RoundIconButton(
+                                    icon: LucideIcons.pencil,
+                                    small: true,
+                                    onTap: () => _startEditingName(
+                                      _displayName(family) ?? '',
+                                    ),
+                                    tooltip: hub['nameEdit'] ?? 'Modifier',
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                hub['photoHint'] ?? '',
+                                textAlign: TextAlign.center,
+                                style: AmaniTheme.bodyStyle.copyWith(
+                                  fontSize: 12,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
-                  if (_photoBase64 != null)
+                  if (!_editingName && _photoBase64 != null)
                     GestureDetector(
                       onTap: _removePhoto,
                       child: Text(
@@ -772,7 +960,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         children: [
                           Text(
                             streak == 1
-                                ? (hub['streakDaySingular'] ?? '1 jour de suite !')
+                                ? (hub['streakDaySingular'] ??
+                                      '1 jour de suite !')
                                 : tFormat(
                                     hub['streakDayPlural'] ??
                                         '{count} jours de suite !',
@@ -853,13 +1042,13 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
               style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 14),
-            for (int i = 0; i < _branchMeta.length; i++) ...[
+            for (final branch in forestBranches) ...[
               _PalierProgressCard(
-                icon: _branchMeta[i]['icon'] as IconData,
-                color: Color(_branchMeta[i]['color'] as int),
-                name: branches.length > i ? (branches[i]['name'] ?? '') : '',
-                done: _branchMeta[i]['done'] as int,
-                total: _branchMeta[i]['total'] as int,
+                icon: branch.icon,
+                color: branch.color,
+                name: branch.name,
+                done: branch.done,
+                total: branch.total,
                 stepsTemplate:
                     hub['stepsValidated'] ?? 'sur {total} étapes validées',
               ),
@@ -1178,6 +1367,26 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
                   Text(
+                    hub['mentalCalcDurationLabel'] ?? 'Temps par calcul mental',
+                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    hub['mentalCalcDurationHint'] ?? '',
+                    style: AmaniTheme.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Stepper(
+                    value: '${_mentalCalcDuration}s',
+                    onDecrement: () =>
+                        _updateMentalCalcDuration(_mentalCalcDuration - 5),
+                    onIncrement: () =>
+                        _updateMentalCalcDuration(_mentalCalcDuration + 5),
+                  ),
+                  const Divider(color: AmaniColors.disabled, height: 32),
+                  Text(
                     hub['speedLabel'] ?? "Vitesse d'animation",
                     style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
                   ),
@@ -1256,8 +1465,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     trailing: CupertinoSwitch(
                       value: accessibility.dyslexiaFont,
                       activeTrackColor: AmaniColors.primary,
-                      onChanged: (v) =>
-                          context.read<AccessibilitySettings>().setDyslexiaFont(v),
+                      onChanged: (v) => context
+                          .read<AccessibilitySettings>()
+                          .setDyslexiaFont(v),
                     ),
                   ),
                   Padding(
@@ -1298,8 +1508,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           max: kMaxUiScale,
                           divisions: 11,
                           activeColor: AmaniColors.primary,
-                          onChanged: (v) =>
-                              context.read<AccessibilitySettings>().setUiScale(v),
+                          onChanged: (v) => context
+                              .read<AccessibilitySettings>()
+                              .setUiScale(v),
                         ),
                       ),
                       const Icon(
@@ -1474,6 +1685,49 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         trailing,
       ],
     );
+  }
+}
+
+/// Petit bouton rond et plein (fond coloré + icône blanche), pour qu'une
+/// action comme "modifier"/"valider" se reconnaisse immédiatement comme un
+/// bouton tapable — plutôt qu'une simple icône nue, facile à manquer.
+class _RoundIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+  final bool small;
+
+  const _RoundIconButton({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+    this.small = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = small ? 26.0 : 34.0;
+    final button = GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AmaniColors.secondary,
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x338FBF6F),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: small ? 13 : 17, color: Colors.white),
+      ),
+    );
+    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
   }
 }
 
@@ -1744,9 +1998,7 @@ class _PasswordField extends StatelessWidget {
           if (onToggleVisibility != null)
             IconButton(
               icon: Icon(
-                obscure
-                    ? LucideIcons.eye
-                    : LucideIcons.eyeOff,
+                obscure ? LucideIcons.eye : LucideIcons.eyeOff,
                 size: 18,
                 color: AmaniColors.textSecondary,
               ),

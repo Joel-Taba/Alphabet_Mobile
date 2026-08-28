@@ -6,6 +6,7 @@ import '../i18n/translations.dart';
 import '../data/word_bank_full.dart';
 import '../utils/crossword_generator.dart';
 import 'amani_mascot.dart';
+import 'confetti_burst.dart';
 import 'crossword_play.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -23,6 +24,7 @@ class _FreeCrosswordSectionState extends State<FreeCrosswordSection> {
   GeneratedCrossword? _crossword;
   int _gameKey = 0;
   final _rand = Random();
+  final _confettiKey = GlobalKey<ConfettiBurstState>();
 
   @override
   void initState() {
@@ -39,107 +41,126 @@ class _FreeCrosswordSectionState extends State<FreeCrosswordSection> {
     });
   }
 
+  /// Grille terminée : confettis puis, après un court délai pour en
+  /// profiter, une nouvelle grille automatiquement — l'enfant n'a rien à
+  /// retaper, le Mode Libre enchaîne tout seul.
+  void _onGridSolved() {
+    _confettiKey.currentState?.play();
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (mounted) _newGame();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
     final mlc = t['modeLibreCroises'] as Map<String, dynamic>? ?? {};
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AmaniColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Row(
-            children: [
-              const AmaniMascot(
-                pose: AmaniPose.motsCroises,
-                size: AmaniSize.small,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AmaniColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      mlc['title'] ?? '',
-                      style: AmaniTheme.titleStyle.copyWith(fontSize: 14),
+              child: Row(
+                children: [
+                  const AmaniMascot(
+                    pose: AmaniPose.motsCroises,
+                    size: AmaniSize.small,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          mlc['title'] ?? '',
+                          style: AmaniTheme.titleStyle.copyWith(fontSize: 14),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          mlc['intro'] ?? '',
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            fontSize: 12,
+                            color: AmaniColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            GestureDetector(
+              onTap: _newGame,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4A90E2),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x334A90E2),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.shuffle,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      mlc['intro'] ?? '',
-                      style: AmaniTheme.bodyStyle.copyWith(
-                        fontSize: 12,
-                        color: AmaniColors.textSecondary,
+                      mlc['newGame'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Colors.white,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        GestureDetector(
-          onTap: _newGame,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF4A90E2),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x334A90E2),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  LucideIcons.shuffle,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  mlc['newGame'] ?? '',
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: Colors.white,
+            const SizedBox(height: 16),
+
+            if (_crossword != null)
+              CrosswordPlay(
+                key: ValueKey(_gameKey),
+                crossword: _crossword!,
+                onSolved: _onGridSolved,
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Text(
+                  mlc['generating'] ?? '',
+                  textAlign: TextAlign.center,
+                  style: AmaniTheme.bodyStyle.copyWith(
+                    fontSize: 13,
+                    color: AmaniColors.textSecondary,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        if (_crossword != null)
-          CrosswordPlay(key: ValueKey(_gameKey), crossword: _crossword!)
-        else
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(
-              mlc['generating'] ?? '',
-              textAlign: TextAlign.center,
-              style: AmaniTheme.bodyStyle.copyWith(
-                fontSize: 13,
-                color: AmaniColors.textSecondary,
               ),
-            ),
-          ),
+          ],
+        ),
+        Positioned.fill(child: ConfettiBurst(key: _confettiKey)),
       ],
     );
   }

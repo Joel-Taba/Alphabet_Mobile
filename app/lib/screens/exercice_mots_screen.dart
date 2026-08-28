@@ -12,7 +12,7 @@ import '../widgets/amani_mascot.dart';
 import '../widgets/word_trace_attempt.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
-import '../hooks/use_countdown.dart';
+import '../services/evaluation_session.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -44,8 +44,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   bool _awaitingRepeatCompletion = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
-  CountdownController? _countdown;
-  bool _evaluationExpired = false;
+  bool _showFirstSubjectAnnouncement = false;
 
   late final ExerciseSettings _settings;
 
@@ -64,22 +63,14 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   Future<void> _initEvaluation() async {
     final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
-    setState(() {
-      _countdown =
-          CountdownController(
-            durationSeconds: minutes * 60,
-            onExpire: () {
-              if (mounted) setState(() => _evaluationExpired = true);
-            },
-          )..addListener(() {
-            if (mounted) setState(() {});
-          });
-    });
+    final session = context.read<EvaluationSessionController>();
+    session.startIfNeeded(minutes * 60);
+    final isFirst = session.configureSubjects(PALIER3_GROUPS.length);
+    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
   }
 
   @override
   void dispose() {
-    _countdown?.dispose();
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
     super.dispose();
@@ -93,6 +84,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
     final cm = t['coursMots'] as Map<String, dynamic>? ?? {};
     final em = t['exerciceMots'] as Map<String, dynamic>? ?? {};
     final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
+    final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
+    final session = context.watch<EvaluationSessionController>();
 
     final group = PALIER3_GROUP_MAP[widget.groupId];
     final groupIdx = PALIER3_GROUPS.indexWhere((g) => g.id == widget.groupId);
@@ -119,7 +112,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/accueil'),
+                  onTap: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -175,8 +169,12 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
           children: [
             Column(
               children: [
-                if (_isEvaluation && !_evaluationExpired && _countdown != null)
-                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                if (_isEvaluation && session.isRunning)
+                  EvaluationTimerBadge(
+                    remaining: session.remainingSeconds,
+                    subjectsDone: session.subjectsDone,
+                    subjectTotal: session.subjectTotal,
+                  ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
@@ -205,7 +203,8 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(LucideIcons.arrowLeft,
+                          child: DirectionalIcon(
+                            LucideIcons.arrowLeft,
                             size: 20,
                           ),
                         ),
@@ -305,52 +304,6 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                         ),
                         const SizedBox(height: 12),
                       ],
-                      if (allDone &&
-                          _isEvaluation &&
-                          evaluationNextGroup != null)
-                        GestureDetector(
-                          onTap: () => context.go(
-                            '/exercice/mots/${evaluationNextGroup.id}?amaniEval=1',
-                          ),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4A90E2),
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x334A90E2),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  tFormat(em['nextGroup'] ?? '', {
-                                    'titre':
-                                        evaluationNextGroup.title[lang.name] ??
-                                        '',
-                                  }),
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                DirectionalIcon(LucideIcons.chevronRight,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -371,8 +324,42 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   });
                 },
               ),
-            if (_isEvaluation && _evaluationExpired)
-              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
+            if (_isEvaluation && session.expired)
+              EvaluationCompleteOverlay(
+                // Après Mots, le prochain palier dépend de la langue : les
+                // Calculs (5) n'existent qu'en français, sinon on saute
+                // directement aux Figures (6).
+                onBack: () => context.go(
+                  '/accueil?scrollToPalier=${lang == Lang.fr ? 5 : 6}',
+                ),
+              ),
+            if (_isEvaluation &&
+                _showFirstSubjectAnnouncement &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: tFormat(ev['firstSubjectTitle'] ?? '', {
+                  'title': groupTitle,
+                }),
+                subtitle: ev['firstSubjectBody'] ?? '',
+                onContinue: () =>
+                    setState(() => _showFirstSubjectAnnouncement = false),
+              ),
+            if (allDone &&
+                _isEvaluation &&
+                evaluationNextGroup != null &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: ev['nextSubjectTitle'] ?? '',
+                subtitle: tFormat(ev['nextSubjectBody'] ?? '', {
+                  'title': evaluationNextGroup.title[lang.name] ?? '',
+                }),
+                onContinue: () {
+                  session.advanceSubject();
+                  context.go(
+                    '/exercice/mots/${evaluationNextGroup.id}?amaniEval=1',
+                  );
+                },
+              ),
           ],
         ),
       ),

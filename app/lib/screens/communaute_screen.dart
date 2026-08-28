@@ -6,8 +6,9 @@ import '../i18n/translations.dart';
 import '../services/profile_auth.dart';
 import '../services/progress_service.dart';
 import '../services/backend_sync_service.dart';
+import '../services/family_service.dart';
 import '../widgets/amani_mascot.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/twinkling_star.dart';
 
 /// Avatars disponibles pour représenter un profil réel venu du back-end (qui
 /// ne connaît aucune notion d'"animal" — seuls nom et score existent côté
@@ -64,6 +65,21 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
     final totalPoints = context.watch<ProgressProvider>().stats.totalPoints;
+    // `FamilyService.activeChild` est réactif (se met à jour dès
+    // l'inscription) contrairement à `_storedName` (lu une seule fois dans
+    // `_loadName`, potentiellement périmé si le nom vient d'être créé) — on
+    // le préfère donc comme source du prénom "moi", `_storedName` restant un
+    // repli si aucun profil actif n'est encore chargé.
+    final activeChildNom = context
+        .watch<FamilyService>()
+        .activeChild
+        ?.nom
+        .trim();
+    final moiDisplayName = (activeChildNom != null && activeChildNom.isNotEmpty)
+        ? activeChildNom
+        : (_storedName != null && _storedName!.trim().isNotEmpty)
+        ? _storedName!.trim()
+        : 'Lila';
 
     // Hardcoded mock data from web version, "moi" overridden with real stats
     final profiles = [
@@ -83,9 +99,7 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
       },
       {
         'id': '3',
-        'prenom': (_storedName != null && _storedName!.trim().isNotEmpty)
-            ? _storedName!.trim()
-            : 'Lila',
+        'prenom': moiDisplayName,
         'animal': 'renard',
         'score': totalPoints,
         'moi': true,
@@ -116,7 +130,7 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
     // Vrais profils du back-end, en plus des profils fictifs de remplissage
     // (voir BackendSyncService.fetchClassement) — "moi" en est exclu, son
     // score affiché reste celui calculé localement ci-dessus.
-    final moiNom = _storedName?.trim().toLowerCase();
+    final moiNom = moiDisplayName.toLowerCase();
     for (final entry in _realEntries) {
       if (entry.nom.trim().toLowerCase() == moiNom) continue;
       profiles.add({
@@ -251,8 +265,9 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
                                       Expanded(
                                         child: Text(
                                           profile['prenom'] as String,
-                                          style: AmaniTheme.titleStyle
-                                              .copyWith(fontSize: 18),
+                                          style: AmaniTheme.titleStyle.copyWith(
+                                            fontSize: 18,
+                                          ),
                                         ),
                                       ),
                                       Row(
@@ -267,10 +282,9 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
                                                 ),
                                           ),
                                           const SizedBox(width: 4),
-                                          const Icon(
-                                            LucideIcons.star,
+                                          const TwinklingStar(
+                                            size: 22,
                                             color: AmaniColors.warning,
-                                            size: 20,
                                           ),
                                         ],
                                       ),
@@ -365,7 +379,22 @@ class _CommunauteScreenState extends State<CommunauteScreen> {
           rank: rank,
           photoBase64: isMoi ? _photoBase64 : null,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${profile['score']}',
+              style: AmaniTheme.titleStyle.copyWith(
+                fontSize: 15,
+                color: AmaniColors.primaryDark,
+              ),
+            ),
+            const SizedBox(width: 3),
+            const TwinklingStar(size: 18, color: AmaniColors.warning),
+          ],
+        ),
+        const SizedBox(height: 8),
         Container(
           width: 90,
           height: height,

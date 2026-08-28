@@ -94,7 +94,8 @@ class _ExerciceCalculComposeScreenState
         body: SafeArea(
           child: Center(
             child: GestureDetector(
-              onTap: () => context.go('/accueil'),
+              onTap: () =>
+                  context.canPop() ? context.pop() : context.go('/accueil'),
               child: Text((common['backToHome'] ?? '').toString()),
             ),
           ),
@@ -123,7 +124,9 @@ class _ExerciceCalculComposeScreenState
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/accueil'),
+                    onTap: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/accueil'),
                     child: Container(
                       width: 44,
                       height: 44,

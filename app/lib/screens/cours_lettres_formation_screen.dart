@@ -121,7 +121,8 @@ class _CoursLettresFormationScreenState
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/accueil'),
+                  onTap: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -188,7 +189,9 @@ class _CoursLettresFormationScreenState
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/accueil'),
+                    onTap: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/accueil'),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -417,7 +420,12 @@ class _CoursLettresFormationScreenState
                                     width: 52,
                                     height: 52,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFF4D3E3E),
+                                      // Fond clair et uniforme quelle que
+                                      // soit la famille du signe — un fond
+                                      // sombre rendait les traits/points
+                                      // (STROKE_FAMILLE brun foncé) presque
+                                      // invisibles dessus.
+                                      color: AmaniColors.surface,
                                       shape: BoxShape.circle,
                                     ),
                                     alignment: Alignment.center,
@@ -460,7 +468,8 @@ class _CoursLettresFormationScreenState
                                 ],
                               ),
                               if (i < steps.length - 1)
-                                DirectionalIcon(LucideIcons.chevronRight,
+                                DirectionalIcon(
+                                  LucideIcons.chevronRight,
                                   size: 14,
                                   color: AmaniColors.primary,
                                 ),

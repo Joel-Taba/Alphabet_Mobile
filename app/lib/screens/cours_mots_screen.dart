@@ -43,7 +43,8 @@ class CoursMotsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/accueil'),
+                  onTap: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -90,7 +91,9 @@ class CoursMotsScreen extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/accueil'),
+                    onTap: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/accueil'),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -352,4 +355,3 @@ class _WordCard extends StatelessWidget {
     );
   }
 }
-

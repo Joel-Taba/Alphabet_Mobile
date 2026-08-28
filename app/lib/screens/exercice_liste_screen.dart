@@ -14,7 +14,7 @@ import '../widgets/amani_mascot.dart';
 import '../widgets/repetition_row.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
-import '../hooks/use_countdown.dart';
+import '../services/evaluation_session.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -26,11 +26,20 @@ class ExerciceListeScreen extends StatefulWidget {
   final String? family;
   final String? group;
   final String? amaniEval;
+
+  /// Non `null` quand cette page est ouverte depuis le bouton "S'entrainer"
+  /// du cours (Palier 1) pour un seul signe : filtre la liste à ce signe
+  /// unique et bascule vers le petit circuit "pratique rapide" (1 point,
+  /// bouton "Revenir à la leçon", pop-up puis retour au cours) plutôt que le
+  /// circuit normal d'exercice de la famille entière.
+  final String? sign;
+
   const ExerciceListeScreen({
     super.key,
     this.family,
     this.group,
     this.amaniEval,
+    this.sign,
   });
 
   @override
@@ -44,8 +53,17 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   bool _awaitingRepeatCompletion = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
-  CountdownController? _countdown;
-  bool _evaluationExpired = false;
+  bool _showFirstSubjectAnnouncement = false;
+  bool _showPracticeSuccess = false;
+
+  /// Pratique rapide d'un seul signe (bouton "S'entrainer" du cours) : 1
+  /// point, pas de marquage de progression normale (l'utilisateur l'a
+  /// explicitement demandé "juste un point, et c'est tout") — puis une
+  /// pop-up de félicitation avant de revenir au cours.
+  void _onPracticeEntryDone() {
+    context.read<ProgressProvider>().awardSignPracticePoint();
+    setState(() => _showPracticeSuccess = true);
+  }
 
   @override
   void initState() {
@@ -58,14 +76,10 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   Future<void> _initEvaluation() async {
     final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
-    setState(() {
-      _countdown = CountdownController(
-        durationSeconds: minutes * 60,
-        onExpire: () {
-          if (mounted) setState(() => _evaluationExpired = true);
-        },
-      )..addListener(_onSettingsChanged);
-    });
+    final session = context.read<EvaluationSessionController>();
+    session.startIfNeeded(minutes * 60);
+    final isFirst = session.configureSubjects(FAMILY_ORDER.length);
+    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
   }
 
   void _onEntryDone(String id, int totalEntries) {
@@ -84,7 +98,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   void dispose() {
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
-    _countdown?.dispose();
     super.dispose();
   }
 
@@ -136,7 +149,8 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 'titre': group.title[lang.name] ?? '',
               }),
               subtitle: subtitle,
-              onBack: () => context.go('/accueil'),
+              onBack: () =>
+                  context.canPop() ? context.pop() : context.go('/accueil'),
             ),
             _HintBar(
               text: el['groupHint'] ?? '',
@@ -261,7 +275,8 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                               ),
                               shape: BoxShape.circle,
                             ),
-                            child: DirectionalIcon(LucideIcons.chevronRight,
+                            child: DirectionalIcon(
+                              LucideIcons.chevronRight,
                               size: 18,
                               color: AmaniColors.secondaryDark,
                             ),
@@ -286,6 +301,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
     SignSpeechService speech,
     Map<String, dynamic> el,
   ) {
+    final session = context.watch<EvaluationSessionController>();
     final familyNames = el['familyNames'] as Map<String, dynamic>? ?? {};
     final allGrouped = [
       (
@@ -310,9 +326,24 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
       ),
     ];
 
+    final practiceMode = widget.sign != null;
     final grouped = widget.family != null
         ? allGrouped.where((g) => g.$1 == widget.family).toList()
         : allGrouped;
+    // Pratique rapide (bouton "S'entrainer" du cours) : ne montrer QUE le
+    // signe demandé, pas toute la famille.
+    final displayedGroups = practiceMode
+        ? grouped
+              .map(
+                (g) => (
+                  g.$1,
+                  g.$2,
+                  g.$3.where((e) => e['id'] == widget.sign).toList(),
+                ),
+              )
+              .where((g) => g.$3.isNotEmpty)
+              .toList()
+        : grouped;
     final headerTitle = widget.family != null && grouped.isNotEmpty
         ? tFormat(el['titleFamily'] ?? '', {'titre': grouped.first.$2})
         : (el['title'] ?? "Cahier d'Écriture");
@@ -332,6 +363,13 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
     final nextFamily = familyIdx >= 0 && familyIdx < FAMILY_ORDER.length - 1
         ? FAMILY_ORDER[familyIdx + 1]
         : null;
+    // En évaluation, une fois la dernière famille atteinte on reboucle sur
+    // la première — seul le chronomètre décide de la fin de la session.
+    final evaluationNextFamily = _isEvaluation && familyIdx >= 0
+        ? FAMILY_ORDER[(familyIdx + 1) % FAMILY_ORDER.length]
+        : null;
+    String familyDisplayName(String id) => (familyNames[id] ?? id).toString();
+    final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -340,12 +378,17 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
           children: [
             Column(
               children: [
-                if (_isEvaluation && !_evaluationExpired && _countdown != null)
-                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                if (_isEvaluation && session.isRunning)
+                  EvaluationTimerBadge(
+                    remaining: session.remainingSeconds,
+                    subjectsDone: session.subjectsDone,
+                    subjectTotal: session.subjectTotal,
+                  ),
                 _Header(
                   title: headerTitle,
                   subtitle: el['subtitle'] ?? '',
-                  onBack: () => context.go('/accueil'),
+                  onBack: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                 ),
                 _HintBar(
                   text: el['startHint'] ?? '',
@@ -353,11 +396,47 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                   fg: const Color(0xFF2D5E8A),
                   dot: true,
                 ),
+                if (practiceMode)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AmaniColors.surface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AmaniColors.secondary),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            DirectionalIcon(
+                              LucideIcons.arrowLeft,
+                              size: 16,
+                              color: AmaniColors.secondaryDark,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              el['backToLesson'] ?? 'Revenir à la leçon',
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: AmaniColors.secondaryDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
                     children: [
-                      for (final (_, titre, entries) in grouped)
+                      for (final (_, titre, entries) in displayedGroups)
                         if (entries.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 20),
@@ -389,8 +468,13 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                                     el: el,
                                     lang: lang,
                                     speech: speech,
-                                    onEntryDone: (id) =>
-                                        _onEntryDone(id, familyEntries.length),
+                                    awardsProgress: !practiceMode,
+                                    onEntryDone: practiceMode
+                                        ? (_) => _onPracticeEntryDone()
+                                        : (id) => _onEntryDone(
+                                            id,
+                                            familyEntries.length,
+                                          ),
                                   ),
                                   const SizedBox(height: 12),
                                 ],
@@ -416,8 +500,114 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                   });
                 },
               ),
-            if (_isEvaluation && _evaluationExpired)
-              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
+            if (_isEvaluation && session.expired)
+              EvaluationCompleteOverlay(
+                onBack: () => context.go('/accueil?scrollToPalier=2'),
+              ),
+            if (_isEvaluation &&
+                _showFirstSubjectAnnouncement &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: tFormat(ev['firstSubjectTitle'] ?? '', {
+                  'title': familyDisplayName(widget.family ?? FAMILY_ORDER[0]),
+                }),
+                subtitle: ev['firstSubjectBody'] ?? '',
+                onContinue: () =>
+                    setState(() => _showFirstSubjectAnnouncement = false),
+              ),
+            if (allFamilyDone &&
+                _isEvaluation &&
+                evaluationNextFamily != null &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: ev['nextSubjectTitle'] ?? '',
+                subtitle: tFormat(ev['nextSubjectBody'] ?? '', {
+                  'title': familyDisplayName(evaluationNextFamily),
+                }),
+                onContinue: () {
+                  session.advanceSubject();
+                  context.go(
+                    '/exercice-liste?family=$evaluationNextFamily&amaniEval=1',
+                  );
+                },
+              ),
+            if (_showPracticeSuccess)
+              Positioned.fill(
+                child: Container(
+                  color: const Color(0x73000000),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 24,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const AmaniMascot(
+                          pose: AmaniPose.celebration,
+                          size: AmaniSize.medium,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          el['practiceSuccessTitle'] ?? 'Bravo !',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            color: AmaniColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          el['practiceSuccessBody'] ?? '',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontSize: 14,
+                            color: AmaniColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        GestureDetector(
+                          onTap: () => context.pop(),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: AmaniColors.primary,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              el['practiceSuccessContinue'] ??
+                                  'Continuer la leçon',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -435,6 +625,12 @@ class _SignExerciseRow extends StatelessWidget {
   final SignSpeechService speech;
   final ValueChanged<String>? onEntryDone;
 
+  /// `false` en pratique rapide depuis le cours (voir [ExerciceListeScreen.sign])
+  /// : cette réussite ne doit pas marquer le signe comme "exercice réussi"
+  /// dans la progression normale — seul un petit point à part est donné
+  /// (voir `_onPracticeEntryDone`).
+  final bool awardsProgress;
+
   const _SignExerciseRow({
     super.key,
     required this.entry,
@@ -445,6 +641,7 @@ class _SignExerciseRow extends StatelessWidget {
     required this.lang,
     required this.speech,
     this.onEntryDone,
+    this.awardsProgress = true,
   });
 
   @override
@@ -491,12 +688,14 @@ class _SignExerciseRow extends StatelessWidget {
       ),
       onAllDone: () {
         speech.speak(el['rowComplete'] ?? '', lang);
-        context.read<ProgressProvider>().awardCompletion(
-          typeEtape: 'SIGNE',
-          modalite: 'EXERCICE',
-          etapeCode: entry['id'] as String,
-          palier: 1,
-        );
+        if (awardsProgress) {
+          context.read<ProgressProvider>().awardCompletion(
+            typeEtape: 'SIGNE',
+            modalite: 'EXERCICE',
+            etapeCode: entry['id'] as String,
+            palier: 1,
+          );
+        }
         onEntryDone?.call(entry['id'] as String);
       },
       badge: showBadge

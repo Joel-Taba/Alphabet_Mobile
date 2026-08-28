@@ -2,6 +2,49 @@ import 'package:flutter/material.dart';
 import '../theme/amani_theme.dart';
 import '../data/calcul_catalog.dart';
 
+/// Statut d'une case après une tentative complète, façon "Wordle" — même
+/// principe que le clavier des tables de multiplication
+/// (`digit_keypad_answer.dart`) : vert le nombre/signe est bien placé,
+/// jaune il fait partie de la solution mais au mauvais endroit, rouge il
+/// n'en fait pas partie du tout. Nombres et signes sont comparés
+/// séparément (deux "alphabets" différents).
+enum _TileStatus { green, yellow, red }
+
+List<_TileStatus> _wordleStatuses<T>(List<T> guess, List<T> solution) {
+  final n = guess.length;
+  final statuses = List<_TileStatus>.filled(n, _TileStatus.red);
+  final remaining = <T, int>{};
+  for (var i = 0; i < n; i++) {
+    if (guess[i] == solution[i]) {
+      statuses[i] = _TileStatus.green;
+    } else {
+      remaining[solution[i]] = (remaining[solution[i]] ?? 0) + 1;
+    }
+  }
+  for (var i = 0; i < n; i++) {
+    if (statuses[i] == _TileStatus.green) continue;
+    final g = guess[i];
+    if ((remaining[g] ?? 0) > 0) {
+      statuses[i] = _TileStatus.yellow;
+      remaining[g] = remaining[g]! - 1;
+    }
+  }
+  return statuses;
+}
+
+Color _colorForStatus(_TileStatus? status) {
+  switch (status) {
+    case _TileStatus.green:
+      return AmaniColors.success;
+    case _TileStatus.yellow:
+      return AmaniColors.warning;
+    case _TileStatus.red:
+      return AmaniColors.error;
+    case null:
+      return AmaniColors.textPrimary.withValues(alpha: 0.15);
+  }
+}
+
 /// Interaction du mini-jeu "Compose le nombre !" : des cases vides à
 /// remplir (nombres et signes) puis un pool de tuiles tapables en-dessous.
 /// Taper une tuile la place dans la prochaine case vide de son type et la
@@ -33,6 +76,8 @@ class _NumberComposePuzzleWidgetState
   late List<int?> _slotNumberTileIdx;
   late List<int?> _slotOperatorTileIdx;
   bool? _feedbackCorrect;
+  List<_TileStatus>? _numberStatuses;
+  List<_TileStatus>? _operatorStatuses;
 
   @override
   void initState() {
@@ -47,6 +92,8 @@ class _NumberComposePuzzleWidgetState
       null,
     );
     _feedbackCorrect = null;
+    _numberStatuses = null;
+    _operatorStatuses = null;
   }
 
   void _tapNumberTile(int tileIdx) {
@@ -89,13 +136,20 @@ class _NumberComposePuzzleWidgetState
         .map((i) => widget.puzzle.operatorTiles[i!])
         .toList();
     final correct = evalComposeLeftToRight(nums, ops) == widget.puzzle.target;
-    setState(() => _feedbackCorrect = correct);
+    setState(() {
+      _feedbackCorrect = correct;
+      _numberStatuses = _wordleStatuses<int>(nums, widget.puzzle.solutionNumbers);
+      _operatorStatuses = _wordleStatuses<String>(
+        ops,
+        widget.puzzle.solutionOperators,
+      );
+    });
     if (correct) {
       Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) widget.onCorrect();
       });
     } else {
-      Future.delayed(const Duration(milliseconds: 700), () {
+      Future.delayed(const Duration(milliseconds: 1100), () {
         if (mounted) setState(_reset);
       });
     }
@@ -103,10 +157,6 @@ class _NumberComposePuzzleWidgetState
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = _feedbackCorrect == null
-        ? AmaniColors.textPrimary.withValues(alpha: 0.15)
-        : (_feedbackCorrect! ? AmaniColors.success : AmaniColors.error);
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -121,7 +171,7 @@ class _NumberComposePuzzleWidgetState
                 label: _slotNumberTileIdx[i] != null
                     ? '${widget.puzzle.numberTiles[_slotNumberTileIdx[i]!]}'
                     : '',
-                borderColor: borderColor,
+                borderColor: _colorForStatus(_numberStatuses?[i]),
                 onTap: _slotNumberTileIdx[i] != null
                     ? () => _clearNumberSlot(i)
                     : null,
@@ -131,7 +181,7 @@ class _NumberComposePuzzleWidgetState
                   label: _slotOperatorTileIdx[i] != null
                       ? widget.puzzle.operatorTiles[_slotOperatorTileIdx[i]!]
                       : '',
-                  borderColor: borderColor,
+                  borderColor: _colorForStatus(_operatorStatuses?[i]),
                   isOperator: true,
                   onTap: _slotOperatorTileIdx[i] != null
                       ? () => _clearOperatorSlot(i)

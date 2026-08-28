@@ -15,7 +15,7 @@ import '../widgets/cahier_frame.dart';
 import '../widgets/repetition_row.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
-import '../hooks/use_countdown.dart';
+import '../services/evaluation_session.dart';
 import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/sign_glyph.dart' show letterFamilyZIndex;
@@ -64,8 +64,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   bool _awaitingRepeatCompletion = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
-  CountdownController? _countdown;
-  bool _evaluationExpired = false;
 
   @override
   void initState() {
@@ -79,14 +77,14 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   Future<void> _initEvaluation() async {
     final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
-    setState(() {
-      _countdown = CountdownController(
-        durationSeconds: minutes * 60,
-        onExpire: () {
-          if (mounted) setState(() => _evaluationExpired = true);
-        },
-      )..addListener(_onSettingsChanged);
-    });
+    final lang = context.read<LanguageProvider>().lang;
+    final session = context.read<EvaluationSessionController>();
+    session.startIfNeeded(minutes * 60);
+    // "Sujet" = un groupe de lettres (voir `palier2Groups`) — chaque lettre
+    // individuelle a déjà son propre écran de succès (`_LetterSuccessOverlay`),
+    // donc ici on ne fait qu'alimenter le compteur "X/Y groupes" du bandeau,
+    // sans ajouter de pop-up supplémentaire par lettre.
+    session.configureSubjects(getPalier2Groups(lang.name).length);
   }
 
   void _onSettingsChanged() {
@@ -120,7 +118,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   void dispose() {
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
-    _countdown?.dispose();
     super.dispose();
   }
 
@@ -197,6 +194,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final style = context.watch<WritingStyleProvider>().style.name;
     final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
     final elL = t['exerciceListe'] as Map<String, dynamic>? ?? {};
+    final session = context.watch<EvaluationSessionController>();
     final letter = getLetterFormation(widget.char, style);
 
     final progressionGroup =
@@ -297,8 +295,12 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
           children: [
             Column(
               children: [
-                if (_isEvaluation && !_evaluationExpired && _countdown != null)
-                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                if (_isEvaluation && session.isRunning)
+                  EvaluationTimerBadge(
+                    remaining: session.remainingSeconds,
+                    subjectsDone: session.subjectsDone,
+                    subjectTotal: session.subjectTotal,
+                  ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
@@ -312,8 +314,14 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            context.go('/exercice-liste?group=$groupId'),
+                        // Revient à l'écran d'où l'utilisateur vient
+                        // réellement (cours, liste d'exercices, ou parcours
+                        // en évaluation — toujours atteint via `push`),
+                        // plutôt que de forcer systématiquement la liste
+                        // d'exercices du groupe.
+                        onTap: () => context.canPop()
+                            ? context.pop()
+                            : context.go('/accueil'),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -327,7 +335,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(LucideIcons.arrowLeft,
+                          child: DirectionalIcon(
+                            LucideIcons.arrowLeft,
                             size: 20,
                           ),
                         ),
@@ -642,8 +651,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                   });
                 },
               ),
-            if (_isEvaluation && _evaluationExpired)
-              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
+            if (_isEvaluation && session.expired)
+              EvaluationCompleteOverlay(
+                onBack: () => context.go('/accueil?scrollToPalier=3'),
+              ),
           ],
         ),
       ),
@@ -775,9 +786,14 @@ class _LetterSuccessOverlay extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.go(
-                      '/exercice/lettre/${evaluationNextLetter['char']}?pg=$evaluationNextGroupId&amaniEval=1',
-                    ),
+                    onPressed: () {
+                      context
+                          .read<EvaluationSessionController>()
+                          .advanceSubject();
+                      context.go(
+                        '/exercice/lettre/${evaluationNextLetter['char']}?pg=$evaluationNextGroupId&amaniEval=1',
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AmaniColors.secondary,
                       padding: const EdgeInsets.symmetric(vertical: 14),

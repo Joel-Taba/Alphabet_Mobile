@@ -11,10 +11,19 @@ import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
 import '../data/syllable_catalog.dart';
 import '../data/calcul_catalog.dart';
+import '../data/shape_catalog.dart';
+import '../data/tangram_catalog.dart';
+import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
 const String _bonusArcSvg = 'M12 16 C14 8 26 8 28 16';
+
+/// Ordre des niveaux du Palier "Les Calculs" — sert à retrouver l'index de
+/// niveau (0=CP … 4=CM2) d'un [CalculTopic] sans dépendre d'un nombre fixe
+/// de sujets par niveau (variable depuis l'ajout des tables de
+/// multiplication, une par une, en CE1).
+const List<String> _calculNiveaux = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
 
 enum StepKind {
   active,
@@ -24,6 +33,9 @@ enum StepKind {
   wordsearch,
   vraiFaux,
   composeNombre,
+  figureQuiz,
+  figureVraiFaux,
+  figureObjet,
   medal,
   header,
 }
@@ -64,7 +76,13 @@ class StepEntry {
 }
 
 class ParcoursScreen extends StatefulWidget {
-  const ParcoursScreen({super.key});
+  /// Numéro de palier (1-6, voir `awardCompletion(palier: ...)`) vers lequel
+  /// défiler au premier affichage — utilisé au retour d'une évaluation de
+  /// fin de palier réussie, pour amener directement l'enfant au palier
+  /// suivant plutôt que de le laisser en haut de la liste.
+  final int? scrollToPalier;
+
+  const ParcoursScreen({super.key, this.scrollToPalier});
 
   @override
   State<ParcoursScreen> createState() => _ParcoursScreenState();
@@ -74,10 +92,35 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   int _activeStepIdx = 1;
   final ScrollController _scrollController = ScrollController();
 
+  /// Une ancre stable par numéro de palier (1-6), posée sur la bannière
+  /// d'en-tête correspondante (`_PalierBanner`) — permet de défiler jusqu'à
+  /// un palier précis via `Scrollable.ensureVisible` sans calcul d'offset
+  /// manuel. Un palier absent pour la langue active (Syllabes/Calculs,
+  /// français uniquement) n'est simplement jamais attaché : le défilement
+  /// est alors silencieusement ignoré plutôt que de planter.
+  final Map<int, GlobalKey> _palierKeys = {
+    for (var i = 1; i <= 6; i++) i: GlobalKey(),
+  };
+
   @override
   void initState() {
     super.initState();
     _loadActiveStep();
+    if (widget.scrollToPalier != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToPalier());
+    }
+  }
+
+  void _scrollToPalier() {
+    final key = _palierKeys[widget.scrollToPalier];
+    final ctx = key?.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      alignment: 0.05,
+    );
   }
 
   Future<void> _loadActiveStep() async {
@@ -183,7 +226,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       StepEntry(
         const Step(kind: StepKind.medal),
         0,
-        to: '/exercice-liste?amaniEval=1',
+        to: '/exercice-liste?family=${FAMILY_ORDER[0]}&amaniEval=1',
       ),
 
       // ─── PALIER 2 : Combinatoire ───
@@ -374,8 +417,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
             to: '/exercice/calcul/${topic.id}',
           ),
         );
-        if ((idx + 1) % 3 == 0) {
-          final niveauIdx = idx ~/ 3;
+        final isLastOfNiveau =
+            idx == CALCUL_TOPICS.length - 1 ||
+            CALCUL_TOPICS[idx + 1].niveau != topic.niveau;
+        if (isLastOfNiveau) {
+          final niveauIdx = _calculNiveaux.indexOf(topic.niveau);
           steps.add(
             StepEntry(
               const Step(kind: StepKind.vraiFaux),
@@ -400,6 +446,93 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         ),
       );
     }
+
+    // ─── PALIER 6 : Les Figures géométriques (vocabulaire universel, pas
+    // lié au système scolaire français — disponible dans les 4 langues,
+    // contrairement à Syllabes/Calculs) ───
+    final figuresPalier =
+        t['parcours']?['figuresPalier'] as Map<String, dynamic>?;
+    steps.add(
+      StepEntry(
+        Step(
+          kind: StepKind.header,
+          title: figuresPalier?['title'] ?? '',
+          subtitle: figuresPalier?['subtitle'] ?? '',
+          tagline: figuresPalier?['tagline'] ?? '',
+          palierNum: 6,
+          bannerBg: const Color(0xFFE07A7A),
+          bannerBorder: const Color(0xFFB85454),
+          bannerIcon: LucideIcons.shapes,
+        ),
+        0,
+      ),
+    );
+
+    for (var idx = 0; idx < SHAPE_TOPICS.length; idx++) {
+      final kind = idx == 0 ? StepKind.active : StepKind.locked;
+      final topic = SHAPE_TOPICS[idx];
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'feuille'),
+          -1,
+          to: '/cours/figure/${topic.id}',
+        ),
+      );
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'branche'),
+          1,
+          to: '/exercice/figure/${topic.id}',
+        ),
+      );
+    }
+    final tangramSimple = tangramPuzzlesByDifficulty(TangramDifficulty.simple);
+    for (var idx = 0; idx < tangramSimple.length; idx++) {
+      const kind = StepKind.locked;
+      final puzzle = tangramSimple[idx];
+      steps.add(
+        StepEntry(
+          const Step(kind: kind, iconType: 'feuille'),
+          -1,
+          to: '/cours/tangram/${puzzle.id}',
+        ),
+      );
+      steps.add(
+        StepEntry(
+          const Step(kind: kind, iconType: 'branche'),
+          1,
+          to: '/exercice/tangram/${puzzle.id}',
+        ),
+      );
+    }
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.figureQuiz),
+        0,
+        to: '/exercice/figure-quiz',
+      ),
+    );
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.figureVraiFaux),
+        0,
+        to: '/exercice/figure-vrai-faux',
+      ),
+    );
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.figureObjet),
+        0,
+        to: '/exercice/figure-objet',
+      ),
+    );
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.medal),
+        0,
+        to: '/exercice/figure/${SHAPE_TOPICS[0].id}?amaniEval=1',
+      ),
+    );
 
     // Chaque étape hérite de la couleur du dernier en-tête de palier rencontré.
     // Numérotation continue de toutes les étapes (hors en-têtes de palier),
@@ -515,6 +648,9 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
                                 isCurrent: i == _activeStepIdx,
                                 t: t,
                                 onTap: () => _onStepTap(i, steps[i].to, t),
+                                anchorKey: steps[i].step.kind == StepKind.header
+                                    ? _palierKeys[steps[i].step.palierNum]
+                                    : null,
                               ),
                             SizedBox(height: pathHeight * 0.05 + 8),
                           ],
@@ -532,6 +668,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   }
 }
 
+/// Trace le chemin reliant les étapes non pas par un simple pointillé mais
+/// par une piste de petites empreintes de pas alternées (gauche/droite),
+/// façon sentier — même géométrie en zigzag (courbes de Bézier quadratiques
+/// entre un point de contrôle gauche et un point de contrôle droit,
+/// alternés à chaque tour) qu'auparavant, seul le style du tracé change.
 class _ZigzagPainter extends CustomPainter {
   final int turns;
   final double stepHeight;
@@ -548,45 +689,116 @@ class _ZigzagPainter extends CustomPainter {
     final centerX = width / 2;
     final leftX = width * 0.2;
     final rightX = width * 0.8;
-    final path = Path();
-    double y = 20;
-    path.moveTo(centerX, y);
-    for (var i = 0; i < turns; i++) {
-      final controlX = i.isEven ? leftX : rightX;
-      final endY = y + stepHeight;
-      path.quadraticBezierTo(controlX, y + stepHeight / 2, centerX, endY);
-      y = endY;
-    }
-
-    final paint = Paint()
-      ..color = const Color(0xFFA9784F).withValues(alpha: 0.28)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-
-    final dashed = dashPath(
-      path,
-      dashArray: CircularIntervalList<double>([2, 13]),
-    );
 
     // Le tracé n'a de sens que sur `turns` tours (une estimation à partir du
     // nombre d'étapes), mais la colonne réelle des étapes peut être
     // légèrement plus haute ou plus basse selon la mise en page effective —
-    // on étire verticalement le tracé pour qu'il couvre exactement toute la
-    // hauteur réservée, jusqu'à la dernière étape, comme le
-    // `preserveAspectRatio="none"` du SVG `_app.accueil.tsx`.
+    // on construit directement le chemin à l'échelle finale (plutôt que de
+    // le dessiner "nature" puis d'appliquer un `canvas.scale` non-uniforme,
+    // qui déformerait chaque empreinte) pour qu'il couvre exactement toute
+    // la hauteur réservée, jusqu'à la dernière étape.
     final naturalHeight = 20 + turns * stepHeight;
-    canvas.save();
-    if (naturalHeight > 0 && size.height > 0) {
-      canvas.scale(1, size.height / naturalHeight);
+    final vScale = (naturalHeight > 0 && size.height > 0)
+        ? size.height / naturalHeight
+        : 1.0;
+    final scaledStepHeight = stepHeight * vScale;
+
+    final path = Path();
+    double y = 20 * vScale;
+    path.moveTo(centerX, y);
+    for (var i = 0; i < turns; i++) {
+      final controlX = i.isEven ? leftX : rightX;
+      final endY = y + scaledStepHeight;
+      path.quadraticBezierTo(controlX, y + scaledStepHeight / 2, centerX, endY);
+      y = endY;
     }
-    canvas.drawPath(dashed, paint);
+
+    final footColor = const Color(0xFFA9784F).withValues(alpha: 0.32);
+    const stepDistance = 22.0; // écart entre deux empreintes le long du sentier
+    const strideOffset = 4.5; // écart latéral gauche/droite (démarche)
+
+    var stepIndex = 0;
+    for (final metric in path.computeMetrics()) {
+      var distance = 6.0;
+      while (distance < metric.length) {
+        final tangent = metric.getTangentForOffset(distance);
+        if (tangent != null) {
+          final angle = tangent.vector.direction;
+          _drawFootprint(
+            canvas,
+            tangent.position,
+            angle,
+            stepIndex.isEven,
+            footColor,
+            strideOffset,
+          );
+          stepIndex++;
+        }
+        distance += stepDistance;
+      }
+    }
+  }
+
+  /// Empreinte façon patte d'animal (un gros coussinet principal + 4
+  /// coussinets d'orteils en éventail devant) — reprend le style de
+  /// l'image de référence fournie par l'utilisateur, plutôt qu'une simple
+  /// semelle de chaussure. L'axe local +X (après rotation par [angle])
+  /// pointe dans le sens de la marche : le coussinet principal reste en
+  /// arrière, les orteils en éventail devant.
+  void _drawFootprint(
+    Canvas canvas,
+    Offset center,
+    double angle,
+    bool isLeft,
+    Color color,
+    double strideOffset,
+  ) {
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    canvas.translate(0, (isLeft ? -1 : 1) * strideOffset);
+
+    final pad = Paint()..color = color;
+
+    // Coussinet principal : ovale légèrement aplati, en arrière.
+    canvas.save();
+    canvas.translate(-3.5, 0);
+    canvas.rotate(0.05);
+    canvas.scale(1.15, 0.9);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: 8.5, height: 7.5),
+      pad,
+    );
+    canvas.restore();
+
+    // 4 coussinets d'orteils en éventail devant, chacun légèrement pivoté
+    // pour évoquer des doigts qui s'écartent.
+    const toeOffsets = [
+      Offset(4.6, -4.4),
+      Offset(6.6, -1.6),
+      Offset(6.6, 1.6),
+      Offset(4.6, 4.4),
+    ];
+    const toeAngles = [-0.7, -0.25, 0.25, 0.7];
+    for (var i = 0; i < 4; i++) {
+      canvas.save();
+      canvas.translate(toeOffsets[i].dx, toeOffsets[i].dy);
+      canvas.rotate(toeAngles[i]);
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset.zero, width: 4.2, height: 2.8),
+        pad,
+      );
+      canvas.restore();
+    }
+
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _ZigzagPainter oldDelegate) =>
-      oldDelegate.turns != turns || oldDelegate.width != width;
+      oldDelegate.turns != turns ||
+      oldDelegate.width != width ||
+      oldDelegate.stepHeight != stepHeight;
 }
 
 class _StepRow extends StatelessWidget {
@@ -597,6 +809,10 @@ class _StepRow extends StatelessWidget {
   final Map<String, dynamic> t;
   final VoidCallback? onTap;
 
+  /// Ancre stable posée sur la bannière (voir `_ParcoursScreenState._palierKeys`),
+  /// non `null` uniquement pour une entrée d'en-tête de palier.
+  final GlobalKey? anchorKey;
+
   const _StepRow({
     required this.entry,
     required this.index,
@@ -604,6 +820,7 @@ class _StepRow extends StatelessWidget {
     required this.isCurrent,
     required this.t,
     this.onTap,
+    this.anchorKey,
   });
 
   @override
@@ -611,9 +828,12 @@ class _StepRow extends StatelessWidget {
     final step = entry.step;
 
     if (step.kind == StepKind.header) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: _PalierBanner(step: step),
+      return KeyedSubtree(
+        key: anchorKey,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: _PalierBanner(step: step),
+        ),
       );
     }
 
@@ -832,6 +1052,15 @@ class _StepNodeState extends State<_StepNode>
     if (widget.step.kind == StepKind.composeNombre) {
       return parcours['composeStep'] ?? '';
     }
+    if (widget.step.kind == StepKind.figureQuiz) {
+      return parcours['figureQuizStep'] ?? '';
+    }
+    if (widget.step.kind == StepKind.figureVraiFaux) {
+      return parcours['figureVraiFauxStep'] ?? '';
+    }
+    if (widget.step.kind == StepKind.figureObjet) {
+      return parcours['figureObjetStep'] ?? '';
+    }
     if (widget.step.iconType == 'branche') {
       return parcours['exerciceStep'] ?? '';
     }
@@ -950,7 +1179,8 @@ class _StepNodeState extends State<_StepNode>
             Stack(
               clipBehavior: Clip.none,
               children: [
-                if (widget.isCurrent) _CurrentSparkles(color: widget.borderColor),
+                if (widget.isCurrent)
+                  _CurrentSparkles(color: widget.borderColor),
                 Container(
                   width: big ? 80 : 56,
                   height: big ? 80 : 56,
@@ -1014,7 +1244,8 @@ class _StepNodeState extends State<_StepNode>
             Stack(
               clipBehavior: Clip.none,
               children: [
-                if (widget.isCurrent) _CurrentSparkles(color: widget.borderColor),
+                if (widget.isCurrent)
+                  _CurrentSparkles(color: widget.borderColor),
                 Container(
                   width: bigWs ? 80 : 56,
                   height: bigWs ? 80 : 56,
@@ -1066,6 +1297,9 @@ class _StepNodeState extends State<_StepNode>
 
       case StepKind.vraiFaux:
       case StepKind.composeNombre:
+      case StepKind.figureQuiz:
+      case StepKind.figureVraiFaux:
+      case StepKind.figureObjet:
         final bool bigGame = widget.isCurrent;
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -1079,7 +1313,8 @@ class _StepNodeState extends State<_StepNode>
             Stack(
               clipBehavior: Clip.none,
               children: [
-                if (widget.isCurrent) _CurrentSparkles(color: widget.borderColor),
+                if (widget.isCurrent)
+                  _CurrentSparkles(color: widget.borderColor),
                 Container(
                   width: bigGame ? 80 : 56,
                   height: bigGame ? 80 : 56,
@@ -1087,16 +1322,22 @@ class _StepNodeState extends State<_StepNode>
                     borderRadius: BorderRadius.circular(20),
                     color: bigGame ? widget.color : AmaniColors.disabled,
                     border: Border.all(
-                      color: bigGame ? widget.borderColor : AmaniColors.disabled,
+                      color: bigGame
+                          ? widget.borderColor
+                          : AmaniColors.disabled,
                       width: 4,
                     ),
                     boxShadow: AmaniShadows.card,
                   ),
                   alignment: Alignment.center,
                   child: Icon(
-                    widget.step.kind == StepKind.vraiFaux
-                        ? LucideIcons.helpCircle
-                        : LucideIcons.puzzle,
+                    switch (widget.step.kind) {
+                      StepKind.vraiFaux ||
+                      StepKind.figureVraiFaux => LucideIcons.helpCircle,
+                      StepKind.figureQuiz => LucideIcons.shapes,
+                      StepKind.figureObjet => LucideIcons.smile,
+                      _ => LucideIcons.puzzle,
+                    },
                     size: bigGame ? 36 : 24,
                     color: bigGame
                         ? Colors.white
@@ -1286,9 +1527,7 @@ class _NumberBadge extends StatelessWidget {
           color: muted ? const Color(0xFFD8CCB8) : color,
           width: 2,
         ),
-        boxShadow: const [
-          BoxShadow(color: Color(0x14000000), blurRadius: 2),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 2)],
       ),
       child: Text(
         '$number',

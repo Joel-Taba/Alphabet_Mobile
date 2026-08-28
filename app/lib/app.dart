@@ -25,8 +25,16 @@ import 'screens/cours_calcul_screen.dart';
 import 'screens/exercice_calcul_screen.dart';
 import 'screens/exercice_calcul_vrai_faux_screen.dart';
 import 'screens/exercice_calcul_compose_screen.dart';
+import 'screens/cours_figure_screen.dart';
+import 'screens/exercice_figure_screen.dart';
+import 'screens/exercice_figure_quiz_screen.dart';
+import 'screens/exercice_figure_objet_screen.dart';
+import 'screens/exercice_figure_vrai_faux_screen.dart';
+import 'screens/cours_tangram_screen.dart';
+import 'screens/exercice_tangram_screen.dart';
 import 'services/sign_speech.dart';
 import 'services/progress_service.dart';
+import 'services/evaluation_session.dart';
 import 'services/backend_sync_service.dart';
 import 'services/family_service.dart';
 import 'hooks/use_writing_style.dart';
@@ -47,21 +55,26 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/cours/:family',
-      builder: (context, state) =>
-          CoursFamilyScreen(family: state.pathParameters['family']!),
+      builder: (context, state) => CoursFamilyScreen(
+        key: ValueKey(state.uri.toString()),
+        family: state.pathParameters['family']!,
+      ),
     ),
     GoRoute(
       path: '/exercice-liste',
       builder: (context, state) => ExerciceListeScreen(
+        key: ValueKey(state.uri.toString()),
         family: state.uri.queryParameters['family'],
         group: state.uri.queryParameters['group'],
         amaniEval: state.uri.queryParameters['amaniEval'],
+        sign: state.uri.queryParameters['sign'],
       ),
     ),
     GoRoute(path: '/exercice', redirect: (context, state) => '/exercice-liste'),
     GoRoute(
       path: '/cours/lettres/formation/:char',
       builder: (context, state) => CoursLettresFormationScreen(
+        key: ValueKey(state.uri.toString()),
         char: state.pathParameters['char']!,
         pg: state.uri.queryParameters['pg'],
       ),
@@ -69,6 +82,7 @@ final _router = GoRouter(
     GoRoute(
       path: '/exercice/lettre/:char',
       builder: (context, state) => ExerciceLettreScreen(
+        key: ValueKey(state.uri.toString()),
         char: state.pathParameters['char']!,
         pg: state.uri.queryParameters['pg'],
         amaniEval: state.uri.queryParameters['amaniEval'],
@@ -76,36 +90,45 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/cours/syllabes/:consonant',
-      builder: (context, state) =>
-          CoursSyllabesScreen(consonant: state.pathParameters['consonant']!),
+      builder: (context, state) => CoursSyllabesScreen(
+        key: ValueKey(state.uri.toString()),
+        consonant: state.pathParameters['consonant']!,
+      ),
     ),
     GoRoute(
       path: '/exercice/syllabes/:consonant',
       builder: (context, state) => ExerciceSyllabesScreen(
+        key: ValueKey(state.uri.toString()),
         consonant: state.pathParameters['consonant']!,
         amaniEval: state.uri.queryParameters['amaniEval'],
       ),
     ),
     GoRoute(
       path: '/cours/calcul/:topicId',
-      builder: (context, state) =>
-          CoursCalculScreen(topicId: state.pathParameters['topicId']!),
+      builder: (context, state) => CoursCalculScreen(
+        key: ValueKey(state.uri.toString()),
+        topicId: state.pathParameters['topicId']!,
+      ),
     ),
     GoRoute(
       path: '/exercice/calcul/:topicId',
       builder: (context, state) => ExerciceCalculScreen(
+        key: ValueKey(state.uri.toString()),
         topicId: state.pathParameters['topicId']!,
         amaniEval: state.uri.queryParameters['amaniEval'],
       ),
     ),
     GoRoute(
       path: '/cours/mots/:groupId',
-      builder: (context, state) =>
-          CoursMotsScreen(groupId: state.pathParameters['groupId']!),
+      builder: (context, state) => CoursMotsScreen(
+        key: ValueKey(state.uri.toString()),
+        groupId: state.pathParameters['groupId']!,
+      ),
     ),
     GoRoute(
       path: '/exercice/mots/:groupId',
       builder: (context, state) => ExerciceMotsScreen(
+        key: ValueKey(state.uri.toString()),
         groupId: state.pathParameters['groupId']!,
         amaniEval: state.uri.queryParameters['amaniEval'],
         onlyWordId: state.uri.queryParameters['word'],
@@ -114,25 +137,70 @@ final _router = GoRouter(
     GoRoute(
       path: '/exercice/mots-croises/:puzzleId',
       builder: (context, state) => ExerciceMotsCroisesScreen(
+        key: ValueKey(state.uri.toString()),
         puzzleId: state.pathParameters['puzzleId']!,
       ),
     ),
     GoRoute(
       path: '/exercice/mots-meles/:puzzleId',
       builder: (context, state) => ExerciceMotsMelesScreen(
+        key: ValueKey(state.uri.toString()),
         puzzleId: state.pathParameters['puzzleId']!,
       ),
     ),
     GoRoute(
       path: '/exercice/calcul-vrai-faux/:levelIndex',
       builder: (context, state) => ExerciceCalculVraiFauxScreen(
+        key: ValueKey(state.uri.toString()),
         levelIndex: state.pathParameters['levelIndex']!,
       ),
     ),
     GoRoute(
       path: '/exercice/calcul-compose/:levelIndex',
       builder: (context, state) => ExerciceCalculComposeScreen(
+        key: ValueKey(state.uri.toString()),
         levelIndex: state.pathParameters['levelIndex']!,
+      ),
+    ),
+    GoRoute(
+      path: '/cours/figure/:shapeId',
+      builder: (context, state) => CoursFigureScreen(
+        key: ValueKey(state.uri.toString()),
+        shapeId: state.pathParameters['shapeId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/figure/:shapeId',
+      builder: (context, state) => ExerciceFigureScreen(
+        key: ValueKey(state.uri.toString()),
+        shapeId: state.pathParameters['shapeId']!,
+        amaniEval: state.uri.queryParameters['amaniEval'],
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/figure-quiz',
+      builder: (context, state) => const ExerciceFigureQuizScreen(),
+    ),
+    GoRoute(
+      path: '/exercice/figure-objet',
+      builder: (context, state) => const ExerciceFigureObjetScreen(),
+    ),
+    GoRoute(
+      path: '/exercice/figure-vrai-faux',
+      builder: (context, state) => const ExerciceFigureVraiFauxScreen(),
+    ),
+    GoRoute(
+      path: '/cours/tangram/:puzzleId',
+      builder: (context, state) => CoursTangramScreen(
+        key: ValueKey(state.uri.toString()),
+        puzzleId: state.pathParameters['puzzleId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/tangram/:puzzleId',
+      builder: (context, state) => ExerciceTangramScreen(
+        key: ValueKey(state.uri.toString()),
+        puzzleId: state.pathParameters['puzzleId']!,
       ),
     ),
     StatefulShellRoute.indexedStack(
@@ -144,7 +212,11 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: '/accueil',
-              builder: (context, state) => const ParcoursScreen(),
+              builder: (context, state) => ParcoursScreen(
+                scrollToPalier: int.tryParse(
+                  state.uri.queryParameters['scrollToPalier'] ?? '',
+                ),
+              ),
             ),
           ],
         ),
@@ -195,6 +267,7 @@ class AmaniApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AnimationSpeedProvider()),
         ChangeNotifierProvider(create: (_) => AccessibilitySettings()),
         ChangeNotifierProvider(create: (_) => ModeLibreController()),
+        ChangeNotifierProvider(create: (_) => EvaluationSessionController()),
         // Réglages par enfant : rechargés à chaque changement d'enfant actif
         // (voir FamilyService.switchTo) via ChangeNotifierProxyProvider,
         // plutôt que recréés — pour ne jamais perdre les autres abonnés.
@@ -250,9 +323,9 @@ class AmaniApp extends StatelessWidget {
               // toute l'app, sur le même principe que les réglages
               // d'accessibilité "Taille d'affichage" d'iOS/Android.
               child: MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(accessibility.uiScale)),
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(accessibility.uiScale),
+                ),
                 child: Stack(children: [?child, const PointsToastHost()]),
               ),
             ),

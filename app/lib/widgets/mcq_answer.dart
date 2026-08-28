@@ -14,6 +14,11 @@ class McqAnswer extends StatefulWidget {
   final bool solved;
   final VoidCallback onSolved;
 
+  /// Largeur minimale d'un bouton — 68 (par défaut) convient à des chiffres
+  /// courts ; les appelants avec des libellés plus longs (noms de figures...)
+  /// peuvent l'élargir pour éviter un retour à la ligne au milieu d'un mot.
+  final double minWidth;
+
   const McqAnswer({
     super.key,
     required this.choices,
@@ -22,6 +27,7 @@ class McqAnswer extends StatefulWidget {
     required this.isFuture,
     required this.solved,
     required this.onSolved,
+    this.minWidth = 68,
   });
 
   @override
@@ -63,6 +69,7 @@ class _McqAnswerState extends State<McqAnswer> {
                   : _ChoiceState.idle,
               dimmed: widget.solved && choice != widget.correctAnswer,
               onTap: () => _handleTap(choice),
+              minWidth: widget.minWidth,
             ),
         ],
       ),
@@ -77,12 +84,14 @@ class _ChoiceButton extends StatelessWidget {
   final _ChoiceState state;
   final bool dimmed;
   final VoidCallback onTap;
+  final double minWidth;
 
   const _ChoiceButton({
     required this.label,
     required this.state,
     required this.dimmed,
     required this.onTap,
+    required this.minWidth,
   });
 
   @override
@@ -113,8 +122,8 @@ class _ChoiceButton extends StatelessWidget {
         opacity: dimmed ? 0.4 : 1,
         duration: const Duration(milliseconds: 200),
         child: Container(
-          width: 68,
-          height: 52,
+          constraints: BoxConstraints(minWidth: minWidth, minHeight: 52),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: bg,
@@ -123,6 +132,7 @@ class _ChoiceButton extends StatelessWidget {
           ),
           child: Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: kBalooFontFamily,
               fontWeight: FontWeight.w800,

@@ -137,17 +137,26 @@ const Map<String, dynamic> fr = {
     'previous': 'Précédent',
     'backToHome': "Retour à l'accueil",
     'restart': 'Recommencer',
-    'speakLetterIntro': 'Pour écrire la lettre {char}, on procède ainsi : {consigne}',
-    'speakDigitIntro': 'Pour écrire le chiffre {char}, on procède ainsi : {consigne}',
-    'speakSignIntro': 'Pour tracer le signe {label}, on procède ainsi : {consigne}',
+    'speakLetterIntro':
+        'Pour écrire la lettre {char}, on procède ainsi : {consigne}',
+    'speakDigitIntro':
+        'Pour écrire le chiffre {char}, on procède ainsi : {consigne}',
+    'speakSignIntro':
+        'Pour tracer le signe {label}, on procède ainsi : {consigne}',
   },
   'evaluation': {
     'badge': 'Évaluation',
     'timeLeft': 'Temps restant',
-    'finishedTitle': 'Bravo, évaluation terminée !',
+    'finishedTitle': 'Félicitations, tu as terminé le palier !',
     'finishedMessage':
         'Le temps est écoulé. Tu as bien travaillé sur cette évaluation.',
     'backToPath': 'Retour au parcours',
+    'subjects': 'sujets',
+    'continueSubject': 'Continuer',
+    'firstSubjectTitle': '1er sujet : {title}',
+    'firstSubjectBody': "C'est parti pour l'évaluation !",
+    'nextSubjectTitle': 'Bravo, sujet réussi !',
+    'nextSubjectBody': 'Sujet suivant : {title}',
   },
   'mascotPoses': {
     'accueil': 'Flores Gong Nota te salue',
@@ -196,6 +205,19 @@ const Map<String, dynamic> fr = {
     'wrongPassword': 'Mot de passe incorrect, réessaie.',
     'unlockButton': 'Déverrouiller',
   },
+  'freeTangram': {
+    'instruction': 'Glisse chaque pièce colorée à sa place.',
+    'doneBody': 'Bravo, le tangram est complet ! Essaie-en un autre.',
+    'newTangram': 'Nouveau tangram',
+  },
+  'freeMentalCalc': {
+    'instruction':
+        'Résous le calcul avant la fin du temps imparti. Tu as 2 essais !',
+    'failTitle': 'La bonne réponse était {answer} !',
+    'failBody':
+        "Ce n'est pas grave, chaque erreur t'apprend quelque chose de nouveau. Flores Gong Nota croit en toi, essaie encore !",
+    'failContinue': 'Nouveau calcul',
+  },
   'modeLibre': {
     'title': 'Mode libre',
     'subtitle': 'Dessine et entraine-toi librement !',
@@ -207,6 +229,8 @@ const Map<String, dynamic> fr = {
       'digit': 'Chiffre',
       'crossword': 'Mots croisés',
       'wordsearch': 'Mots mêlés',
+      'tangram': 'Tangram',
+      'calcul': 'Calcul',
     },
     'modelLabel': 'Modèle',
     'noModelTitle': 'Laisse libre cours à ton imagination !',
@@ -236,7 +260,10 @@ const Map<String, dynamic> fr = {
     'crosswordStep': 'Mots croisés',
     'wordSearchStep': 'Mots mêlés',
     'vraiFauxStep': 'Vrai ou faux',
-    'composeStep': 'Compose',
+    'composeStep': 'Association',
+    'figureQuizStep': 'Quiz figures',
+    'figureVraiFauxStep': 'Vrai ou faux',
+    'figureObjetStep': 'Objets',
     'paliers': [
       {
         'title': 'Les signes de base',
@@ -264,6 +291,11 @@ const Map<String, dynamic> fr = {
         'tagline': "De l'addition CP à la proportionnalité CM2",
       },
     ],
+    'figuresPalier': {
+      'title': 'Les figures géométriques',
+      'subtitle': 'PALIER 6',
+      'tagline': 'Carré, rectangle, triangle, cercle',
+    },
     'comingSoon': 'Cette étape arrive bientôt !',
   },
   'community': {
@@ -292,8 +324,7 @@ const Map<String, dynamic> fr = {
     'streakAtRisk': "Joue aujourd'hui pour continuer ta série !",
     'accessibilityCardTitle': 'Accessibilité',
     'dyslexiaFontLabel': 'Police adaptée dyslexie',
-    'dyslexiaFontHint':
-        'Utilise une police conçue pour faciliter la lecture.',
+    'dyslexiaFontHint': 'Utilise une police conçue pour faciliter la lecture.',
     'uiScaleLabel': "Taille de l'interface",
     'uiScaleHint': 'Agrandit ou réduit le texte dans toute l\'application.',
     'totalPointsLabel': 'Mes points',
@@ -324,6 +355,8 @@ const Map<String, dynamic> fr = {
     'photoHint': '',
     'photoChangeAria': 'Changer la photo de profil',
     'photoRemove': 'Supprimer',
+    'nameSave': 'Valider',
+    'nameEdit': 'Modifier',
     'formatCardTitle': "Format d'écriture",
     'formatOptions': [
       {'label': 'Script', 'desc': 'Imprimé'},
@@ -333,6 +366,9 @@ const Map<String, dynamic> fr = {
     'evaluationDurationLabel': "Durée de l'évaluation",
     'evaluationDurationHint':
         "Temps donné pour l'évaluation chronométrée de fin de palier",
+    'mentalCalcDurationLabel': 'Temps par calcul mental',
+    'mentalCalcDurationHint':
+        "En évaluation, temps donné pour répondre à chaque calcul mental",
     'speedLabel': 'Vitesse de formation',
     'speedHint': "Vitesse de l'animation qui montre comment tracer un signe",
     'speedOptions': [
@@ -527,6 +563,11 @@ const Map<String, dynamic> fr = {
       'crochet': 'Crochets',
       'trait': 'Traits',
     },
+    'backToLesson': 'Revenir à la leçon',
+    'practiceSuccessTitle': 'Bravo !',
+    'practiceSuccessBody':
+        "Tu as réussi l'exercice sur ce signe — un point de plus pour toi !",
+    'practiceSuccessContinue': 'Continuer la leçon',
   },
   'exerciceLettre': {
     'title': 'Tracer',
@@ -590,11 +631,12 @@ const Map<String, dynamic> fr = {
   },
   'exerciceCalcul': {
     'problemsReady': '{done}/{total} calculs résolus',
-    'introTitle': 'Écris le résultat',
-    'introBody': 'Trace les chiffres de la réponse pour chaque calcul.',
+    'introTitle': 'Trouve le résultat',
+    'introBody': 'Résous chaque calcul, un par un.',
     'allDoneTitle': 'Bravo, tous les calculs sont résolus !',
     'allDoneBody': 'Tu maîtrises ce sujet.',
     'nextTopic': 'Sujet suivant : {title}',
+    'mentalTimeout': 'Temps écoulé !',
   },
   'calculVraiFaux': {
     'title': 'Vrai ou faux ?',
@@ -606,7 +648,7 @@ const Map<String, dynamic> fr = {
     'doneBody': 'Rejoue pour t\'entrainer encore.',
   },
   'calculCompose': {
-    'title': 'Compose le nombre !',
+    'title': 'Associe pour trouver le nombre !',
     'instruction':
         'Touche les nombres et les signes pour obtenir le nombre demandé, dans l\'ordre, de gauche à droite.',
     'target': 'Obtiens {target} !',
@@ -632,6 +674,61 @@ const Map<String, dynamic> fr = {
     'allDoneTitle': 'Bravo, tous les mots sont écrits !',
     'allDoneBody': 'Tu maîtrises ce groupe de mots.',
     'nextGroup': 'Groupe suivant : {titre}',
+  },
+  'coursFigure': {
+    'notFound': "n'est pas disponible pour le moment.",
+    'backToList': "Retour à l'accueil",
+    'practice': "S'entrainer",
+    'propertiesWithCorners': '{sides} côtés et {corners} coins',
+    'propertiesRound':
+        'Pas un seul côté droit, pas un seul coin : tout est rond !',
+  },
+  'exerciceFigure': {
+    'problemsReady': '{done}/{total} tracés réussis',
+    'introTitle': 'Trace la figure',
+    'introBody': 'Suis le contour avec ton doigt, doucement.',
+    'allDoneTitle': 'Bravo, tu as bien tracé la figure !',
+    'allDoneBody': 'Tu la reconnais et tu sais la dessiner.',
+    'nextTopic': 'Figure suivante : {title}',
+  },
+  'figureQuiz': {
+    'title': 'Quelle est cette figure ?',
+    'instruction': 'Regarde la figure et touche son nom.',
+    'scoreLabel': '{score}/{total} figures reconnues',
+    'doneTitle': 'Partie terminée !',
+    'doneBody': "Rejoue pour t'entrainer encore.",
+  },
+  'figureObjet': {
+    'title': 'Quel objet a cette forme ?',
+    'instruction': "Touche l'objet qui a la même forme.",
+    'promptLabel': '{shape}, comme quel objet ?',
+    'scoreLabel': '{score}/{total} objets trouvés',
+    'doneTitle': 'Partie terminée !',
+    'doneBody': "Rejoue pour t'entrainer encore.",
+  },
+  'figureVraiFaux': {
+    'title': 'Vrai ou faux ?',
+    'instruction': 'Cette affirmation est-elle juste ? À toi de décider !',
+    'true': 'Vrai',
+    'false': 'Faux',
+    'scoreLabel': '{score}/{total} bonnes réponses',
+    'doneTitle': 'Partie terminée !',
+    'doneBody': "Rejoue pour t'entrainer encore.",
+  },
+  'coursTangram': {
+    'notFound': "n'est pas disponible pour le moment.",
+    'introTitle': 'Assemble le tangram !',
+    'introBody':
+        'Glisse chaque pièce colorée dans la case qui a la même forme, '
+        "jusqu'à reconstituer le dessin.",
+    'practice': "S'entrainer",
+    'nextTopic': 'Tangram suivant : {title}',
+  },
+  'exerciceTangram': {
+    'notFound': "n'est pas disponible pour le moment.",
+    'instruction':
+        'Glisse chaque pièce colorée dans la case qui lui correspond.',
+    'doneBody': 'Bravo, le tangram est complet !',
   },
   'motsCroises': {
     'title': 'Mots croisés',
@@ -712,9 +809,15 @@ const Map<String, dynamic> en = {
   'evaluation': {
     'badge': 'Evaluation',
     'timeLeft': 'Time left',
-    'finishedTitle': 'Well done, evaluation complete!',
+    'finishedTitle': 'Congratulations, you finished the tier!',
     'finishedMessage': "Time's up. You worked hard on this evaluation.",
     'backToPath': 'Back to the path',
+    'subjects': 'subjects',
+    'continueSubject': 'Continue',
+    'firstSubjectTitle': 'Subject 1: {title}',
+    'firstSubjectBody': "Let's start the evaluation!",
+    'nextSubjectTitle': 'Well done, subject passed!',
+    'nextSubjectBody': 'Next subject: {title}',
   },
   'mascotPoses': {
     'accueil': 'Flores Gong Nota waves hello',
@@ -763,6 +866,18 @@ const Map<String, dynamic> en = {
     'wrongPassword': 'Wrong password, try again.',
     'unlockButton': 'Unlock',
   },
+  'freeTangram': {
+    'instruction': 'Drag each colored piece to its spot.',
+    'doneBody': 'Well done, the tangram is complete! Try another one.',
+    'newTangram': 'New tangram',
+  },
+  'freeMentalCalc': {
+    'instruction': 'Solve it before time runs out. You have 2 tries!',
+    'failTitle': 'The right answer was {answer}!',
+    'failBody':
+        "It's okay, every mistake teaches you something new. Flores Gong Nota believes in you — try again!",
+    'failContinue': 'New problem',
+  },
   'modeLibre': {
     'title': 'Free Mode',
     'subtitle': 'Draw and practice freely, no rules attached!',
@@ -775,6 +890,8 @@ const Map<String, dynamic> en = {
       'digit': 'Digit',
       'crossword': 'Crossword',
       'wordsearch': 'Word search',
+      'tangram': 'Tangram',
+      'calcul': 'Math',
     },
     'modelLabel': 'Model',
     'noModelTitle': 'Draw whatever you want!',
@@ -803,6 +920,9 @@ const Map<String, dynamic> en = {
     'exerciceStep': 'Exercise',
     'crosswordStep': 'Crossword',
     'wordSearchStep': 'Word search',
+    'figureQuizStep': 'Shape quiz',
+    'figureVraiFauxStep': 'True or false',
+    'figureObjetStep': 'Objects',
     'paliers': [
       {
         'title': 'The Basic Signs',
@@ -825,6 +945,11 @@ const Map<String, dynamic> en = {
         'tagline': 'Link letters together',
       },
     ],
+    'figuresPalier': {
+      'title': 'Geometric Shapes',
+      'subtitle': 'TIER 6',
+      'tagline': 'Square, rectangle, triangle, circle',
+    },
     'comingSoon': 'This step is coming soon!',
   },
   'community': {
@@ -879,11 +1004,14 @@ const Map<String, dynamic> en = {
       {'label': 'Female voice', 'desc': 'Soft and warm'},
     ],
     'voiceGenderTest': 'Hear an example',
-    'voiceGenderTestPhrase': "Hi, it's Flores Gong Nota! Shall we keep learning together?",
+    'voiceGenderTestPhrase':
+        "Hi, it's Flores Gong Nota! Shall we keep learning together?",
     'photoTitle': 'My profile photo',
     'photoHint':
         'It will show up next to your name on the Clearing leaderboard.',
     'photoChangeAria': 'Change profile photo',
+    'nameSave': 'Save',
+    'nameEdit': 'Edit',
     'photoRemove': 'Remove',
     'formatCardTitle': 'Writing format',
     'formatOptions': [
@@ -893,6 +1021,9 @@ const Map<String, dynamic> en = {
     'exercisesCardTitle': 'Writing exercises',
     'evaluationDurationLabel': 'Evaluation duration',
     'evaluationDurationHint': 'Time given for the timed end-of-tier evaluation',
+    'mentalCalcDurationLabel': 'Time per mental calculation',
+    'mentalCalcDurationHint':
+        'In evaluation, time given to answer each mental calculation',
     'speedLabel': 'Formation speed',
     'speedHint': 'Speed of the animation that shows how to trace a sign',
     'speedOptions': [
@@ -1087,6 +1218,11 @@ const Map<String, dynamic> en = {
       'crochet': 'Hooks',
       'trait': 'Lines',
     },
+    'backToLesson': 'Back to the lesson',
+    'practiceSuccessTitle': 'Well done!',
+    'practiceSuccessBody':
+        "You solved the exercise for this sign — one more point for you!",
+    'practiceSuccessContinue': 'Continue the lesson',
   },
   'exerciceLettre': {
     'title': 'Trace',
@@ -1160,6 +1296,60 @@ const Map<String, dynamic> en = {
     'allDoneBody': "You've mastered this group of words.",
     'nextGroup': 'Next group: {titre}',
   },
+  'coursFigure': {
+    'notFound': 'is not available yet.',
+    'backToList': 'Back to home',
+    'practice': 'Practice',
+    'propertiesWithCorners': '{sides} sides and {corners} corners',
+    'propertiesRound':
+        "Not a single straight side, not a single corner: it's all round!",
+  },
+  'exerciceFigure': {
+    'problemsReady': '{done}/{total} drawings done',
+    'introTitle': 'Trace the shape',
+    'introBody': 'Follow the outline with your finger, slowly.',
+    'allDoneTitle': 'Well done, you traced the shape!',
+    'allDoneBody': 'You can recognize it and draw it.',
+    'nextTopic': 'Next shape: {title}',
+  },
+  'figureQuiz': {
+    'title': 'Which shape is this?',
+    'instruction': 'Look at the shape and tap its name.',
+    'scoreLabel': '{score}/{total} shapes recognized',
+    'doneTitle': 'Round complete!',
+    'doneBody': 'Play again to practice more.',
+  },
+  'figureObjet': {
+    'title': 'Which object has this shape?',
+    'instruction': 'Tap the object with the same shape.',
+    'promptLabel': '{shape} — which object looks like this?',
+    'scoreLabel': '{score}/{total} objects found',
+    'doneTitle': 'Round complete!',
+    'doneBody': 'Play again to practice more.',
+  },
+  'figureVraiFaux': {
+    'title': 'True or false?',
+    'instruction': 'Is this statement correct? You decide!',
+    'true': 'True',
+    'false': 'False',
+    'scoreLabel': '{score}/{total} correct answers',
+    'doneTitle': 'Round complete!',
+    'doneBody': 'Play again to practice more.',
+  },
+  'coursTangram': {
+    'notFound': 'is not available yet.',
+    'introTitle': 'Build the tangram!',
+    'introBody':
+        'Drag each colored piece into the matching shape until the '
+        'picture is complete.',
+    'practice': 'Practice',
+    'nextTopic': 'Next tangram: {title}',
+  },
+  'exerciceTangram': {
+    'notFound': 'is not available yet.',
+    'instruction': 'Drag each colored piece into its matching spot.',
+    'doneBody': 'Well done, the tangram is complete!',
+  },
   'motsCroises': {
     'title': 'Crossword',
     'subtitle': 'Complete the grid letter by letter',
@@ -1231,17 +1421,25 @@ const Map<String, dynamic> es = {
     'previous': 'Anterior',
     'backToHome': 'Volver al inicio',
     'restart': 'Empezar de nuevo',
-    'speakLetterIntro': 'Para escribir la letra {char}, así es como: {consigne}',
-    'speakDigitIntro': 'Para escribir el número {char}, así es como: {consigne}',
+    'speakLetterIntro':
+        'Para escribir la letra {char}, así es como: {consigne}',
+    'speakDigitIntro':
+        'Para escribir el número {char}, así es como: {consigne}',
     'speakSignIntro': 'Para trazar el signo {label}, así es como: {consigne}',
   },
   'evaluation': {
     'badge': 'Evaluación',
     'timeLeft': 'Tiempo restante',
-    'finishedTitle': '¡Bien hecho, evaluación terminada!',
+    'finishedTitle': '¡Felicidades, has terminado el nivel!',
     'finishedMessage':
         'Se acabó el tiempo. Has trabajado muy bien en esta evaluación.',
     'backToPath': 'Volver al recorrido',
+    'subjects': 'temas',
+    'continueSubject': 'Continuar',
+    'firstSubjectTitle': 'Tema 1: {title}',
+    'firstSubjectBody': '¡Empezamos la evaluación!',
+    'nextSubjectTitle': '¡Bien hecho, tema superado!',
+    'nextSubjectBody': 'Siguiente tema: {title}',
   },
   'mascotPoses': {
     'accueil': 'Flores Gong Nota te saluda',
@@ -1291,6 +1489,19 @@ const Map<String, dynamic> es = {
     'wrongPassword': 'Contraseña incorrecta, inténtalo de nuevo.',
     'unlockButton': 'Desbloquear',
   },
+  'freeTangram': {
+    'instruction': 'Arrastra cada pieza de color a su lugar.',
+    'doneBody': '¡Bien hecho, el tangram está completo! Prueba con otro.',
+    'newTangram': 'Nuevo tangram',
+  },
+  'freeMentalCalc': {
+    'instruction':
+        'Resuelve el cálculo antes de que se acabe el tiempo. ¡Tienes 2 intentos!',
+    'failTitle': '¡La respuesta correcta era {answer}!',
+    'failBody':
+        'No pasa nada, cada error te enseña algo nuevo. Flores Gong Nota cree en ti, ¡inténtalo de nuevo!',
+    'failContinue': 'Nuevo cálculo',
+  },
   'modeLibre': {
     'title': 'Modo libre',
     'subtitle': '¡Dibuja y practica libremente, sin reglas!',
@@ -1303,6 +1514,8 @@ const Map<String, dynamic> es = {
       'digit': 'Dígito',
       'crossword': 'Crucigrama',
       'wordsearch': 'Sopa de letras',
+      'tangram': 'Tangram',
+      'calcul': 'Cálculo',
     },
     'modelLabel': 'Modelo',
     'noModelTitle': '¡Dibuja lo que quieras!',
@@ -1332,6 +1545,9 @@ const Map<String, dynamic> es = {
     'exerciceStep': 'Ejercicio',
     'crosswordStep': 'Crucigrama',
     'wordSearchStep': 'Sopa de letras',
+    'figureQuizStep': 'Adivina la figura',
+    'figureVraiFauxStep': 'Verdadero o falso',
+    'figureObjetStep': 'Objetos',
     'paliers': [
       {
         'title': 'Los signos básicos',
@@ -1354,6 +1570,11 @@ const Map<String, dynamic> es = {
         'tagline': 'Une las letras entre sí',
       },
     ],
+    'figuresPalier': {
+      'title': 'Las figuras geométricas',
+      'subtitle': 'NIVEL 6',
+      'tagline': 'Cuadrado, rectángulo, triángulo, círculo',
+    },
     'comingSoon': '¡Esta etapa llega pronto!',
   },
   'community': {
@@ -1382,8 +1603,7 @@ const Map<String, dynamic> es = {
     'streakAtRisk': '¡Juega hoy para mantener tu racha!',
     'accessibilityCardTitle': 'Accesibilidad',
     'dyslexiaFontLabel': 'Fuente para dislexia',
-    'dyslexiaFontHint':
-        'Usa una fuente diseñada para facilitar la lectura.',
+    'dyslexiaFontHint': 'Usa una fuente diseñada para facilitar la lectura.',
     'uiScaleLabel': 'Tamaño de la interfaz',
     'uiScaleHint': 'Agranda o reduce el texto en toda la aplicación.',
     'totalPointsLabel': 'Mis puntos',
@@ -1408,11 +1628,14 @@ const Map<String, dynamic> es = {
       {'label': 'Voz femenina', 'desc': 'Suave y cálida'},
     ],
     'voiceGenderTest': 'Escuchar un ejemplo',
-    'voiceGenderTestPhrase': '¡Hola, soy Flores Gong Nota! ¿Seguimos aprendiendo juntos?',
+    'voiceGenderTestPhrase':
+        '¡Hola, soy Flores Gong Nota! ¿Seguimos aprendiendo juntos?',
     'photoTitle': 'Mi foto de perfil',
     'photoHint': 'Aparecerá junto a tu nombre en la clasificación de el claro.',
     'photoChangeAria': 'Cambiar la foto de perfil',
     'photoRemove': 'Eliminar',
+    'nameSave': 'Guardar',
+    'nameEdit': 'Editar',
     'formatCardTitle': 'Formato de escritura',
     'formatOptions': [
       {'label': 'Script', 'desc': 'Imprenta'},
@@ -1422,6 +1645,9 @@ const Map<String, dynamic> es = {
     'evaluationDurationLabel': 'Duración de la evaluación',
     'evaluationDurationHint':
         'Tiempo dado para la evaluación cronometrada de fin de nivel',
+    'mentalCalcDurationLabel': 'Tiempo por cálculo mental',
+    'mentalCalcDurationHint':
+        'En evaluación, tiempo dado para responder a cada cálculo mental',
     'speedLabel': 'Velocidad de formación',
     'speedHint': 'Velocidad de la animación que muestra cómo trazar un signo',
     'speedOptions': [
@@ -1620,6 +1846,11 @@ const Map<String, dynamic> es = {
       'crochet': 'Ganchos',
       'trait': 'Trazos',
     },
+    'backToLesson': 'Volver a la lección',
+    'practiceSuccessTitle': '¡Bien hecho!',
+    'practiceSuccessBody':
+        '¡Has superado el ejercicio de este signo — un punto más para ti!',
+    'practiceSuccessContinue': 'Continuar la lección',
   },
   'exerciceLettre': {
     'title': 'Trazar',
@@ -1697,6 +1928,60 @@ const Map<String, dynamic> es = {
     'allDoneBody': 'Dominas este grupo de palabras.',
     'nextGroup': 'Siguiente grupo: {titre}',
   },
+  'coursFigure': {
+    'notFound': 'no está disponible por el momento.',
+    'backToList': 'Volver al inicio',
+    'practice': 'Practicar',
+    'propertiesWithCorners': '{sides} lados y {corners} esquinas',
+    'propertiesRound':
+        '¡Ni un solo lado recto, ni una sola esquina: todo es redondo!',
+  },
+  'exerciceFigure': {
+    'problemsReady': '{done}/{total} trazos logrados',
+    'introTitle': 'Traza la figura',
+    'introBody': 'Sigue el contorno con tu dedo, despacio.',
+    'allDoneTitle': '¡Bien hecho, trazaste la figura!',
+    'allDoneBody': 'La reconoces y sabes dibujarla.',
+    'nextTopic': 'Siguiente figura: {title}',
+  },
+  'figureQuiz': {
+    'title': '¿Qué figura es esta?',
+    'instruction': 'Mira la figura y toca su nombre.',
+    'scoreLabel': '{score}/{total} figuras reconocidas',
+    'doneTitle': '¡Partida terminada!',
+    'doneBody': 'Vuelve a jugar para practicar más.',
+  },
+  'figureObjet': {
+    'title': '¿Qué objeto tiene esta forma?',
+    'instruction': 'Toca el objeto que tiene la misma forma.',
+    'promptLabel': '{shape}, ¿como qué objeto?',
+    'scoreLabel': '{score}/{total} objetos encontrados',
+    'doneTitle': '¡Partida terminada!',
+    'doneBody': 'Vuelve a jugar para practicar más.',
+  },
+  'figureVraiFaux': {
+    'title': '¿Verdadero o falso?',
+    'instruction': '¿Esta afirmación es correcta? ¡Tú decides!',
+    'true': 'Verdadero',
+    'false': 'Falso',
+    'scoreLabel': '{score}/{total} respuestas correctas',
+    'doneTitle': '¡Partida terminada!',
+    'doneBody': 'Vuelve a jugar para practicar más.',
+  },
+  'coursTangram': {
+    'notFound': 'no está disponible por el momento.',
+    'introTitle': '¡Arma el tangram!',
+    'introBody':
+        'Arrastra cada pieza de color a la casilla con la misma forma '
+        'hasta completar el dibujo.',
+    'practice': 'Practicar',
+    'nextTopic': 'Siguiente tangram: {title}',
+  },
+  'exerciceTangram': {
+    'notFound': 'no está disponible por el momento.',
+    'instruction': 'Arrastra cada pieza de color a su lugar correspondiente.',
+    'doneBody': '¡Bien hecho, el tangram está completo!',
+  },
   'motsCroises': {
     'title': 'Crucigrama',
     'subtitle': 'Completa la cuadrícula letra por letra',
@@ -1752,7 +2037,7 @@ const Map<String, dynamic> ar = {
     "communaute": "الساحة",
     "profil": "الملف الشخصي",
     "reglages": "الإعدادات",
-    "mainNavAria": "التنقل الرئيسي"
+    "mainNavAria": "التنقل الرئيسي",
   },
   "common": {
     "back": "رجوع",
@@ -1771,14 +2056,20 @@ const Map<String, dynamic> ar = {
     "restart": "إعادة البدء",
     "speakLetterIntro": "لكتابة الحرف {char}، إليك الطريقة: {consigne}",
     "speakDigitIntro": "لكتابة الرقم {char}، إليك الطريقة: {consigne}",
-    "speakSignIntro": "لرسم الإشارة {label}، إليك الطريقة: {consigne}"
+    "speakSignIntro": "لرسم الإشارة {label}، إليك الطريقة: {consigne}",
   },
   "evaluation": {
     "badge": "تقييم",
     "timeLeft": "الوقت المتبقي",
-    "finishedTitle": "أحسنت، انتهى التقييم!",
+    "finishedTitle": "تهانينا، لقد أنهيت المرحلة!",
     "finishedMessage": "انتهى الوقت. لقد بذلت جهدًا رائعًا في هذا التقييم.",
-    "backToPath": "العودة إلى المسار"
+    "backToPath": "العودة إلى المسار",
+    "subjects": "مواضيع",
+    "continueSubject": "متابعة",
+    "firstSubjectTitle": "الموضوع 1: {title}",
+    "firstSubjectBody": "لنبدأ التقييم!",
+    "nextSubjectTitle": "أحسنت، نجحت في الموضوع!",
+    "nextSubjectBody": "الموضوع التالي: {title}",
   },
   "mascotPoses": {
     "accueil": "فلوريس غونغ نوتا تحييك",
@@ -1787,26 +2078,27 @@ const Map<String, dynamic> ar = {
     "celebration": "فلوريس غونغ نوتا تحتفل بنجاحك",
     "reconfort": "فلوريس غونغ نوتا تواسيك",
     "reflexion": "فلوريس غونغ نوتا تفكر",
-    "veille": "فلوريس غونغ نوتا ترتاح"
+    "veille": "فلوريس غونغ نوتا ترتاح",
   },
   "notFound": {
     "title": "404",
     "heading": "الصفحة غير موجودة",
     "body": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
-    "goHome": "العودة إلى الرئيسية"
+    "goHome": "العودة إلى الرئيسية",
   },
   "errorPage": {
     "heading": "تعذر تحميل هذه الصفحة",
-    "body": "حدث خطأ ما من جانبنا. يمكنك إعادة المحاولة أو العودة إلى الرئيسية.",
+    "body":
+        "حدث خطأ ما من جانبنا. يمكنك إعادة المحاولة أو العودة إلى الرئيسية.",
     "retry": "إعادة المحاولة",
-    "goHome": "الرئيسية"
+    "goHome": "الرئيسية",
   },
   "welcome": {
     "title": "مرحبًا",
     "heading": "مرحبًا! أنا فلوريس غونغ نوتا.",
     "subheading": "هل تريد اللعب معي؟",
     "start": "ابدأ المغامرة",
-    "imBack": "ها أنا ذا مجددًا! 🐿️"
+    "imBack": "ها أنا ذا مجددًا! 🐿️",
   },
   "onboarding": {
     "title": "مرحبًا بك!",
@@ -1817,26 +2109,41 @@ const Map<String, dynamic> ar = {
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور",
     "languageLabel": "اللغة",
-    "start": "ابدأ المغامرة"
+    "start": "ابدأ المغامرة",
   },
   "profileLock": {
     "title": "ملفي الشخصي محمي",
     "subtitle": "أدخل كلمة المرور التي حددتها عند التسجيل للمتابعة.",
     "passwordPlaceholder": "كلمة المرور",
     "wrongPassword": "كلمة مرور خاطئة، حاول مرة أخرى.",
-    "unlockButton": "فتح القفل"
+    "unlockButton": "فتح القفل",
+  },
+  "freeTangram": {
+    "instruction": "اسحب كل قطعة ملونة إلى مكانها.",
+    "doneBody": "أحسنت، التانغرام مكتمل! جرّب واحدًا آخر.",
+    "newTangram": "تانغرام جديد",
+  },
+  "freeMentalCalc": {
+    "instruction": "احسب قبل انتهاء الوقت. لديك محاولتان!",
+    "failTitle": "الإجابة الصحيحة كانت {answer}!",
+    "failBody":
+        "لا بأس، كل خطأ يعلّمك شيئًا جديدًا. فلوريس غونغ نوتا تؤمن بك، حاول مرة أخرى!",
+    "failContinue": "حساب جديد",
   },
   "modeLibre": {
     "title": "الوضع الحر",
     "subtitle": "ارسم وتدرّب بحرية، بلا قيود!",
-    "helpText": "اختر نموذجًا إذا أردت الإلهام، ثم ارسمه من الذاكرة على الصفحة الفارغة. امسحه وابدأ من جديد كما تشاء!",
+    "helpText":
+        "اختر نموذجًا إذا أردت الإلهام، ثم ارسمه من الذاكرة على الصفحة الفارغة. امسحه وابدأ من جديد كما تشاء!",
     "tabs": {
       "scribble": "خربشة",
       "sign": "إشارة",
       "letter": "حرف",
       "digit": "رقم",
       "crossword": "الكلمات المتقاطعة",
-      "wordsearch": "البحث عن الكلمات"
+      "wordsearch": "البحث عن الكلمات",
+      "tangram": "تانغرام",
+      "calcul": "حساب",
     },
     "modelLabel": "نموذج",
     "noModelTitle": "ارسم ما تريد!",
@@ -1850,8 +2157,8 @@ const Map<String, dynamic> ar = {
       "trait": "الخط",
       "courbe": "المنحنى",
       "point": "النقطة",
-      "crochet": "الخطاف"
-    }
+      "crochet": "الخطاف",
+    },
   },
   "parcours": {
     "title": "مسار الغصن",
@@ -1865,29 +2172,37 @@ const Map<String, dynamic> ar = {
     "exerciceStep": "تمرين",
     "crosswordStep": "الكلمات المتقاطعة",
     "wordSearchStep": "البحث عن الكلمات",
+    "figureQuizStep": "اختبار الأشكال",
+    "figureVraiFauxStep": "صح أم خطأ",
+    "figureObjetStep": "أغراض",
     "paliers": [
       {
         "title": "الإشارات الأساسية",
         "subtitle": "المرحلة 1",
-        "tagline": "نقاط، منحنيات، خطاطيف وخطوط"
+        "tagline": "نقاط، منحنيات، خطاطيف وخطوط",
       },
       {
         "title": "التركيب: الحروف والأرقام",
         "subtitle": "المرحلة 2",
-        "tagline": "اجمع الإشارات للكتابة"
+        "tagline": "اجمع الإشارات للكتابة",
       },
       {
         "title": "المقاطع",
         "subtitle": "المرحلة 3",
-        "tagline": "اجمع الحروف الساكنة والمتحركة للقراءة"
+        "tagline": "اجمع الحروف الساكنة والمتحركة للقراءة",
       },
       {
         "title": "الكلمات",
         "subtitle": "المرحلة 4",
-        "tagline": "اربط الحروف ببعضها"
-      }
+        "tagline": "اربط الحروف ببعضها",
+      },
     ],
-    "comingSoon": "هذه الخطوة قادمة قريبًا!"
+    "figuresPalier": {
+      "title": "الأشكال الهندسية",
+      "subtitle": "المرحلة 6",
+      "tagline": "مربع، مستطيل، مثلث، دائرة",
+    },
+    "comingSoon": "هذه الخطوة قادمة قريبًا!",
   },
   "community": {
     "title": "مجتمعنا في الساحة",
@@ -1898,7 +2213,7 @@ const Map<String, dynamic> ar = {
     "amaniLine": "أحسنتم يا براعم الساحة جميعًا!",
     "footnote": "هذا الترتيب خاص بهذا الجهاز فقط.",
     "starsSuffix": "⭐",
-    "stumpAria": "جذع المرتبة {rank}"
+    "stumpAria": "جذع المرتبة {rank}",
   },
   "profileHub": {
     "title": "دفتر مستكشفي",
@@ -1936,58 +2251,40 @@ const Map<String, dynamic> ar = {
     "volumeTestPhrase": "هكذا يبدو صوتي!",
     "voiceGenderLabel": "نمط الصوت",
     "voiceGenderOptions": [
-      {
-        "label": "صوت رجل",
-        "desc": "دافئ ولطيف"
-      },
-      {
-        "label": "صوت امرأة",
-        "desc": "دافئ ولطيف"
-      }
+      {"label": "صوت رجل", "desc": "دافئ ولطيف"},
+      {"label": "صوت امرأة", "desc": "دافئ ولطيف"},
     ],
     "voiceGenderTest": "استمع إلى مثال",
-    "voiceGenderTestPhrase": "مرحبًا، أنا فلوريس غونغ نوتا! هل نواصل التعلم معًا؟",
+    "voiceGenderTestPhrase":
+        "مرحبًا، أنا فلوريس غونغ نوتا! هل نواصل التعلم معًا؟",
     "photoTitle": "صورتي الشخصية",
     "photoHint": "ستظهر بجانب اسمك في ترتيب الساحة.",
     "photoChangeAria": "تغيير الصورة الشخصية",
     "photoRemove": "حذف",
+    "nameSave": "حفظ",
+    "nameEdit": "تعديل",
     "formatCardTitle": "نمط الكتابة",
     "formatOptions": [
-      {
-        "label": "مطبوع",
-        "desc": "مطبوع"
-      },
-      {
-        "label": "مربوط",
-        "desc": "متصل"
-      }
+      {"label": "مطبوع", "desc": "مطبوع"},
+      {"label": "مربوط", "desc": "متصل"},
     ],
     "exercisesCardTitle": "تمارين الكتابة",
     "evaluationDurationLabel": "مدة التقييم",
     "evaluationDurationHint": "الوقت المخصص لتقييم نهاية المرحلة المحدد بمؤقت",
+    "mentalCalcDurationLabel": "الوقت لكل حساب ذهني",
+    "mentalCalcDurationHint":
+        "أثناء التقييم، الوقت المخصص للإجابة عن كل حساب ذهني",
     "speedLabel": "سرعة التكوين",
     "speedHint": "سرعة الرسم المتحرك الذي يوضح كيفية رسم الإشارة",
     "speedOptions": [
-      {
-        "label": "بطيئة"
-      },
-      {
-        "label": "عادية"
-      },
-      {
-        "label": "سريعة"
-      }
+      {"label": "بطيئة"},
+      {"label": "عادية"},
+      {"label": "سريعة"},
     ],
     "branches": [
-      {
-        "name": "المرحلة 1: النقاط والمنحنيات"
-      },
-      {
-        "name": "المرحلة 2: الخطاطيف والخطوط"
-      },
-      {
-        "name": "المرحلة 3: التركيب"
-      }
+      {"name": "المرحلة 1: النقاط والمنحنيات"},
+      {"name": "المرحلة 2: الخطاطيف والخطوط"},
+      {"name": "المرحلة 3: التركيب"},
     ],
     "lockAction": "قفل ملفي الشخصي",
     "passwordCardTitle": "كلمة مرور ملفي الشخصي",
@@ -1998,28 +2295,29 @@ const Map<String, dynamic> ar = {
     "passwordMismatch": "كلمتا المرور غير متطابقتين.",
     "passwordTooShort": "يجب أن تحتوي كلمة المرور على {count} أحرف على الأقل.",
     "passwordSaved": "تم تحديث كلمة المرور!",
-    "savePassword": "حفظ كلمة المرور"
+    "savePassword": "حفظ كلمة المرور",
   },
   "plusScreen": {
     "title": "المزيد من الخيارات",
-    "subtitle": "إعدادات عملية أخرى، في متناول يدك."
+    "subtitle": "إعدادات عملية أخرى، في متناول يدك.",
   },
   "exerciceComplete": {
     "title": "انتهى التمرين!",
-    "body": "أحسنت، لقد أنهيت هذا التمرين. ماذا تريد أن تفعل الآن؟"
+    "body": "أحسنت، لقد أنهيت هذا التمرين. ماذا تريد أن تفعل الآن؟",
   },
   "coursScreen": {
     "title": "دروسي",
     "subtitle": "منهج فلوريس غونغ نوتا",
-    "intro": "إليك الإشارات الأربع الأساسية لمنهج فلوريس غونغ نوتا. المس بطاقة لاستكشاف جميع أشكالها.",
+    "intro":
+        "إليك الإشارات الأربع الأساسية لمنهج فلوريس غونغ نوتا. المس بطاقة لاستكشاف جميع أشكالها.",
     "letters": "الحروف والأرقام",
     "lettersSubtitle": "التركيب — من a إلى z، من A إلى Z، من 0 إلى 9",
     "signNames": {
       "trait": "الخط",
       "crochet": "الخطاف",
       "courbe": "المنحنيات",
-      "point": "النقطة"
-    }
+      "point": "النقطة",
+    },
   },
   "coursFamily": {
     "intro": "إليك درس {title}. المس بطاقة في الأسفل لترى كيفية رسم كل شكل.",
@@ -2032,40 +2330,44 @@ const Map<String, dynamic> ar = {
       "point": "النقطة",
       "courbe": "المنحنيات",
       "crochet": "الخطاطيف والخطاطيف المزدوجة",
-      "trait": "الخطوط"
-    }
+      "trait": "الخطوط",
+    },
   },
   "coursLettres": {
     "title": "الحروف والأرقام",
     "subtitle": "المس حرفًا لترى تركيبته",
-    "intro": "الحروف والأرقام. يتكون كل حرف بتجميع الإشارات الأساسية. المس حرفًا لترى تركيبته!",
+    "intro":
+        "الحروف والأرقام. يتكون كل حرف بتجميع الإشارات الأساسية. المس حرفًا لترى تركيبته!",
     "legendSuffix": "الغالب",
     "minusculesTitle": "الحروف الصغيرة (a – z)",
     "minusculesSubtitle": "المصدر: دليل CP1 — تركيبات معتمدة",
     "chiffresTitle": "الأرقام (0 – 9)",
     "chiffresSubtitle": "0–4 معتمدة · 5–9 قيد الاعتماد مع السيد موسى",
     "majusculesTitle": "الحروف الكبيرة (A – Z)",
-    "majusculesSubtitle": "⚠️ تركيبات يجب اعتمادها مع السيد موسى قبل الاستخدام التربوي",
+    "majusculesSubtitle":
+        "⚠️ تركيبات يجب اعتمادها مع السيد موسى قبل الاستخدام التربوي",
     "signeCount": "{count} إشارة",
     "pendingAria": "قيد الاعتماد",
-    "viewAria": "عرض تفاصيل {name}"
+    "viewAria": "عرض تفاصيل {name}",
   },
   "coursLettresChar": {
     "notFound": "غير موجود",
     "backToList": "العودة إلى القائمة",
-    "pendingWarning": "هذه التركيبة إعادة بناء بصرية ويجب أن يعتمدها السيد موسى قبل استخدامها في التمارين التربوية.",
+    "pendingWarning":
+        "هذه التركيبة إعادة بناء بصرية ويجب أن يعتمدها السيد موسى قبل استخدامها في التمارين التربوية.",
     "seenOnLines": "معاينة على الأسطر",
     "formulaTitle": "التركيبة",
     "signeCount": "{count} إشارة · المس إشارة لمعرفة المزيد",
     "result": "النتيجة",
-    "adqNote": "ملاحظة: الحروف a وd وq تستخدم نفس تركيبة الإشارات. موضع الخط العمودي (الجسم / الساق العلوية / الساق السفلية) هو ما يميزها، وليس الإشارات نفسها.",
+    "adqNote":
+        "ملاحظة: الحروف a وd وq تستخدم نفس تركيبة الإشارات. موضع الخط العمودي (الجسم / الساق العلوية / الساق السفلية) هو ما يميزها، وليس الإشارات نفسها.",
     "practiceLink": "تدرّب في دفتر الكتابة",
     "seeAll": "عرض جميع الحروف",
     "families": {
       "trait": "الخط",
       "courbe": "المنحنى",
       "crochet": "الخطاف",
-      "point": "النقطة"
+      "point": "النقطة",
     },
     "variants": {
       "vertical": "عمودي",
@@ -2081,22 +2383,24 @@ const Map<String, dynamic> ar = {
       "top-left": "أعلى اليسار",
       "bottom-right": "أسفل اليمين",
       "bottom-left": "أسفل اليسار",
-      "center": "وسط"
+      "center": "وسط",
     },
     "zones": {
       "corps": "الجسم",
       "hampe": "↑ الساق العلوية",
-      "jambe": "↓ الساق السفلية"
-    }
+      "jambe": "↓ الساق السفلية",
+    },
   },
   "coursFormation": {
     "title": "تكوين الحروف",
     "subtitle": "الجمع بين الإشارات الأساسية",
-    "intro": "مرحبًا بك في التركيب! هنا ستتعلم كيفية الجمع بين الإشارات لتكوين الحروف والأرقام.",
+    "intro":
+        "مرحبًا بك في التركيب! هنا ستتعلم كيفية الجمع بين الإشارات لتكوين الحروف والأرقام.",
     "magicTitle": "سحر التركيب!",
-    "magicBody": "يتكون كل حرف بتجميع الإشارات التي تعلمتها: الخطوط، المنحنيات، الخطاطيف والنقاط. المس مجموعة للبدء!",
+    "magicBody":
+        "يتكون كل حرف بتجميع الإشارات التي تعلمتها: الخطوط، المنحنيات، الخطاطيف والنقاط. المس مجموعة للبدء!",
     "previewTitle": "معاينة",
-    "signeCount": "{count} إشارة"
+    "signeCount": "{count} إشارة",
   },
   "coursFormationChar": {
     "notFound": "غير متوفر حاليًا.",
@@ -2108,8 +2412,8 @@ const Map<String, dynamic> ar = {
       "trait": "خط",
       "courbe": "منحنى",
       "crochet": "خطاف",
-      "point": "نقطة"
-    }
+      "point": "نقطة",
+    },
   },
   "exerciceIntro": {
     "title": "التمرين التالي",
@@ -2119,7 +2423,7 @@ const Map<String, dynamic> ar = {
     "typeDesc": "ابحث عن الإشارة الصحيحة ضمن شبكة صغيرة.",
     "previewLabel": "معاينة",
     "start": "ابدأ",
-    "demo": "شاهد عرضًا توضيحيًا"
+    "demo": "شاهد عرضًا توضيحيًا",
   },
   "exercice": {
     "findPrefix": "ابحث عن",
@@ -2127,13 +2431,14 @@ const Map<String, dynamic> ar = {
     "helpText": "<b>المنحنى</b> قوس ليّن كالجسر، بلون أخضر.",
     "successTitle": "أحسنت، لقد وجدته!",
     "successBody": "تفتحت برعمة جديدة على غصنك.",
-    "tryAgain": "حاول مرة أخرى"
+    "tryAgain": "حاول مرة أخرى",
   },
   "exerciceListe": {
     "titleGroup": "الدفتر: {titre}",
     "subtitleGroupLettres": "تدرّب على رسم هذه الحروف",
     "subtitleGroupDigits": "تدرّب على رسم هذه الأرقام",
-    "introGroup": "إليك دفتر الكتابة لـ{titre}! اختر حرفًا للتدرب على تكوينه إشارة بإشارة.",
+    "introGroup":
+        "إليك دفتر الكتابة لـ{titre}! اختر حرفًا للتدرب على تكوينه إشارة بإشارة.",
     "groupHint": "المس حرفًا أدناه للتدرب على شبكة سييس مع التحقق من كل حركة!",
     "letterPrefix": "الحرف",
     "digitPrefix": "الرقم",
@@ -2141,12 +2446,14 @@ const Map<String, dynamic> ar = {
     "title": "دفتر الكتابة",
     "titleFamily": "الدفتر: {titre}",
     "subtitle": "أعد رسم الخط المنقط",
-    "introGeneral": "مرحبًا بك في دفتر الكتابة! أعد رسم الخط المنقط متبعًا النقطة الخضراء لتتعلم رسم كل إشارة بشكل صحيح.",
+    "introGeneral":
+        "مرحبًا بك في دفتر الكتابة! أعد رسم الخط المنقط متبعًا النقطة الخضراء لتتعلم رسم كل إشارة بشكل صحيح.",
     "repetitionsLabel": "التكرارات لكل إشارة",
     "repetitionsHint": "عدد مرات رسم كل إشارة على السطر",
     "toleranceLabel": "درجة التسامح في التحقق",
     "toleranceHint": "أعلى = أسهل على الأصغر سنًا",
-    "startHint": "تشير النقطة الخضراء إلى نقطة البداية. اتبع الخط المنقط مع رفع إصبعك بأقل قدر ممكن.",
+    "startHint":
+        "تشير النقطة الخضراء إلى نقطة البداية. اتبع الخط المنقط مع رفع إصبعك بأقل قدر ممكن.",
     "done": "تم!",
     "rowComplete": "أحسنت! لقد رسمت جميع إشارات هذا السطر. عمل ممتاز!",
     "listenConsigne": "استمع إلى التعليمة: {label}",
@@ -2157,8 +2464,13 @@ const Map<String, dynamic> ar = {
       "point": "نقاط",
       "courbe": "منحنيات",
       "crochet": "خطاطيف",
-      "trait": "خطوط"
-    }
+      "trait": "خطوط",
+    },
+    "backToLesson": "العودة إلى الدرس",
+    "practiceSuccessTitle": "أحسنت!",
+    "practiceSuccessBody":
+        "لقد أنجزت التمرين على هذه الإشارة — نقطة إضافية لك!",
+    "practiceSuccessContinue": "متابعة الدرس",
   },
   "exerciceLettre": {
     "title": "ارسم",
@@ -2167,7 +2479,8 @@ const Map<String, dynamic> ar = {
     "practiceStepsTitle": "تدرّب على كل إشارة",
     "practiceStepsHint": "أنجز كل إشارة {reps} مرات قبل كتابة الحرف كاملاً.",
     "finalTitle": "اكتب الحرف كاملاً",
-    "finalHint": "ارسم الآن جميع الإشارات تباعًا، كما لو كنت تكتب الحرف الحقيقي.",
+    "finalHint":
+        "ارسم الآن جميع الإشارات تباعًا، كما لو كنت تكتب الحرف الحقيقي.",
     "finalLocked": "أنجز أولاً جميع الإشارات أعلاه لفتح هذه الخطوة.",
     "successAll": "تهانينا! الحرف كامل!",
     "successAllSub": "لقد أتقنت تجميع هذا الحرف.",
@@ -2186,7 +2499,7 @@ const Map<String, dynamic> ar = {
     "speakNextStep": "رائع! انتقل الآن إلى الإشارة التالية.",
     "speakLetterDone": "أحسنت! لقد كوّنت الحرف {name} بشكل مثالي!",
     "speakRetryStep": "تقريبًا! أعد المحاولة في هذه الحركة فقط: {desc}",
-    "speakReset": "لنبدأ الحرف {name} من جديد."
+    "speakReset": "لنبدأ الحرف {name} من جديد.",
   },
   "coursSyllabes": {
     "title": "المقاطع",
@@ -2199,7 +2512,7 @@ const Map<String, dynamic> ar = {
     "exampleWordLabel": "كلمة تحتوي على «{syllable}»",
     "speakFormation": "{consonant}... {vowel}... {syllable}!",
     "practice": "تدرّب على هذه المقاطع",
-    "nextConsonant": "الحرف الساكن التالي: {consonant}"
+    "nextConsonant": "الحرف الساكن التالي: {consonant}",
   },
   "exerciceSyllabes": {
     "title": "ارسم",
@@ -2209,7 +2522,7 @@ const Map<String, dynamic> ar = {
     "allDoneTitle": "أحسنت، جميع المقاطع مرسومة!",
     "allDoneBody": "لقد أتقنت مقاطع هذا الحرف الساكن.",
     "nextGroup": "الحرف الساكن التالي: {consonant}",
-    "exampleWordPrefix": "كما في"
+    "exampleWordPrefix": "كما في",
   },
   "coursMots": {
     "notFound": "غير متوفر حاليًا.",
@@ -2217,9 +2530,10 @@ const Map<String, dynamic> ar = {
     "wordCount": "{count} كلمة لاكتشافها",
     "introSpeak": "إليك درس {titre}. المس الكلمة لسماعها.",
     "introTitle": "استمع وشاهد كل كلمة",
-    "introBody": "كل كلمة مكتوبة بالفعل بالحروف التي تعرفها. المس الكلمة لسماعها، أو المس الدمبل للتدرّب عليها!",
+    "introBody":
+        "كل كلمة مكتوبة بالفعل بالحروف التي تعرفها. المس الكلمة لسماعها، أو المس الدمبل للتدرّب عليها!",
     "practiceGroup": "تدرّب",
-    "practiceWordAria": "تدرّب على «{mot}»"
+    "practiceWordAria": "تدرّب على «{mot}»",
   },
   "exerciceMots": {
     "wordsReady": "{done}/{total} كلمات مكتوبة",
@@ -2227,14 +2541,67 @@ const Map<String, dynamic> ar = {
     "introBody": "ارسم الحروف بالترتيب لتكوين كل كلمة.",
     "allDoneTitle": "أحسنت، جميع الكلمات مكتوبة!",
     "allDoneBody": "لقد أتقنت هذه المجموعة من الكلمات.",
-    "nextGroup": "المجموعة التالية: {titre}"
+    "nextGroup": "المجموعة التالية: {titre}",
+  },
+  "coursFigure": {
+    "notFound": "غير متوفر حاليًا.",
+    "backToList": "العودة إلى الرئيسية",
+    "practice": "تدرب",
+    "propertiesWithCorners": "{sides} أضلاع و{corners} زوايا",
+    "propertiesRound": "لا ضلع مستقيم ولا زاوية واحدة: كله مستدير!",
+  },
+  "exerciceFigure": {
+    "problemsReady": "{done}/{total} رسمات صحيحة",
+    "introTitle": "ارسم الشكل",
+    "introBody": "اتبع الحدود بإصبعك، ببطء.",
+    "allDoneTitle": "أحسنت، لقد رسمت الشكل!",
+    "allDoneBody": "أصبحت تتعرف عليه وتعرف كيف ترسمه.",
+    "nextTopic": "الشكل التالي: {title}",
+  },
+  "figureQuiz": {
+    "title": "ما هذا الشكل؟",
+    "instruction": "انظر إلى الشكل والمس اسمه.",
+    "scoreLabel": "{score}/{total} أشكال صحيحة",
+    "doneTitle": "انتهت الجولة!",
+    "doneBody": "العب مرة أخرى للتدرب أكثر.",
+  },
+  "figureObjet": {
+    "title": "أي غرض له هذا الشكل؟",
+    "instruction": "المس الغرض الذي له نفس الشكل.",
+    "promptLabel": "{shape}: أي غرض يشبهه؟",
+    "scoreLabel": "{score}/{total} أغراض صحيحة",
+    "doneTitle": "انتهت الجولة!",
+    "doneBody": "العب مرة أخرى للتدرب أكثر.",
+  },
+  "figureVraiFaux": {
+    "title": "صحيح أم خطأ؟",
+    "instruction": "هل هذه العبارة صحيحة؟ أنت من يقرر!",
+    "true": "صحيح",
+    "false": "خطأ",
+    "scoreLabel": "{score}/{total} إجابات صحيحة",
+    "doneTitle": "انتهت الجولة!",
+    "doneBody": "العب مرة أخرى للتدرب أكثر.",
+  },
+  "coursTangram": {
+    "notFound": "غير متاح حاليًا.",
+    "introTitle": "كوّن التانغرام!",
+    "introBody":
+        "اسحب كل قطعة ملونة إلى الخانة التي لها نفس الشكل حتى تكتمل الصورة.",
+    "practice": "تدرب",
+    "nextTopic": "التانغرام التالي: {title}",
+  },
+  "exerciceTangram": {
+    "notFound": "غير متاح حاليًا.",
+    "instruction": "اسحب كل قطعة ملونة إلى مكانها المناسب.",
+    "doneBody": "أحسنت، التانغرام مكتمل!",
   },
   "motsCroises": {
     "title": "الكلمات المتقاطعة",
     "subtitle": "أكمل الشبكة حرفًا بحرف",
     "levelSubtitle": "المستوى {level} · {count} كلمات",
     "hintTitle": "استمع ثم أكمل",
-    "hintBody": "استمع إلى كل كلمة أدناه وارسم حروفها في الشبكة، تمامًا كالكلمات المتقاطعة الحقيقية!",
+    "hintBody":
+        "استمع إلى كل كلمة أدناه وارسم حروفها في الشبكة، تمامًا كالكلمات المتقاطعة الحقيقية!",
     "doneTitle": "اكتملت الشبكة!",
     "doneBody": "أحسنت، لقد حللت هذه الكلمات المتقاطعة.",
     "across": "أفقي",
@@ -2243,31 +2610,34 @@ const Map<String, dynamic> ar = {
     "featuredBody": "لقد كتبت ونطقت جميع الكلمات! إليك الكلمة المميزة:",
     "continueLabel": "متابعة",
     "generationFailed": "تعذر إنشاء هذه الشبكة، حاول مرة أخرى.",
-    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة"
+    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة",
   },
   "modeLibreCroises": {
     "title": "الكلمات المتقاطعة",
     "subtitle": "شبكة جديدة في كل مرة",
-    "intro": "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالكلمات المتقاطعة كما تشاء!",
+    "intro":
+        "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالكلمات المتقاطعة كما تشاء!",
     "newGame": "شبكة جديدة",
-    "generating": "جارٍ تحضير الشبكة…"
+    "generating": "جارٍ تحضير الشبكة…",
   },
   "motsMeles": {
     "title": "البحث عن الكلمات",
     "subtitle": "ابحث عن كل الكلمات المخفية في الشبكة",
     "levelSubtitle": "المستوى {level} · {count} كلمات",
     "hintTitle": "اسحب لتجد",
-    "hintBody": "اسحب إصبعك من بداية كل كلمة مخفية في الشبكة إلى نهايتها: أفقيًا أو عموديًا أو قطريًا!",
+    "hintBody":
+        "اسحب إصبعك من بداية كل كلمة مخفية في الشبكة إلى نهايتها: أفقيًا أو عموديًا أو قطريًا!",
     "doneTitle": "اكتملت الشبكة!",
     "doneBody": "أحسنت، لقد وجدت كل الكلمات المخفية.",
     "generationFailed": "تعذر إنشاء هذه الشبكة، حاول مرة أخرى.",
-    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة"
+    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة",
   },
   "modeLibreMeles": {
     "title": "البحث عن الكلمات",
     "subtitle": "شبكة جديدة في كل مرة",
-    "intro": "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالبحث عن الكلمات كما تشاء!",
+    "intro":
+        "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالبحث عن الكلمات كما تشاء!",
     "newGame": "شبكة جديدة",
-    "generating": "جارٍ تحضير الشبكة…"
-  }
+    "generating": "جارٍ تحضير الشبكة…",
+  },
 };

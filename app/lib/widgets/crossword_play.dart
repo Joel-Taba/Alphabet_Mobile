@@ -54,11 +54,20 @@ class CrosswordPlay extends StatefulWidget {
   final GeneratedCrossword crossword;
   final String? puzzleId;
   final int? level;
+
+  /// Appelé dès que la grille est entièrement résolue (après la petite
+  /// célébration du mot mystère s'il y en a un), qu'il s'agisse d'une
+  /// étape du parcours ou d'une grille du Mode Libre — contrairement à
+  /// l'attribution de points/pop-up de fin, indépendante de
+  /// [puzzleId]/[level].
+  final VoidCallback? onSolved;
+
   const CrosswordPlay({
     super.key,
     required this.crossword,
     this.puzzleId,
     this.level,
+    this.onSolved,
   });
 
   @override
@@ -156,6 +165,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
   /// révéler, sinon après la fermeture de cette petite célébration.
   void _onFullySolved() {
     if (!mounted) return;
+    widget.onSolved?.call();
     final lang = context.read<LanguageProvider>().lang;
     if (widget.puzzleId != null && !_pointsAwarded) {
       _pointsAwarded = true;
@@ -340,9 +350,7 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                         fit: BoxFit.cover,
                       ),
                       Container(
-                        color: const Color(0xFFFBF6EC).withValues(
-                          alpha: 0.93,
-                        ),
+                        color: const Color(0xFFFBF6EC).withValues(alpha: 0.93),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(4),
@@ -351,36 +359,43 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
                           boundaryMargin: const EdgeInsets.all(40),
                           minScale: 0.4,
                           maxScale: 2.5,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: SizedBox(
-                              width: gridWidth,
-                              height: gridHeight,
-                              child: Column(
-                                children: [
-                                  for (
-                                    var row = 0;
-                                    row < widget.crossword.rows;
-                                    row++
-                                  )
-                                    Row(
-                                      children: [
-                                        for (
-                                          var col = 0;
-                                          col < widget.crossword.cols;
-                                          col++
-                                        )
-                                          _buildCell(
-                                            row,
-                                            col,
-                                            cellSize,
-                                            activeCell,
-                                            solvedWordCellKeys,
-                                            style,
-                                          ),
-                                      ],
-                                    ),
-                                ],
+                          // `constrained: false` positionne l'enfant en
+                          // haut à gauche par défaut : un `Center` le
+                          // recentre dans le viewport dès que la grille est
+                          // plus petite que l'espace alloué (grilles à peu
+                          // de mots), comme pour les mots mêlés.
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: SizedBox(
+                                width: gridWidth,
+                                height: gridHeight,
+                                child: Column(
+                                  children: [
+                                    for (
+                                      var row = 0;
+                                      row < widget.crossword.rows;
+                                      row++
+                                    )
+                                      Row(
+                                        children: [
+                                          for (
+                                            var col = 0;
+                                            col < widget.crossword.cols;
+                                            col++
+                                          )
+                                            _buildCell(
+                                              row,
+                                              col,
+                                              cellSize,
+                                              activeCell,
+                                              solvedWordCellKeys,
+                                              style,
+                                            ),
+                                        ],
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

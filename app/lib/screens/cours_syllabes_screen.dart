@@ -104,7 +104,8 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/accueil'),
+                  onTap: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -168,7 +169,9 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/accueil'),
+                    onTap: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/accueil'),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -245,10 +248,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            MiniLetterFrame(
-                              letter: vowelLetter,
-                              delayMs: 650,
-                            ),
+                            MiniLetterFrame(letter: vowelLetter, delayMs: 650),
                             const SizedBox(width: 10),
                             const Text(
                               '=',
@@ -470,7 +470,8 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              DirectionalIcon(LucideIcons.chevronRight,
+                              DirectionalIcon(
+                                LucideIcons.chevronRight,
                                 size: 14,
                                 color: AmaniColors.textPrimary,
                               ),

@@ -10,9 +10,11 @@ import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_countdown.dart';
+import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/word_trace_attempt.dart';
 import '../widgets/mcq_answer.dart';
+import '../widgets/digit_keypad_answer.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
@@ -40,27 +42,34 @@ class ExerciceCalculScreen extends StatefulWidget {
 class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
   int _activeIdx = 0;
   final Set<int> _doneIndices = {};
+  final Set<int> _timedOutIndices = {};
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
   List<CalculProblem> _problems = const [];
 
   bool get _isEvaluation => widget.amaniEval == '1';
-  CountdownController? _countdown;
-  bool _evaluationExpired = false;
+  bool get _isMentalCalc =>
+      findCalculTopic(widget.topicId)?.isMentalCalc ?? false;
+  int _mentalDuration = kDefaultMentalCalcDuration;
+  CountdownController? _mentalCountdown;
 
   late final ExerciseSettings _settings;
+  bool _showFirstSubjectAnnouncement = false;
 
   @override
   void initState() {
     super.initState();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
-    _settings.load().then((_) => _regenerate());
-    if (_isEvaluation) _initEvaluation();
+    _settings.load().then((_) {
+      _regenerate();
+      if (_isEvaluation) _initEvaluation();
+    });
   }
 
   void _onSettingsChanged() {
     if (!mounted) return;
     setState(_regenerate);
+    _startMentalCountdownForActive();
   }
 
   void _regenerate() {
@@ -72,27 +81,52 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
     );
     _activeIdx = 0;
     _doneIndices.clear();
+    _timedOutIndices.clear();
   }
 
   Future<void> _initEvaluation() async {
     final minutes = await readEvaluationDurationMinutes();
+    final mentalSeconds = await readMentalCalcDurationSeconds();
     if (!mounted) return;
+    _mentalDuration = mentalSeconds;
+    final session = context.read<EvaluationSessionController>();
+    session.startIfNeeded(minutes * 60);
+    final isFirst = session.configureSubjects(CALCUL_TOPICS.length);
+    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
+    _startMentalCountdownForActive();
+  }
+
+  /// Chronomètre propre au problème actif (sujet "calcul mental", en
+  /// évaluation seulement) — distinct du chrono global de l'évaluation :
+  /// il redémarre à chaque nouveau problème plutôt que de courir pour toute
+  /// l'évaluation, l'objectif étant de mesurer l'automatisme sur CHAQUE
+  /// calcul plutôt que d'imposer un budget global.
+  void _startMentalCountdownForActive() {
+    final old = _mentalCountdown;
+    final applies =
+        _isEvaluation &&
+        _isMentalCalc &&
+        _activeIdx < _problems.length &&
+        !_doneIndices.contains(_activeIdx);
+    final idx = _activeIdx;
     setState(() {
-      _countdown =
-          CountdownController(
-            durationSeconds: minutes * 60,
-            onExpire: () {
-              if (mounted) setState(() => _evaluationExpired = true);
-            },
-          )..addListener(() {
-            if (mounted) setState(() {});
-          });
+      _mentalCountdown = applies
+          ? (CountdownController(
+              durationSeconds: _mentalDuration,
+              onExpire: () {
+                if (mounted) _onProblemTimeout(idx);
+              },
+            )..addListener(() {
+              if (mounted) setState(() {});
+            }))
+          : null;
     });
+    old?.dispose();
   }
 
   @override
   void dispose() {
-    _countdown?.dispose();
+    _mentalCountdown?.dispose();
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
     super.dispose();
@@ -115,6 +149,26 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
     }
+    _startMentalCountdownForActive();
+  }
+
+  /// Le temps imparti pour le problème actif s'est écoulé (calcul mental,
+  /// évaluation) : on passe au suivant sans créditer la réussite — répondre
+  /// juste mais trop lentement ne valide pas l'automatisme visé.
+  void _onProblemTimeout(int i) {
+    if (_doneIndices.contains(i)) return;
+    setState(() {
+      _timedOutIndices.add(i);
+      _doneIndices.add(i);
+      if (i + 1 < _problems.length) {
+        _activeIdx = i + 1;
+      }
+    });
+    if (_doneIndices.length >= _problems.length && _awaitingRepeatCompletion) {
+      context.read<ProgressProvider>().awardRestartBonus();
+      setState(() => _awaitingRepeatCompletion = false);
+    }
+    _startMentalCountdownForActive();
   }
 
   @override
@@ -122,7 +176,9 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
     final t = context.watch<LanguageProvider>().t;
     final cc = t['coursCalcul'] as Map<String, dynamic>? ?? {};
     final ec = t['exerciceCalcul'] as Map<String, dynamic>? ?? {};
+    final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
     final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
+    final session = context.watch<EvaluationSessionController>();
     final topic = findCalculTopic(widget.topicId);
 
     if (topic == null) {
@@ -139,7 +195,8 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/accueil'),
+                  onTap: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -184,8 +241,12 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
           children: [
             Column(
               children: [
-                if (_isEvaluation && !_evaluationExpired && _countdown != null)
-                  EvaluationTimerBadge(remaining: _countdown!.remaining),
+                if (_isEvaluation && session.isRunning)
+                  EvaluationTimerBadge(
+                    remaining: session.remainingSeconds,
+                    subjectsDone: session.subjectsDone,
+                    subjectTotal: session.subjectTotal,
+                  ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
@@ -308,56 +369,17 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                           isActive: i == _activeIdx,
                           isFuture: i > _activeIdx,
                           done: _doneIndices.contains(i),
+                          timedOut: _timedOutIndices.contains(i),
                           doneLabel: el['done'] ?? 'Terminé !',
+                          timedOutLabel:
+                              ec['mentalTimeout'] ?? 'Temps écoulé !',
+                          mentalRemaining: i == _activeIdx
+                              ? _mentalCountdown?.remaining
+                              : null,
                           onDone: () => _onProblemDone(i),
                         ),
                         const SizedBox(height: 12),
                       ],
-                      if (allDone &&
-                          _isEvaluation &&
-                          evaluationNextTopic != null)
-                        GestureDetector(
-                          onTap: () => context.go(
-                            '/exercice/calcul/${evaluationNextTopic.id}?amaniEval=1',
-                          ),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B5FBF),
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x338B5FBF),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  tFormat(ec['nextTopic'] ?? '', {
-                                    'title': evaluationNextTopic.title,
-                                  }),
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                DirectionalIcon(
-                                  LucideIcons.chevronRight,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -376,10 +398,40 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                     _awaitingRepeatCompletion = true;
                     _regenerate();
                   });
+                  _startMentalCountdownForActive();
                 },
               ),
-            if (_isEvaluation && _evaluationExpired)
-              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
+            if (_isEvaluation && session.expired)
+              EvaluationCompleteOverlay(
+                onBack: () => context.go('/accueil?scrollToPalier=6'),
+              ),
+            if (_isEvaluation &&
+                _showFirstSubjectAnnouncement &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: tFormat(ev['firstSubjectTitle'] ?? '', {
+                  'title': topic.title,
+                }),
+                subtitle: ev['firstSubjectBody'] ?? '',
+                onContinue: () =>
+                    setState(() => _showFirstSubjectAnnouncement = false),
+              ),
+            if (allDone &&
+                _isEvaluation &&
+                evaluationNextTopic != null &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: ev['nextSubjectTitle'] ?? '',
+                subtitle: tFormat(ev['nextSubjectBody'] ?? '', {
+                  'title': evaluationNextTopic.title,
+                }),
+                onContinue: () {
+                  session.advanceSubject();
+                  context.go(
+                    '/exercice/calcul/${evaluationNextTopic.id}?amaniEval=1',
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -392,7 +444,10 @@ class _ProblemRow extends StatefulWidget {
   final bool isActive;
   final bool isFuture;
   final bool done;
+  final bool timedOut;
   final String doneLabel;
+  final String timedOutLabel;
+  final int? mentalRemaining;
   final VoidCallback onDone;
 
   const _ProblemRow({
@@ -401,7 +456,10 @@ class _ProblemRow extends StatefulWidget {
     required this.isActive,
     required this.isFuture,
     required this.done,
+    this.timedOut = false,
     required this.doneLabel,
+    this.timedOutLabel = '',
+    this.mentalRemaining,
     required this.onDone,
   });
 
@@ -447,13 +505,17 @@ class _ProblemRowState extends State<_ProblemRow> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: widget.done
+            color: widget.timedOut
+                ? AmaniColors.warning.withValues(alpha: 0.6)
+                : widget.done
                 ? AmaniColors.secondary.withValues(alpha: 0.6)
                 : AmaniColors.textPrimary.withValues(alpha: 0.1),
           ),
           boxShadow: [
             BoxShadow(
-              color: widget.done
+              color: widget.timedOut
+                  ? const Color(0x2EE3B873)
+                  : widget.done
                   ? const Color(0x2E8FBF6F)
                   : const Color(0x144A3B2A),
               blurRadius: widget.done ? 16 : 8,
@@ -465,10 +527,7 @@ class _ProblemRowState extends State<_ProblemRow> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: AmaniColors.surface,
                 border: Border(
@@ -490,7 +549,17 @@ class _ProblemRowState extends State<_ProblemRow> {
                       ),
                     ),
                   ),
-                  if (widget.done)
+                  if (widget.timedOut)
+                    Text(
+                      '⏱ ${widget.timedOutLabel}',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AmaniColors.warning,
+                      ),
+                    )
+                  else if (widget.done)
                     Text(
                       '✓ ${widget.doneLabel}',
                       style: TextStyle(
@@ -499,11 +568,43 @@ class _ProblemRowState extends State<_ProblemRow> {
                         fontSize: 13,
                         color: AmaniColors.secondary,
                       ),
+                    )
+                  else if (widget.mentalRemaining != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.mentalRemaining! <= 5
+                            ? const Color(0xFFC03E3E)
+                            : AmaniColors.textPrimary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.timer,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.mentalRemaining}s',
+                            style: TextStyle(
+                              fontFamily: kBalooFontFamily,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   const SizedBox(width: 8),
                   GestureDetector(
-                    onTap: () =>
-                        speech.speak(widget.problem.display, lang),
+                    onTap: () => speech.speak(widget.problem.display, lang),
                     child: Container(
                       width: 32,
                       height: 32,
@@ -521,7 +622,15 @@ class _ProblemRowState extends State<_ProblemRow> {
                 ],
               ),
             ),
-            if (widget.problem.choices != null)
+            if (widget.problem.keypadAnswer)
+              DigitKeypadAnswer(
+                correctAnswer: widget.problem.answer,
+                isActive: widget.isActive,
+                isFuture: widget.isFuture,
+                solved: widget.done,
+                onSolved: widget.onDone,
+              )
+            else if (widget.problem.choices != null)
               McqAnswer(
                 choices: widget.problem.choices!,
                 correctAnswer: widget.problem.answer,

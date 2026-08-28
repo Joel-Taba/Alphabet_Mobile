@@ -246,7 +246,9 @@ class _ChildTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isActive ? AmaniColors.secondary.withValues(alpha: 0.14) : Colors.white,
+          color: isActive
+              ? AmaniColors.secondary.withValues(alpha: 0.14)
+              : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isActive ? AmaniColors.secondary : AmaniColors.disabled,

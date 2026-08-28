@@ -9,8 +9,35 @@ import '../data/calcul_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../widgets/mini_letter_frame.dart';
+import '../widgets/posed_operation_demo.dart';
+import '../widgets/small_calc_balls.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+/// Extrait les deux opérandes d'un `CalculProblem.display` (ex. "34 + 89")
+/// pour les widgets de démonstration "opération posée" — évite d'ajouter des
+/// champs numériques dédiés aux générateurs existants.
+List<int>? _parseOperands(String display, String operatorSymbol) {
+  final parts = display.split(operatorSymbol);
+  if (parts.length != 2) return null;
+  final a = int.tryParse(parts[0].trim());
+  final b = int.tryParse(parts[1].trim());
+  if (a == null || b == null) return null;
+  return [a, b];
+}
+
+/// Extrait numérateur/dénominateur des deux fractions d'un `display` du
+/// type "1/2 + 1/3", pour `FractionPoseeDemo`.
+List<int>? _parseFractionOperands(String display) {
+  final m = RegExp(r'^(\d+)/(\d+) \+ (\d+)/(\d+)$').firstMatch(display.trim());
+  if (m == null) return null;
+  return [
+    int.parse(m.group(1)!),
+    int.parse(m.group(2)!),
+    int.parse(m.group(3)!),
+    int.parse(m.group(4)!),
+  ];
+}
 
 /// Cours du Palier "Les Calculs" : présente le concept du sujet (avec une
 /// petite animation et, pour les tout premiers sujets, des objets à
@@ -81,7 +108,8 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/accueil'),
+                  onTap: () =>
+                      context.canPop() ? context.pop() : context.go('/accueil'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -108,19 +136,42 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
       );
     }
 
+    final isTableTopic = topic.tableNumber != null;
+    final isPosedTopic = topic.posedOperation != null;
+
     // Un seul problème illustré sert de démonstration sur cette page — le
     // premier généré qui porte des objets à compter, sinon le tout premier.
-    final demoProblems = topic.generateProblems(_replaySeed, 3);
-    final demo = demoProblems.firstWhere(
-      (p) => p.illustrateA != null,
-      orElse: () => demoProblems.first,
-    );
-    final answerDigits = demo.answer
-        .split('')
-        .map((c) => getLetterFormation(c, style))
-        .whereType<dynamic>()
-        .toList();
-    final answerDigitsSecond = demo.answerSecondPart
+    // Non utilisé pour une table de multiplication (carte dédiée ci-dessous).
+    final demoProblems = isTableTopic
+        ? const <CalculProblem>[]
+        : topic.generateProblems(_replaySeed, 3);
+    final demo = isTableTopic
+        ? null
+        : demoProblems.firstWhere(
+            (p) => p.illustrateA != null,
+            orElse: () => demoProblems.first,
+          );
+    final posedOperands = isPosedTopic && demo != null
+        ? (topic.posedOperation == 'fraction'
+              ? _parseFractionOperands(demo.display)
+              : _parseOperands(
+                  demo.display,
+                  const {
+                    'addition': '+',
+                    'soustraction': '-',
+                    'multiplication': '×',
+                    'division': '÷',
+                  }[topic.posedOperation]!,
+                ))
+        : null;
+    final answerDigits = demo == null
+        ? const <dynamic>[]
+        : demo.answer
+              .split('')
+              .map((c) => getLetterFormation(c, style))
+              .whereType<dynamic>()
+              .toList();
+    final answerDigitsSecond = demo?.answerSecondPart
         ?.split('')
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
@@ -144,7 +195,9 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/accueil'),
+                    onTap: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/accueil'),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -194,93 +247,137 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Carte de démonstration : objets à compter (si présents)
-                  // + équation + réponse animée chiffre par chiffre.
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x1F000000),
-                          blurRadius: 20,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        if (demo.illustrateA != null) ...[
-                          _ObjectRow(count: demo.illustrateA!),
-                          const SizedBox(height: 6),
+                  if (isTableTopic)
+                    _MultiplicationTableCard(tableNumber: topic.tableNumber!)
+                  else if (isPosedTopic && posedOperands != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1F000000),
+                            blurRadius: 20,
+                            offset: Offset(0, 6),
+                          ),
                         ],
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              demo.display,
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 28,
-                                color: AmaniColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              '=',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AmaniColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Row(
-                              key: ValueKey('answer-$_replaySeed'),
-                              children: [
-                                for (final d in answerDigits) ...[
-                                  MiniLetterFrame(letter: d, size: 52),
-                                  const SizedBox(width: 4),
-                                ],
-                                if (answerDigitsSecond != null) ...[
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    demo.secondPartSeparator,
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 22,
-                                      color: AmaniColors.textPrimary,
-                                    ),
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: switch (topic.posedOperation) {
+                          'addition' => AdditionPoseeDemo(
+                            a: posedOperands[0],
+                            b: posedOperands[1],
+                          ),
+                          'soustraction' => SoustractionPoseeDemo(
+                            a: posedOperands[0],
+                            b: posedOperands[1],
+                          ),
+                          'multiplication' => MultiplicationPoseeDemo(
+                            a: posedOperands[0],
+                            b: posedOperands[1],
+                          ),
+                          'division' => DivisionPoseeDemo(
+                            dividend: posedOperands[0],
+                            divisor: posedOperands[1],
+                          ),
+                          'fraction' => FractionPoseeDemo(
+                            numA: posedOperands[0],
+                            denomA: posedOperands[1],
+                            numB: posedOperands[2],
+                            denomB: posedOperands[3],
+                          ),
+                          _ => const SizedBox.shrink(),
+                        },
+                      ),
+                    )
+                  else
+                    // Carte de démonstration : objets à compter (si
+                    // présents) + équation + réponse animée chiffre par
+                    // chiffre.
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1F000000),
+                            blurRadius: 20,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          if (demo!.illustrateA != null &&
+                              demo.illustrateB != null) ...[
+                            demo.display.contains('-')
+                                ? SoustractionBallsDemo(
+                                    countA: demo.illustrateA!,
+                                    countRemoved: demo.illustrateB!,
+                                  )
+                                : AdditionBallsDemo(
+                                    countA: demo.illustrateA!,
+                                    countB: demo.illustrateB!,
                                   ),
-                                  const SizedBox(width: 6),
-                                  for (final d in answerDigitsSecond) ...[
+                            const SizedBox(height: 12),
+                          ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                demo.display,
+                                style: TextStyle(
+                                  fontFamily: kBalooFontFamily,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 28,
+                                  color: AmaniColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                '=',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Row(
+                                key: ValueKey('answer-$_replaySeed'),
+                                children: [
+                                  for (final d in answerDigits) ...[
                                     MiniLetterFrame(letter: d, size: 52),
                                     const SizedBox(width: 4),
                                   ],
+                                  if (answerDigitsSecond != null) ...[
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      demo.secondPartSeparator,
+                                      style: TextStyle(
+                                        fontFamily: kBalooFontFamily,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 22,
+                                        color: AmaniColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    for (final d in answerDigitsSecond) ...[
+                                      MiniLetterFrame(letter: d, size: 52),
+                                      const SizedBox(width: 4),
+                                    ],
+                                  ],
                                 ],
-                              ],
-                            ),
-                          ],
-                        ),
-                        if (demo.illustrateB != null) ...[
-                          const SizedBox(height: 10),
-                          // Pour une soustraction, le second groupe
-                          // représente ce qu'on enlève : jetons grisés
-                          // plutôt que la même couleur que le premier
-                          // groupe, pour bien illustrer la disparition.
-                          _ObjectRow(
-                            count: demo.illustrateB!,
-                            color: demo.display.contains('-')
-                                ? AmaniColors.disabled
-                                : const Color(0xFF8B5FBF),
+                              ),
+                            ],
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 16),
 
                   // Carte mnémotechnique "Le sais-tu ?"
@@ -352,8 +449,7 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                   // doit s'entraîner avant de continuer, comme pour les
                   // autres paliers récents (Mots, Syllabes).
                   GestureDetector(
-                    onTap: () =>
-                        context.push('/exercice/calcul/${topic.id}'),
+                    onTap: () => context.push('/exercice/calcul/${topic.id}'),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -401,28 +497,96 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
   }
 }
 
-/// Rangée d'objets à compter (jetons colorés) — utilisée uniquement pour les
-/// tout premiers problèmes de CP, où le sens du symbole "+" prime sur le
-/// calcul abstrait.
-class _ObjectRow extends StatelessWidget {
-  final int count;
-  final Color color;
-  const _ObjectRow({required this.count, this.color = const Color(0xFF8B5FBF)});
+/// Palette pastel cyclique (une couleur par table, 1 à 10) — pas de
+/// correspondance exacte avec une charte existante, juste une couleur
+/// distincte par table pour rappeler la fiche de référence papier classique.
+const List<Color> _kTableCardBg = [
+  Color(0xFFFFF6C8),
+  Color(0xFFD9F0DA),
+  Color(0xFFFBDDE3),
+  Color(0xFFDCEBFB),
+  Color(0xFFE6DFF6),
+  Color(0xFFF3DCEE),
+  Color(0xFFE3E6E8),
+  Color(0xFFFBE6CE),
+  Color(0xFFDCEEDC),
+  Color(0xFFD3EDEA),
+];
+const List<Color> _kTableCardBorder = [
+  Color(0xFFE8D27A),
+  Color(0xFF8FBF6F),
+  Color(0xFFE9899C),
+  Color(0xFF7FAEDE),
+  Color(0xFFA98FD6),
+  Color(0xFFC97FBE),
+  Color(0xFF9AA5AC),
+  Color(0xFFE0A85E),
+  Color(0xFF6FA36F),
+  Color(0xFF5FB3A6),
+];
+
+/// Fiche de référence complète d'une table de multiplication (× 0 à × 10),
+/// style fiche papier classique — voir le Cours d'un sujet `tableNumber`.
+class _MultiplicationTableCard extends StatelessWidget {
+  final int tableNumber;
+  const _MultiplicationTableCard({required this.tableNumber});
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (var i = 0; i < count; i++)
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    final bg = _kTableCardBg[(tableNumber - 1) % _kTableCardBg.length];
+    final border =
+        _kTableCardBorder[(tableNumber - 1) % _kTableCardBorder.length];
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: border, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 20,
+            offset: Offset(0, 6),
           ),
-      ],
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: border, width: 3),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$tableNumber',
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                color: AmaniColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (var n = 0; n <= 10; n++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Text(
+                '$tableNumber × $n = ${tableNumber * n}',
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AmaniColors.textPrimary,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

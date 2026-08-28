@@ -58,6 +58,7 @@ class _EtapeReussie {
   final int palier;
   final int points;
   final String dateReussite;
+
   /// `true` une fois que [BackendSyncService.pushProgression] a confirmé la
   /// journalisation côté serveur — voir [ProgressProvider.syncPendingProgression],
   /// qui ré-essaie toutes les entrées encore à `false` (ex. journalisées
@@ -235,6 +236,34 @@ class ProgressProvider extends ChangeNotifier {
     return AwardResult(pointsAwarded: points, alreadyCompleted: false);
   }
 
+  /// Nombre d'étapes distinctes validées (COURS + EXERCICE) pour un
+  /// [typeEtape] donné — utilisé par "Ma progression dans la forêt" pour
+  /// afficher une progression réelle par grande étape du parcours. Fiable
+  /// tant que chaque étape du catalogue a un `etapeCode` unique et stable
+  /// (SIGNE, LETTRE, SYLLABE, MOT, TANGRAM).
+  int completedCountForType(String typeEtape) =>
+      _log.where((e) => e.typeEtape == typeEtape).length;
+
+  /// Variante pour les types dont les exercices sont journalisés par
+  /// tentative plutôt que par sujet du catalogue (`etapeCode` de la forme
+  /// `'sujetId-i'`, ex. CALCUL/FIGURE) : compte les COURS validés, puis le
+  /// nombre de SUJETS distincts ayant au moins un exercice réussi — pas le
+  /// nombre brut d'entrées, qui grandirait sans borne à chaque répétition.
+  int completedTopicsForType(String typeEtape) {
+    final coursCount = _log
+        .where((e) => e.typeEtape == typeEtape && e.modalite == 'COURS')
+        .length;
+    final exerciceTopics = _log
+        .where((e) => e.typeEtape == typeEtape && e.modalite == 'EXERCICE')
+        .map((e) {
+          final idx = e.etapeCode.lastIndexOf('-');
+          return idx == -1 ? e.etapeCode : e.etapeCode.substring(0, idx);
+        })
+        .toSet()
+        .length;
+    return coursCount + exerciceTopics;
+  }
+
   /// Tente de synchroniser une étape tout juste journalisée et marque
   /// l'entrée correspondante comme `synced` en cas de succès. En cas
   /// d'échec (hors-ligne...), l'entrée reste `synced: false` et sera
@@ -299,6 +328,18 @@ class ProgressProvider extends ChangeNotifier {
     await _writeBonus();
     _signalPointsAwarded(points);
     return points;
+  }
+
+  /// 1 point, à chaque fois, pour une pratique rapide d'un seul signe lancée
+  /// depuis le bouton "S'entrainer" du cours (Palier 1) — sur le même
+  /// principe que [awardRestartBonus] (s'ajoute au score, jamais dédupliqué,
+  /// pas de nouvelle "étape réussie" journalisée), mais un montant fixe
+  /// plutôt qu'aléatoire : l'utilisateur a explicitement demandé "juste un
+  /// point, comme les autres", pas un bonus variable.
+  Future<void> awardSignPracticePoint() async {
+    _bonusTotal += 1;
+    await _writeBonus();
+    _signalPointsAwarded(1);
   }
 
   String _viewedKey(String typeEtape, String groupCode) =>
@@ -388,7 +429,11 @@ class ProgressProvider extends ChangeNotifier {
     final coursTermines = _log.where((e) => e.modalite == 'COURS').length;
     final exercicesReussis = _log.where((e) => e.modalite == 'EXERCICE').length;
     final joursAventure = _log
-        .map((e) => DateTime.parse(e.dateReussite).toUtc().toIso8601String().substring(0, 10))
+        .map(
+          (e) => DateTime.parse(
+            e.dateReussite,
+          ).toUtc().toIso8601String().substring(0, 10),
+        )
         .toSet()
         .length;
     final totalPoints =

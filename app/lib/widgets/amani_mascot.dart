@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Poses de la mascotte Amani, correspondant aux fichiers image.
+/// Poses de la mascotte Flores Gong Nota, correspondant aux fichiers image.
 enum AmaniPose {
   accueil,
   demonstration,
@@ -58,27 +58,27 @@ const Map<AmaniPose, String> _poseAssets = {
 
 /// Labels d'accessibilité par pose.
 const Map<AmaniPose, String> _poseLabels = {
-  AmaniPose.accueil: 'Amani te salue',
-  AmaniPose.demonstration: 'Amani te montre un signe',
-  AmaniPose.encouragement: "Amani t'encourage",
-  AmaniPose.celebration: 'Amani célèbre ta réussite',
-  AmaniPose.reconfort: 'Amani te réconforte',
-  AmaniPose.reflexion: 'Amani réfléchit',
-  AmaniPose.veille: 'Amani se repose',
-  AmaniPose.miniReussite: 'Amani est ravi de ta réussite',
-  AmaniPose.miniReessai: "Amani t'encourage à réessayer",
-  AmaniPose.invitation: "Amani t'invite à continuer",
-  AmaniPose.curiosite: 'Amani est curieux',
-  AmaniPose.emerveillement: "Amani s'émerveille",
-  AmaniPose.victoirePalier: 'Amani fête ton palier',
-  AmaniPose.podium: 'Amani te félicite sur le podium',
-  AmaniPose.dessin: 'Amani dessine',
-  AmaniPose.perdu: 'Amani est perdu',
+  AmaniPose.accueil: 'Flores Gong Nota te salue',
+  AmaniPose.demonstration: 'Flores Gong Nota te montre un signe',
+  AmaniPose.encouragement: "Flores Gong Nota t'encourage",
+  AmaniPose.celebration: 'Flores Gong Nota célèbre ta réussite',
+  AmaniPose.reconfort: 'Flores Gong Nota te réconforte',
+  AmaniPose.reflexion: 'Flores Gong Nota réfléchit',
+  AmaniPose.veille: 'Flores Gong Nota se repose',
+  AmaniPose.miniReussite: 'Flores Gong Nota est ravi de ta réussite',
+  AmaniPose.miniReessai: "Flores Gong Nota t'encourage à réessayer",
+  AmaniPose.invitation: "Flores Gong Nota t'invite à continuer",
+  AmaniPose.curiosite: 'Flores Gong Nota est curieux',
+  AmaniPose.emerveillement: "Flores Gong Nota s'émerveille",
+  AmaniPose.victoirePalier: 'Flores Gong Nota fête ton palier',
+  AmaniPose.podium: 'Flores Gong Nota te félicite sur le podium',
+  AmaniPose.dessin: 'Flores Gong Nota dessine',
+  AmaniPose.perdu: 'Flores Gong Nota est perdu',
   AmaniPose.motsCroises: 'Grille de mots croisés',
   AmaniPose.motsMeles: 'Grille de mots mêlés',
 };
 
-/// Widget de la mascotte Amani.
+/// Widget de la mascotte Flores Gong Nota.
 class AmaniMascot extends StatelessWidget {
   final AmaniPose pose;
   final AmaniSize size;

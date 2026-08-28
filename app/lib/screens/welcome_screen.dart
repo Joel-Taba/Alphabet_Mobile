@@ -52,7 +52,10 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const AmaniMascot(pose: AmaniPose.accueil, size: AmaniSize.heroLg),
+              const AmaniMascot(
+                pose: AmaniPose.accueil,
+                size: AmaniSize.heroLg,
+              ),
               const Spacer(),
               AmaniButton(
                 label: t['welcome']['start'],

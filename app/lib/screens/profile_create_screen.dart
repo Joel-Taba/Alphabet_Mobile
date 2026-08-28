@@ -102,7 +102,11 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(LucideIcons.leaf, color: AmaniColors.secondary, size: 36),
+                      Icon(
+                        LucideIcons.leaf,
+                        color: AmaniColors.secondary,
+                        size: 36,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         t['onboarding']['title'],
@@ -342,9 +346,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               ),
               IconButton(
                 icon: Icon(
-                  _showPassword
-                      ? LucideIcons.eyeOff
-                      : LucideIcons.eye,
+                  _showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
                   color: AmaniColors.textSecondary,
                 ),
                 onPressed: () => setState(() => _showPassword = !_showPassword),

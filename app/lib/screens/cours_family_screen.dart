@@ -146,7 +146,9 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/accueil'),
+                    onTap: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/accueil'),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -289,7 +291,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                               fg: Colors.white,
                               filled: true,
                               onTap: () => context.push(
-                                '/exercice-liste?family=${widget.family}',
+                                '/exercice-liste?family=${widget.family}&sign=${_selectedSign['id']}',
                               ),
                             ),
                           ),

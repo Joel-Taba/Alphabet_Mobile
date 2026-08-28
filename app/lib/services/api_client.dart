@@ -1,15 +1,24 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'platform_default_api_base_url.dart'
+    if (dart.library.io) 'platform_default_api_base_url_io.dart';
 
 /// URL de base du backend Spring (`back-end/`). Configurable au lancement
-/// sans recompiler : `flutter run --dart-define=API_BASE_URL=http://192.168.1.23:8080`.
-/// Par défaut, `10.0.2.2` est l'adresse conventionnelle de l'hôte depuis un
-/// émulateur Android ; un simulateur iOS ou un run desktop utiliseraient
-/// `localhost` à la place via ce même `--dart-define`.
-const String kApiBaseUrl = String.fromEnvironment(
-  'API_BASE_URL',
-  defaultValue: 'http://10.0.2.2:8080',
-);
+/// sans recompiler : `flutter run --dart-define=API_BASE_URL=http://192.168.1.23:8080`
+/// — indispensable dès que le backend ne tourne pas sur la même machine que
+/// l'appareil qui exécute l'app (téléphone physique, backend déployé
+/// ailleurs...), sans quoi AUCUNE synchronisation ne peut jamais réussir.
+///
+/// À défaut de cette variable, la valeur choisie dépend de la plateforme :
+/// `10.0.2.2` est l'adresse conventionnelle de l'hôte depuis un émulateur
+/// Android, alors que le web (le run le plus courant en développement) et
+/// tout run natif desktop/iOS peuvent directement joindre `localhost`.
+const String _kApiBaseUrlOverride = String.fromEnvironment('API_BASE_URL');
+
+String get kApiBaseUrl => _kApiBaseUrlOverride.isNotEmpty
+    ? _kApiBaseUrlOverride
+    : (kIsWeb ? 'http://localhost:8080' : defaultNativeApiBaseUrl);
 
 /// Erreur renvoyée par l'API, au format `ApiErrorResponse` du back-end
 /// (`code` correspond aux constantes comme `NOM_DEJA_UTILISE`,

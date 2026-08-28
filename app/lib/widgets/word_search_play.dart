@@ -67,11 +67,19 @@ class WordSearchPlay extends StatefulWidget {
   final GeneratedWordSearch wordSearch;
   final String? puzzleId;
   final int? level;
+
+  /// Appelé dès que la grille est entièrement résolue, qu'il s'agisse
+  /// d'une étape du parcours ou d'une grille du Mode Libre — contrairement
+  /// à l'attribution de points/pop-up de fin, indépendante de
+  /// [puzzleId]/[level].
+  final VoidCallback? onSolved;
+
   const WordSearchPlay({
     super.key,
     required this.wordSearch,
     this.puzzleId,
     this.level,
+    this.onSolved,
   });
 
   @override
@@ -134,6 +142,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
   /// fournis).
   void _onFullySolved() {
     if (!mounted) return;
+    widget.onSolved?.call();
     final lang = context.read<LanguageProvider>().lang;
     if (widget.puzzleId != null && !_pointsAwarded) {
       _pointsAwarded = true;

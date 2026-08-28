@@ -56,6 +56,12 @@ class CalculProblem {
   /// savoir quel choix est correct.
   final List<String>? choices;
 
+  /// Réponse à composer en tapant sur un clavier numérique 0-9 réutilisable
+  /// (plutôt qu'en traçant ou en choisissant parmi des propositions) — voir
+  /// `DigitKeypadAnswer` dans `exercice_calcul_screen.dart`. Utilisé pour les
+  /// tables de multiplication : l'enfant compose chiffre par chiffre.
+  final bool keypadAnswer;
+
   const CalculProblem({
     required this.display,
     required this.answer,
@@ -64,6 +70,7 @@ class CalculProblem {
     this.illustrateA,
     this.illustrateB,
     this.choices,
+    this.keypadAnswer = false,
   });
 }
 
@@ -75,9 +82,31 @@ class CalculTopic {
   final String mnemonicTitle;
   final String mnemonicBody;
 
+  /// Non `null` pour un sujet "table de multiplication" (1 à 10) : le Cours
+  /// affiche alors la table complète (× 0 à × 10), style fiche de référence,
+  /// plutôt que la carte de démonstration générique à une seule équation —
+  /// voir `cours_calcul_screen.dart`.
+  final int? tableNumber;
+
+  /// Non `null` pour un sujet "opération posée" ('addition' | 'soustraction'
+  /// | 'multiplication' | 'division') : le Cours affiche alors l'opération
+  /// posée colonne par colonne (retenues/emprunts animés, potence pour la
+  /// division) plutôt que la carte de démonstration générique — voir
+  /// `cours_calcul_screen.dart` et `widgets/posed_operation_demo.dart`.
+  final String? posedOperation;
+
+  /// `true` pour le sujet "calcul mental" : en mode évaluation, chaque
+  /// problème est alors soumis à son propre petit chronomètre (réglage
+  /// Profil dédié, par défaut 15 s) plutôt que de laisser l'enfant prendre
+  /// tout son temps — l'automatisme se mesure aussi à la vitesse de
+  /// réponse, pas seulement à sa justesse. Sans effet hors évaluation.
+  final bool isMentalCalc;
+
   /// [seed] varie à chaque "Relancer"/nouvelle tentative pour varier les
   /// problèmes ; [count] vient du réglage "Répétitions" (Profil > Réglages),
-  /// réutilisé ici comme "nombre de problèmes par session d'exercice".
+  /// réutilisé ici comme "nombre de problèmes par session d'exercice" (ignoré
+  /// pour les tables de multiplication, qui posent toujours les 11 faits
+  /// appris en entier).
   final List<CalculProblem> Function(int seed, int count) generateProblems;
 
   const CalculTopic({
@@ -87,6 +116,9 @@ class CalculTopic {
     required this.subtitle,
     required this.mnemonicTitle,
     required this.mnemonicBody,
+    this.tableNumber,
+    this.posedOperation,
+    this.isMentalCalc = false,
     required this.generateProblems,
   });
 }
@@ -210,51 +242,29 @@ List<CalculProblem> _generateSoustractionPoseeCe1(int seed, int count) {
   return problems;
 }
 
-/// Construit 4 choix de QCM pour "table × n" : la bonne réponse et 3
-/// distracteurs plausibles (table voisine, opérande voisin, confusion
-/// addition/multiplication) — jamais une valeur absurde.
-List<String> _mcqChoicesForMultiplication(int table, int n, Random rand) {
-  final correct = table * n;
-  final neighborTable = table > 1 ? table - 1 : table + 1;
-  final neighborN = n > 1 ? n - 1 : n + 1;
-  final candidates = <int>{
-    neighborTable * n,
-    table * neighborN,
-    table + n,
-  }..removeWhere((c) => c <= 0 || c == correct);
-  var offset = 1;
-  while (candidates.length < 3) {
-    final cand = correct + offset;
-    if (cand > 0 && cand != correct) candidates.add(cand);
-    offset = offset > 0 ? -offset : -(offset - 1);
-  }
-  final distractors = candidates.toList()..shuffle(rand);
-  final choices = [
-    correct.toString(),
-    ...distractors.take(3).map((c) => c.toString()),
-  ];
-  choices.shuffle(rand);
-  return choices;
-}
+/// Une table de multiplication complète, × 0 à × 10 (11 faits), dans l'ordre
+/// — comme une fiche de référence à réciter, pas un tirage aléatoire. [seed]
+/// et [count] sont ignorés à dessein : "on pose toutes les multiplications
+/// apprises", pas un sous-ensemble variable selon le réglage Répétitions.
+List<CalculProblem> _tableFacts(int table) => [
+  for (var n = 0; n <= 10; n++)
+    CalculProblem(
+      display: '$table × $n',
+      answer: '${table * n}',
+      keypadAnswer: true,
+    ),
+];
 
-/// Tables de 1 à 9 — espace fermé, destiné à être mémorisé plutôt que
-/// recalculé (même principe que les doubles/amis de 10 du CP). Exercice en
-/// QCM (voir [CalculProblem.choices]) plutôt qu'en traçage : c'est le rappel
-/// du fait mémorisé qui est testé, pas le tracé du chiffre.
-List<CalculProblem> _generateMultiplicationCe1(int seed, int count) {
-  final rand = Random(seed);
-  final pool = <CalculProblem>[
-    for (final table in [1, 2, 3, 4, 5, 6, 7, 8, 9])
-      for (var n = 1; n <= 10; n++)
-        CalculProblem(
-          display: '$table × $n',
-          answer: '${table * n}',
-          choices: _mcqChoicesForMultiplication(table, n, rand),
-        ),
-  ];
-  pool.shuffle(rand);
-  return pool.take(count).toList();
-}
+List<CalculProblem> _generateTable1(int seed, int count) => _tableFacts(1);
+List<CalculProblem> _generateTable2(int seed, int count) => _tableFacts(2);
+List<CalculProblem> _generateTable3(int seed, int count) => _tableFacts(3);
+List<CalculProblem> _generateTable4(int seed, int count) => _tableFacts(4);
+List<CalculProblem> _generateTable5(int seed, int count) => _tableFacts(5);
+List<CalculProblem> _generateTable6(int seed, int count) => _tableFacts(6);
+List<CalculProblem> _generateTable7(int seed, int count) => _tableFacts(7);
+List<CalculProblem> _generateTable8(int seed, int count) => _tableFacts(8);
+List<CalculProblem> _generateTable9(int seed, int count) => _tableFacts(9);
+List<CalculProblem> _generateTable10(int seed, int count) => _tableFacts(10);
 
 List<CalculProblem> _generateMultiplicationPoseeCe2(int seed, int count) {
   final rand = Random(seed);
@@ -355,6 +365,39 @@ List<CalculProblem> _generateFractionsCm1(int seed, int count) {
       CalculProblem(
         display: '$numA/$denom + $numB/$denom = ?/$denom',
         answer: '${numA + numB}',
+      ),
+    );
+  }
+  return problems;
+}
+
+/// Dénominateurs différents : il faut les mettre au même dénominateur avant
+/// d'additionner. Dénominateur commun = simple produit des deux (pas le PPCM
+/// minimal — reste bien plus simple à expliquer au primaire), donc le
+/// résultat n'est jamais simplifié (hors périmètre : la simplification de
+/// fraction est une compétence à part). `display` reste au format "a/b +
+/// c/d" (sans "=?", contrairement au sujet même-dénominateur ci-dessus) pour
+/// que l'écran d'exercice générique ajoute lui-même " = ?" proprement.
+List<CalculProblem> _generateFractionsDenomDiffCm2(int seed, int count) {
+  final rand = Random(seed);
+  const denominateurs = [2, 3, 4, 5];
+  final problems = <CalculProblem>[];
+  for (var i = 0; i < count; i++) {
+    var denomA = denominateurs[rand.nextInt(denominateurs.length)];
+    var denomB = denominateurs[rand.nextInt(denominateurs.length)];
+    while (denomB == denomA) {
+      denomB = denominateurs[rand.nextInt(denominateurs.length)];
+    }
+    final numA = 1 + rand.nextInt(denomA - 1);
+    final numB = 1 + rand.nextInt(denomB - 1);
+    final commonDenom = denomA * denomB;
+    final resultNum = numA * denomB + numB * denomA;
+    problems.add(
+      CalculProblem(
+        display: '$numA/$denomA + $numB/$denomB',
+        answer: '$resultNum',
+        answerSecondPart: '$commonDenom',
+        secondPartSeparator: '/',
       ),
     );
   }
@@ -481,6 +524,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'porte, 3+3 les dés, 4+4 la pieuvre (elle a 8 pattes !), 5+5 les '
         'doigts de tes deux mains. Pour arriver à 10, cherche ton "ami de '
         '10" : 1 et 9, 2 et 8, 3 et 7, 4 et 6, 5 et 5 !',
+    isMentalCalc: true,
     generateProblems: _generateCalculMentalCp,
   ),
   CalculTopic(
@@ -494,6 +538,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'des unités : la dizaine en trop "grimpe" tout en haut de la colonne '
         'suivante pour s\'ajouter aux dizaines. Elle voyage, elle ne '
         'disparaît jamais !',
+    posedOperation: 'addition',
     generateProblems: _generateAdditionPoseeCe1,
   ),
   CalculTopic(
@@ -507,20 +552,131 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'une dizaine à la colonne voisine : elle revient sous forme de 10 '
         'unités supplémentaires. Un emprunt, ça se rend toujours, alors on '
         'n\'oublie pas de l\'enlever à la colonne d\'à côté !',
+    posedOperation: 'soustraction',
     generateProblems: _generateSoustractionPoseeCe1,
   ),
   CalculTopic(
-    id: 'ce1-multiplication',
+    id: 'ce1-table-1',
     niveau: 'CE1',
-    title: 'La multiplication',
-    subtitle: 'Le sens de la multiplication et les tables de 1 à 9',
-    mnemonicTitle: 'Multiplier, c\'est additionner en rythme !',
+    title: 'Table de 1',
+    subtitle: 'Apprends et récite la table de 1',
+    mnemonicTitle: 'Multiplier par 1, ça ne change rien !',
     mnemonicBody:
-        'Multiplier, c\'est additionner plusieurs fois le même nombre : '
-        '3 × 4, c\'est 3+3+3+3. La table de 2, ce sont les doubles que tu '
-        'connais déjà. La table de 5, ce sont les doigts d\'une main : '
-        'compte par bonds de 5 (5, 10, 15, 20...).',
-    generateProblems: _generateMultiplicationCe1,
+        'Un nombre multiplié par 1 reste toujours lui-même : 1 × 7, c\'est '
+        'juste 7 ! C\'est la table la plus facile de toutes.',
+    tableNumber: 1,
+    generateProblems: _generateTable1,
+  ),
+  CalculTopic(
+    id: 'ce1-table-2',
+    niveau: 'CE1',
+    title: 'Table de 2',
+    subtitle: 'Apprends et récite la table de 2',
+    mnemonicTitle: 'Ce sont les doubles !',
+    mnemonicBody:
+        'Multiplier par 2, c\'est additionner le nombre à lui-même : '
+        '2 × 6, c\'est 6 + 6 = 12. Tu connais déjà tous les doubles !',
+    tableNumber: 2,
+    generateProblems: _generateTable2,
+  ),
+  CalculTopic(
+    id: 'ce1-table-3',
+    niveau: 'CE1',
+    title: 'Table de 3',
+    subtitle: 'Apprends et récite la table de 3',
+    mnemonicTitle: 'Le double, plus une fois de plus !',
+    mnemonicBody:
+        '3 × n, c\'est le double de n, plus n encore une fois : '
+        '3 × 4 = (2 × 4) + 4 = 8 + 4 = 12.',
+    tableNumber: 3,
+    generateProblems: _generateTable3,
+  ),
+  CalculTopic(
+    id: 'ce1-table-4',
+    niveau: 'CE1',
+    title: 'Table de 4',
+    subtitle: 'Apprends et récite la table de 4',
+    mnemonicTitle: 'Le double du double !',
+    mnemonicBody:
+        'Multiplier par 4, c\'est doubler deux fois de suite : pour 4 × 3, '
+        'double de 3 = 6, puis double de 6 = 12.',
+    tableNumber: 4,
+    generateProblems: _generateTable4,
+  ),
+  CalculTopic(
+    id: 'ce1-table-5',
+    niveau: 'CE1',
+    title: 'Table de 5',
+    subtitle: 'Apprends et récite la table de 5',
+    mnemonicTitle: 'Compte par bonds de 5, comme les doigts d\'une main !',
+    mnemonicBody:
+        '5, 10, 15, 20... Chaque main a 5 doigts : 5 × 3, c\'est 3 mains de '
+        '5 doigts, donc 15. Le résultat finit toujours par 0 ou par 5.',
+    tableNumber: 5,
+    generateProblems: _generateTable5,
+  ),
+  CalculTopic(
+    id: 'ce1-table-6',
+    niveau: 'CE1',
+    title: 'Table de 6',
+    subtitle: 'Apprends et récite la table de 6',
+    mnemonicTitle: 'Le double de la table de 3 !',
+    mnemonicBody:
+        '6 × n, c\'est le double de 3 × n : pour 6 × 4, calcule d\'abord '
+        '3 × 4 = 12, puis double = 24.',
+    tableNumber: 6,
+    generateProblems: _generateTable6,
+  ),
+  CalculTopic(
+    id: 'ce1-table-7',
+    niveau: 'CE1',
+    title: 'Table de 7',
+    subtitle: 'Apprends et récite la table de 7',
+    mnemonicTitle: 'Pas d\'astuce magique : on la récite comme une comptine !',
+    mnemonicBody:
+        'La table de 7 est la plus difficile à retenir. Récite-la à voix '
+        'haute plusieurs fois, dans l\'ordre, comme une chanson : 7, 14, '
+        '21, 28... jusqu\'à la connaître par cœur.',
+    tableNumber: 7,
+    generateProblems: _generateTable7,
+  ),
+  CalculTopic(
+    id: 'ce1-table-8',
+    niveau: 'CE1',
+    title: 'Table de 8',
+    subtitle: 'Apprends et récite la table de 8',
+    mnemonicTitle: 'Le double du double du double !',
+    mnemonicBody:
+        'Multiplier par 8, c\'est doubler trois fois de suite : pour 8 × 3, '
+        'double de 3 = 6, double de 6 = 12, double de 12 = 24.',
+    tableNumber: 8,
+    generateProblems: _generateTable8,
+  ),
+  CalculTopic(
+    id: 'ce1-table-9',
+    niveau: 'CE1',
+    title: 'Table de 9',
+    subtitle: 'Apprends et récite la table de 9',
+    mnemonicTitle: 'L\'astuce des 10 doigts !',
+    mnemonicBody:
+        'Lève tes 10 doigts. Pour 9 × n, replie le n-ième doigt : les '
+        'doigts avant comptent les dizaines, ceux d\'après les unités. '
+        'Pour 9 × 4 : replie le 4e doigt → 3 doigts avant (30) et 6 doigts '
+        'après (6) → 36 !',
+    tableNumber: 9,
+    generateProblems: _generateTable9,
+  ),
+  CalculTopic(
+    id: 'ce1-table-10',
+    niveau: 'CE1',
+    title: 'Table de 10',
+    subtitle: 'Apprends et récite la table de 10',
+    mnemonicTitle: 'On ajoute juste un zéro !',
+    mnemonicBody:
+        'Multiplier par 10, c\'est décaler chaque chiffre d\'un rang : '
+        '10 × 7 = 70. Il suffit d\'écrire un 0 après le nombre.',
+    tableNumber: 10,
+    generateProblems: _generateTable10,
   ),
   CalculTopic(
     id: 'ce2-multiplication-posee',
@@ -533,6 +689,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'pluie qui tombe colonne par colonne, et on n\'oublie jamais les '
         'retenues au passage — elles suivent le même chemin que dans une '
         'addition posée.',
+    posedOperation: 'multiplication',
     generateProblems: _generateMultiplicationPoseeCe2,
   ),
   CalculTopic(
@@ -572,6 +729,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'par le plus grand : à chaque étape, ce qui ne peut pas être '
         'partagé "descend" rejoindre le chiffre suivant, comme un petit '
         'reste qui continue le voyage.',
+    posedOperation: 'division',
     generateProblems: _generateDivisionPoseeCm1,
   ),
   CalculTopic(
@@ -636,6 +794,20 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'flèches se croisent en X entre ce que tu connais et ce que tu '
         'cherches : "produit en croix" !',
     generateProblems: _generateProportionnaliteCm2,
+  ),
+  CalculTopic(
+    id: 'cm2-fractions-denominateurs-differents',
+    niveau: 'CM2',
+    title: 'Fractions à dénominateurs différents',
+    subtitle: 'Mettre au même dénominateur avant d\'additionner',
+    mnemonicTitle: 'On coupe les pizzas en plus petites parts !',
+    mnemonicBody:
+        'Deux pizzas coupées différemment ne se comparent pas directement. '
+        'On recoupe chaque pizza pour qu\'elles aient le même nombre de '
+        'parts (on multiplie chaque fraction par le dénominateur de '
+        'l\'autre), et seulement après, on additionne les parts.',
+    posedOperation: 'fraction',
+    generateProblems: _generateFractionsDenomDiffCm2,
   ),
 ];
 
@@ -863,11 +1035,20 @@ class NumberComposePuzzle {
   final List<String> operatorTiles;
   final int slotCount;
 
+  /// La séquence attendue (nombres et signes, dans l'ordre de gauche à
+  /// droite) — sert de référence pour le code couleur façon "Wordle" de
+  /// l'exercice (vert/jaune/rouge), en plus de la vérification arithmétique
+  /// du résultat.
+  final List<int> solutionNumbers;
+  final List<String> solutionOperators;
+
   const NumberComposePuzzle({
     required this.target,
     required this.numberTiles,
     required this.operatorTiles,
     required this.slotCount,
+    required this.solutionNumbers,
+    required this.solutionOperators,
   });
 }
 
@@ -977,6 +1158,8 @@ NumberComposePuzzle _buildComposePuzzle(
     numberTiles: numberTiles,
     operatorTiles: operatorTiles,
     slotCount: slotCount,
+    solutionNumbers: nums,
+    solutionOperators: ops,
   );
 }
 

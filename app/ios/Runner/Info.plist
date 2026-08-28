@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Amani a besoin d'accéder à tes photos pour choisir une photo de profil.</string>
+	<string>Flores Gong Nota a besoin d'accéder à tes photos pour choisir une photo de profil.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

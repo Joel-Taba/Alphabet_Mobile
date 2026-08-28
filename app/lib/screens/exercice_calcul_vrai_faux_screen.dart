@@ -5,6 +5,7 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../data/calcul_catalog.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../widgets/confetti_burst.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -30,6 +31,7 @@ class _ExerciceCalculVraiFauxScreenState
   int _restartKey = 0;
   bool? _lastCorrect;
   bool _locked = false;
+  final _confettiKey = GlobalKey<ConfettiBurstState>();
 
   int? get _levelIdx => int.tryParse(widget.levelIndex);
 
@@ -49,7 +51,10 @@ class _ExerciceCalculVraiFauxScreenState
     final idx = _levelIdx;
     if (idx == null || idx < 0 || idx >= VRAI_FAUX_LEVELS.length) return;
     final level = VRAI_FAUX_LEVELS[idx];
-    _items = level.generateItems(idx * 1000 + _restartKey, _settings.repetitions);
+    _items = level.generateItems(
+      idx * 1000 + _restartKey,
+      _settings.repetitions,
+    );
     _index = 0;
     _score = 0;
     _lastCorrect = null;
@@ -71,6 +76,7 @@ class _ExerciceCalculVraiFauxScreenState
       _lastCorrect = correct;
       if (correct) _score++;
     });
+    if (correct) _confettiKey.currentState?.play();
     Future.delayed(const Duration(milliseconds: 700), () {
       if (!mounted) return;
       setState(() {
@@ -104,7 +110,8 @@ class _ExerciceCalculVraiFauxScreenState
         body: SafeArea(
           child: Center(
             child: GestureDetector(
-              onTap: () => context.go('/accueil'),
+              onTap: () =>
+                  context.canPop() ? context.pop() : context.go('/accueil'),
               child: Text(common['backToHome'] ?? ''),
             ),
           ),
@@ -118,158 +125,175 @@ class _ExerciceCalculVraiFauxScreenState
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              decoration: BoxDecoration(
-                color: AmaniColors.background,
-                border: Border(
-                  bottom: BorderSide(
-                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.go('/accueil'),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        color: AmaniColors.surface,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Color(0x1F000000), blurRadius: 6),
-                        ],
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  decoration: BoxDecoration(
+                    color: AmaniColors.background,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          level.niveau,
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                            letterSpacing: 1.2,
-                            color: const Color(0xFF6B3F94),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.canPop()
+                            ? context.pop()
+                            : context.go('/accueil'),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: AmaniColors.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1F000000),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: DirectionalIcon(
+                            LucideIcons.arrowLeft,
+                            size: 20,
                           ),
                         ),
-                        Text(
-                          (vf['title'] ?? level.title).toString(),
-                          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_items.isNotEmpty)
-                    Text(
-                      (vf['scoreLabel'] ?? '{score}/{total}')
-                          .toString()
-                          .replaceAll('{score}', '$_score')
-                          .replaceAll('{total}', '${_items.length}'),
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AmaniColors.textSecondary,
                       ),
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: done
-                      ? _DoneCard(
-                          title: (vf['doneTitle'] ?? '').toString(),
-                          body: (vf['doneBody'] ?? '').toString(),
-                          replayLabel: (common['replay'] ?? 'Relancer')
-                              .toString(),
-                          onReplay: _restart,
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (vf['instruction'] ?? '').toString(),
-                              textAlign: TextAlign.center,
-                              style: AmaniTheme.bodyStyle.copyWith(
-                                fontSize: 14,
-                                color: AmaniColors.textSecondary,
+                              level.niveau,
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                                letterSpacing: 1.2,
+                                color: const Color(0xFF6B3F94),
                               ),
                             ),
-                            const SizedBox(height: 24),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 28,
-                                vertical: 28,
+                            Text(
+                              (vf['title'] ?? level.title).toString(),
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 20,
                               ),
-                              constraints: const BoxConstraints(minWidth: 260),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: _lastCorrect == null
-                                      ? AmaniColors.textPrimary.withValues(
-                                          alpha: 0.1,
-                                        )
-                                      : (_lastCorrect!
-                                            ? AmaniColors.success
-                                            : AmaniColors.error),
-                                  width: 3,
-                                ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x1F000000),
-                                    blurRadius: 20,
-                                    offset: Offset(0, 6),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                current?.display ?? '',
-                                style: TextStyle(
-                                  fontFamily: kBalooFontFamily,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 30,
-                                  color: AmaniColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _AnswerButton(
-                                  label: (vf['true'] ?? 'Vrai').toString(),
-                                  icon: LucideIcons.check,
-                                  color: AmaniColors.success,
-                                  onTap: () => _answer(true),
-                                ),
-                                const SizedBox(width: 16),
-                                _AnswerButton(
-                                  label: (vf['false'] ?? 'Faux').toString(),
-                                  icon: LucideIcons.x,
-                                  color: AmaniColors.error,
-                                  onTap: () => _answer(false),
-                                ),
-                              ],
                             ),
                           ],
                         ),
+                      ),
+                      if (_items.isNotEmpty)
+                        Text(
+                          (vf['scoreLabel'] ?? '{score}/{total}')
+                              .toString()
+                              .replaceAll('{score}', '$_score')
+                              .replaceAll('{total}', '${_items.length}'),
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: AmaniColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: done
+                          ? _DoneCard(
+                              title: (vf['doneTitle'] ?? '').toString(),
+                              body: (vf['doneBody'] ?? '').toString(),
+                              replayLabel: (common['replay'] ?? 'Relancer')
+                                  .toString(),
+                              onReplay: _restart,
+                            )
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  (vf['instruction'] ?? '').toString(),
+                                  textAlign: TextAlign.center,
+                                  style: AmaniTheme.bodyStyle.copyWith(
+                                    fontSize: 14,
+                                    color: AmaniColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 28,
+                                    vertical: 28,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 260,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: _lastCorrect == null
+                                          ? AmaniColors.textPrimary.withValues(
+                                              alpha: 0.1,
+                                            )
+                                          : (_lastCorrect!
+                                                ? AmaniColors.success
+                                                : AmaniColors.error),
+                                      width: 3,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x1F000000),
+                                        blurRadius: 20,
+                                        offset: Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    current?.display ?? '',
+                                    style: TextStyle(
+                                      fontFamily: kBalooFontFamily,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 30,
+                                      color: AmaniColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 28),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _AnswerButton(
+                                      label: (vf['true'] ?? 'Vrai').toString(),
+                                      icon: LucideIcons.check,
+                                      color: AmaniColors.success,
+                                      onTap: () => _answer(true),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    _AnswerButton(
+                                      label: (vf['false'] ?? 'Faux').toString(),
+                                      icon: LucideIcons.x,
+                                      color: AmaniColors.error,
+                                      onTap: () => _answer(false),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+            Positioned.fill(child: ConfettiBurst(key: _confettiKey)),
           ],
         ),
       ),

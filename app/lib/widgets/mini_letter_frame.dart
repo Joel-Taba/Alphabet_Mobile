@@ -14,11 +14,22 @@ class MiniLetterFrame extends StatefulWidget {
   final int delayMs;
   final double size;
 
+  /// Écart entre le début de deux gestes consécutifs, et durée de tracé
+  /// d'un geste. Par défaut (260/500), les gestes se chevauchent légèrement
+  /// — convient à des lettres à 1-2 gestes très liés. Pour des figures à
+  /// plusieurs côtés bien distincts (carré, rectangle, triangle), passer
+  /// `stepGapMs == stepDrawMs` (ex. 700/700) pour que chaque côté se trace
+  /// entièrement avant que le suivant ne commence.
+  final int stepGapMs;
+  final int stepDrawMs;
+
   const MiniLetterFrame({
     super.key,
     required this.letter,
     this.delayMs = 0,
     this.size = 76,
+    this.stepGapMs = 260,
+    this.stepDrawMs = 500,
   });
 
   @override
@@ -31,13 +42,13 @@ class _MiniLetterFrameState extends State<MiniLetterFrame>
 
   int get _stepCount => (widget.letter?['steps'] as List?)?.length ?? 0;
 
+  Duration get _totalDuration =>
+      Duration(milliseconds: _stepCount * widget.stepGapMs + 500);
+
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: _stepCount * 260 + 500),
-    );
+    _controller = AnimationController(vsync: this, duration: _totalDuration);
     _play();
   }
 
@@ -52,7 +63,7 @@ class _MiniLetterFrameState extends State<MiniLetterFrame>
   void didUpdateWidget(covariant MiniLetterFrame oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.letter != widget.letter) {
-      _controller.duration = Duration(milliseconds: _stepCount * 260 + 500);
+      _controller.duration = _totalDuration;
       _play();
     }
   }
@@ -81,7 +92,12 @@ class _MiniLetterFrameState extends State<MiniLetterFrame>
               _controller.value * _controller.duration!.inMilliseconds;
           return CustomPaint(
             size: Size(widget.size, widget.size),
-            painter: _MiniLetterPainter(steps: steps, elapsedMs: elapsedMs),
+            painter: _MiniLetterPainter(
+              steps: steps,
+              elapsedMs: elapsedMs,
+              stepGapMs: widget.stepGapMs.toDouble(),
+              stepDrawMs: widget.stepDrawMs.toDouble(),
+            ),
           );
         },
       ),
@@ -92,8 +108,15 @@ class _MiniLetterFrameState extends State<MiniLetterFrame>
 class _MiniLetterPainter extends CustomPainter {
   final List<Map<String, dynamic>> steps;
   final double elapsedMs;
+  final double stepGapMs;
+  final double stepDrawMs;
 
-  _MiniLetterPainter({required this.steps, required this.elapsedMs});
+  _MiniLetterPainter({
+    required this.steps,
+    required this.elapsedMs,
+    required this.stepGapMs,
+    required this.stepDrawMs,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -101,8 +124,8 @@ class _MiniLetterPainter extends CustomPainter {
     canvas.save();
     canvas.scale(scale, scale);
     for (int i = 0; i < steps.length; i++) {
-      final stepStart = i * 260.0;
-      final stepProgress = ((elapsedMs - stepStart) / 500.0).clamp(0.0, 1.0);
+      final stepStart = i * stepGapMs;
+      final stepProgress = ((elapsedMs - stepStart) / stepDrawMs).clamp(0.0, 1.0);
       if (stepProgress <= 0) continue;
       final path = parseSvgPathData(steps[i]['pathD'] as String);
       final color = Color(

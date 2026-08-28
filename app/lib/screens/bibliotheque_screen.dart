@@ -7,6 +7,8 @@ import '../widgets/cahier_frame.dart';
 import '../widgets/scribble_canvas.dart';
 import '../widgets/free_crossword_section.dart';
 import '../widgets/free_word_search_section.dart';
+import '../widgets/free_tangram_section.dart';
+import '../widgets/free_mental_calc_section.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/amani_mascot.dart';
 import '../data/sign_exercise_catalog.dart';
@@ -16,7 +18,16 @@ import '../hooks/use_writing_style.dart';
 import '../services/mode_libre_controller.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-enum ModeLibreTab { scribble, signe, lettre, chiffre, crossword, wordsearch }
+enum ModeLibreTab {
+  scribble,
+  signe,
+  lettre,
+  chiffre,
+  crossword,
+  wordsearch,
+  tangram,
+  calcul,
+}
 
 const List<SignFamily> _signFamilies = [
   SignFamily.trait,
@@ -100,12 +111,21 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     super.dispose();
   }
 
+  /// En Mode Libre, une seule variante par forme (pas de doublon "réduit" à
+  /// côté du signe normal) pour les traits et les courbes — contrairement au
+  /// parcours du Palier 1, où les deux tailles ("hampe"/"corps") font partie
+  /// du programme. Points et crochets n'ont pas ce doublon dans le
+  /// catalogue : inchangés.
   List<dynamic> _signsForFamily(SignFamily family) {
     switch (family) {
       case SignFamily.trait:
-        return TRAITS;
+        return TRAITS
+            .where((s) => !(s['id'] as String).endsWith('-reduced'))
+            .toList();
       case SignFamily.courbe:
-        return COURBES;
+        return COURBES
+            .where((s) => !(s['id'] as String).endsWith('-reduced'))
+            .toList();
       case SignFamily.point:
         return POINTS;
       case SignFamily.crochet:
@@ -238,6 +258,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                     ModeLibreTab.wordsearch,
                     tabs['wordsearch'] ?? 'Mots mêlés',
                   ),
+                  const SizedBox(width: 8),
+                  _buildTab(ModeLibreTab.tangram, tabs['tangram'] ?? 'Tangram'),
+                  const SizedBox(width: 8),
+                  _buildTab(ModeLibreTab.calcul, tabs['calcul'] ?? 'Calcul'),
                 ],
               ),
             ),
@@ -249,6 +273,10 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               FreeWordSearchSection(
                 key: ValueKey('wordsearch-$_resetGeneration'),
               )
+            else if (_currentTab == ModeLibreTab.tangram)
+              FreeTangramSection(key: ValueKey('tangram-$_resetGeneration'))
+            else if (_currentTab == ModeLibreTab.calcul)
+              FreeMentalCalcSection(key: ValueKey('calcul-$_resetGeneration'))
             else ...[
               // Sélecteur de famille (uniquement pour l'onglet Signe)
               if (_currentTab == ModeLibreTab.signe) ...[
@@ -464,9 +492,22 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
 
     if (_currentTab == ModeLibreTab.signe) {
       final colors = glyphColorByFamily[_selectedFamily]!;
-      label = signNames[signFamilyKey(_selectedFamily)] as String? ?? '';
+      final lang = context.watch<LanguageProvider>().lang;
+      final signs = _signsForFamily(_selectedFamily);
+      final selected = _selectedSignIndex < signs.length
+          ? signs[_selectedSignIndex]
+          : null;
+      final variantLabel = selected != null
+          ? (selected['label']?[lang.name] as String? ??
+                selected['label']?['fr'] as String?)
+          : null;
+      label =
+          variantLabel ??
+          signNames[signFamilyKey(_selectedFamily)] as String? ??
+          '';
       preview = SignGlyph(
         family: _selectedFamily,
+        variant: selected?['variant'] ?? 'vertical',
         stroke:
             _selectedFamily == SignFamily.trait ||
                 _selectedFamily == SignFamily.point

@@ -28,6 +28,12 @@ class LetterTraceCell extends StatefulWidget {
   final bool bold;
   final VoidCallback? onSolved;
 
+  /// Multiplicateur de l'épaisseur du feutre (guides, tracés complétés ET
+  /// tracé en cours) — 1.0 par défaut ; les appelants avec des cases plus
+  /// grandes (les figures géométriques, par ex.) peuvent le réduire pour un
+  /// trait plus fin, plus précis à l'œil pour un contour de figure.
+  final double strokeWidthScale;
+
   const LetterTraceCell({
     super.key,
     required this.letter,
@@ -36,6 +42,7 @@ class LetterTraceCell extends StatefulWidget {
     this.given = false,
     this.transparent = false,
     this.bold = false,
+    this.strokeWidthScale = 1.0,
     this.onSolved,
   });
 
@@ -189,6 +196,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
                     cellSize: widget.size,
                     isActive: widget.isActive,
                     bold: widget.bold,
+                    strokeWidthScale: widget.strokeWidthScale,
                   ),
                 ),
                 GestureDetector(
@@ -217,6 +225,7 @@ class _CellPainter extends CustomPainter {
   final double cellSize;
   final bool isActive;
   final bool bold;
+  final double strokeWidthScale;
 
   _CellPainter({
     required this.steps,
@@ -228,12 +237,13 @@ class _CellPainter extends CustomPainter {
     required this.cellSize,
     required this.isActive,
     this.bold = false,
+    this.strokeWidthScale = 1.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final scale = cellSize / 200.0;
-    final lineWidth = (cellSize / 12).clamp(2.0, 100.0);
+    final lineWidth = (cellSize / 12 * strokeWidthScale).clamp(1.5, 100.0);
 
     if (solved) {
       final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
