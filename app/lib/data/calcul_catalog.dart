@@ -208,7 +208,8 @@ List<CalculProblem> _generateAdditionPoseeCe1(int seed, int count) {
     int unitsA, unitsB;
     if (i.isEven) {
       unitsA = 5 + rand.nextInt(5); // 5..9
-      unitsB = (10 - unitsA) + rand.nextInt(unitsA); // garantit unitsA+unitsB ≥ 10
+      unitsB =
+          (10 - unitsA) + rand.nextInt(unitsA); // garantit unitsA+unitsB ≥ 10
     } else {
       unitsA = rand.nextInt(5); // 0..4
       unitsB = rand.nextInt(10 - unitsA); // garantit unitsA+unitsB ≤ 9
@@ -423,8 +424,7 @@ List<CalculProblem> _generateDecimauxCm1(int seed, int count) {
     }
     problems.add(
       CalculProblem(
-        display:
-            '${_formatDixiemes(aTenths)} $op ${_formatDixiemes(bTenths)}',
+        display: '${_formatDixiemes(aTenths)} $op ${_formatDixiemes(bTenths)}',
         answer: '${resultTenths ~/ 10}',
         answerSecondPart: '${resultTenths % 10}',
         secondPartSeparator: ',',
@@ -829,7 +829,17 @@ CalculTopic? findCalculTopic(String id) {
 class TrueFalseEquation {
   final String display;
   final bool isTrue;
-  const TrueFalseEquation({required this.display, required this.isTrue});
+
+  /// Le même calcul avec le résultat réellement exact substitué à
+  /// [display] -- identique à [display] quand [isTrue] est vrai, sert
+  /// d'explication affichée dans le pop-up de correction sinon.
+  final String correctDisplay;
+
+  const TrueFalseEquation({
+    required this.display,
+    required this.isTrue,
+    required this.correctDisplay,
+  });
 }
 
 class VraiFauxLevel {
@@ -866,6 +876,7 @@ List<TrueFalseEquation> _generateVraiFauxCp(int seed, int count) {
     return TrueFalseEquation(
       display: '$a ${isAddition ? '+' : '-'} $b = $shown',
       isTrue: shown == correct,
+      correctDisplay: '$a ${isAddition ? '+' : '-'} $b = $correct',
     );
   });
 }
@@ -896,6 +907,7 @@ List<TrueFalseEquation> _generateVraiFauxCe1(int seed, int count) {
     return TrueFalseEquation(
       display: '$a $sign $b = $shown',
       isTrue: shown == correct,
+      correctDisplay: '$a $sign $b = $correct',
     );
   });
 }
@@ -935,6 +947,7 @@ List<TrueFalseEquation> _generateVraiFauxCe2(int seed, int count) {
     return TrueFalseEquation(
       display: '$a $sign $b = $shown',
       isTrue: shown == correct,
+      correctDisplay: '$a $sign $b = $correct',
     );
   });
 }
@@ -947,10 +960,13 @@ List<TrueFalseEquation> _generateVraiFauxCm1(int seed, int count) {
       final numA = 1 + rand.nextInt(denom - 1);
       final numB = 1 + rand.nextInt(denom - numA);
       final correct = numA + numB;
-      final shown = rand.nextBool() ? correct : _nearMiss(rand, correct, min: 1);
+      final shown = rand.nextBool()
+          ? correct
+          : _nearMiss(rand, correct, min: 1);
       return TrueFalseEquation(
         display: '$numA/$denom + $numB/$denom = $shown/$denom',
         isTrue: shown == correct,
+        correctDisplay: '$numA/$denom + $numB/$denom = $correct/$denom',
       );
     }
     final aTenths = 10 + rand.nextInt(490);
@@ -965,6 +981,9 @@ List<TrueFalseEquation> _generateVraiFauxCm1(int seed, int count) {
           '${_formatDixiemes(aTenths)} + ${_formatDixiemes(bTenths)} = '
           '${_formatDixiemes(shownTenths)}',
       isTrue: shownTenths == correctTenths,
+      correctDisplay:
+          '${_formatDixiemes(aTenths)} + ${_formatDixiemes(bTenths)} = '
+          '${_formatDixiemes(correctTenths)}',
     );
   });
 }
@@ -980,6 +999,7 @@ List<TrueFalseEquation> _generateVraiFauxCm2(int seed, int count) {
       return TrueFalseEquation(
         display: '$pct % de $base = $shown',
         isTrue: shown == correct,
+        correctDisplay: '$pct % de $base = $correct',
       );
     }
     final aTenths = 10 + rand.nextInt(90);
@@ -990,8 +1010,11 @@ List<TrueFalseEquation> _generateVraiFauxCm2(int seed, int count) {
         ? correctTenths
         : correctTenths + (rand.nextBool() ? 10 : -10);
     return TrueFalseEquation(
-      display: '${_formatDixiemes(aTenths)} × $b = ${_formatDixiemes(shownTenths)}',
+      display:
+          '${_formatDixiemes(aTenths)} × $b = ${_formatDixiemes(shownTenths)}',
       isTrue: shownTenths == correctTenths,
+      correctDisplay:
+          '${_formatDixiemes(aTenths)} × $b = ${_formatDixiemes(correctTenths)}',
     );
   });
 }
@@ -1055,8 +1078,7 @@ class NumberComposePuzzle {
 class ComposeNombreLevel {
   final String niveau;
   final String title;
-  final List<NumberComposePuzzle> Function(int seed, int count)
-  generatePuzzles;
+  final List<NumberComposePuzzle> Function(int seed, int count) generatePuzzles;
 
   const ComposeNombreLevel({
     required this.niveau,

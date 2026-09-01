@@ -319,9 +319,15 @@ class AmaniApp extends StatelessWidget {
                   ? TextDirection.rtl
                   : TextDirection.ltr,
               // Réglage "taille de l'interface" (Profil > Réglages) :
-              // agrandit/réduit le texte (et tout ce qui en dépend) dans
-              // toute l'app, sur le même principe que les réglages
-              // d'accessibilité "Taille d'affichage" d'iOS/Android.
+              // agrandit/réduit le texte (et tout ce qui en dépend, via les
+              // styles `AmaniTheme`) dans toute l'app -- un ajustement doux
+              // qui laisse chaque écran se ré-agencer normalement (retour à
+              // la ligne, défilement...), sans jamais rogner ou déformer la
+              // page comme le ferait un zoom global de tout l'écran. Les
+              // espaces de tracé des exercices, eux, lisent directement ce
+              // même réglage pour agrandir leur propre canevas -- voir
+              // [LetterTraceCell], [RepetitionRow] et
+              // `_LetterDrawingCanvas` (exercice_lettre_screen.dart).
               child: MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   textScaler: TextScaler.linear(accessibility.uiScale),

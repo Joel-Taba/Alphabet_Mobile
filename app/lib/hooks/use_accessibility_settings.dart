@@ -9,8 +9,20 @@ const _dyslexiaFontKey = 'amani_setting_dyslexia_font';
 const _uiScaleKey = 'amani_setting_ui_scale';
 
 const double kMinUiScale = 0.85;
-const double kMaxUiScale = 1.4;
-const double kDefaultUiScale = 1.0;
+
+/// Chaque écran d'exercice qui lit ce réglage (voir [LetterTraceCell],
+/// [RepetitionRow], `WordTraceAttempt`, `_LetterDrawingCanvas`, la grille de
+/// `CrosswordPlay`...) borne lui-même sa taille finale à la largeur
+/// réellement disponible (`LayoutBuilder`/`Wrap`) ou vit dans un
+/// `InteractiveViewer` pannable (mots croisés) : on peut donc viser une
+/// plage large sans risque de débordement, y compris sur tablette où l'on
+/// veut des espaces de tracé aussi grands que possible.
+const double kMaxUiScale = 1.8;
+
+/// Grand par défaut (au lieu de 1.0) : l'utilisateur veut des espaces de
+/// tracé bien visibles dès l'installation, tout en gardant de la marge pour
+/// aggrandir encore (`kMaxUiScale`) ou réduire (`kMinUiScale`) au besoin.
+const double kDefaultUiScale = 1.4;
 
 class AccessibilitySettings extends ChangeNotifier {
   bool _dyslexiaFont = false;
@@ -28,7 +40,13 @@ class AccessibilitySettings extends ChangeNotifier {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     _dyslexiaFont = prefs.getBool(_dyslexiaFontKey) ?? false;
-    _uiScale = prefs.getDouble(_uiScaleKey) ?? kDefaultUiScale;
+    // `.clamp(...)` : une valeur enregistrée avant un ajustement de
+    // `kMaxUiScale` (ex. réduit après coup) pourrait sinon dépasser les
+    // bornes actuelles et casser l'assertion `value <= max` du slider.
+    _uiScale = (prefs.getDouble(_uiScaleKey) ?? kDefaultUiScale).clamp(
+      kMinUiScale,
+      kMaxUiScale,
+    );
     _loaded = true;
     notifyListeners();
   }

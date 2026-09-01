@@ -135,10 +135,6 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
     final syllables = group['syllables'] as List;
     final idx = _syllableIdx.clamp(0, syllables.length - 1);
     final current = syllables[idx] as Map<String, dynamic>;
-    final groupIdx = SYLLABLE_GROUPS.indexWhere((g) => g['id'] == group['id']);
-    final nextGroup = groupIdx >= 0 && groupIdx < SYLLABLE_GROUPS.length - 1
-        ? SYLLABLE_GROUPS[groupIdx + 1] as Map<String, dynamic>
-        : null;
 
     final consonantLetter = getLetterFormation(
       current['consonant'] as String,
@@ -433,54 +429,6 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                     ),
                   ),
 
-                  if (nextGroup != null) ...[
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () => context.go(
-                          '/cours/syllabes/${nextGroup['consonant']}',
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AmaniColors.surface,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: AmaniColors.textPrimary.withValues(
-                                alpha: 0.1,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                tFormat(cs['nextConsonant'] ?? '', {
-                                  'consonant': nextGroup['consonant'],
-                                }),
-                                style: TextStyle(
-                                  fontFamily: kBalooFontFamily,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                  color: AmaniColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              DirectionalIcon(
-                                LucideIcons.chevronRight,
-                                size: 14,
-                                color: AmaniColors.textPrimary,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 12),
                 ],
               ),

@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
+import 'package:provider/provider.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../theme/amani_theme.dart';
 import '../utils/trace_validation.dart';
 import 'amani_mascot.dart';
@@ -77,6 +80,12 @@ class _RepetitionRowState extends State<RepetitionRow> {
 
   static const double _occW = 100;
   static const double _occH = 140;
+
+  /// Cases de tracé du cahier agrandies selon le réglage "Taille de
+  /// l'interface" (Profil > Réglages) : composant ciblé (au lieu d'un zoom
+  /// de tout l'écran), le `Wrap` autour reflue normalement.
+  double get _effOccW => _occW * context.read<AccessibilitySettings>().uiScale;
+  double get _effOccH => _occH * context.read<AccessibilitySettings>().uiScale;
 
   @override
   void initState() {
@@ -225,19 +234,21 @@ class _RepetitionRowState extends State<RepetitionRow> {
             // une seule ligne à défilement horizontal.
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               constraints: const BoxConstraints(maxHeight: 330),
               child: SingleChildScrollView(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     const spacing = 10.0;
-                    final perRow = ((constraints.maxWidth + spacing) /
-                            (_occW + spacing))
-                        .floor()
-                        .clamp(1, _occurrences.isEmpty ? 1 : _occurrences.length);
+                    final occW = _effOccW;
+                    final occH = _effOccH;
+                    final perRow =
+                        ((constraints.maxWidth + spacing) / (occW + spacing))
+                            .floor()
+                            .clamp(
+                              1,
+                              _occurrences.isEmpty ? 1 : _occurrences.length,
+                            );
                     final rows = (_occurrences.length / perRow).ceil();
 
                     return SizedBox(
@@ -245,8 +256,12 @@ class _RepetitionRowState extends State<RepetitionRow> {
                       child: CustomPaint(
                         painter: _SeyesLinesPainter(
                           rows: rows,
-                          rowHeight: _occH,
+                          rowHeight: occH,
                           rowSpacing: spacing,
+                          // Même échelle que `_OccurrenceCanvasState._scale`
+                          // (`min(w, h) / 200`) : les lignes doivent suivre
+                          // la taille réelle des cases, pas une valeur figée.
+                          lineScale: math.min(occW, occH) / 200,
                         ),
                         child: Wrap(
                           spacing: spacing,
@@ -262,8 +277,8 @@ class _RepetitionRowState extends State<RepetitionRow> {
                                     !widget.locked,
                                 onSuccess: () => _handleSuccess(i),
                                 onRetry: () => _handleRetry(i),
-                                w: _occW,
-                                h: _occH,
+                                w: occW,
+                                h: occH,
                                 tolerancePct: widget.tolerance,
                               ),
                           ],
@@ -283,29 +298,39 @@ class _RepetitionRowState extends State<RepetitionRow> {
 
 class _SeyesLinesPainter extends CustomPainter {
   // Mêmes 4 lignes équidistantes (intervalle 60 dans l'espace lettre 0-200)
-  // que CahierFrame.dart, converties en pixels ici via l'échelle fixe de
-  // _OccurrenceCanvas (sc=0.5, oy=20) : pixelY = yLettre * 0.5, répété pour
-  // chaque ligne de répétitions (le Wrap fait autant de lignes qu'il en
-  // tient horizontalement) afin que le quadrillage couvre toute la largeur
+  // que CahierFrame.dart, converties en pixels ici via `lineScale` --
+  // identique à `_OccurrenceCanvasState._scale` (`min(w, h) / 200`), pour
+  // que le quadrillage suive la taille réelle des cases (réglage "Taille de
+  // l'interface" compris) plutôt qu'une échelle figée -- répété pour chaque
+  // ligne de répétitions (le Wrap fait autant de lignes qu'il en tient
+  // horizontalement) afin que le quadrillage couvre toute la largeur
   // réelle, sur toutes les lignes, plutôt que de rester calé sur une seule.
   static const List<double> _positions = [10, 70, 130, 190];
 
   final int rows;
   final double rowHeight;
   final double rowSpacing;
+  final double lineScale;
 
   _SeyesLinesPainter({
     required this.rows,
     required this.rowHeight,
     required this.rowSpacing,
+    required this.lineScale,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    // `_OccurrenceCanvas` centre son contenu 0-200 dans sa case (voir
+    // `_OccurrenceCanvasState._origin`) dès que la case n'est pas carrée
+    // (hauteur > largeur, cas courant ici) : la même marge doit être
+    // ajoutée aux lignes, sous peine de les voir décalées par rapport à la
+    // lettre-guide qu'elles sont censées accompagner.
+    final originDy = (rowHeight - 200 * lineScale) / 2;
     for (int r = 0; r < rows; r++) {
       final rowTop = r * (rowHeight + rowSpacing);
       for (int i = 0; i < _positions.length; i++) {
-        final y = rowTop + _positions[i] * 0.5;
+        final y = rowTop + originDy + _positions[i] * lineScale;
         final isBaseline = i == 2;
         final paint = Paint()
           ..color =
@@ -321,7 +346,8 @@ class _SeyesLinesPainter extends CustomPainter {
   bool shouldRepaint(covariant _SeyesLinesPainter oldDelegate) =>
       oldDelegate.rows != rows ||
       oldDelegate.rowHeight != rowHeight ||
-      oldDelegate.rowSpacing != rowSpacing;
+      oldDelegate.rowSpacing != rowSpacing ||
+      oldDelegate.lineScale != lineScale;
 }
 
 class _OccurrenceCanvas extends StatefulWidget {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
+import 'package:provider/provider.dart';
+import '../hooks/use_accessibility_settings.dart';
 import 'letter_trace_cell.dart';
 
 /// Boîte englobante (dans l'espace virtuel 0-200 du catalogue) de l'encre
@@ -104,7 +106,12 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
       }
     }
 
-    final cellSize = widget.cellSize;
+    // Case de tracé agrandie selon le réglage "Taille de l'interface"
+    // (Profil > Réglages) : composant ciblé, le `LayoutBuilder` ci-dessous
+    // recalcule `perRow` à partir de cette taille, donc la ligne reflue
+    // normalement (moins de lettres par ligne) sans jamais déborder.
+    final cellSize =
+        widget.cellSize * context.read<AccessibilitySettings>().uiScale;
     final scale = cellSize / 200;
     final n = widget.letters.length;
 
@@ -145,11 +152,11 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
                 if (i + 1 < end) {
                   final rightMargin =
                       200 - _letterInkBounds(widget.letters[i]).right;
-                  final leftMarginNext =
-                      _letterInkBounds(widget.letters[i + 1]).left;
+                  final leftMarginNext = _letterInkBounds(
+                    widget.letters[i + 1],
+                  ).left;
                   final overlap =
-                      ((rightMargin + leftMarginNext) * scale -
-                              _desiredInkGap)
+                      ((rightMargin + leftMarginNext) * scale - _desiredInkGap)
                           .clamp(0.0, cellSize * 0.65);
                   tx += cellSize - overlap;
                 }

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/amani_theme.dart';
 import '../utils/trace_validation.dart';
@@ -6,6 +7,21 @@ import 'sign_glyph.dart' show letterFamilyZIndex;
 enum _CellStatus { idle, drawing, retry, solved }
 
 const double _kCellTolerancePx = 27;
+
+/// Tolérance de contact minimale visée à l'écran, en pixels réels,
+/// indépendamment de la taille de la case. `_kCellTolerancePx` est exprimée
+/// dans le repère SVG 200×200 : dans une petite case (ex. 40px, grille de
+/// mots croisés dense), elle ne représente plus que quelques pixels réels à
+/// l'écran — bien en-dessous de la précision d'un doigt d'enfant. On calcule
+/// donc, pour chaque case, l'équivalent SVG de cette tolérance réelle
+/// minimale, sans jamais descendre sous la tolérance d'origine (les grandes
+/// cases, déjà confortables, ne changent pas de comportement).
+const double _kMinRealTolerancePx = 14;
+
+double _effectiveTolerancePx(double cellSize) {
+  final realEquivalent = _kMinRealTolerancePx * 200 / cellSize;
+  return math.max(_kCellTolerancePx, realEquivalent);
+}
 
 /// Case carrée façon mots croisés : trace une lettre entière (tous ses
 /// signes, un geste après l'autre) dans un même cadre bien centré. Utilisée
@@ -115,7 +131,11 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
 
   void _onPanEnd(DragEndDetails d) {
     if (_status != _CellStatus.drawing) return;
-    final result = validateTrace(_userPoints, _refPoints, _kCellTolerancePx);
+    final result = validateTrace(
+      _userPoints,
+      _refPoints,
+      _effectiveTolerancePx(widget.size),
+    );
     if (result.valid) {
       setState(() {
         _completedSteps.add(_currentStepIdx);

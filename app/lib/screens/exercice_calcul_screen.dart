@@ -7,6 +7,7 @@ import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
 import '../data/calcul_catalog.dart';
 import '../data/letter_style_resolver.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_writing_style.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_countdown.dart';
@@ -654,61 +655,86 @@ class _ProblemRowState extends State<_ProblemRow> {
                 },
               )
             else
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: digits.length * 62.0 + 24,
-                      child: WordTraceAttempt(
-                        letters: digits,
-                        cellSize: 56,
-                        solved: _solved,
-                        isActive: widget.isActive,
-                        isFuture: widget.isFuture,
-                        onLetterSolved: (i) {
-                          setState(() {
-                            _solved.add(i);
-                            _maybeDone(digits.length, digitsSecond.length);
-                          });
-                        },
+              Builder(
+                builder: (context) {
+                  // Boîtes englobantes des deux nombres élargies avec le
+                  // réglage "Taille de l'interface" (Profil > Réglages) --
+                  // sans ça, une fois `WordTraceAttempt` agrandi, ses
+                  // chiffres wrapperaient sur plusieurs lignes dans une
+                  // largeur restée calée sur l'ancienne taille de case,
+                  // cassant la mise en page de l'équation.
+                  final uiScale = context.read<AccessibilitySettings>().uiScale;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    // Défilement horizontal de secours : à taille
+                    // d'interface élevée et pour de grands nombres,
+                    // l'équation peut dépasser la largeur de l'écran --
+                    // mieux vaut pouvoir la faire défiler que la voir
+                    // débordée/rognée.
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: (digits.length * 62.0 + 24) * uiScale,
+                            child: WordTraceAttempt(
+                              letters: digits,
+                              cellSize: 56,
+                              solved: _solved,
+                              isActive: widget.isActive,
+                              isFuture: widget.isFuture,
+                              onLetterSolved: (i) {
+                                setState(() {
+                                  _solved.add(i);
+                                  _maybeDone(
+                                    digits.length,
+                                    digitsSecond.length,
+                                  );
+                                });
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              widget.problem.secondPartSeparator,
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 20,
+                                color: AmaniColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: (digitsSecond.length * 62.0 + 24) * uiScale,
+                            child: WordTraceAttempt(
+                              letters: digitsSecond,
+                              cellSize: 56,
+                              solved: _solvedSecond,
+                              isActive: widget.isActive,
+                              isFuture: widget.isFuture,
+                              onLetterSolved: (i) {
+                                setState(() {
+                                  _solvedSecond.add(i);
+                                  _maybeDone(
+                                    digits.length,
+                                    digitsSecond.length,
+                                  );
+                                });
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        widget.problem.secondPartSeparator,
-                        style: TextStyle(
-                          fontFamily: kBalooFontFamily,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
-                          color: AmaniColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: digitsSecond.length * 62.0 + 24,
-                      child: WordTraceAttempt(
-                        letters: digitsSecond,
-                        cellSize: 56,
-                        solved: _solvedSecond,
-                        isActive: widget.isActive,
-                        isFuture: widget.isFuture,
-                        onLetterSolved: (i) {
-                          setState(() {
-                            _solvedSecond.add(i);
-                            _maybeDone(digits.length, digitsSecond.length);
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
           ],
         ),

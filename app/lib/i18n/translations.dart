@@ -144,6 +144,10 @@ const Map<String, dynamic> fr = {
     'speakSignIntro':
         'Pour tracer le signe {label}, on procède ainsi : {consigne}',
   },
+  'wrongAnswerPopup': {
+    'title': 'Pas tout à fait !',
+    'correctAnswerLabel': 'La bonne réponse',
+  },
   'evaluation': {
     'badge': 'Évaluation',
     'timeLeft': 'Temps restant',
@@ -326,7 +330,8 @@ const Map<String, dynamic> fr = {
     'dyslexiaFontLabel': 'Police adaptée dyslexie',
     'dyslexiaFontHint': 'Utilise une police conçue pour faciliter la lecture.',
     'uiScaleLabel': "Taille de l'interface",
-    'uiScaleHint': 'Agrandit ou réduit le texte dans toute l\'application.',
+    'uiScaleHint':
+        "Agrandit ou réduit toute l'interface -- texte, boutons et espaces de tracé des exercices compris.",
     'totalPointsLabel': 'Mes points',
     'totalPointsHint': 'Gagnés en terminant tes cours et tes exercices',
     'statsSignes': 'Signes maîtrisés',
@@ -806,6 +811,10 @@ const Map<String, dynamic> en = {
     'speakDigitIntro': 'To write the digit {char}, here is how: {consigne}',
     'speakSignIntro': 'To trace the sign {label}, here is how: {consigne}',
   },
+  'wrongAnswerPopup': {
+    'title': 'Not quite!',
+    'correctAnswerLabel': 'The correct answer',
+  },
   'evaluation': {
     'badge': 'Evaluation',
     'timeLeft': 'Time left',
@@ -981,7 +990,8 @@ const Map<String, dynamic> en = {
     'dyslexiaFontLabel': 'Dyslexia-friendly font',
     'dyslexiaFontHint': 'Use a font designed to make reading easier.',
     'uiScaleLabel': 'Interface size',
-    'uiScaleHint': 'Makes text bigger or smaller throughout the app.',
+    'uiScaleHint':
+        'Makes the whole interface bigger or smaller -- text, buttons and exercise tracing areas included.',
     'totalPointsLabel': 'My points',
     'totalPointsHint': 'Earned by finishing your lessons and exercises',
     'statsSignes': 'Signs mastered',
@@ -1427,6 +1437,10 @@ const Map<String, dynamic> es = {
         'Para escribir el número {char}, así es como: {consigne}',
     'speakSignIntro': 'Para trazar el signo {label}, así es como: {consigne}',
   },
+  'wrongAnswerPopup': {
+    'title': '¡No es así del todo!',
+    'correctAnswerLabel': 'La respuesta correcta',
+  },
   'evaluation': {
     'badge': 'Evaluación',
     'timeLeft': 'Tiempo restante',
@@ -1605,7 +1619,8 @@ const Map<String, dynamic> es = {
     'dyslexiaFontLabel': 'Fuente para dislexia',
     'dyslexiaFontHint': 'Usa una fuente diseñada para facilitar la lectura.',
     'uiScaleLabel': 'Tamaño de la interfaz',
-    'uiScaleHint': 'Agranda o reduce el texto en toda la aplicación.',
+    'uiScaleHint':
+        'Agranda o reduce toda la interfaz -- texto, botones y áreas de trazo de los ejercicios incluidos.',
     'totalPointsLabel': 'Mis puntos',
     'totalPointsHint': 'Ganados al terminar tus lecciones y ejercicios',
     'statsSignes': 'Signos dominados',
@@ -2058,6 +2073,10 @@ const Map<String, dynamic> ar = {
     "speakDigitIntro": "لكتابة الرقم {char}، إليك الطريقة: {consigne}",
     "speakSignIntro": "لرسم الإشارة {label}، إليك الطريقة: {consigne}",
   },
+  "wrongAnswerPopup": {
+    "title": "ليس تمامًا!",
+    "correctAnswerLabel": "الإجابة الصحيحة",
+  },
   "evaluation": {
     "badge": "تقييم",
     "timeLeft": "الوقت المتبقي",
@@ -2232,7 +2251,7 @@ const Map<String, dynamic> ar = {
     "dyslexiaFontLabel": "خط مناسب لعسر القراءة",
     "dyslexiaFontHint": "استخدم خطًا مصممًا لتسهيل القراءة.",
     "uiScaleLabel": "حجم الواجهة",
-    "uiScaleHint": "يكبّر أو يصغّر النص في التطبيق بأكمله.",
+    "uiScaleHint": "يكبّر أو يصغّر الواجهة بأكملها -- النص والأزرار ومساحات الرسم في التمارين.",
     "totalPointsLabel": "نقاطي",
     "totalPointsHint": "مكتسبة من إنهاء دروسك وتمارينك",
     "statsSignes": "الإشارات المتقنة",

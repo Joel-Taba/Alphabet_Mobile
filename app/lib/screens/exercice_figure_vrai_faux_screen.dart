@@ -10,6 +10,7 @@ import '../widgets/confetti_burst.dart';
 import '../widgets/quiz_bubble_card.dart';
 import '../widgets/lettered_choice_button.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/wrong_answer_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Mini-jeu bonus "Vrai ou Faux ?" du Palier "Figures géométriques" —
@@ -34,6 +35,7 @@ class _ExerciceFigureVraiFauxScreenState
   bool? _lastCorrect;
   bool? _guessedTrue;
   bool _locked = false;
+  bool _showWrongPopup = false;
   final _confettiKey = GlobalKey<ConfettiBurstState>();
 
   @override
@@ -56,6 +58,7 @@ class _ExerciceFigureVraiFauxScreenState
     _score = 0;
     _lastCorrect = null;
     _locked = false;
+    _showWrongPopup = false;
   }
 
   @override
@@ -74,15 +77,35 @@ class _ExerciceFigureVraiFauxScreenState
       _guessedTrue = guessTrue;
       if (correct) _score++;
     });
-    if (correct) _confettiKey.currentState?.play();
-    Future.delayed(const Duration(milliseconds: 700), () {
-      if (!mounted) return;
-      setState(() {
-        _index++;
-        _lastCorrect = null;
-        _guessedTrue = null;
-        _locked = false;
+    if (correct) {
+      _confettiKey.currentState?.play();
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (!mounted) return;
+        setState(() {
+          _index++;
+          _lastCorrect = null;
+          _guessedTrue = null;
+          _locked = false;
+        });
       });
+    } else {
+      // Laisse le temps de voir la pastille rouge avant d'expliquer la
+      // bonne réponse, plutôt que d'enchaîner directement sur la question
+      // suivante sans que l'enfant sache pourquoi il s'est trompé.
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+        setState(() => _showWrongPopup = true);
+      });
+    }
+  }
+
+  void _continueAfterWrong() {
+    setState(() {
+      _showWrongPopup = false;
+      _index++;
+      _lastCorrect = null;
+      _guessedTrue = null;
+      _locked = false;
     });
   }
 
@@ -261,6 +284,19 @@ class _ExerciceFigureVraiFauxScreenState
               ],
             ),
             Positioned.fill(child: ConfettiBurst(key: _confettiKey)),
+            if (_showWrongPopup && current != null)
+              WrongAnswerPopup(
+                correctAnswer:
+                    (current.isTrue
+                            ? (vf['true'] ?? 'Vrai')
+                            : (vf['false'] ?? 'Faux'))
+                        .toString(),
+                explanation:
+                    current.explanation[lang.name] ??
+                    current.explanation['fr'] ??
+                    '',
+                onContinue: _continueAfterWrong,
+              ),
           ],
         ),
       ),

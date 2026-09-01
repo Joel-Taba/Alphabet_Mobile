@@ -1,9 +1,11 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
@@ -53,6 +55,12 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   late ExerciseSettings _settings;
   final Set<int> _doneSteps = {};
   int _currentStepIdx = 0;
+
+  /// Canevas de la Phase B (lettre entière) agrandi selon le réglage
+  /// "Taille de l'interface" (Profil > Réglages) : composant ciblé, pas un
+  /// zoom de tout l'écran.
+  double get _letterCanvasSize =>
+      270 * context.read<AccessibilitySettings>().uiScale;
   final List<_CompletedStep> _completedSteps = [];
   _StepStatus _stepStatus = _StepStatus.idle;
   bool _letterSuccess = false;
@@ -469,6 +477,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                             alignment: Alignment.center,
                             child: Text(
                               '${i + 1}',
+                              textHeightBehavior: const TextHeightBehavior(
+                                applyHeightToFirstAscent: false,
+                                applyHeightToLastDescent: false,
+                              ),
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w800,
@@ -518,19 +530,31 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                           ),
                         )
                       else ...[
-                        Center(
-                          child: _LetterDrawingCanvas(
-                            letter: letter,
-                            currentStepIdx: _currentStepIdx,
-                            completedSteps: _completedSteps,
-                            stepStatus: _stepStatus,
-                            onStatusChange: (s) =>
-                                setState(() => _stepStatus = s),
-                            onSuccess: () => _handleStepSuccess(steps),
-                            onRetry: () => _handleStepRetry(steps),
-                            w: 270,
-                            h: 270,
-                          ),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            // Sur un écran étroit, la taille désirée
+                            // (réglage "Taille de l'interface") peut
+                            // dépasser la largeur réellement disponible :
+                            // on la borne pour ne jamais déborder.
+                            final size = math.min(
+                              _letterCanvasSize,
+                              constraints.maxWidth,
+                            );
+                            return Center(
+                              child: _LetterDrawingCanvas(
+                                letter: letter,
+                                currentStepIdx: _currentStepIdx,
+                                completedSteps: _completedSteps,
+                                stepStatus: _stepStatus,
+                                onStatusChange: (s) =>
+                                    setState(() => _stepStatus = s),
+                                onSuccess: () => _handleStepSuccess(steps),
+                                onRetry: () => _handleStepRetry(steps),
+                                w: size,
+                                h: size,
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 16),
                         Container(
@@ -899,11 +923,16 @@ class _FormulaBadge extends StatelessWidget {
                   )
                 : Text(
                     '${index + 1}',
+                    textHeightBehavior: const TextHeightBehavior(
+                      applyHeightToFirstAscent: false,
+                      applyHeightToLastDescent: false,
+                    ),
                     style: TextStyle(
                       fontFamily: kBalooFontFamily,
                       fontWeight: FontWeight.w800,
                       fontSize: 10,
                       color: fg,
+                      height: 1,
                     ),
                   ),
           ),

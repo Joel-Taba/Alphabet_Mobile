@@ -298,7 +298,18 @@ const Map<String, String> SHAPE_OBJECT_KEY = {
 class ShapeStatement {
   final Map<String, String> display;
   final bool isTrue;
-  const ShapeStatement({required this.display, required this.isTrue});
+
+  /// Brève explication affichée dans le pop-up de correction lorsque
+  /// l'enfant se trompe -- rappelle la propriété réelle de la figure,
+  /// quelle que soit l'erreur commise (répondre Faux à une affirmation
+  /// vraie, ou Vrai à une affirmation fausse).
+  final Map<String, String> explanation;
+
+  const ShapeStatement({
+    required this.display,
+    required this.isTrue,
+    required this.explanation,
+  });
 }
 
 const List<ShapeStatement> SHAPE_STATEMENTS = [
@@ -310,6 +321,13 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'المربع له 4 أضلاع متساوية.',
     },
     isTrue: true,
+    explanation: {
+      'fr': "C'est vrai ! Les 4 côtés du carré ont toujours la même longueur.",
+      'en': "That's true! A square's 4 sides are always the same length.",
+      'es':
+          '¡Es verdad! Los 4 lados del cuadrado siempre tienen la misma longitud.',
+      'ar': 'هذا صحيح! أضلاع المربع الأربعة متساوية دائمًا في الطول.',
+    },
   ),
   ShapeStatement(
     display: {
@@ -319,6 +337,13 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'المربع له أضلاع بأطوال مختلفة.',
     },
     isTrue: false,
+    explanation: {
+      'fr': 'En fait, les 4 côtés du carré ont tous la même longueur !',
+      'en': "Actually, a square's 4 sides are all the same length!",
+      'es':
+          '¡En realidad, los 4 lados del cuadrado tienen todos la misma longitud!',
+      'ar': 'في الحقيقة، أضلاع المربع الأربعة كلها متساوية في الطول!',
+    },
   ),
   ShapeStatement(
     display: {
@@ -328,6 +353,14 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'المستطيل له 4 زوايا قائمة.',
     },
     isTrue: true,
+    explanation: {
+      'fr':
+          "C'est vrai ! Les 4 coins du rectangle forment toujours un angle droit.",
+      'en': "That's true! A rectangle's 4 corners always form a right angle.",
+      'es':
+          '¡Es verdad! Las 4 esquinas del rectángulo siempre forman un ángulo recto.',
+      'ar': 'هذا صحيح! زوايا المستطيل الأربع قائمة دائمًا.',
+    },
   ),
   ShapeStatement(
     display: {
@@ -337,6 +370,12 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'المستطيل له 3 أضلاع فقط.',
     },
     isTrue: false,
+    explanation: {
+      'fr': 'En fait, le rectangle a 4 côtés, pas 3 !',
+      'en': 'Actually, a rectangle has 4 sides, not 3!',
+      'es': '¡En realidad, el rectángulo tiene 4 lados, no 3!',
+      'ar': 'في الحقيقة، للمستطيل 4 أضلاع، وليس 3!',
+    },
   ),
   ShapeStatement(
     display: {
@@ -346,6 +385,12 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'المثلث له 3 أضلاع.',
     },
     isTrue: true,
+    explanation: {
+      'fr': "C'est vrai ! Le triangle est la figure à 3 côtés et 3 coins.",
+      'en': "That's true! A triangle is the shape with 3 sides and 3 corners.",
+      'es': '¡Es verdad! El triángulo es la figura con 3 lados y 3 esquinas.',
+      'ar': 'هذا صحيح! المثلث هو الشكل الذي له 3 أضلاع و3 زوايا.',
+    },
   ),
   ShapeStatement(
     display: {
@@ -355,6 +400,12 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'المثلث له 4 زوايا.',
     },
     isTrue: false,
+    explanation: {
+      'fr': 'En fait, le triangle a seulement 3 coins, pas 4 !',
+      'en': 'Actually, a triangle only has 3 corners, not 4!',
+      'es': '¡En realidad, el triángulo solo tiene 3 esquinas, no 4!',
+      'ar': 'في الحقيقة، للمثلث 3 زوايا فقط، وليس 4!',
+    },
   ),
   ShapeStatement(
     display: {
@@ -364,6 +415,13 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'الدائرة لها زوايا مدببة.',
     },
     isTrue: false,
+    explanation: {
+      'fr': "En fait, le cercle n'a aucun coin : il est tout rond !",
+      'en': "Actually, a circle has no corners at all: it's perfectly round!",
+      'es':
+          '¡En realidad, el círculo no tiene ninguna esquina: es completamente redondo!',
+      'ar': 'في الحقيقة، ليس للدائرة أي زاوية: إنها مستديرة تمامًا!',
+    },
   ),
   ShapeStatement(
     display: {
@@ -373,5 +431,14 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
       'ar': 'الدائرة ليس لها أي ضلع مستقيم.',
     },
     isTrue: true,
+    explanation: {
+      'fr':
+          "C'est vrai ! Le contour du cercle est une courbe, sans aucune ligne droite.",
+      'en':
+          "That's true! A circle's outline is a curve, with no straight line at all.",
+      'es':
+          '¡Es verdad! El contorno del círculo es una curva, sin ninguna línea recta.',
+      'ar': 'هذا صحيح! محيط الدائرة منحنٍ، بلا أي خط مستقيم.',
+    },
   ),
 ];

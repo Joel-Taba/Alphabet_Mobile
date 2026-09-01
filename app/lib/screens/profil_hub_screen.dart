@@ -1506,7 +1506,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           value: accessibility.uiScale,
                           min: kMinUiScale,
                           max: kMaxUiScale,
-                          divisions: 11,
+                          divisions: 23,
                           activeColor: AmaniColors.primary,
                           onChanged: (v) => context
                               .read<AccessibilitySettings>()

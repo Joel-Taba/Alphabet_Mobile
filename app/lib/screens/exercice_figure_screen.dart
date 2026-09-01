@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/progress_service.dart';
 import '../data/shape_catalog.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
@@ -376,6 +378,13 @@ class _ShapeAttemptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cadre de tracé agrandi selon le réglage "Taille de l'interface"
+    // (Profil > Réglages) : la hauteur fixe du CahierFrame doit grandir en
+    // même temps que la case, sous peine d'être rognée par son `ClipRRect`.
+    final uiScale = context.read<AccessibilitySettings>().uiScale;
+    final cellSize = 160 * uiScale;
+    final frameHeight = 220 * uiScale;
+
     return Opacity(
       opacity: isFuture ? 0.4 : 1,
       child: Container(
@@ -413,17 +422,25 @@ class _ShapeAttemptCard extends StatelessWidget {
               ),
             CahierFrame(
               width: double.infinity,
-              height: 220,
+              height: frameHeight,
               rounded: 12,
-              child: Center(
-                child: LetterTraceCell(
-                  letter: topic.traceData,
-                  size: 160,
-                  isActive: isActive && !done,
-                  transparent: true,
-                  strokeWidthScale: 0.55,
-                  onSolved: isActive && !done ? onDone : null,
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Sur un écran étroit, borne la case à la largeur
+                  // réellement disponible pour ne jamais déborder du
+                  // CahierFrame (qui rogne via son `ClipRRect`).
+                  final size = math.min(cellSize, constraints.maxWidth);
+                  return Center(
+                    child: LetterTraceCell(
+                      letter: topic.traceData,
+                      size: size,
+                      isActive: isActive && !done,
+                      transparent: true,
+                      strokeWidthScale: 0.55,
+                      onSolved: isActive && !done ? onDone : null,
+                    ),
+                  );
+                },
               ),
             ),
           ],

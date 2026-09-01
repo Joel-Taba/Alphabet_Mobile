@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../data/letter_style_resolver.dart';
@@ -201,11 +202,19 @@ class _CrosswordPlayState extends State<CrosswordPlay> {
     }
     final allSolved =
         _solved.length == _sequence.length && _sequence.isNotEmpty;
-    final cellSize = widget.crossword.cols >= 8
-        ? 40.0
-        : widget.crossword.cols >= 6
-        ? 48.0
-        : 60.0;
+    // Case de grille agrandie selon le réglage "Taille de l'interface"
+    // (Profil > Réglages) : `gridWidth`/`gridHeight` et chaque `_buildCell`
+    // dérivent tous de ce même `cellSize`, et l'ensemble reste posé dans un
+    // `InteractiveViewer` pannable/zoomable -- rien ne peut donc déborder de
+    // façon incohérente, la grille devient juste plus grande à explorer.
+    final uiScale = context.read<AccessibilitySettings>().uiScale;
+    final cellSize =
+        (widget.crossword.cols >= 8
+            ? 40.0
+            : widget.crossword.cols >= 6
+            ? 48.0
+            : 60.0) *
+        uiScale;
 
     // Progrès par MOT (pas par case) pour l'indicateur "X sur Y mots trouvés"
     // et le fond coloré qui met en valeur chaque mot complété dans la grille.
