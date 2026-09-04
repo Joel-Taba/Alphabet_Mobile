@@ -7,6 +7,7 @@ import '../data/tangram_catalog.dart';
 import 'tangram_board.dart';
 import 'amani_mascot.dart';
 import 'confetti_burst.dart';
+import 'scroll_handle.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Onglet "Tangram" du Mode Libre : puzzles bien plus complexes (animaux,
@@ -150,6 +151,8 @@ class _FreeTangramSectionState extends State<FreeTangramSection> {
               style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
             ),
             const SizedBox(height: 10),
+            const ScrollHandle(),
+            const SizedBox(height: 8),
             // Pas de cadre supplémentaire ici : le plateau lui-même (fond
             // clair + contour, voir `TangramBoard`) tient déjà lieu
             // d'espace de jeu, avec le bac de pièces juste en dessous —

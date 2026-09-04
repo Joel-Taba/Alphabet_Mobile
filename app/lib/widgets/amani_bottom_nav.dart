@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../i18n/translations.dart';
 import '../theme/amani_theme.dart';
+import '../utils/text_case.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class _NavItem {
@@ -126,8 +127,9 @@ class AmaniBottomNav extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              (nav[_items[currentIndex].key] ?? '')
-                                  .toUpperCase(),
+                              capitalizeFirst(
+                                nav[_items[currentIndex].key] ?? '',
+                              ),
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w800,

@@ -217,18 +217,18 @@ final Map<String, WordGroup> PALIER3_GROUP_MAP = {
   for (final g in PALIER3_GROUPS) g.id: g,
 };
 
-/// Difficulté progressive des mots croisés du Palier 3 : de 2 à 10 mots par
-/// grille. Une grille est insérée dans le parcours (voir parcours_screen.dart)
-/// après chaque groupe de mots à index impair.
-const List<int> PALIER3_CROSSWORD_LEVELS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+/// Difficulté progressive des grilles de mots mêlés du Palier 3 : de 2 à 10
+/// mots par grille. Une grille est insérée dans le parcours (voir
+/// parcours_screen.dart) après chaque groupe de mots à index impair.
+const List<int> PALIER3_WORD_PUZZLE_LEVELS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-/// Groupe de mots qui suit une grille de mots croisés donnée dans le
+/// Groupe de mots qui suit une grille de mots mêlés donnée dans le
 /// parcours — sert de cible au bouton "Suivant" une fois la grille résolue
-/// (voir CrosswordPlay). La grille de niveau N est insérée après le groupe
+/// (voir WordSearchPlay). La grille de niveau N est insérée après le groupe
 /// d'index (2 * indexDuNiveau + 1), donc le groupe suivant est à l'index
 /// (2 * indexDuNiveau + 2).
-WordGroup? nextWordGroupAfterCrossword(int level) {
-  final levelIdx = PALIER3_CROSSWORD_LEVELS.indexOf(level);
+WordGroup? nextWordGroupAfterWordPuzzle(int level) {
+  final levelIdx = PALIER3_WORD_PUZZLE_LEVELS.indexOf(level);
   if (levelIdx < 0) return null;
   final groupIdx = 2 * levelIdx + 2;
   return groupIdx < PALIER3_GROUPS.length ? PALIER3_GROUPS[groupIdx] : null;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
@@ -51,10 +53,17 @@ class _CompletedStep {
 
 const double _kLetterTolerancePx = 27;
 
+/// Identifiant fixe de cette évaluation (Palier "Combinatoire") — voir
+/// `EvaluationSessionController.ensureContext`.
+const String _kEvalId = 'combinatoire';
+
 class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   late ExerciseSettings _settings;
+  late final EvaluationSessionController _session;
   final Set<int> _doneSteps = {};
   int _currentStepIdx = 0;
+  bool _showFirstSubjectAnnouncement = false;
+  Map<String, dynamic>? _resumeOffer;
 
   /// Canevas de la Phase B (lettre entière) agrandi selon le réglage
   /// "Taille de l'interface" (Profil > Réglages) : composant ciblé, pas un
@@ -76,6 +85,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   @override
   void initState() {
     super.initState();
+    _session = context.read<EvaluationSessionController>();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load();
     WidgetsBinding.instance.addPostFrameCallback((_) => _speakStart());
@@ -83,16 +93,53 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   }
 
   Future<void> _initEvaluation() async {
-    final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
     final lang = context.read<LanguageProvider>().lang;
-    final session = context.read<EvaluationSessionController>();
-    session.startIfNeeded(minutes * 60);
+    final continuing = _session.ensureContext(_kEvalId);
     // "Sujet" = un groupe de lettres (voir `palier2Groups`) — chaque lettre
     // individuelle a déjà son propre écran de succès (`_LetterSuccessOverlay`),
     // donc ici on ne fait qu'alimenter le compteur "X/Y groupes" du bandeau,
     // sans ajouter de pop-up supplémentaire par lettre.
-    session.configureSubjects(getPalier2Groups(lang.name).length);
+    _session.configureSubjects(getPalier2Groups(lang.name).length);
+    if (continuing) return;
+    final saved = await _session.readSavedProgress(_kEvalId);
+    if (!mounted) return;
+    if (saved != null) {
+      setState(() => _resumeOffer = saved);
+    } else {
+      setState(() => _showFirstSubjectAnnouncement = true);
+    }
+  }
+
+  Future<void> _handleStartFirstSubject() async {
+    final minutes = await readEvaluationDurationMinutes();
+    if (!mounted) return;
+    _session.start(minutes * 60);
+    setState(() => _showFirstSubjectAnnouncement = false);
+  }
+
+  void _handleResume(Map<String, dynamic> saved) {
+    final lang = context.read<LanguageProvider>().lang;
+    final palier2Groups = getPalier2Groups(lang.name);
+    _session.resumeFrom(saved);
+    setState(() => _resumeOffer = null);
+    final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
+    if (savedIdx >= 0 && savedIdx < palier2Groups.length) {
+      final savedGroup = palier2Groups[savedIdx];
+      if (savedGroup.id != widget.pg && savedGroup.chars.isNotEmpty) {
+        context.go(
+          '/exercice/lettre/${savedGroup.chars.first}?pg=${savedGroup.id}&amaniEval=1',
+        );
+      }
+    }
+  }
+
+  void _handleRestart() {
+    unawaited(_session.clearSavedProgress(_kEvalId));
+    setState(() {
+      _resumeOffer = null;
+      _showFirstSubjectAnnouncement = true;
+    });
   }
 
   void _onSettingsChanged() {
@@ -124,6 +171,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
 
   @override
   void dispose() {
+    if (_isEvaluation) unawaited(_session.persistProgress());
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
     super.dispose();
@@ -202,6 +250,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final style = context.watch<WritingStyleProvider>().style.name;
     final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
     final elL = t['exerciceListe'] as Map<String, dynamic>? ?? {};
+    final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
     final session = context.watch<EvaluationSessionController>();
     final letter = getLetterFormation(widget.char, style);
 
@@ -295,6 +344,9 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
               : null)
         : null;
     final evaluationNextGroupId = evalNextGroup?.id;
+    final evaluationNextGroupIndex = groupIdx >= 0
+        ? (groupIdx + 1) % palier2Groups.length
+        : null;
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -376,6 +428,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(16),
+                    physics: tracingAwareScrollPhysics(context),
                     children: [
                       // Bandeau d'état
                       Container(
@@ -667,6 +720,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                 isEvaluation: _isEvaluation,
                 evaluationNextLetter: evaluationNextLetter,
                 evaluationNextGroupId: evaluationNextGroupId,
+                evaluationNextGroupIndex: evaluationNextGroupIndex,
                 onReset: () {
                   setState(() {
                     _resetAll();
@@ -678,6 +732,21 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
             if (_isEvaluation && session.expired)
               EvaluationCompleteOverlay(
                 onBack: () => context.go('/accueil?scrollToPalier=3'),
+              ),
+            if (_isEvaluation && _resumeOffer != null && !session.expired)
+              EvaluationResumeOffer(
+                onResume: () => _handleResume(_resumeOffer!),
+                onRestart: _handleRestart,
+              ),
+            if (_isEvaluation &&
+                _showFirstSubjectAnnouncement &&
+                !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: tFormat(ev['firstSubjectTitle'] ?? '', {
+                  'title': progressionGroup?.title[lang.name] ?? groupId,
+                }),
+                subtitle: ev['firstSubjectBody'] ?? '',
+                onContinue: _handleStartFirstSubject,
               ),
           ],
         ),
@@ -693,6 +762,7 @@ class _LetterSuccessOverlay extends StatelessWidget {
   final bool isEvaluation;
   final dynamic evaluationNextLetter;
   final String? evaluationNextGroupId;
+  final int? evaluationNextGroupIndex;
   final VoidCallback onReset;
 
   const _LetterSuccessOverlay({
@@ -702,6 +772,7 @@ class _LetterSuccessOverlay extends StatelessWidget {
     required this.isEvaluation,
     required this.evaluationNextLetter,
     required this.evaluationNextGroupId,
+    required this.evaluationNextGroupIndex,
     required this.onReset,
   });
 
@@ -806,14 +877,15 @@ class _LetterSuccessOverlay extends StatelessWidget {
                   ),
                 )
               else if (evaluationNextLetter != null &&
-                  evaluationNextGroupId != null)
+                  evaluationNextGroupId != null &&
+                  evaluationNextGroupIndex != null)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
                       context
                           .read<EvaluationSessionController>()
-                          .advanceSubject();
+                          .advanceSubject(evaluationNextGroupIndex!);
                       context.go(
                         '/exercice/lettre/${evaluationNextLetter['char']}?pg=$evaluationNextGroupId&amaniEval=1',
                       );
@@ -983,6 +1055,13 @@ class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
   final List<Offset> _userPoints = [];
   List<Offset> _refPoints = [];
 
+  /// Identifiant du doigt qui a démarré le tracé en cours — voir
+  /// `LetterTraceCell._activePointer` pour l'explication complète : sans ce
+  /// suivi, un second doigt posé pendant qu'on trace déjà romprait
+  /// l'équilibre start/stop de `TracingScrollLock` et bloquerait le
+  /// défilement pour le reste de la session.
+  int? _activePointer;
+
   dynamic get _activeStep {
     final steps = widget.letter['steps'] as List;
     return widget.currentStepIdx < steps.length
@@ -1013,26 +1092,41 @@ class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
   Offset _toSvg(Offset p) =>
       Offset((p.dx - _origin.dx) / _scale, (p.dy - _origin.dy) / _scale);
 
-  void _onPanStart(DragStartDetails d) {
+  void _onPointerDown(PointerDownEvent event) {
     if (_activeStep == null ||
         widget.stepStatus == _StepStatus.success ||
-        widget.stepStatus == _StepStatus.retry) {
+        widget.stepStatus == _StepStatus.retry ||
+        _activePointer != null) {
       return;
     }
+    // Verrouille le défilement de la page pendant tout le tracé -- voir
+    // `LetterTraceCell` pour l'explication complète du choix d'un
+    // `Listener` (événements pointeur bruts) plutôt qu'un `GestureDetector`
+    // à base de pan.
+    _activePointer = event.pointer;
+    context.read<TracingScrollLock>().start();
     setState(() {
       widget.onStatusChange(_StepStatus.drawing);
       _userPoints.clear();
-      _userPoints.add(_toSvg(d.localPosition));
+      _userPoints.add(_toSvg(event.localPosition));
     });
   }
 
-  void _onPanUpdate(DragUpdateDetails d) {
-    if (widget.stepStatus != _StepStatus.drawing) return;
-    setState(() => _userPoints.add(_toSvg(d.localPosition)));
+  void _onPointerMove(PointerMoveEvent event) {
+    if (widget.stepStatus != _StepStatus.drawing ||
+        event.pointer != _activePointer) {
+      return;
+    }
+    setState(() => _userPoints.add(_toSvg(event.localPosition)));
   }
 
-  void _onPanEnd(DragEndDetails d) {
-    if (widget.stepStatus != _StepStatus.drawing) return;
+  void _onPointerUp(PointerUpEvent event) {
+    if (widget.stepStatus != _StepStatus.drawing ||
+        event.pointer != _activePointer) {
+      return;
+    }
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
     final result = validateTrace(_userPoints, _refPoints, _kLetterTolerancePx);
     if (result.valid) {
       widget.onStatusChange(_StepStatus.success);
@@ -1048,6 +1142,29 @@ class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
         });
       });
     }
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (widget.stepStatus != _StepStatus.drawing ||
+        event.pointer != _activePointer) {
+      return;
+    }
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
+    setState(() {
+      _userPoints.clear();
+      widget.onStatusChange(_StepStatus.idle);
+    });
+  }
+
+  @override
+  void dispose() {
+    // Filet de sécurité : si le widget disparaît pendant un tracé (par ex.
+    // navigation en plein geste), le verrou ne doit jamais rester bloqué.
+    if (widget.stepStatus == _StepStatus.drawing) {
+      context.read<TracingScrollLock>().stop();
+    }
+    super.dispose();
   }
 
   @override
@@ -1082,10 +1199,11 @@ class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
                 origin: _origin,
               ),
             ),
-            GestureDetector(
-              onPanStart: _onPanStart,
-              onPanUpdate: _onPanUpdate,
-              onPanEnd: _onPanEnd,
+            Listener(
+              onPointerDown: _onPointerDown,
+              onPointerMove: _onPointerMove,
+              onPointerUp: _onPointerUp,
+              onPointerCancel: _onPointerCancel,
               child: Container(
                 color: Colors.transparent,
                 width: widget.w,
@@ -1184,7 +1302,10 @@ class _LetterCanvasPainter extends CustomPainter {
         Paint()
           ..color = completed.strokeColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 8
+          // Fixe, alignée sur l'épaisseur du tracé animé en cours (voir
+          // `MiniLetterFrame`/`_OccurrencePainter`), plutôt que de grandir
+          // avec le cadre (comme `scale` ci-dessus).
+          ..strokeWidth = 7.0
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );
@@ -1204,7 +1325,7 @@ class _LetterCanvasPainter extends CustomPainter {
         Paint()
           ..color = const Color(0xFF5BAA6A)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 8
+          ..strokeWidth = 7.0
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );

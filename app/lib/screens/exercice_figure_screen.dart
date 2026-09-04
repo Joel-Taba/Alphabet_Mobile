@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import '../services/progress_service.dart';
 import '../data/shape_catalog.dart';
 import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/cahier_frame.dart';
@@ -34,6 +36,10 @@ class ExerciceFigureScreen extends StatefulWidget {
   State<ExerciceFigureScreen> createState() => _ExerciceFigureScreenState();
 }
 
+/// Identifiant fixe de cette évaluation (Palier "Figures géométriques") —
+/// voir `EvaluationSessionController.ensureContext`.
+const String _kEvalId = 'figures';
+
 class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   int _activeIdx = 0;
   final Set<int> _doneIndices = {};
@@ -43,12 +49,15 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
 
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
+  Map<String, dynamic>? _resumeOffer;
 
   late final ExerciseSettings _settings;
+  late final EvaluationSessionController _session;
 
   @override
   void initState() {
     super.initState();
+    _session = context.read<EvaluationSessionController>();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load().then((_) => _regenerate());
     if (_isEvaluation) _initEvaluation();
@@ -66,16 +75,49 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   }
 
   Future<void> _initEvaluation() async {
+    if (!mounted) return;
+    final continuing = _session.ensureContext(_kEvalId);
+    _session.configureSubjects(SHAPE_TOPICS.length);
+    if (continuing) return;
+    final saved = await _session.readSavedProgress(_kEvalId);
+    if (!mounted) return;
+    if (saved != null) {
+      setState(() => _resumeOffer = saved);
+    } else {
+      setState(() => _showFirstSubjectAnnouncement = true);
+    }
+  }
+
+  Future<void> _handleStartFirstSubject() async {
     final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
-    final session = context.read<EvaluationSessionController>();
-    session.startIfNeeded(minutes * 60);
-    final isFirst = session.configureSubjects(SHAPE_TOPICS.length);
-    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
+    _session.start(minutes * 60);
+    setState(() => _showFirstSubjectAnnouncement = false);
+  }
+
+  void _handleResume(Map<String, dynamic> saved) {
+    _session.resumeFrom(saved);
+    setState(() => _resumeOffer = null);
+    final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
+    if (savedIdx >= 0 && savedIdx < SHAPE_TOPICS.length) {
+      final savedTopic = SHAPE_TOPICS[savedIdx];
+      if (savedTopic.id != widget.shapeId) {
+        context.go('/exercice/figure/${savedTopic.id}?amaniEval=1');
+      }
+    }
+  }
+
+  void _handleRestart() {
+    unawaited(_session.clearSavedProgress(_kEvalId));
+    setState(() {
+      _resumeOffer = null;
+      _showFirstSubjectAnnouncement = true;
+    });
   }
 
   @override
   void dispose() {
+    if (_isEvaluation) unawaited(_session.persistProgress());
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
     super.dispose();
@@ -239,6 +281,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(16),
+                    physics: tracingAwareScrollPhysics(context),
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
@@ -324,14 +367,18 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
               ),
             if (_isEvaluation && session.expired)
               EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
+            if (_isEvaluation && _resumeOffer != null && !session.expired)
+              EvaluationResumeOffer(
+                onResume: () => _handleResume(_resumeOffer!),
+                onRestart: _handleRestart,
+              ),
             if (_isEvaluation &&
                 _showFirstSubjectAnnouncement &&
                 !session.expired)
               EvaluationSubjectAnnouncement(
                 title: tFormat(ev['firstSubjectTitle'] ?? '', {'title': name}),
                 subtitle: ev['firstSubjectBody'] ?? '',
-                onContinue: () =>
-                    setState(() => _showFirstSubjectAnnouncement = false),
+                onContinue: _handleStartFirstSubject,
               ),
             if (allDone &&
                 _isEvaluation &&
@@ -345,7 +392,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                       evaluationNextTopic.name['fr']!,
                 }),
                 onContinue: () {
-                  session.advanceSubject();
+                  session.advanceSubject((topicIdx + 1) % SHAPE_TOPICS.length);
                   context.go(
                     '/exercice/figure/${evaluationNextTopic.id}?amaniEval=1',
                   );

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../data/word_catalog.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../utils/word_search_generator.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/word_search_play.dart';
@@ -11,8 +12,8 @@ import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Exercice de mots mêlés à difficulté progressive (`lvl2` → 2 mots,
-/// `lvl10` → 10 mots), en alternance avec les mots croisés dans le Palier 4.
-/// Port fidèle de `src/routes/exercice.mots-meles.$puzzleId.tsx`.
+/// `lvl10` → 10 mots), intercalé dans le Palier 4. Port fidèle de
+/// `src/routes/exercice.mots-meles.$puzzleId.tsx`.
 class ExerciceMotsMelesScreen extends StatefulWidget {
   final String puzzleId;
   const ExerciceMotsMelesScreen({super.key, required this.puzzleId});
@@ -159,6 +160,7 @@ class _ExerciceMotsMelesScreenState extends State<ExerciceMotsMelesScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
+                    physics: tracingAwareScrollPhysics(context),
                     child: WordSearchPlay(
                       wordSearch: wordSearch,
                       puzzleId: widget.puzzleId,

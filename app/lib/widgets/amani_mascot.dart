@@ -18,7 +18,6 @@ enum AmaniPose {
   podium,
   dessin,
   perdu,
-  motsCroises,
   motsMeles,
 }
 
@@ -52,7 +51,6 @@ const Map<AmaniPose, String> _poseAssets = {
   AmaniPose.podium: 'assets/images/amani-podium.png',
   AmaniPose.dessin: 'assets/images/amani-dessin.png',
   AmaniPose.perdu: 'assets/images/amani-perdu.png',
-  AmaniPose.motsCroises: 'assets/images/amani-mots-croises.png',
   AmaniPose.motsMeles: 'assets/images/amani-mots-meles.png',
 };
 
@@ -74,7 +72,6 @@ const Map<AmaniPose, String> _poseLabels = {
   AmaniPose.podium: 'Flores Gong Nota te félicite sur le podium',
   AmaniPose.dessin: 'Flores Gong Nota dessine',
   AmaniPose.perdu: 'Flores Gong Nota est perdu',
-  AmaniPose.motsCroises: 'Grille de mots croisés',
   AmaniPose.motsMeles: 'Grille de mots mêlés',
 };
 

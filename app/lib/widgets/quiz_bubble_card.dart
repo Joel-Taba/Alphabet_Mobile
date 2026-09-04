@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme/amani_theme.dart';
+import '../utils/text_case.dart';
 
 /// Bulle de question façon "carte de quiz" (coin de dialogue à pointe, façon
 /// bande dessinée) — même esprit que les templates de quiz colorés, avec la
@@ -31,7 +32,7 @@ class QuizBubbleCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    label.toUpperCase(),
+                    capitalizeFirst(label),
                     style: TextStyle(
                       fontFamily: kBalooFontFamily,
                       fontWeight: FontWeight.w800,

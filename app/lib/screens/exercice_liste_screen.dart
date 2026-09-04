@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../data/sign_exercise_catalog.dart';
 import '../data/palier2_groups.dart';
 import '../data/letter_style_resolver.dart';
@@ -16,6 +18,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/directional_icon.dart';
+import '../utils/text_case.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// "Cahier d'Écriture" : exerce chaque signe d'une famille (répétitions sur
@@ -46,8 +49,15 @@ class ExerciceListeScreen extends StatefulWidget {
   State<ExerciceListeScreen> createState() => _ExerciceListeScreenState();
 }
 
+/// Identifiant fixe de cette évaluation (Palier "Les Signes de base") —
+/// voir `EvaluationSessionController.ensureContext`. Seule la variante
+/// `?family=...&amaniEval=1` de cet écran déclenche jamais une évaluation
+/// (la variante `?group=...`, Palier 2, n'ajoute jamais `amaniEval=1`).
+const String _kEvalId = 'signes';
+
 class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   late ExerciseSettings _settings;
+  late final EvaluationSessionController _session;
   final Set<String> _doneSigns = {};
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
@@ -55,6 +65,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
   bool _showPracticeSuccess = false;
+  Map<String, dynamic>? _resumeOffer;
 
   /// Pratique rapide d'un seul signe (bouton "S'entrainer" du cours) : 1
   /// point, pas de marquage de progression normale (l'utilisateur l'a
@@ -68,18 +79,51 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   @override
   void initState() {
     super.initState();
+    _session = context.read<EvaluationSessionController>();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load();
     if (_isEvaluation) _initEvaluation();
   }
 
   Future<void> _initEvaluation() async {
+    if (!mounted) return;
+    final continuing = _session.ensureContext(_kEvalId);
+    _session.configureSubjects(FAMILY_ORDER.length);
+    if (continuing) return;
+    final saved = await _session.readSavedProgress(_kEvalId);
+    if (!mounted) return;
+    if (saved != null) {
+      setState(() => _resumeOffer = saved);
+    } else {
+      setState(() => _showFirstSubjectAnnouncement = true);
+    }
+  }
+
+  Future<void> _handleStartFirstSubject() async {
     final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
-    final session = context.read<EvaluationSessionController>();
-    session.startIfNeeded(minutes * 60);
-    final isFirst = session.configureSubjects(FAMILY_ORDER.length);
-    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
+    _session.start(minutes * 60);
+    setState(() => _showFirstSubjectAnnouncement = false);
+  }
+
+  void _handleResume(Map<String, dynamic> saved) {
+    _session.resumeFrom(saved);
+    setState(() => _resumeOffer = null);
+    final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
+    if (savedIdx >= 0 && savedIdx < FAMILY_ORDER.length) {
+      final savedFamily = FAMILY_ORDER[savedIdx];
+      if (savedFamily != widget.family) {
+        context.go('/exercice-liste?family=$savedFamily&amaniEval=1');
+      }
+    }
+  }
+
+  void _handleRestart() {
+    unawaited(_session.clearSavedProgress(_kEvalId));
+    setState(() {
+      _resumeOffer = null;
+      _showFirstSubjectAnnouncement = true;
+    });
   }
 
   void _onEntryDone(String id, int totalEntries) {
@@ -96,6 +140,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
 
   @override
   void dispose() {
+    if (_isEvaluation) unawaited(_session.persistProgress());
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
     super.dispose();
@@ -435,6 +480,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                    physics: tracingAwareScrollPhysics(context),
                     children: [
                       for (final (_, titre, entries) in displayedGroups)
                         if (entries.isNotEmpty)
@@ -504,6 +550,11 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
               EvaluationCompleteOverlay(
                 onBack: () => context.go('/accueil?scrollToPalier=2'),
               ),
+            if (_isEvaluation && _resumeOffer != null && !session.expired)
+              EvaluationResumeOffer(
+                onResume: () => _handleResume(_resumeOffer!),
+                onRestart: _handleRestart,
+              ),
             if (_isEvaluation &&
                 _showFirstSubjectAnnouncement &&
                 !session.expired)
@@ -512,8 +563,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                   'title': familyDisplayName(widget.family ?? FAMILY_ORDER[0]),
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
-                onContinue: () =>
-                    setState(() => _showFirstSubjectAnnouncement = false),
+                onContinue: _handleStartFirstSubject,
               ),
             if (allFamilyDone &&
                 _isEvaluation &&
@@ -525,7 +575,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                   'title': familyDisplayName(evaluationNextFamily),
                 }),
                 onContinue: () {
-                  session.advanceSubject();
+                  session.advanceSubject((familyIdx + 1) % FAMILY_ORDER.length);
                   context.go(
                     '/exercice-liste?family=$evaluationNextFamily&amaniEval=1',
                   );
@@ -711,10 +761,11 @@ class _SignExerciseRow extends StatelessWidget {
                     : null,
               ),
               child: Text(
-                (entry['scale'] == 'reduced'
-                        ? (el['reducedLabel'] ?? 'réduit')
-                        : (familyNames[entry['family']] ?? ''))
-                    .toUpperCase(),
+                capitalizeFirst(
+                  entry['scale'] == 'reduced'
+                      ? (el['reducedLabel'] ?? 'réduit')
+                      : (familyNames[entry['family']] ?? ''),
+                ),
                 style: TextStyle(
                   fontFamily: kBalooFontFamily,
                   fontWeight: FontWeight.w800,

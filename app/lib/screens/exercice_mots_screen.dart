@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
 import '../hooks/use_exercise_settings.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -38,6 +40,10 @@ class ExerciceMotsScreen extends StatefulWidget {
   State<ExerciceMotsScreen> createState() => _ExerciceMotsScreenState();
 }
 
+/// Identifiant fixe de cette évaluation (Palier "Les Mots") — voir
+/// `EvaluationSessionController.ensureContext`.
+const String _kEvalId = 'mots';
+
 class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   final Set<String> _doneWords = {};
   int _restartKey = 0;
@@ -45,12 +51,15 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
 
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
+  Map<String, dynamic>? _resumeOffer;
 
   late final ExerciseSettings _settings;
+  late final EvaluationSessionController _session;
 
   @override
   void initState() {
     super.initState();
+    _session = context.read<EvaluationSessionController>();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load();
     if (_isEvaluation) _initEvaluation();
@@ -61,16 +70,49 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   }
 
   Future<void> _initEvaluation() async {
+    if (!mounted) return;
+    final continuing = _session.ensureContext(_kEvalId);
+    _session.configureSubjects(PALIER3_GROUPS.length);
+    if (continuing) return;
+    final saved = await _session.readSavedProgress(_kEvalId);
+    if (!mounted) return;
+    if (saved != null) {
+      setState(() => _resumeOffer = saved);
+    } else {
+      setState(() => _showFirstSubjectAnnouncement = true);
+    }
+  }
+
+  Future<void> _handleStartFirstSubject() async {
     final minutes = await readEvaluationDurationMinutes();
     if (!mounted) return;
-    final session = context.read<EvaluationSessionController>();
-    session.startIfNeeded(minutes * 60);
-    final isFirst = session.configureSubjects(PALIER3_GROUPS.length);
-    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
+    _session.start(minutes * 60);
+    setState(() => _showFirstSubjectAnnouncement = false);
+  }
+
+  void _handleResume(Map<String, dynamic> saved) {
+    _session.resumeFrom(saved);
+    setState(() => _resumeOffer = null);
+    final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
+    if (savedIdx >= 0 && savedIdx < PALIER3_GROUPS.length) {
+      final savedGroup = PALIER3_GROUPS[savedIdx];
+      if (savedGroup.id != widget.groupId) {
+        context.go('/exercice/mots/${savedGroup.id}?amaniEval=1');
+      }
+    }
+  }
+
+  void _handleRestart() {
+    unawaited(_session.clearSavedProgress(_kEvalId));
+    setState(() {
+      _resumeOffer = null;
+      _showFirstSubjectAnnouncement = true;
+    });
   }
 
   @override
   void dispose() {
+    if (_isEvaluation) unawaited(_session.persistProgress());
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
     super.dispose();
@@ -239,6 +281,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(16),
+                    physics: tracingAwareScrollPhysics(context),
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
@@ -333,6 +376,11 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   '/accueil?scrollToPalier=${lang == Lang.fr ? 5 : 6}',
                 ),
               ),
+            if (_isEvaluation && _resumeOffer != null && !session.expired)
+              EvaluationResumeOffer(
+                onResume: () => _handleResume(_resumeOffer!),
+                onRestart: _handleRestart,
+              ),
             if (_isEvaluation &&
                 _showFirstSubjectAnnouncement &&
                 !session.expired)
@@ -341,8 +389,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   'title': groupTitle,
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
-                onContinue: () =>
-                    setState(() => _showFirstSubjectAnnouncement = false),
+                onContinue: _handleStartFirstSubject,
               ),
             if (allDone &&
                 _isEvaluation &&
@@ -354,7 +401,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   'title': evaluationNextGroup.title[lang.name] ?? '',
                 }),
                 onContinue: () {
-                  session.advanceSubject();
+                  session.advanceSubject((groupIdx + 1) % PALIER3_GROUPS.length);
                   context.go(
                     '/exercice/mots/${evaluationNextGroup.id}?amaniEval=1',
                   );

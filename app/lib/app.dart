@@ -6,6 +6,7 @@ import 'services/mode_libre_controller.dart';
 import 'i18n/translations.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/profile_create_screen.dart';
+import 'screens/returning_user_screen.dart';
 import 'screens/app_shell.dart';
 import 'screens/parcours_screen.dart';
 import 'screens/bibliotheque_screen.dart';
@@ -17,7 +18,6 @@ import 'screens/cours_lettres_formation_screen.dart';
 import 'screens/exercice_lettre_screen.dart';
 import 'screens/cours_mots_screen.dart';
 import 'screens/exercice_mots_screen.dart';
-import 'screens/exercice_mots_croises_screen.dart';
 import 'screens/exercice_mots_meles_screen.dart';
 import 'screens/cours_syllabes_screen.dart';
 import 'screens/exercice_syllabes_screen.dart';
@@ -40,6 +40,7 @@ import 'services/family_service.dart';
 import 'hooks/use_writing_style.dart';
 import 'hooks/use_animation_speed.dart';
 import 'hooks/use_accessibility_settings.dart';
+import 'hooks/use_tracing_scroll_lock.dart';
 import 'widgets/points_toast_host.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -47,11 +48,28 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
+  // Une fois qu'un enfant a été connecté une seule fois sur cet appareil
+  // (inscription ou "C'est encore moi", voir `FamilyService.createChild`/
+  // `switchTo`), la page de bienvenue ne doit plus jamais réapparaître —
+  // toute ouverture de l'app doit reconduire directement à `/accueil`.
+  // `FamilyService.ready` est déjà attendu avant `runApp` (voir
+  // `main.dart`), donc `hasAnyChild` est fiable dès le premier rendu.
+  redirect: (context, state) {
+    final family = context.read<FamilyService>();
+    if (family.isLoaded && state.matchedLocation == '/' && family.hasAnyChild) {
+      return '/accueil';
+    }
+    return null;
+  },
   routes: [
     GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
     GoRoute(
       path: '/profil',
       builder: (context, state) => const ProfileCreateScreen(),
+    ),
+    GoRoute(
+      path: '/connexion',
+      builder: (context, state) => const ReturningUserScreen(),
     ),
     GoRoute(
       path: '/cours/:family',
@@ -132,13 +150,6 @@ final _router = GoRouter(
         groupId: state.pathParameters['groupId']!,
         amaniEval: state.uri.queryParameters['amaniEval'],
         onlyWordId: state.uri.queryParameters['word'],
-      ),
-    ),
-    GoRoute(
-      path: '/exercice/mots-croises/:puzzleId',
-      builder: (context, state) => ExerciceMotsCroisesScreen(
-        key: ValueKey(state.uri.toString()),
-        puzzleId: state.pathParameters['puzzleId']!,
       ),
     ),
     GoRoute(
@@ -263,11 +274,27 @@ class AmaniApp extends StatelessWidget {
         // enfant ci-dessous voient d'emblée le bon espace de nommage.
         ChangeNotifierProvider.value(value: familyService),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
-        ChangeNotifierProvider(create: (_) => SignSpeechService()),
+        // Déclaré avant `SignSpeechService` : ce dernier en dépend (voir le
+        // ChangeNotifierProxyProvider ci-dessous) pour accorder le débit de
+        // la voix au réglage "Vitesse de formation".
         ChangeNotifierProvider(create: (_) => AnimationSpeedProvider()),
+        ChangeNotifierProxyProvider<AnimationSpeedProvider, SignSpeechService>(
+          create: (_) => SignSpeechService(),
+          update: (context, animationSpeed, previous) {
+            previous!.updateAnimationSpeed(animationSpeed.speed);
+            return previous;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => AccessibilitySettings()),
+        ChangeNotifierProvider(create: (_) => TracingScrollLock()),
         ChangeNotifierProvider(create: (_) => ModeLibreController()),
-        ChangeNotifierProvider(create: (_) => EvaluationSessionController()),
+        ChangeNotifierProxyProvider<FamilyService, EvaluationSessionController>(
+          create: (_) => EvaluationSessionController(),
+          update: (context, family, previous) {
+            previous!.rechargerPourEnfantActif();
+            return previous;
+          },
+        ),
         // Réglages par enfant : rechargés à chaque changement d'enfant actif
         // (voir FamilyService.switchTo) via ChangeNotifierProxyProvider,
         // plutôt que recréés — pour ne jamais perdre les autres abonnés.

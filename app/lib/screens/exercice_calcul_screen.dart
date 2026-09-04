@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_writing_style.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_countdown.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/word_trace_attempt.dart';
@@ -40,6 +42,12 @@ class ExerciceCalculScreen extends StatefulWidget {
   State<ExerciceCalculScreen> createState() => _ExerciceCalculScreenState();
 }
 
+/// Identifiant fixe de cette évaluation (Palier "Les Calculs") — voir
+/// `EvaluationSessionController.ensureContext`, distingue cette évaluation
+/// de celles des autres paliers pour que chacune ait son propre chrono,
+/// son propre décompte de sujets, et sa propre reprise éventuelle.
+const String _kEvalId = 'calculs';
+
 class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
   int _activeIdx = 0;
   final Set<int> _doneIndices = {};
@@ -49,17 +57,19 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
   List<CalculProblem> _problems = const [];
 
   bool get _isEvaluation => widget.amaniEval == '1';
-  bool get _isMentalCalc =>
-      findCalculTopic(widget.topicId)?.isMentalCalc ?? false;
-  int _mentalDuration = kDefaultMentalCalcDuration;
+  int? get _mentalCalcSeconds =>
+      findCalculTopic(widget.topicId)?.mentalCalcSeconds;
   CountdownController? _mentalCountdown;
 
   late final ExerciseSettings _settings;
+  late final EvaluationSessionController _session;
   bool _showFirstSubjectAnnouncement = false;
+  Map<String, dynamic>? _resumeOffer;
 
   @override
   void initState() {
     super.initState();
+    _session = context.read<EvaluationSessionController>();
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load().then((_) {
       _regenerate();
@@ -86,34 +96,76 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
   }
 
   Future<void> _initEvaluation() async {
-    final minutes = await readEvaluationDurationMinutes();
-    final mentalSeconds = await readMentalCalcDurationSeconds();
     if (!mounted) return;
-    _mentalDuration = mentalSeconds;
-    final session = context.read<EvaluationSessionController>();
-    session.startIfNeeded(minutes * 60);
-    final isFirst = session.configureSubjects(CALCUL_TOPICS.length);
-    if (isFirst) setState(() => _showFirstSubjectAnnouncement = true);
+    final continuing = _session.ensureContext(_kEvalId);
+    _session.configureSubjects(CALCUL_TOPICS.length);
     _startMentalCountdownForActive();
+    if (continuing) return;
+    final saved = await _session.readSavedProgress(_kEvalId);
+    if (!mounted) return;
+    if (saved != null) {
+      setState(() => _resumeOffer = saved);
+    } else {
+      setState(() => _showFirstSubjectAnnouncement = true);
+    }
+  }
+
+  /// Lance réellement le chrono de l'évaluation — appelé seulement quand
+  /// l'enfant appuie sur "Continuer" (premier sujet) ou "Reprendre", jamais
+  /// automatiquement à l'ouverture de l'écran : le temps annoncé doit
+  /// toujours être celui actuellement réglé dans Profil, relu à cet instant
+  /// précis plutôt que mis en cache plus tôt.
+  Future<void> _handleStartFirstSubject() async {
+    final minutes = await readEvaluationDurationMinutes();
+    if (!mounted) return;
+    _session.start(minutes * 60);
+    setState(() => _showFirstSubjectAnnouncement = false);
+    _startMentalCountdownForActive();
+  }
+
+  void _handleResume(Map<String, dynamic> saved) {
+    _session.resumeFrom(saved);
+    setState(() => _resumeOffer = null);
+    _startMentalCountdownForActive();
+    final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
+    if (savedIdx >= 0 && savedIdx < CALCUL_TOPICS.length) {
+      final savedTopic = CALCUL_TOPICS[savedIdx];
+      if (savedTopic.id != widget.topicId) {
+        context.go('/exercice/calcul/${savedTopic.id}?amaniEval=1');
+      }
+    }
+  }
+
+  void _handleRestart() {
+    unawaited(_session.clearSavedProgress(_kEvalId));
+    setState(() {
+      _resumeOffer = null;
+      _showFirstSubjectAnnouncement = true;
+    });
   }
 
   /// Chronomètre propre au problème actif (sujet "calcul mental", en
   /// évaluation seulement) — distinct du chrono global de l'évaluation :
   /// il redémarre à chaque nouveau problème plutôt que de courir pour toute
   /// l'évaluation, l'objectif étant de mesurer l'automatisme sur CHAQUE
-  /// calcul plutôt que d'imposer un budget global.
+  /// calcul plutôt que d'imposer un budget global. Ne démarre que si le
+  /// chrono global est déjà lancé (pas avant que l'enfant ait fermé
+  /// l'annonce du premier sujet, ni pendant une éventuelle proposition de
+  /// reprise).
   void _startMentalCountdownForActive() {
     final old = _mentalCountdown;
+    final seconds = _mentalCalcSeconds;
     final applies =
         _isEvaluation &&
-        _isMentalCalc &&
+        _session.isRunning &&
+        seconds != null &&
         _activeIdx < _problems.length &&
         !_doneIndices.contains(_activeIdx);
     final idx = _activeIdx;
     setState(() {
       _mentalCountdown = applies
           ? (CountdownController(
-              durationSeconds: _mentalDuration,
+              durationSeconds: seconds,
               onExpire: () {
                 if (mounted) _onProblemTimeout(idx);
               },
@@ -127,6 +179,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
 
   @override
   void dispose() {
+    if (_isEvaluation) unawaited(_session.persistProgress());
     _mentalCountdown?.dispose();
     _settings.removeListener(_onSettingsChanged);
     _settings.dispose();
@@ -312,6 +365,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(16),
+                    physics: tracingAwareScrollPhysics(context),
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
@@ -406,6 +460,11 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
               EvaluationCompleteOverlay(
                 onBack: () => context.go('/accueil?scrollToPalier=6'),
               ),
+            if (_isEvaluation && _resumeOffer != null && !session.expired)
+              EvaluationResumeOffer(
+                onResume: () => _handleResume(_resumeOffer!),
+                onRestart: _handleRestart,
+              ),
             if (_isEvaluation &&
                 _showFirstSubjectAnnouncement &&
                 !session.expired)
@@ -414,8 +473,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                   'title': topic.title,
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
-                onContinue: () =>
-                    setState(() => _showFirstSubjectAnnouncement = false),
+                onContinue: _handleStartFirstSubject,
               ),
             if (allDone &&
                 _isEvaluation &&
@@ -427,7 +485,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                   'title': evaluationNextTopic.title,
                 }),
                 onContinue: () {
-                  session.advanceSubject();
+                  session.advanceSubject((topicIdx + 1) % CALCUL_TOPICS.length);
                   context.go(
                     '/exercice/calcul/${evaluationNextTopic.id}?amaniEval=1',
                   );
@@ -676,6 +734,7 @@ class _ProblemRowState extends State<_ProblemRow> {
                     // débordée/rognée.
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
+                      physics: tracingAwareScrollPhysics(context),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,

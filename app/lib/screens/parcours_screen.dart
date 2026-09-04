@@ -14,6 +14,7 @@ import '../data/calcul_catalog.dart';
 import '../data/shape_catalog.dart';
 import '../data/tangram_catalog.dart';
 import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER;
+import '../utils/text_case.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
@@ -29,7 +30,6 @@ enum StepKind {
   active,
   locked,
   bonus,
-  crossword,
   wordsearch,
   vraiFaux,
   composeNombre,
@@ -356,18 +356,13 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       );
       if (idx % 2 == 1) {
         final levelIdx = (idx - 1) ~/ 2;
-        if (levelIdx < PALIER3_CROSSWORD_LEVELS.length) {
-          final level = PALIER3_CROSSWORD_LEVELS[levelIdx];
-          final isWordSearch = levelIdx % 2 == 1;
+        if (levelIdx < PALIER3_WORD_PUZZLE_LEVELS.length) {
+          final level = PALIER3_WORD_PUZZLE_LEVELS[levelIdx];
           steps.add(
             StepEntry(
-              Step(
-                kind: isWordSearch ? StepKind.wordsearch : StepKind.crossword,
-              ),
+              const Step(kind: StepKind.wordsearch),
               0,
-              to: isWordSearch
-                  ? '/exercice/mots-meles/lvl$level'
-                  : '/exercice/mots-croises/lvl$level',
+              to: '/exercice/mots-meles/lvl$level',
             ),
           );
         }
@@ -536,8 +531,13 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
 
     // Chaque étape hérite de la couleur du dernier en-tête de palier rencontré.
     // Numérotation continue de toutes les étapes (hors en-têtes de palier),
-    // pour le petit badge rappelant la position dans le parcours — port
-    // fidèle du compteur `stepNumber` de `_app.accueil.tsx`.
+    // pour le petit badge rappelant la position dans le parcours. Les étapes
+    // bonus/médaille n'affichent jamais ce badge (voir les branches
+    // `StepKind.bonus`/`StepKind.medal` du switch de rendu plus bas) : on ne
+    // leur attribue donc pas non plus de numéro, pour que la suite visible
+    // de numéros reste toujours consécutive (sans ce saut, une étape bonus
+    // ou médaille "consommait" un numéro jamais affiché, créant un trou
+    // visible dans la séquence).
     Color currentColor = const Color(0xFF8FBF6F);
     Color currentBorder = const Color(0xFF5E8E3E);
     int stepNumber = 0;
@@ -548,8 +548,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       } else {
         entry.color = currentColor;
         entry.borderColor = currentBorder;
-        stepNumber += 1;
-        entry.number = stepNumber;
+        if (entry.step.kind != StepKind.bonus &&
+            entry.step.kind != StepKind.medal) {
+          stepNumber += 1;
+          entry.number = stepNumber;
+        }
       }
     }
 
@@ -713,7 +716,7 @@ class _ZigzagPainter extends CustomPainter {
       y = endY;
     }
 
-    final footColor = const Color(0xFFA9784F).withValues(alpha: 0.32);
+    final footColor = const Color(0xFF000000).withValues(alpha: 0.32);
     const stepDistance = 22.0; // écart entre deux empreintes le long du sentier
     const strideOffset = 4.5; // écart latéral gauche/droite (démarche)
 
@@ -934,7 +937,7 @@ class _PalierBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      (step.subtitle ?? '').toUpperCase(),
+                      capitalizeFirst(step.subtitle ?? ''),
                       style: TextStyle(
                         fontFamily: kBalooFontFamily,
                         fontWeight: FontWeight.w800,
@@ -1040,9 +1043,6 @@ class _StepNodeState extends State<_StepNode>
 
   String get _stepLabel {
     final parcours = widget.t['parcours'] as Map<String, dynamic>? ?? {};
-    if (widget.step.kind == StepKind.crossword) {
-      return parcours['crosswordStep'] ?? '';
-    }
     if (widget.step.kind == StepKind.wordsearch) {
       return parcours['wordSearchStep'] ?? '';
     }
@@ -1151,7 +1151,7 @@ class _StepNodeState extends State<_StepNode>
             ),
             const SizedBox(height: 6),
             Text(
-              _stepLabel.toUpperCase(),
+              capitalizeFirst(_stepLabel),
               style: TextStyle(
                 fontFamily: kBalooFontFamily,
                 fontWeight: FontWeight.w800,
@@ -1159,71 +1159,6 @@ class _StepNodeState extends State<_StepNode>
                 letterSpacing: 0.6,
                 color: bigNode
                     ? Colors.black
-                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        );
-
-      case StepKind.crossword:
-        final bool big = widget.isCurrent;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.isCurrent)
-              _StartPill(
-                borderColor: widget.borderColor,
-                label: parcours['start'] ?? 'Commencer',
-              ),
-            if (widget.isCurrent) const SizedBox(height: 10),
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                if (widget.isCurrent)
-                  _CurrentSparkles(color: widget.borderColor),
-                Container(
-                  width: big ? 80 : 56,
-                  height: big ? 80 : 56,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: big ? widget.color : AmaniColors.disabled,
-                    border: Border.all(
-                      color: big ? widget.borderColor : AmaniColors.disabled,
-                      width: 4,
-                    ),
-                    boxShadow: AmaniShadows.card,
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    LucideIcons.grid3x3,
-                    size: big ? 36 : 24,
-                    color: big
-                        ? Colors.white
-                        : AmaniColors.textSecondary.withValues(alpha: 0.7),
-                  ),
-                ),
-                if (widget.number != null)
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: _NumberBadge(
-                      number: widget.number!,
-                      color: widget.borderColor,
-                      muted: !widget.isCurrent,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _stepLabel.toUpperCase(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                color: big
-                    ? widget.borderColor
                     : AmaniColors.textSecondary.withValues(alpha: 0.7),
               ),
             ),
@@ -1281,7 +1216,7 @@ class _StepNodeState extends State<_StepNode>
             ),
             const SizedBox(height: 6),
             Text(
-              _stepLabel.toUpperCase(),
+              capitalizeFirst(_stepLabel),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: kBalooFontFamily,
@@ -1358,7 +1293,7 @@ class _StepNodeState extends State<_StepNode>
             ),
             const SizedBox(height: 6),
             Text(
-              _stepLabel.toUpperCase(),
+              capitalizeFirst(_stepLabel),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: kBalooFontFamily,
@@ -1432,7 +1367,7 @@ class _StartPill extends StatelessWidget {
             boxShadow: AmaniShadows.card,
           ),
           child: Text(
-            label.toUpperCase(),
+            capitalizeFirst(label),
             style: TextStyle(
               fontFamily: kBalooFontFamily,
               fontWeight: FontWeight.w800,
@@ -1516,9 +1451,14 @@ class _NumberBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = muted ? const Color(0xFF9C8F79) : color;
+    // Diamètre assez large pour qu'un nombre à 3 chiffres (l'étape 100 et
+    // au-delà) reste toujours entièrement lisible à l'intérieur du cercle,
+    // pas seulement les nombres à 1-2 chiffres.
+    final digits = '$number'.length;
+    final size = digits >= 3 ? 32.0 : (digits == 2 ? 26.0 : 24.0);
     return Container(
-      width: 24,
-      height: 24,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -1529,13 +1469,20 @@ class _NumberBadge extends StatelessWidget {
         ),
         boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 2)],
       ),
-      child: Text(
-        '$number',
-        style: TextStyle(
-          fontFamily: kBalooFontFamily,
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-          color: c,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: Text(
+            '$number',
+            maxLines: 1,
+            style: TextStyle(
+              fontFamily: kBalooFontFamily,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+              color: c,
+            ),
+          ),
         ),
       ),
     );

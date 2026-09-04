@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:provider/provider.dart';
 import '../hooks/use_accessibility_settings.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../theme/amani_theme.dart';
 import '../utils/trace_validation.dart';
 import 'amani_mascot.dart';
@@ -237,6 +238,7 @@ class _RepetitionRowState extends State<RepetitionRow> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               constraints: const BoxConstraints(maxHeight: 330),
               child: SingleChildScrollView(
+                physics: tracingAwareScrollPhysics(context),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     const spacing = 10.0;
@@ -382,6 +384,13 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   Timer? _mergeBlinkTimer;
   bool _mergeGreenPhase = true;
 
+  /// Identifiant du doigt qui a démarré le tracé en cours — voir
+  /// `LetterTraceCell._activePointer` pour l'explication complète : sans ce
+  /// suivi, un second doigt posé pendant qu'on trace déjà romprait
+  /// l'équilibre start/stop de `TracingScrollLock` et bloquerait le
+  /// défilement pour le reste de la session.
+  int? _activePointer;
+
   /// La mascotte de réussite ne reste affichée que quelques secondes : au-delà,
   /// elle cachait le signe que l'enfant venait de tracer avec succès, ce qui
   /// nuit à l'apprentissage (voir `build`, où la teinte verte de fond reste
@@ -438,6 +447,11 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   @override
   void dispose() {
     _mergeBlinkTimer?.cancel();
+    // Filet de sécurité : si le widget disparaît pendant un tracé (par ex.
+    // navigation en plein geste), le verrou ne doit jamais rester bloqué.
+    if (_localStatus == OccurrenceStatus.drawing) {
+      context.read<TracingScrollLock>().stop();
+    }
     super.dispose();
   }
 
@@ -450,22 +464,40 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     (canvasPt.dy - _origin.dy) / _scale,
   );
 
-  void _onPanStart(DragStartDetails details) {
-    if (!widget.isActive || _localStatus == OccurrenceStatus.success) return;
+  void _onPointerDown(PointerDownEvent event) {
+    if (!widget.isActive ||
+        _localStatus == OccurrenceStatus.success ||
+        _activePointer != null) {
+      return;
+    }
+    // Verrouille le défilement de la page pendant tout le tracé -- voir
+    // `LetterTraceCell` pour l'explication complète du choix d'un
+    // `Listener` (événements pointeur bruts) plutôt qu'un `GestureDetector`
+    // à base de pan.
+    _activePointer = event.pointer;
+    context.read<TracingScrollLock>().start();
     setState(() {
       _localStatus = OccurrenceStatus.drawing;
       _userPoints.clear();
-      _userPoints.add(_toSvg(details.localPosition));
+      _userPoints.add(_toSvg(event.localPosition));
     });
   }
 
-  void _onPanUpdate(DragUpdateDetails details) {
-    if (_localStatus != OccurrenceStatus.drawing) return;
-    setState(() => _userPoints.add(_toSvg(details.localPosition)));
+  void _onPointerMove(PointerMoveEvent event) {
+    if (_localStatus != OccurrenceStatus.drawing ||
+        event.pointer != _activePointer) {
+      return;
+    }
+    setState(() => _userPoints.add(_toSvg(event.localPosition)));
   }
 
-  void _onPanEnd(DragEndDetails details) {
-    if (_localStatus != OccurrenceStatus.drawing) return;
+  void _onPointerUp(PointerUpEvent event) {
+    if (_localStatus != OccurrenceStatus.drawing ||
+        event.pointer != _activePointer) {
+      return;
+    }
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
     final tolerancePx = (widget.tolerancePct / 100) * 200;
     final result = validateTrace(_userPoints, _refPoints, tolerancePx);
     if (result.valid) {
@@ -486,6 +518,19 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
         widget.onRetry();
       });
     }
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (_localStatus != OccurrenceStatus.drawing ||
+        event.pointer != _activePointer) {
+      return;
+    }
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
+    setState(() {
+      _userPoints.clear();
+      _localStatus = OccurrenceStatus.idle;
+    });
   }
 
   @override
@@ -518,10 +563,11 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
               mergeGreenPhase: _mergeGreenPhase,
             ),
           ),
-          GestureDetector(
-            onPanStart: _onPanStart,
-            onPanUpdate: _onPanUpdate,
-            onPanEnd: _onPanEnd,
+          Listener(
+            onPointerDown: _onPointerDown,
+            onPointerMove: _onPointerMove,
+            onPointerUp: _onPointerUp,
+            onPointerCancel: _onPointerCancel,
             child: Container(
               color: Colors.transparent,
               width: widget.w,
@@ -683,7 +729,7 @@ class _OccurrencePainter extends CustomPainter {
         Paint()
           ..color = entry.strokeColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 3.5
+          ..strokeWidth = 7.0
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );
@@ -704,7 +750,7 @@ class _OccurrencePainter extends CustomPainter {
         Paint()
           ..color = const Color(0xFF5BAA6A)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 3.5
+          ..strokeWidth = 7.0
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
       );

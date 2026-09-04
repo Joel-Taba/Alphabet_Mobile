@@ -19,8 +19,8 @@ import 'dart:math';
 /// zigzag. Les problèmes eux-mêmes sont soit une liste fixe (quand l'espace
 /// à mémoriser est pédagogiquement fermé — doubles, amis de 10, tables),
 /// soit générés par une fonction seedée (même principe que
-/// `generateCrossword`/`generateWordSearch` dans `lib/utils/`) pour les
-/// sujets à grand espace numérique.
+/// `generateWordSearch` dans `lib/utils/`) pour les sujets à grand espace
+/// numérique.
 class CalculProblem {
   /// Énoncé affiché (ex. "7 + 3", "3/4 + 1/4").
   final String display;
@@ -95,12 +95,14 @@ class CalculTopic {
   /// `cours_calcul_screen.dart` et `widgets/posed_operation_demo.dart`.
   final String? posedOperation;
 
-  /// `true` pour le sujet "calcul mental" : en mode évaluation, chaque
-  /// problème est alors soumis à son propre petit chronomètre (réglage
-  /// Profil dédié, par défaut 15 s) plutôt que de laisser l'enfant prendre
-  /// tout son temps — l'automatisme se mesure aussi à la vitesse de
-  /// réponse, pas seulement à sa justesse. Sans effet hors évaluation.
-  final bool isMentalCalc;
+  /// Non `null` pour le sujet "calcul mental" : en mode évaluation, chaque
+  /// problème est alors soumis à son propre petit chronomètre de cette
+  /// durée (en secondes) plutôt que de laisser l'enfant prendre tout son
+  /// temps — l'automatisme se mesure aussi à la vitesse de réponse, pas
+  /// seulement à sa justesse. Sans effet hors évaluation. Fixé par sujet
+  /// plutôt que réglable, pour rester cohérent avec le niveau scolaire visé
+  /// par chaque sujet.
+  final int? mentalCalcSeconds;
 
   /// [seed] varie à chaque "Relancer"/nouvelle tentative pour varier les
   /// problèmes ; [count] vient du réglage "Répétitions" (Profil > Réglages),
@@ -118,7 +120,7 @@ class CalculTopic {
     required this.mnemonicBody,
     this.tableNumber,
     this.posedOperation,
-    this.isMentalCalc = false,
+    this.mentalCalcSeconds,
     required this.generateProblems,
   });
 }
@@ -524,7 +526,11 @@ const List<CalculTopic> CALCUL_TOPICS = [
         'porte, 3+3 les dés, 4+4 la pieuvre (elle a 8 pattes !), 5+5 les '
         'doigts de tes deux mains. Pour arriver à 10, cherche ton "ami de '
         '10" : 1 et 9, 2 et 8, 3 et 7, 4 et 6, 5 et 5 !',
-    isMentalCalc: true,
+    // Niveau CP, doubles/compléments à 10 à un chiffre : un calcul très
+    // rapide à mémoriser, mais la réponse doit ensuite être tracée
+    // chiffre par chiffre (WordTraceAttempt) — 15 s laisse ce temps de
+    // traçage en plus du calcul lui-même.
+    mentalCalcSeconds: 15,
     generateProblems: _generateCalculMentalCp,
   ),
   CalculTopic(
@@ -821,8 +827,8 @@ CalculTopic? findCalculTopic(String id) {
 // ─── Mini-jeux bonus (5 niveaux chacun) ────────────────────────────────
 //
 // "Vrai ou Faux ?" et "Compose le nombre !" — intercalés dans le zigzag du
-// Palier "Les Calculs" au même titre que les mots croisés/mêlés du Palier
-// "Les Mots" : purement ludiques, sans points ni progression (voir
+// Palier "Les Calculs" au même titre que les mots mêlés du Palier "Les
+// Mots" : purement ludiques, sans points ni progression (voir
 // parcours_screen.dart, aucun de ces écrans n'appelle awardCompletion).
 
 /// Un "Vrai ou Faux ?" : l'énoncé est-il juste ?

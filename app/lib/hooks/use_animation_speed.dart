@@ -18,6 +18,18 @@ const Map<AnimationSpeed, double> _speedMultiplier = {
   AnimationSpeed.rapide: 2.5,
 };
 
+/// Multiplicateur appliqué au débit de la voix (`SignSpeechService.speak`),
+/// pour que la vitesse de la synthèse vocale suive elle aussi ce réglage.
+/// Plage volontairement plus resserrée que [_speedMultiplier] (celle des
+/// animations, calibrée pour un simple raccourci visuel jusqu'à 2.5x) : au
+/// débit de parole, un facteur aussi extrême rendrait la voix inintelligible
+/// ou saccadée.
+const Map<AnimationSpeed, double> speechRateMultiplier = {
+  AnimationSpeed.lent: 0.75,
+  AnimationSpeed.normal: 1.0,
+  AnimationSpeed.rapide: 1.3,
+};
+
 class AnimationSpeedProvider extends ChangeNotifier {
   AnimationSpeed _speed = AnimationSpeed.normal;
   AnimationSpeed get speed => _speed;

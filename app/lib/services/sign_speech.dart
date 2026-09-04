@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../hooks/use_animation_speed.dart';
 import '../i18n/translations.dart';
 
 const String _volumeStorageKey = 'amani_setting_volume';
@@ -130,7 +131,18 @@ class SignSpeechService extends ChangeNotifier {
   bool _isSpeaking = false;
   List<dynamic>? _voicesCache;
 
+  /// Suit le réglage "Vitesse de formation" (Profil > Réglages), tenu à jour
+  /// par le `ChangeNotifierProxyProvider` dans `app.dart` : le débit de la
+  /// voix (voir [speak]) doit s'accorder avec cette même vitesse, plutôt que
+  /// de rester figé pendant que les animations et le tracé accélèrent ou
+  /// ralentissent.
+  AnimationSpeed _animationSpeed = AnimationSpeed.normal;
+
   bool get isSpeaking => _isSpeaking;
+
+  void updateAnimationSpeed(AnimationSpeed speed) {
+    _animationSpeed = speed;
+  }
 
   SignSpeechService() {
     _initTts();
@@ -287,9 +299,16 @@ class SignSpeechService extends ChangeNotifier {
     // sonner une voix "robotisée".
     final resolvedPitch = pitch ?? (gender == VoiceGender.femme ? 1.05 : 0.95);
 
+    // Le débit suit le réglage "Vitesse de formation" (Profil > Réglages),
+    // borné pour ne jamais rendre la voix inintelligible aux extrêmes.
+    final effectiveRate = (rate * speechRateMultiplier[_animationSpeed]!).clamp(
+      0.1,
+      1.0,
+    );
+
     await _flutterTts.setLanguage(locale);
     await _flutterTts.setSpeechRate(
-      rate,
+      effectiveRate,
     ); // Le rate FlutterTts diffère du Web API (0.5 est normal)
     await _flutterTts.setPitch(resolvedPitch);
     await _flutterTts.setVolume(volume);

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../i18n/translations.dart';
+import '../utils/text_case.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/amani_button.dart';
 import '../theme/amani_theme.dart';
@@ -16,12 +18,12 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                t['welcome']['title'].toString().toUpperCase(),
+                capitalizeFirst(t['welcome']['title'].toString()),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -63,17 +65,12 @@ class WelcomeScreen extends StatelessWidget {
                 onPressed: () => context.go('/profil'),
               ),
               const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => context.go('/accueil'),
-                child: Text(
-                  t['welcome']['imBack'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AmaniColors.textSecondary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
+              AmaniButton(
+                label: t['welcome']['imBack'],
+                variant: AmaniButtonVariant.secondary,
+                size: AmaniButtonSize.small,
+                icon: LucideIcons.userCheck,
+                onPressed: () => context.go('/connexion'),
               ),
             ],
           ),

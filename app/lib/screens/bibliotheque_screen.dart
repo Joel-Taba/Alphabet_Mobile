@@ -5,17 +5,19 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../widgets/cahier_frame.dart';
 import '../widgets/scribble_canvas.dart';
-import '../widgets/free_crossword_section.dart';
 import '../widgets/free_word_search_section.dart';
 import '../widgets/free_tangram_section.dart';
 import '../widgets/free_mental_calc_section.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/amani_mascot.dart';
+import '../widgets/scroll_handle.dart';
 import '../data/sign_exercise_catalog.dart';
 import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/mode_libre_controller.dart';
+import '../utils/text_case.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 enum ModeLibreTab {
@@ -23,7 +25,6 @@ enum ModeLibreTab {
   signe,
   lettre,
   chiffre,
-  crossword,
   wordsearch,
   tangram,
   calcul,
@@ -64,8 +65,9 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       GlobalKey<ScribbleCanvasState>();
 
   /// Incrémenté à chaque remise à zéro (voir `_onLeftModeLibre`) pour forcer
-  /// la reconstruction complète des mini-jeux (mots croisés/mêlés), dont
-  /// l'état interne (grille en cours) n'est pas autrement accessible d'ici.
+  /// la reconstruction complète des mini-jeux (mots mêlés, tangram, calcul),
+  /// dont l'état interne (grille en cours) n'est pas autrement accessible
+  /// d'ici.
   int _resetGeneration = 0;
 
   late List<dynamic> _allLetters;
@@ -160,6 +162,13 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     return getLetterFormation(fallback['char'] as String, style) ?? fallback;
   }
 
+  static const List<ModeLibreTab> _drawingTabs = [
+    ModeLibreTab.scribble,
+    ModeLibreTab.signe,
+    ModeLibreTab.lettre,
+    ModeLibreTab.chiffre,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
@@ -175,6 +184,14 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+          // Verrouillé pendant qu'un tracé est en cours (voir
+          // `TracingScrollLock`) : le canevas de dessin capte alors tout le
+          // geste sans jamais le laisser aussi faire défiler la page.
+          // Le reste du temps, cette page défile normalement -- avec, juste
+          // au-dessus du canevas, une petite poignée dédiée (voir
+          // `_buildScrollHandle`) toujours facile à saisir pour défiler
+          // sans risquer de commencer un tracé par erreur.
+          physics: tracingAwareScrollPhysics(context),
           children: [
             // En-tête
             Row(
@@ -208,13 +225,11 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             const SizedBox(height: 20),
 
             // Image plein cadre — bannière décorative inspirée de
-            // `_app.bibliotheque.tsx` (amani-gribouillage.png), agrandie
-            // par rapport au web pour que l'image reste bien visible sur
-            // mobile plutôt que d'être largement rognée par BoxFit.cover.
+            // `_app.bibliotheque.tsx` (amani-gribouillage.png).
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Container(
-                height: 280,
+                height: 300,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   border: Border.all(
@@ -232,11 +247,13 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Onglets de modèle
-            SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
+            // Onglets de modèle -- hauteur non figée (contrairement à un
+            // `SizedBox(height: 44)` calé sur la taille de police d'origine)
+            // : avec le réglage "Taille de l'interface" (Profil > Réglages),
+            // les libellés grandissent et un cadre figé les aurait rognés.
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
                   _buildTab(
                     ModeLibreTab.scribble,
@@ -248,11 +265,6 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                   _buildTab(ModeLibreTab.lettre, tabs['letter'] ?? 'Lettre'),
                   const SizedBox(width: 8),
                   _buildTab(ModeLibreTab.chiffre, tabs['digit'] ?? 'Chiffre'),
-                  const SizedBox(width: 8),
-                  _buildTab(
-                    ModeLibreTab.crossword,
-                    tabs['crossword'] ?? 'Mots croisés',
-                  ),
                   const SizedBox(width: 8),
                   _buildTab(
                     ModeLibreTab.wordsearch,
@@ -267,76 +279,81 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             ),
             const SizedBox(height: 16),
 
-            if (_currentTab == ModeLibreTab.crossword)
-              FreeCrosswordSection(key: ValueKey('crossword-$_resetGeneration'))
+            if (_drawingTabs.contains(_currentTab))
+              _buildDrawingBody(modeLibre)
             else if (_currentTab == ModeLibreTab.wordsearch)
               FreeWordSearchSection(
                 key: ValueKey('wordsearch-$_resetGeneration'),
               )
             else if (_currentTab == ModeLibreTab.tangram)
               FreeTangramSection(key: ValueKey('tangram-$_resetGeneration'))
-            else if (_currentTab == ModeLibreTab.calcul)
-              FreeMentalCalcSection(key: ValueKey('calcul-$_resetGeneration'))
-            else ...[
-              // Sélecteur de famille (uniquement pour l'onglet Signe)
-              if (_currentTab == ModeLibreTab.signe) ...[
-                _buildFamilySelector(modeLibre),
-                const SizedBox(height: 12),
-              ],
-
-              // Carte "modèle de référence"
-              _buildModelCard(modeLibre),
-              const SizedBox(height: 16),
-
-              // Canvas — page de dessin libre — uniquement des lignes d'écriture façon
-              // cahier, sans aucun tracé-guide superposé : c'est l'enfant qui
-              // dessine seul, quel que soit l'onglet. Port fidèle du canevas
-              // unique partagé par les 4 onglets dans `_app.bibliotheque.tsx`
-              // (`<CahierFrame ... /><canvas .../>`, sans `targetSvgPath`).
-              AspectRatio(
-                aspectRatio: 1.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AmaniColors.disabled, width: 2),
-                  ),
-                  child: CahierFrame(
-                    rounded: 22,
-                    child: ScribbleCanvas(
-                      key: _scribbleKey,
-                      penColor: _penColor,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Barre d'outils : couleurs + effacer, commune à tous les
-              // onglets (même barre que sur le web).
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      for (final c in _penColors) ...[
-                        _buildColorSwatch(c),
-                        const SizedBox(width: 10),
-                      ],
-                    ],
-                  ),
-                  _buildEraserMenu(),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Sélecteur du modèle courant (carousel horizontal)
-              if (_currentTab != ModeLibreTab.scribble)
-                SizedBox(height: 74, child: _buildSelector()),
-            ],
+            else
+              FreeMentalCalcSection(key: ValueKey('calcul-$_resetGeneration')),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDrawingBody(Map<String, dynamic> modeLibre) {
+    return Column(
+      children: [
+        // Sélecteur de famille (uniquement pour l'onglet Signe)
+        if (_currentTab == ModeLibreTab.signe) ...[
+          _buildFamilySelector(modeLibre),
+          const SizedBox(height: 12),
+        ],
+
+        // Carte "modèle de référence"
+        _buildModelCard(modeLibre),
+        const SizedBox(height: 8),
+
+        const ScrollHandle(),
+        const SizedBox(height: 8),
+
+        // Canvas — page de dessin libre — uniquement des lignes d'écriture façon
+        // cahier, sans aucun tracé-guide superposé : c'est l'enfant qui
+        // dessine seul, quel que soit l'onglet. Port fidèle du canevas
+        // unique partagé par les 4 onglets dans `_app.bibliotheque.tsx`
+        // (`<CahierFrame ... /><canvas .../>`, sans `targetSvgPath`).
+        AspectRatio(
+          aspectRatio: 1.0,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AmaniColors.disabled, width: 2),
+            ),
+            child: CahierFrame(
+              rounded: 22,
+              child: ScribbleCanvas(key: _scribbleKey, penColor: _penColor),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Barre d'outils : couleurs + effacer, commune à tous les
+        // onglets (même barre que sur le web).
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                for (final c in _penColors) ...[
+                  _buildColorSwatch(c),
+                  const SizedBox(width: 10),
+                ],
+              ],
+            ),
+            _buildEraserMenu(),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // Sélecteur du modèle courant (carousel horizontal)
+        if (_currentTab != ModeLibreTab.scribble)
+          SizedBox(height: 74, child: _buildSelector()),
+      ],
     );
   }
 
@@ -560,9 +577,9 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  (modeLibre['modelLabel'] ?? 'Modèle')
-                      .toString()
-                      .toUpperCase(),
+                  capitalizeFirst(
+                    (modeLibre['modelLabel'] ?? 'Modèle').toString(),
+                  ),
                   style: TextStyle(
                     fontFamily: kBalooFontFamily,
                     fontWeight: FontWeight.w700,

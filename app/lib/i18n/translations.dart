@@ -161,6 +161,12 @@ const Map<String, dynamic> fr = {
     'firstSubjectBody': "C'est parti pour l'évaluation !",
     'nextSubjectTitle': 'Bravo, sujet réussi !',
     'nextSubjectBody': 'Sujet suivant : {title}',
+    'resumeTitle': 'Reprendre cette évaluation ?',
+    'resumeBody':
+        "Tu l'avais laissée en cours de route. Veux-tu continuer là où "
+        "tu t'étais arrêté, ou recommencer depuis le début ?",
+    'resumeContinueButton': "Continuer où j'en étais",
+    'resumeRestartButton': 'Recommencer',
   },
   'mascotPoses': {
     'accueil': 'Flores Gong Nota te salue',
@@ -187,7 +193,7 @@ const Map<String, dynamic> fr = {
   'welcome': {
     'title': 'Bienvenue',
     'heading': 'Salut ! Je suis Flores Gong Nota.',
-    'subheading': 'Tu veux bien jouer avec moi ?',
+    'subheading': 'Veux-tu apprendre à écrire et à lire en jouant avec moi ?',
     'start': "Commencer l'aventure",
     'imBack': "C'est encore moi ! 🐿️",
   },
@@ -201,6 +207,17 @@ const Map<String, dynamic> fr = {
     'hidePassword': 'Masquer le mot de passe',
     'languageLabel': 'Langue',
     'start': "Commencer l'aventure",
+    'nameTaken': 'Ce nom est déjà pris, essaie une de ces idées :',
+  },
+  'returningUser': {
+    'title': "C'est encore moi !",
+    'subtitle': "Dis-nous comment tu t'appelles pour continuer l'aventure.",
+    'namePlaceholder': "Comment tu t'appelles ?",
+    'checking': 'Vérification...',
+    'submit': 'Continuer',
+    'errorNotFound':
+        "Ce nom n'existe pas encore. Tu peux commencer l'aventure !",
+    'errorNetwork': 'Connexion impossible, réessaie.',
   },
   'profileLock': {
     'title': 'Mon profil est protégé',
@@ -231,7 +248,6 @@ const Map<String, dynamic> fr = {
       'sign': 'Signe',
       'letter': 'Lettre',
       'digit': 'Chiffre',
-      'crossword': 'Mots croisés',
       'wordsearch': 'Mots mêlés',
       'tangram': 'Tangram',
       'calcul': 'Calcul',
@@ -261,7 +277,6 @@ const Map<String, dynamic> fr = {
     'medalDoneAria': 'Médaille de fin de palier obtenue',
     'coursStep': 'Cours',
     'exerciceStep': 'Exercice',
-    'crosswordStep': 'Mots croisés',
     'wordSearchStep': 'Mots mêlés',
     'vraiFauxStep': 'Vrai ou faux',
     'composeStep': 'Association',
@@ -271,33 +286,33 @@ const Map<String, dynamic> fr = {
     'paliers': [
       {
         'title': 'Les signes de base',
-        'subtitle': 'PALIER 1',
+        'subtitle': 'Palier 1',
         'tagline': 'Points, courbes, crochets et traits',
       },
       {
         'title': 'La combinatoire : lettres et chiffres',
-        'subtitle': 'PALIER 2',
+        'subtitle': 'Palier 2',
         'tagline': 'Assembler les signes',
       },
       {
         'title': 'Les syllabes',
-        'subtitle': 'PALIER 3',
+        'subtitle': 'Palier 3',
         'tagline': 'Assemble consonnes et voyelles pour lire',
       },
       {
         'title': 'Les mots',
-        'subtitle': 'PALIER 4',
+        'subtitle': 'Palier 4',
         'tagline': 'Relie les lettres entre elles',
       },
       {
         'title': 'Les calculs',
-        'subtitle': 'PALIER 5',
+        'subtitle': 'Palier 5',
         'tagline': "De l'addition CP à la proportionnalité CM2",
       },
     ],
     'figuresPalier': {
       'title': 'Les figures géométriques',
-      'subtitle': 'PALIER 6',
+      'subtitle': 'Palier 6',
       'tagline': 'Carré, rectangle, triangle, cercle',
     },
     'comingSoon': 'Cette étape arrive bientôt !',
@@ -371,9 +386,6 @@ const Map<String, dynamic> fr = {
     'evaluationDurationLabel': "Durée de l'évaluation",
     'evaluationDurationHint':
         "Temps donné pour l'évaluation chronométrée de fin de palier",
-    'mentalCalcDurationLabel': 'Temps par calcul mental',
-    'mentalCalcDurationHint':
-        "En évaluation, temps donné pour répondre à chaque calcul mental",
     'speedLabel': 'Vitesse de formation',
     'speedHint': "Vitesse de l'animation qui montre comment tracer un signe",
     'speedOptions': [
@@ -735,32 +747,6 @@ const Map<String, dynamic> fr = {
         'Glisse chaque pièce colorée dans la case qui lui correspond.',
     'doneBody': 'Bravo, le tangram est complet !',
   },
-  'motsCroises': {
-    'title': 'Mots croisés',
-    'subtitle': 'Complète la grille lettre par lettre',
-    'levelSubtitle': 'Niveau {level} · {count} mots',
-    'hintTitle': 'Écoute puis complète',
-    'hintBody':
-        'Écoute chaque mot ci-dessous et trace ses lettres dans la grille, comme un vrai mot croisé !',
-    'doneTitle': 'Grille complétée !',
-    'doneBody': 'Bravo, tu as résolu ce mot croisé.',
-    'across': 'Horizontal',
-    'down': 'Vertical',
-    'featuredTitle': 'Grille terminée, bravo !',
-    'featuredBody':
-        "Tu as écrit et prononcé tous les mots ! Voici le mot vedette à l'honneur :",
-    'continueLabel': 'Continuer',
-    'generationFailed': 'Impossible de créer cette grille, réessaie.',
-    'wordsFoundLabel': '{solved} sur {total} mots trouvés',
-  },
-  'modeLibreCroises': {
-    'title': 'Mots croisés',
-    'subtitle': 'Une nouvelle grille à chaque partie',
-    'intro':
-        'Touche « Nouvelle grille » pour piocher des mots au hasard et jouer aux mots croisés autant de fois que tu veux !',
-    'newGame': 'Nouvelle grille',
-    'generating': 'Préparation de la grille…',
-  },
   'motsMeles': {
     'title': 'Mots mêlés',
     'subtitle': 'Trouve tous les mots cachés dans la grille',
@@ -827,6 +813,12 @@ const Map<String, dynamic> en = {
     'firstSubjectBody': "Let's start the evaluation!",
     'nextSubjectTitle': 'Well done, subject passed!',
     'nextSubjectBody': 'Next subject: {title}',
+    'resumeTitle': 'Resume this evaluation?',
+    'resumeBody':
+        'You left it partway through. Do you want to continue where you '
+        'stopped, or start over from the beginning?',
+    'resumeContinueButton': 'Continue where I left off',
+    'resumeRestartButton': 'Start over',
   },
   'mascotPoses': {
     'accueil': 'Flores Gong Nota waves hello',
@@ -853,7 +845,7 @@ const Map<String, dynamic> en = {
   'welcome': {
     'title': 'Welcome',
     'heading': "Hi! I'm Flores Gong Nota.",
-    'subheading': 'Want to play with me?',
+    'subheading': 'Do you want to learn to read and write while playing with me?',
     'start': 'Start the adventure',
     'imBack': "It's me again! 🐿️",
   },
@@ -867,6 +859,17 @@ const Map<String, dynamic> en = {
     'hidePassword': 'Hide password',
     'languageLabel': 'Language',
     'start': 'Start the adventure',
+    'nameTaken': 'This name is already taken, try one of these ideas:',
+  },
+  'returningUser': {
+    'title': "It's me again!",
+    'subtitle': "Tell us your name to keep going on the adventure.",
+    'namePlaceholder': "What's your name?",
+    'checking': 'Checking...',
+    'submit': 'Continue',
+    'errorNotFound':
+        "This name doesn't exist yet. You can start the adventure!",
+    'errorNetwork': "Couldn't connect, please try again.",
   },
   'profileLock': {
     'title': 'My Profile is protected',
@@ -897,7 +900,6 @@ const Map<String, dynamic> en = {
       'sign': 'Sign',
       'letter': 'Letter',
       'digit': 'Digit',
-      'crossword': 'Crossword',
       'wordsearch': 'Word search',
       'tangram': 'Tangram',
       'calcul': 'Math',
@@ -927,7 +929,6 @@ const Map<String, dynamic> en = {
     'medalDoneAria': 'End-of-tier medal earned',
     'coursStep': 'Lesson',
     'exerciceStep': 'Exercise',
-    'crosswordStep': 'Crossword',
     'wordSearchStep': 'Word search',
     'figureQuizStep': 'Shape quiz',
     'figureVraiFauxStep': 'True or false',
@@ -935,28 +936,28 @@ const Map<String, dynamic> en = {
     'paliers': [
       {
         'title': 'The Basic Signs',
-        'subtitle': 'TIER 1',
+        'subtitle': 'Tier 1',
         'tagline': 'Dots, curves, hooks and lines',
       },
       {
         'title': 'Combinatorics: letters and numbers',
-        'subtitle': 'TIER 2',
+        'subtitle': 'Tier 2',
         'tagline': 'Combine signs to write',
       },
       {
         'title': 'Syllables',
-        'subtitle': 'TIER 3',
+        'subtitle': 'Tier 3',
         'tagline': 'Blend consonants and vowels to read',
       },
       {
         'title': 'Words',
-        'subtitle': 'TIER 4',
+        'subtitle': 'Tier 4',
         'tagline': 'Link letters together',
       },
     ],
     'figuresPalier': {
       'title': 'Geometric Shapes',
-      'subtitle': 'TIER 6',
+      'subtitle': 'Tier 6',
       'tagline': 'Square, rectangle, triangle, circle',
     },
     'comingSoon': 'This step is coming soon!',
@@ -1031,9 +1032,6 @@ const Map<String, dynamic> en = {
     'exercisesCardTitle': 'Writing exercises',
     'evaluationDurationLabel': 'Evaluation duration',
     'evaluationDurationHint': 'Time given for the timed end-of-tier evaluation',
-    'mentalCalcDurationLabel': 'Time per mental calculation',
-    'mentalCalcDurationHint':
-        'In evaluation, time given to answer each mental calculation',
     'speedLabel': 'Formation speed',
     'speedHint': 'Speed of the animation that shows how to trace a sign',
     'speedOptions': [
@@ -1360,31 +1358,6 @@ const Map<String, dynamic> en = {
     'instruction': 'Drag each colored piece into its matching spot.',
     'doneBody': 'Well done, the tangram is complete!',
   },
-  'motsCroises': {
-    'title': 'Crossword',
-    'subtitle': 'Complete the grid letter by letter',
-    'levelSubtitle': 'Level {level} · {count} words',
-    'hintTitle': 'Listen, then complete',
-    'hintBody':
-        'Listen to each word below and trace its letters in the grid, like a real crossword!',
-    'doneTitle': 'Grid complete!',
-    'doneBody': 'Well done, you solved this crossword.',
-    'across': 'Across',
-    'down': 'Down',
-    'featuredTitle': 'Grid complete, well done!',
-    'featuredBody': "You wrote and said every word! Here's the featured word:",
-    'continueLabel': 'Continue',
-    'generationFailed': "Couldn't build this grid, try again.",
-    'wordsFoundLabel': '{solved} of {total} words found',
-  },
-  'modeLibreCroises': {
-    'title': 'Crossword',
-    'subtitle': 'A new grid every game',
-    'intro':
-        'Tap "New grid" to draw random words and play crosswords as many times as you like!',
-    'newGame': 'New grid',
-    'generating': 'Building the grid…',
-  },
   'motsMeles': {
     'title': 'Word search',
     'subtitle': 'Find every word hidden in the grid',
@@ -1454,6 +1427,12 @@ const Map<String, dynamic> es = {
     'firstSubjectBody': '¡Empezamos la evaluación!',
     'nextSubjectTitle': '¡Bien hecho, tema superado!',
     'nextSubjectBody': 'Siguiente tema: {title}',
+    'resumeTitle': '¿Reanudar esta evaluación?',
+    'resumeBody':
+        'La habías dejado a medias. ¿Quieres continuar donde la dejaste, '
+        'o empezar de nuevo desde el principio?',
+    'resumeContinueButton': 'Continuar donde lo dejé',
+    'resumeRestartButton': 'Empezar de nuevo',
   },
   'mascotPoses': {
     'accueil': 'Flores Gong Nota te saluda',
@@ -1480,7 +1459,7 @@ const Map<String, dynamic> es = {
   'welcome': {
     'title': 'Bienvenido',
     'heading': '¡Hola! Soy Flores Gong Nota.',
-    'subheading': '¿Quieres jugar conmigo?',
+    'subheading': '¿Quieres aprender a leer y escribir jugando conmigo?',
     'start': 'Comenzar la aventura',
     'imBack': '¡Soy yo otra vez! 🐿️',
   },
@@ -1494,6 +1473,16 @@ const Map<String, dynamic> es = {
     'hidePassword': 'Ocultar contraseña',
     'languageLabel': 'Idioma',
     'start': 'Comenzar la aventura',
+    'nameTaken': 'Este nombre ya está en uso, prueba una de estas ideas:',
+  },
+  'returningUser': {
+    'title': '¡Soy yo otra vez!',
+    'subtitle': 'Dinos cómo te llamas para continuar la aventura.',
+    'namePlaceholder': '¿Cómo te llamas?',
+    'checking': 'Comprobando...',
+    'submit': 'Continuar',
+    'errorNotFound': 'Ese nombre todavía no existe. ¡Puedes comenzar la aventura!',
+    'errorNetwork': 'No se pudo conectar, inténtalo de nuevo.',
   },
   'profileLock': {
     'title': 'Mi perfil está protegido',
@@ -1526,7 +1515,6 @@ const Map<String, dynamic> es = {
       'sign': 'Signo',
       'letter': 'Letra',
       'digit': 'Dígito',
-      'crossword': 'Crucigrama',
       'wordsearch': 'Sopa de letras',
       'tangram': 'Tangram',
       'calcul': 'Cálculo',
@@ -1557,7 +1545,6 @@ const Map<String, dynamic> es = {
     'medalDoneAria': 'Medalla de fin de nivel obtenida',
     'coursStep': 'Lección',
     'exerciceStep': 'Ejercicio',
-    'crosswordStep': 'Crucigrama',
     'wordSearchStep': 'Sopa de letras',
     'figureQuizStep': 'Adivina la figura',
     'figureVraiFauxStep': 'Verdadero o falso',
@@ -1565,28 +1552,28 @@ const Map<String, dynamic> es = {
     'paliers': [
       {
         'title': 'Los signos básicos',
-        'subtitle': 'NIVEL 1',
+        'subtitle': 'Nivel 1',
         'tagline': 'Puntos, curvas, ganchos y trazos',
       },
       {
         'title': 'La combinatoria: letras y números',
-        'subtitle': 'NIVEL 2',
+        'subtitle': 'Nivel 2',
         'tagline': 'Combina los signos para escribir',
       },
       {
         'title': 'Las sílabas',
-        'subtitle': 'NIVEL 3',
+        'subtitle': 'Nivel 3',
         'tagline': 'Combina consonantes y vocales para leer',
       },
       {
         'title': 'Las palabras',
-        'subtitle': 'NIVEL 4',
+        'subtitle': 'Nivel 4',
         'tagline': 'Une las letras entre sí',
       },
     ],
     'figuresPalier': {
       'title': 'Las figuras geométricas',
-      'subtitle': 'NIVEL 6',
+      'subtitle': 'Nivel 6',
       'tagline': 'Cuadrado, rectángulo, triángulo, círculo',
     },
     'comingSoon': '¡Esta etapa llega pronto!',
@@ -1660,9 +1647,6 @@ const Map<String, dynamic> es = {
     'evaluationDurationLabel': 'Duración de la evaluación',
     'evaluationDurationHint':
         'Tiempo dado para la evaluación cronometrada de fin de nivel',
-    'mentalCalcDurationLabel': 'Tiempo por cálculo mental',
-    'mentalCalcDurationHint':
-        'En evaluación, tiempo dado para responder a cada cálculo mental',
     'speedLabel': 'Velocidad de formación',
     'speedHint': 'Velocidad de la animación que muestra cómo trazar un signo',
     'speedOptions': [
@@ -1997,32 +1981,6 @@ const Map<String, dynamic> es = {
     'instruction': 'Arrastra cada pieza de color a su lugar correspondiente.',
     'doneBody': '¡Bien hecho, el tangram está completo!',
   },
-  'motsCroises': {
-    'title': 'Crucigrama',
-    'subtitle': 'Completa la cuadrícula letra por letra',
-    'levelSubtitle': 'Nivel {level} · {count} palabras',
-    'hintTitle': 'Escucha y luego completa',
-    'hintBody':
-        '¡Escucha cada palabra de abajo y traza sus letras en la cuadrícula, como un verdadero crucigrama!',
-    'doneTitle': '¡Cuadrícula completada!',
-    'doneBody': 'Bien hecho, has resuelto este crucigrama.',
-    'across': 'Horizontal',
-    'down': 'Vertical',
-    'featuredTitle': '¡Cuadrícula terminada, bien hecho!',
-    'featuredBody':
-        '¡Has escrito y pronunciado todas las palabras! Aquí está la palabra destacada:',
-    'continueLabel': 'Continuar',
-    'generationFailed': 'No se pudo crear esta cuadrícula, inténtalo de nuevo.',
-    'wordsFoundLabel': '{solved} de {total} palabras encontradas',
-  },
-  'modeLibreCroises': {
-    'title': 'Crucigrama',
-    'subtitle': 'Una cuadrícula nueva en cada partida',
-    'intro':
-        '¡Toca «Nueva cuadrícula» para sacar palabras al azar y jugar al crucigrama todas las veces que quieras!',
-    'newGame': 'Nueva cuadrícula',
-    'generating': 'Preparando la cuadrícula…',
-  },
   'motsMeles': {
     'title': 'Sopa de letras',
     'subtitle': 'Encuentra todas las palabras escondidas en la cuadrícula',
@@ -2089,6 +2047,10 @@ const Map<String, dynamic> ar = {
     "firstSubjectBody": "لنبدأ التقييم!",
     "nextSubjectTitle": "أحسنت، نجحت في الموضوع!",
     "nextSubjectBody": "الموضوع التالي: {title}",
+    "resumeTitle": "استئناف هذا التقييم؟",
+    "resumeBody": "لقد توقفت في منتصفه. هل تريد المتابعة من حيث توقفت، أم البدء من جديد؟",
+    "resumeContinueButton": "المتابعة من حيث توقفت",
+    "resumeRestartButton": "البدء من جديد",
   },
   "mascotPoses": {
     "accueil": "فلوريس غونغ نوتا تحييك",
@@ -2115,7 +2077,7 @@ const Map<String, dynamic> ar = {
   "welcome": {
     "title": "مرحبًا",
     "heading": "مرحبًا! أنا فلوريس غونغ نوتا.",
-    "subheading": "هل تريد اللعب معي؟",
+    "subheading": "هل تريد أن تتعلم القراءة والكتابة وأنت تلعب معي؟",
     "start": "ابدأ المغامرة",
     "imBack": "ها أنا ذا مجددًا! 🐿️",
   },
@@ -2129,6 +2091,16 @@ const Map<String, dynamic> ar = {
     "hidePassword": "إخفاء كلمة المرور",
     "languageLabel": "اللغة",
     "start": "ابدأ المغامرة",
+    "nameTaken": "هذا الاسم مُستخدم بالفعل، جرّب إحدى هذه الأفكار:",
+  },
+  "returningUser": {
+    "title": "ها أنا ذا مجددًا!",
+    "subtitle": "أخبرنا باسمك لمتابعة المغامرة.",
+    "namePlaceholder": "ما اسمك؟",
+    "checking": "جارٍ التحقق...",
+    "submit": "متابعة",
+    "errorNotFound": "هذا الاسم غير موجود بعد. يمكنك بدء المغامرة!",
+    "errorNetwork": "تعذّر الاتصال، حاول مرة أخرى.",
   },
   "profileLock": {
     "title": "ملفي الشخصي محمي",
@@ -2159,7 +2131,6 @@ const Map<String, dynamic> ar = {
       "sign": "إشارة",
       "letter": "حرف",
       "digit": "رقم",
-      "crossword": "الكلمات المتقاطعة",
       "wordsearch": "البحث عن الكلمات",
       "tangram": "تانغرام",
       "calcul": "حساب",
@@ -2189,7 +2160,6 @@ const Map<String, dynamic> ar = {
     "medalDoneAria": "تم الحصول على ميدالية نهاية المرحلة",
     "coursStep": "درس",
     "exerciceStep": "تمرين",
-    "crosswordStep": "الكلمات المتقاطعة",
     "wordSearchStep": "البحث عن الكلمات",
     "figureQuizStep": "اختبار الأشكال",
     "figureVraiFauxStep": "صح أم خطأ",
@@ -2290,9 +2260,6 @@ const Map<String, dynamic> ar = {
     "exercisesCardTitle": "تمارين الكتابة",
     "evaluationDurationLabel": "مدة التقييم",
     "evaluationDurationHint": "الوقت المخصص لتقييم نهاية المرحلة المحدد بمؤقت",
-    "mentalCalcDurationLabel": "الوقت لكل حساب ذهني",
-    "mentalCalcDurationHint":
-        "أثناء التقييم، الوقت المخصص للإجابة عن كل حساب ذهني",
     "speedLabel": "سرعة التكوين",
     "speedHint": "سرعة الرسم المتحرك الذي يوضح كيفية رسم الإشارة",
     "speedOptions": [
@@ -2613,31 +2580,6 @@ const Map<String, dynamic> ar = {
     "notFound": "غير متاح حاليًا.",
     "instruction": "اسحب كل قطعة ملونة إلى مكانها المناسب.",
     "doneBody": "أحسنت، التانغرام مكتمل!",
-  },
-  "motsCroises": {
-    "title": "الكلمات المتقاطعة",
-    "subtitle": "أكمل الشبكة حرفًا بحرف",
-    "levelSubtitle": "المستوى {level} · {count} كلمات",
-    "hintTitle": "استمع ثم أكمل",
-    "hintBody":
-        "استمع إلى كل كلمة أدناه وارسم حروفها في الشبكة، تمامًا كالكلمات المتقاطعة الحقيقية!",
-    "doneTitle": "اكتملت الشبكة!",
-    "doneBody": "أحسنت، لقد حللت هذه الكلمات المتقاطعة.",
-    "across": "أفقي",
-    "down": "عمودي",
-    "featuredTitle": "اكتملت الشبكة، أحسنت!",
-    "featuredBody": "لقد كتبت ونطقت جميع الكلمات! إليك الكلمة المميزة:",
-    "continueLabel": "متابعة",
-    "generationFailed": "تعذر إنشاء هذه الشبكة، حاول مرة أخرى.",
-    "wordsFoundLabel": "{solved} من أصل {total} كلمات موجودة",
-  },
-  "modeLibreCroises": {
-    "title": "الكلمات المتقاطعة",
-    "subtitle": "شبكة جديدة في كل مرة",
-    "intro":
-        "المس «شبكة جديدة» لسحب كلمات عشوائية واللعب بالكلمات المتقاطعة كما تشاء!",
-    "newGame": "شبكة جديدة",
-    "generating": "جارٍ تحضير الشبكة…",
   },
   "motsMeles": {
     "title": "البحث عن الكلمات",

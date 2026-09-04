@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
 import '../utils/word_search_generator.dart';
+import '../utils/text_case.dart';
 import '../data/word_catalog.dart';
 import 'amani_mascot.dart';
 import 'exercise_complete_popup.dart';
@@ -52,17 +54,16 @@ bool _sameCells(List<GridPos> a, List<GridPos> b) {
 }
 
 /// Grille de mots mêlés jouable : lettres imprimées statiques (pas de
-/// traçage manuscrit, à la différence des mots croisés), un mot se trouve en
-/// glissant le doigt du début à la fin, dans n'importe quel sens (horizontal,
-/// vertical, diagonal) et dans n'importe quel ordre (l'enfant peut partir de
-/// n'importe quelle extrémité du mot repéré). Port fidèle de
-/// `src/components/amani/WordSearchPlay.tsx`.
+/// traçage manuscrit), un mot se trouve en glissant le doigt du début à la
+/// fin, dans n'importe quel sens (horizontal, vertical, diagonal) et dans
+/// n'importe quel ordre (l'enfant peut partir de n'importe quelle extrémité
+/// du mot repéré). Port fidèle de `src/components/amani/WordSearchPlay.tsx`.
 ///
 /// [puzzleId]/[level] ne sont fournis que par l'étape du parcours (voir
 /// exercice_mots_meles_screen.dart) : c'est ce qui déclenche l'attribution de
 /// points et le pop-up de fin d'exercice. Le mode libre de la bibliothèque
 /// (grilles régénérées à la demande) omet ces props et ne déclenche donc ni
-/// l'un ni l'autre, volontairement — même convention que `CrosswordPlay`.
+/// l'un ni l'autre, volontairement.
 class WordSearchPlay extends StatefulWidget {
   final GeneratedWordSearch wordSearch;
   final String? puzzleId;
@@ -90,6 +91,14 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
   final Set<String> _found = {};
   GridPos? _dragStart;
   GridPos? _dragCurrent;
+
+  /// Identifiant du doigt qui a démarré la sélection en cours — voir
+  /// `LetterTraceCell._activePointer` pour le raisonnement complet : sans ce
+  /// suivi, un second doigt posé pendant qu'on glisse déjà (paume, doigt
+  /// curieux d'un enfant...) redéclencherait `TracingScrollLock.start()` une
+  /// deuxième fois alors qu'un seul `stop()` suivrait, bloquant le verrou
+  /// pour le reste de la session.
+  int? _activePointer;
   bool _showCompletePopup = false;
   bool _pointsAwarded = false;
   bool _awaitingRepeatCompletion = false;
@@ -104,6 +113,16 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
       _dragStart = null;
       _dragCurrent = null;
     }
+  }
+
+  @override
+  void dispose() {
+    // Filet de sécurité : si le widget disparaît en pleine sélection (par
+    // ex. navigation), le verrou ne doit jamais rester bloqué.
+    if (_dragStart != null) {
+      context.read<TracingScrollLock>().stop();
+    }
+    super.dispose();
   }
 
   GridPos? _cellFromLocal(Offset local, double cellSize) {
@@ -200,7 +219,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
         : 38.0;
     final gridPixels = widget.wordSearch.size * cellSize;
     final nextWordGroup = widget.level != null
-        ? nextWordGroupAfterCrossword(widget.level!)
+        ? nextWordGroupAfterWordPuzzle(widget.level!)
         : null;
 
     return Stack(
@@ -306,24 +325,51 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                 ),
               ),
               alignment: Alignment.center,
-              child: GestureDetector(
-                onPanStart: (details) {
-                  final cell = _cellFromLocal(details.localPosition, cellSize);
+              child: Listener(
+                // `Listener` (événements pointeur bruts) plutôt qu'un
+                // `GestureDetector` à base de pan, combiné au verrouillage
+                // du défilement de la page (voir `TracingScrollLock`) :
+                // sans ça, une sélection verticale ou diagonale de mot est
+                // visuellement identique à un geste de scroll et peut lui
+                // être happée par un ascendant défilant.
+                onPointerDown: (event) {
+                  if (_dragStart != null || _activePointer != null) return;
+                  final cell = _cellFromLocal(event.localPosition, cellSize);
                   if (cell == null) return;
+                  _activePointer = event.pointer;
+                  context.read<TracingScrollLock>().start();
                   setState(() {
                     _dragStart = cell;
                     _dragCurrent = cell;
                   });
                 },
-                onPanUpdate: (details) {
-                  if (_dragStart == null) return;
-                  final cell = _cellFromLocal(details.localPosition, cellSize);
+                onPointerMove: (event) {
+                  if (_dragStart == null || event.pointer != _activePointer) {
+                    return;
+                  }
+                  final cell = _cellFromLocal(event.localPosition, cellSize);
                   if (cell != null) setState(() => _dragCurrent = cell);
                 },
-                onPanEnd: (_) {
-                  if (_dragStart != null && _dragCurrent != null) {
+                onPointerUp: (event) {
+                  if (_dragStart == null || event.pointer != _activePointer) {
+                    return;
+                  }
+                  _activePointer = null;
+                  context.read<TracingScrollLock>().stop();
+                  if (_dragCurrent != null) {
                     _finishSelection(_dragStart!, _dragCurrent!);
                   }
+                  setState(() {
+                    _dragStart = null;
+                    _dragCurrent = null;
+                  });
+                },
+                onPointerCancel: (event) {
+                  if (_dragStart == null || event.pointer != _activePointer) {
+                    return;
+                  }
+                  _activePointer = null;
+                  context.read<TracingScrollLock>().stop();
                   setState(() {
                     _dragStart = null;
                     _dragCurrent = null;
@@ -407,7 +453,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              p.word.fr.toUpperCase(),
+                              capitalizeFirst(p.word.fr),
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w700,

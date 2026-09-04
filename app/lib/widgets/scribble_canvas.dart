@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 
 /// Un seul trait dessiné : ses points, sa couleur au moment du tracé (pour
 /// que changer de couleur de crayon n'affecte jamais les traits déjà
@@ -40,26 +42,70 @@ class ScribbleCanvasState extends State<ScribbleCanvas> {
   void clear() => setState(_strokes.clear);
 
   static const double _eraserWidth = 28;
+  bool _drawing = false;
 
-  void _onPanStart(DragStartDetails d) {
+  /// Identifiant du doigt qui a démarré le trait en cours — voir
+  /// `LetterTraceCell._activePointer` pour le raisonnement complet : sans ce
+  /// suivi, un second doigt posé pendant qu'on dessine déjà (paume, doigt
+  /// curieux d'un enfant...) redéclencherait `TracingScrollLock.start()` une
+  /// deuxième fois alors qu'un seul `stop()` suivrait, bloquant le verrou
+  /// pour le reste de la session.
+  int? _activePointer;
+
+  void _onPointerDown(PointerDownEvent event) {
+    // Verrouille le défilement de la page pendant tout le tracé -- voir
+    // `LetterTraceCell` pour l'explication complète du choix d'un
+    // `Listener` (événements pointeur bruts) plutôt qu'un `GestureDetector`
+    // à base de pan.
+    if (_drawing || _activePointer != null) return;
+    _activePointer = event.pointer;
+    context.read<TracingScrollLock>().start();
     setState(() {
-      _pointerPos = d.localPosition;
+      _drawing = true;
+      _pointerPos = event.localPosition;
       _strokes.add(
         _Stroke(color: widget.penColor, isEraser: _eraserMode)
-          ..points.add(d.localPosition),
+          ..points.add(event.localPosition),
       );
     });
   }
 
-  void _onPanUpdate(DragUpdateDetails d) {
+  void _onPointerMove(PointerMoveEvent event) {
+    if (!_drawing || event.pointer != _activePointer) return;
     setState(() {
-      _pointerPos = d.localPosition;
-      _strokes.last.points.add(d.localPosition);
+      _pointerPos = event.localPosition;
+      _strokes.last.points.add(event.localPosition);
     });
   }
 
-  void _onPanEnd(DragEndDetails d) {
-    setState(() => _pointerPos = null);
+  void _onPointerUp(PointerUpEvent event) {
+    if (!_drawing || event.pointer != _activePointer) return;
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
+    setState(() {
+      _drawing = false;
+      _pointerPos = null;
+    });
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (!_drawing || event.pointer != _activePointer) return;
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
+    setState(() {
+      _drawing = false;
+      _pointerPos = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Filet de sécurité : si le widget disparaît en plein tracé (par ex.
+    // navigation), le verrou ne doit jamais rester bloqué.
+    if (_drawing) {
+      context.read<TracingScrollLock>().stop();
+    }
+    super.dispose();
   }
 
   @override
@@ -67,10 +113,11 @@ class ScribbleCanvasState extends State<ScribbleCanvas> {
     return MouseRegion(
       onHover: (e) => setState(() => _pointerPos = e.localPosition),
       onExit: (_) => setState(() => _pointerPos = null),
-      child: GestureDetector(
-        onPanStart: _onPanStart,
-        onPanUpdate: _onPanUpdate,
-        onPanEnd: _onPanEnd,
+      child: Listener(
+        onPointerDown: _onPointerDown,
+        onPointerMove: _onPointerMove,
+        onPointerUp: _onPointerUp,
+        onPointerCancel: _onPointerCancel,
         child: CustomPaint(
           painter: _ScribblePainter(
             strokes: _strokes,

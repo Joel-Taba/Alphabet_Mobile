@@ -3,11 +3,14 @@ import '../theme/amani_theme.dart';
 
 enum AmaniButtonVariant { primary, secondary, danger, ghost }
 
+enum AmaniButtonSize { normal, small }
+
 /// Bouton Amani avec effet 3D "pressable".
 class AmaniButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final AmaniButtonVariant variant;
+  final AmaniButtonSize size;
   final IconData? icon;
   final bool fullWidth;
   final bool disabled;
@@ -17,6 +20,7 @@ class AmaniButton extends StatefulWidget {
     required this.label,
     this.onPressed,
     this.variant = AmaniButtonVariant.primary,
+    this.size = AmaniButtonSize.normal,
     this.icon,
     this.fullWidth = false,
     this.disabled = false,
@@ -66,9 +70,19 @@ class _AmaniButtonState extends State<AmaniButton> {
       }
     }
 
+    final isSmall = widget.size == AmaniButtonSize.small;
+    final height = isSmall ? 44.0 : 58.0;
+    final borderRadius = height / 2;
+    final horizontalPadding = isSmall ? 20.0 : 24.0;
+    final fontSize = isSmall ? 15.0 : 18.0;
+    final iconSize = isSmall ? 18.0 : 24.0;
+    final maxShadow = isSmall ? 3.0 : 4.0;
+
     final isGhost = widget.variant == AmaniButtonVariant.ghost;
-    final yOffset = _isPressed && !isDisabled && !isGhost ? 4.0 : 0.0;
-    final shadowHeight = isGhost || isDisabled ? 0.0 : (_isPressed ? 0.0 : 4.0);
+    final yOffset = _isPressed && !isDisabled && !isGhost ? maxShadow : 0.0;
+    final shadowHeight = isGhost || isDisabled
+        ? 0.0
+        : (_isPressed ? 0.0 : maxShadow);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -82,10 +96,10 @@ class _AmaniButtonState extends State<AmaniButton> {
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, yOffset, 0),
         width: widget.fullWidth ? double.infinity : null,
-        height: 58,
+        height: height,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(29),
+          borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             if (shadowHeight > 0)
               BoxShadow(
@@ -98,7 +112,7 @@ class _AmaniButtonState extends State<AmaniButton> {
         child: Material(
           color: Colors.transparent,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Row(
               mainAxisSize: widget.fullWidth
                   ? MainAxisSize.max
@@ -106,14 +120,14 @@ class _AmaniButtonState extends State<AmaniButton> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (widget.icon != null) ...[
-                  Icon(widget.icon, color: fg, size: 24),
+                  Icon(widget.icon, color: fg, size: iconSize),
                   const SizedBox(width: 8),
                 ],
                 Text(
                   widget.label,
                   style: TextStyle(
                     color: fg,
-                    fontSize: 18,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

@@ -147,6 +147,136 @@ class _StepDot extends StatelessWidget {
   }
 }
 
+/// Popup bloquante proposée à l'entrée d'une évaluation pour laquelle une
+/// progression sauvegardée existe (l'enfant l'avait quittée en cours de
+/// route) : reprendre exactement là où il s'était arrêté (même sujet,
+/// même temps restant, mêmes sujets déjà réussis) ou recommencer entièrement
+/// à zéro. Doit être utilisée dans un [Stack] (voir [Positioned.fill]).
+class EvaluationResumeOffer extends StatelessWidget {
+  final VoidCallback onResume;
+  final VoidCallback onRestart;
+
+  const EvaluationResumeOffer({
+    super.key,
+    required this.onResume,
+    required this.onRestart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.watch<LanguageProvider>().t;
+    final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
+
+    return Positioned.fill(
+      child: Container(
+        color: const Color(0x73000000),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 320),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 24,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AmaniMascot(
+                pose: AmaniPose.reflexion,
+                size: AmaniSize.medium,
+              ),
+              const SizedBox(height: 12),
+              const Icon(
+                LucideIcons.history,
+                color: Color(0xFFA9784F),
+                size: 26,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                ev['resumeTitle'] ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: AmaniColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                ev['resumeBody'] ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontSize: 14,
+                  color: AmaniColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: onResume,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AmaniColors.secondary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    ev['resumeContinueButton'] ?? '',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onRestart,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AmaniColors.textPrimary,
+                    side: const BorderSide(color: AmaniColors.disabled),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    ev['resumeRestartButton'] ?? '',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AmaniColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Popup bloquante annonçant le sujet de l'évaluation en cours — soit "1er
 /// sujet" à l'entrée dans l'évaluation, soit "Bravo, sujet suivant" une
 /// fois le sujet précédent réussi. Doit être utilisée dans un [Stack] (voir

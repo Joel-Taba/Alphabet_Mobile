@@ -262,7 +262,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   int _repetitions = kDefaultRepetitions;
   int _tolerance = kDefaultTolerance;
   int _evaluationDuration = kDefaultEvaluationDuration;
-  int _mentalCalcDuration = kDefaultMentalCalcDuration;
   VoiceGender _voiceGender = VoiceGender.femme;
   String? _photoBase64;
   String? _storedName;
@@ -316,9 +315,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       _evaluationDuration =
           prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
           kDefaultEvaluationDuration;
-      _mentalCalcDuration =
-          prefs.getInt(scopeKey(kMentalCalcDurationStorageKey)) ??
-          kDefaultMentalCalcDuration;
       _voiceGender = gender;
       _photoBase64 = photo;
       _storedName = name;
@@ -491,13 +487,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(scopeKey(kEvaluationDurationStorageKey), clamped);
     setState(() => _evaluationDuration = clamped);
-  }
-
-  Future<void> _updateMentalCalcDuration(int value) async {
-    final clamped = value.clamp(kMinMentalCalcDuration, kMaxMentalCalcDuration);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(scopeKey(kMentalCalcDurationStorageKey), clamped);
-    setState(() => _mentalCalcDuration = clamped);
   }
 
   Future<void> _updateTolerance(int value) async {
@@ -1364,26 +1353,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         _updateEvaluationDuration(_evaluationDuration - 1),
                     onIncrement: () =>
                         _updateEvaluationDuration(_evaluationDuration + 1),
-                  ),
-                  const Divider(color: AmaniColors.disabled, height: 32),
-                  Text(
-                    hub['mentalCalcDurationLabel'] ?? 'Temps par calcul mental',
-                    style: AmaniTheme.titleStyle.copyWith(fontSize: 16),
-                  ),
-                  Text(
-                    hub['mentalCalcDurationHint'] ?? '',
-                    style: AmaniTheme.bodyStyle.copyWith(
-                      fontSize: 12,
-                      color: AmaniColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _Stepper(
-                    value: '${_mentalCalcDuration}s',
-                    onDecrement: () =>
-                        _updateMentalCalcDuration(_mentalCalcDuration - 5),
-                    onIncrement: () =>
-                        _updateMentalCalcDuration(_mentalCalcDuration + 5),
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
                   Text(

@@ -3,15 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
-import '../data/word_bank_full.dart';
+import '../data/word_catalog.dart';
 import '../utils/word_search_generator.dart';
 import 'amani_mascot.dart';
 import 'confetti_burst.dart';
+import 'scroll_handle.dart';
 import 'word_search_play.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Section "Mots mêlés" du Mode Libre : une grille aléatoire à volonté,
-/// piochée dans la banque complète de mots. Port fidèle de
+/// piochée dans `WORD_CATALOG` (même banque de mots simples et courants,
+/// maximum 6 lettres, que les leçons "Les Mots" de la page d'accueil — un
+/// enfant de primaire doit pouvoir les reconnaître) plutôt que dans une
+/// banque de mots plus vaste et plus complexe. Port fidèle de
 /// `FreeWordSearchSection` dans `src/routes/_app.bibliotheque.tsx`.
 class FreeWordSearchSection extends StatefulWidget {
   const FreeWordSearchSection({super.key});
@@ -36,7 +40,7 @@ class _FreeWordSearchSectionState extends State<FreeWordSearchSection> {
     final wordCount = _rand.nextBool() ? 5 : 6;
     final seed = _rand.nextInt(1000000);
     setState(() {
-      _wordSearch = generateWordSearch(FULL_WORD_BANK, wordCount, seed);
+      _wordSearch = generateWordSearch(WORD_CATALOG, wordCount, seed);
       _gameKey++;
     });
   }
@@ -138,6 +142,9 @@ class _FreeWordSearchSectionState extends State<FreeWordSearchSection> {
               ),
             ),
             const SizedBox(height: 16),
+
+            const ScrollHandle(),
+            const SizedBox(height: 8),
 
             if (_wordSearch != null)
               WordSearchPlay(

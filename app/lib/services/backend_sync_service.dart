@@ -3,9 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'profile_auth.dart';
 import 'family_service.dart';
+import '../i18n/translations.dart' show Lang;
 
 const _tokenKey = 'amani_backend_token';
 const _langStorageKey = 'amani_setting_lang';
+
+/// Issue d'une tentative d'inscription bloquante (voir [registerProfile]) —
+/// distincte de [_trySignup], qui reste purement best-effort pour la
+/// resynchronisation silencieuse en arrière-plan.
+enum SignupOutcome { success, nomDejaUtilise, erreurReseau }
 
 /// Entrée du classement telle que renvoyée par
 /// `GET /api/v1/communaute/classement` (public, sans authentification).
@@ -127,6 +133,46 @@ class BackendSyncService extends ChangeNotifier {
       return e.code == 'NOM_DEJA_UTILISE';
     } catch (_) {
       return false;
+    }
+  }
+
+  /// Vérifie si un nom de profil existe déjà en base — utilisé par l'écran
+  /// "C'est encore moi" (reconnaissance par le nom seul, sans mot de passe).
+  /// `null` distingue une erreur réseau d'un nom réellement absent.
+  Future<bool?> profilExiste(String nom) async {
+    try {
+      final res = await _api.get(
+        '/api/v1/profils/existe?nom=${Uri.encodeQueryComponent(nom)}',
+      );
+      return res['existe'] as bool? ?? false;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Inscription bloquante (contrairement à [_trySignup], purement best-
+  /// effort) : utilisée par `ProfileCreateScreen` pour réagir en direct à un
+  /// nom déjà pris (proposer des variantes) avant de créer l'enfant local.
+  Future<SignupOutcome> registerProfile(
+    String nom,
+    String motDePasse,
+    Lang langue,
+  ) async {
+    try {
+      await _api.post(
+        '/api/v1/profils',
+        body: {
+          'nom': nom,
+          'motDePasse': motDePasse,
+          'langue': langue == Lang.en ? 'EN' : 'FR',
+        },
+      );
+      return SignupOutcome.success;
+    } on ApiException catch (e) {
+      if (e.code == 'NOM_DEJA_UTILISE') return SignupOutcome.nomDejaUtilise;
+      return SignupOutcome.erreurReseau;
+    } catch (_) {
+      return SignupOutcome.erreurReseau;
     }
   }
 

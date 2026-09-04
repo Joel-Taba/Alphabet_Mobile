@@ -11,6 +11,7 @@ import '../data/sign_exercise_catalog.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/cahier_frame.dart';
 import '../hooks/use_animation_speed.dart';
+import '../utils/text_case.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -46,6 +47,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
   dynamic _selectedSign;
   late AnimationController _controller;
   late int _animDurationMs;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -110,11 +112,23 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
   void _selectSign(dynamic sign) {
     setState(() => _selectedSign = sign);
     _playAnimation();
+    // Remonte tout en haut de la page : la carte du tracé animé est en tête
+    // de liste, au-dessus de la grille des variantes — sans ça, l'enfant qui
+    // vient de toucher une vignette plus bas ne verrait jamais le nouveau
+    // tracé sans faire défiler la page lui-même.
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -180,6 +194,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
             Expanded(
               child: ListView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_selectedSign != null)
@@ -301,15 +316,16 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
                   const SizedBox(height: 24),
                   Text(
-                    (_entries.length == 1
-                            ? (coursFamily['oneVariant'] ??
-                                  'Une seule variante')
-                            : tFormat(
-                                coursFamily['variantsCount'] ??
-                                    '{count} variantes',
-                                {'count': _entries.length},
-                              ))
-                        .toUpperCase(),
+                    capitalizeFirst(
+                      _entries.length == 1
+                          ? (coursFamily['oneVariant'] ??
+                                'Une seule variante')
+                          : tFormat(
+                              coursFamily['variantsCount'] ??
+                                  '{count} variantes',
+                              {'count': _entries.length},
+                            ),
+                    ),
                     style: TextStyle(
                       fontFamily: kBalooFontFamily,
                       fontWeight: FontWeight.w800,

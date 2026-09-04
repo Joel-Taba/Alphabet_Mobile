@@ -10,8 +10,8 @@ import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Mini-jeu bonus "Compose le nombre !" du Palier "Les Calculs" — purement
-/// ludique, sans points ni progression, comme les mots croisés/mêlés du
-/// Palier "Les Mots". [levelIndex] est l'index dans [COMPOSE_NOMBRE_LEVELS]
+/// ludique, sans points ni progression, comme les mots mêlés du Palier
+/// "Les Mots". [levelIndex] est l'index dans [COMPOSE_NOMBRE_LEVELS]
 /// (0=CP … 4=CM2).
 class ExerciceCalculComposeScreen extends StatefulWidget {
   final String levelIndex;

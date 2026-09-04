@@ -11,8 +11,8 @@ import '../widgets/wrong_answer_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Mini-jeu bonus "Vrai ou Faux ?" du Palier "Les Calculs" — purement
-/// ludique, sans points ni progression, comme les mots croisés/mêlés du
-/// Palier "Les Mots". [levelIndex] est l'index dans [VRAI_FAUX_LEVELS]
+/// ludique, sans points ni progression, comme les mots mêlés du Palier
+/// "Les Mots". [levelIndex] est l'index dans [VRAI_FAUX_LEVELS]
 /// (0=CP … 4=CM2).
 class ExerciceCalculVraiFauxScreen extends StatefulWidget {
   final String levelIndex;

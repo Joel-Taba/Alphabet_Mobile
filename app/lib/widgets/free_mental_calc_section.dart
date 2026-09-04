@@ -6,6 +6,7 @@ import '../i18n/translations.dart';
 import '../data/mental_calc_generator.dart';
 import '../hooks/use_countdown.dart';
 import 'amani_mascot.dart';
+import 'scroll_handle.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Onglet "Calcul" du Mode Libre : calcul mental chronométré façon QCM — un
@@ -141,6 +142,9 @@ class _FreeMentalCalcSectionState extends State<FreeMentalCalcSection> {
               ),
             ),
             const SizedBox(height: 16),
+
+            const ScrollHandle(),
+            const SizedBox(height: 8),
 
             Container(
               width: double.infinity,

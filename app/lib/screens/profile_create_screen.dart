@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import '../services/progress_service.dart';
 import '../hooks/use_writing_style.dart';
 import '../theme/amani_theme.dart';
 import '../utils/pick_profile_photo.dart';
+import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ProfileCreateScreen extends StatefulWidget {
@@ -25,6 +27,10 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _isLangDropdownOpen = false;
+  bool _isSubmitting = false;
+  bool _nameTaken = false;
+  List<String> _nameSuggestions = const [];
+  final _random = Random();
   // Volontairement jamais pré-rempli depuis le stockage : cet écran crée
   // TOUJOURS un nouvel enfant (le premier, ou un de plus pour la fratrie —
   // voir _handleStart), donc il ne doit jamais reprendre par erreur la
@@ -46,14 +52,55 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
   }
 
   bool get canContinue {
-    return _nameController.text.trim().length >= 2 &&
+    return !_isSubmitting &&
+        _nameController.text.trim().length >= 2 &&
         _passwordController.text.length >= 4;
+  }
+
+  /// 3 variantes du nom saisi, chacune suffixée d'un nombre distinct (ex.
+  /// "Alex" → "Alex 780") — proposées quand le nom choisi est déjà pris,
+  /// pour qu'un enfant n'ait qu'à toucher une puce plutôt que d'inventer
+  /// lui-même un autre nom.
+  List<String> _generateSuggestions(String nom) {
+    final numbers = <int>{};
+    while (numbers.length < 3) {
+      numbers.add(100 + _random.nextInt(900));
+    }
+    return [for (final n in numbers) '$nom $n'];
   }
 
   void _handleStart() async {
     if (!canContinue) return;
-    final family = context.read<FamilyService>();
+    final nom = _nameController.text.trim();
     final backend = context.read<BackendSyncService>();
+    final lang = context.read<LanguageProvider>().lang;
+
+    setState(() {
+      _isSubmitting = true;
+      _nameTaken = false;
+    });
+
+    // Inscription réelle (pas best-effort) AVANT toute écriture locale :
+    // pour réagir en direct si le nom est déjà pris ailleurs (voir
+    // `registerProfile`), sans jamais créer d'enfant local orphelin d'un
+    // compte serveur qui n'existe pas sous ce nom.
+    final outcome = await backend.registerProfile(
+      nom,
+      _passwordController.text,
+      lang,
+    );
+    if (!mounted) return;
+
+    if (outcome == SignupOutcome.nomDejaUtilise) {
+      setState(() {
+        _isSubmitting = false;
+        _nameTaken = true;
+        _nameSuggestions = _generateSuggestions(nom);
+      });
+      return;
+    }
+
+    final family = context.read<FamilyService>();
     final progress = context.read<ProgressProvider>();
     final writingStyle = context.read<WritingStyleProvider>();
 
@@ -61,8 +108,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
     // supplémentaire pour la fratrie — cet écran sert les deux cas) AVANT
     // d'écrire nom/mot de passe, pour que ces derniers atterrissent sous la
     // bonne clé namespacée (voir FamilyService.scopeKey).
-    await family.createChild(_nameController.text.trim());
-    await setStoredName(_nameController.text.trim());
+    await family.createChild(nom);
+    await setStoredName(nom);
     await setStoredPassword(_passwordController.text);
     if (_photoBase64 != null) await setStoredPhoto(_photoBase64!);
 
@@ -70,9 +117,19 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
     await progress.rechargerPourEnfantActif();
     await writingStyle.rechargerPourEnfantActif();
     // Best-effort, ne bloque jamais la navigation : voir BackendSyncService.
+    // (Si `outcome == erreurReseau`, ce best-effort réessaiera le signup et
+    // la connexion tout seul dès que le réseau reviendra.)
     unawaited(backend.ensureLinked());
     if (!mounted) return;
     context.go('/accueil');
+  }
+
+  void _applySuggestion(String suggestion) {
+    _nameController.text = suggestion;
+    setState(() {
+      _nameTaken = false;
+      _nameSuggestions = const [];
+    });
   }
 
   @override
@@ -93,109 +150,144 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 40.0,
-                    left: 24.0,
-                    right: 24.0,
-                    bottom: 0,
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        LucideIcons.leaf,
-                        color: AmaniColors.secondary,
-                        size: 36,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 40.0,
+                        left: 24.0,
+                        right: 24.0,
+                        bottom: 0,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        t['onboarding']['title'],
-                        style: const TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.bold,
-                          color: AmaniColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        t['onboarding']['subtitle'],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AmaniColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Mascotte (ou photo choisie) superposée
-                      Transform.translate(
-                        offset: const Offset(
-                          0,
-                          56,
-                        ), // Pour superposer sur la carte
-                        child: SizedBox(
-                          width: 140,
-                          height: 140,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 140,
-                                height: 140,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x2E4A3B2A),
-                                      blurRadius: 12,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                  image: DecorationImage(
-                                    image: _photoBase64 != null
-                                        ? MemoryImage(
-                                            base64Decode(_photoBase64!),
-                                          )
-                                        : const AssetImage(
-                                                'assets/images/amani-inscription.jpeg',
-                                              )
-                                              as ImageProvider,
-                                    fit: BoxFit.cover,
-                                    alignment: _photoBase64 != null
-                                        ? Alignment.center
-                                        : Alignment.topCenter,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 2,
-                                right: 2,
-                                child: GestureDetector(
-                                  onTap: _choosePhoto,
-                                  child: Container(
-                                    width: 36,
-                                    height: 36,
+                      child: Column(
+                        children: [
+                          Icon(
+                            LucideIcons.leaf,
+                            color: AmaniColors.secondary,
+                            size: 36,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            t['onboarding']['title'],
+                            style: const TextStyle(
+                              fontSize: 34,
+                              fontWeight: FontWeight.bold,
+                              color: AmaniColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            t['onboarding']['subtitle'],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: AmaniColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Mascotte (ou photo choisie) superposée
+                          Transform.translate(
+                            offset: const Offset(
+                              0,
+                              56,
+                            ), // Pour superposer sur la carte
+                            child: SizedBox(
+                              width: 140,
+                              height: 140,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
+                                    width: 140,
+                                    height: 140,
                                     decoration: BoxDecoration(
-                                      color: AmaniColors.primary,
                                       shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 2,
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x2E4A3B2A),
+                                          blurRadius: 12,
+                                          offset: Offset(0, 4),
+                                        ),
+                                      ],
+                                      image: DecorationImage(
+                                        image: _photoBase64 != null
+                                            ? MemoryImage(
+                                                base64Decode(_photoBase64!),
+                                              )
+                                            : const AssetImage(
+                                                    'assets/images/amani-inscription.jpeg',
+                                                  )
+                                                  as ImageProvider,
+                                        fit: BoxFit.cover,
+                                        alignment: _photoBase64 != null
+                                            ? Alignment.center
+                                            : Alignment.topCenter,
                                       ),
                                     ),
-                                    child: const Icon(
-                                      LucideIcons.camera,
-                                      size: 18,
-                                      color: Colors.white,
+                                  ),
+                                  Positioned(
+                                    bottom: 2,
+                                    right: 2,
+                                    child: GestureDetector(
+                                      onTap: _choosePhoto,
+                                      child: Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: AmaniColors.primary,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          LucideIcons.camera,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Retour à l'écran d'accueil (`WelcomeScreen`, route
+                    // `/`) : cet écran est toujours atteint via `context.go`
+                    // (jamais `push`), donc `canPop()` est systématiquement
+                    // faux -- direct vers `/` plutôt qu'une tentative de pop
+                    // qui ne ferait jamais rien.
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: GestureDetector(
+                        onTap: () =>
+                            context.canPop() ? context.pop() : context.go('/'),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: AmaniColors.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1F000000),
+                                blurRadius: 6,
                               ),
                             ],
                           ),
+                          child: DirectionalIcon(
+                            LucideIcons.arrowLeft,
+                            size: 18,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               SliverToBoxAdapter(
@@ -223,6 +315,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                         iconBg: AmaniColors.secondary,
                         isActive: _nameController.text.isNotEmpty,
                       ),
+                      if (_nameTaken) _buildNameTaken(t),
                       const SizedBox(height: 20),
                       // Champ Mot de passe
                       _buildPasswordField(t),
@@ -240,6 +333,56 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNameTaken(Map<String, dynamic> t) {
+    final onboarding = t['onboarding'] as Map<String, dynamic>? ?? {};
+    return Padding(
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            onboarding['nameTaken'] ??
+                'Ce nom est déjà pris, essaie une de ces idées :',
+            style: const TextStyle(fontSize: 12, color: AmaniColors.error),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final suggestion in _nameSuggestions)
+                GestureDetector(
+                  onTap: () => _applySuggestion(suggestion),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.secondary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: AmaniColors.secondary,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      suggestion,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AmaniColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

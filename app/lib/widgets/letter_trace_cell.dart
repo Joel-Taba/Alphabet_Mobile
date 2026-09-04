@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../hooks/use_tracing_scroll_lock.dart';
 import '../theme/amani_theme.dart';
 import '../utils/trace_validation.dart';
 import 'sign_glyph.dart' show letterFamilyZIndex;
@@ -10,12 +12,12 @@ const double _kCellTolerancePx = 27;
 
 /// Tolérance de contact minimale visée à l'écran, en pixels réels,
 /// indépendamment de la taille de la case. `_kCellTolerancePx` est exprimée
-/// dans le repère SVG 200×200 : dans une petite case (ex. 40px, grille de
-/// mots croisés dense), elle ne représente plus que quelques pixels réels à
-/// l'écran — bien en-dessous de la précision d'un doigt d'enfant. On calcule
-/// donc, pour chaque case, l'équivalent SVG de cette tolérance réelle
-/// minimale, sans jamais descendre sous la tolérance d'origine (les grandes
-/// cases, déjà confortables, ne changent pas de comportement).
+/// dans le repère SVG 200×200 : dans une petite case, elle ne représente
+/// plus que quelques pixels réels à l'écran — bien en-dessous de la
+/// précision d'un doigt d'enfant. On calcule donc, pour chaque case,
+/// l'équivalent SVG de cette tolérance réelle minimale, sans jamais
+/// descendre sous la tolérance d'origine (les grandes cases, déjà
+/// confortables, ne changent pas de comportement).
 const double _kMinRealTolerancePx = 14;
 
 double _effectiveTolerancePx(double cellSize) {
@@ -23,10 +25,10 @@ double _effectiveTolerancePx(double cellSize) {
   return math.max(_kCellTolerancePx, realEquivalent);
 }
 
-/// Case carrée façon mots croisés : trace une lettre entière (tous ses
-/// signes, un geste après l'autre) dans un même cadre bien centré. Utilisée
-/// à la fois pour les rangées de mots et les grilles de mots croisés. Port
-/// fidèle de `src/components/amani/LetterTraceCell.tsx`.
+/// Case carrée de tracé : trace une lettre entière (tous ses signes, un
+/// geste après l'autre) dans un même cadre bien centré. Utilisée à la fois
+/// pour les rangées de mots et les cases de figures. Port fidèle de
+/// `src/components/amani/LetterTraceCell.tsx`.
 class LetterTraceCell extends StatefulWidget {
   final dynamic letter;
   final double size;
@@ -38,10 +40,6 @@ class LetterTraceCell extends StatefulWidget {
   /// case, comme les cases de RepetitionRow au Palier 2.
   final bool transparent;
 
-  /// Cadre et signes-guides plus marqués : utilisé pour la grille de mots
-  /// croisés, posée sur une image de fond, où le contraste par défaut est
-  /// trop faible pour bien distinguer chaque case.
-  final bool bold;
   final VoidCallback? onSolved;
 
   /// Multiplicateur de l'épaisseur du feutre (guides, tracés complétés ET
@@ -57,7 +55,6 @@ class LetterTraceCell extends StatefulWidget {
     required this.isActive,
     this.given = false,
     this.transparent = false,
-    this.bold = false,
     this.strokeWidthScale = 1.0,
     this.onSolved,
   });
@@ -72,6 +69,16 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
   int _currentStepIdx = 0;
   final List<int> _completedSteps = [];
   _CellStatus _status = _CellStatus.idle;
+
+  /// Identifiant du doigt qui a démarré le tracé en cours — voir
+  /// `_onPointerDown`. Sans ce suivi, un second doigt posé pendant qu'on
+  /// trace déjà (paume, doigt curieux d'un enfant...) redéclencherait
+  /// `TracingScrollLock.start()` une deuxième fois alors qu'un seul
+  /// `stop()` suivrait jamais (le premier relâchement fait déjà sortir
+  /// `_status` de `drawing`, donc le second `_onPointerUp`/`Cancel` est
+  /// ignoré par la garde ci-dessous) : le verrou resterait bloqué pour le
+  /// reste de la session, empêchant tout défilement ailleurs dans l'app.
+  int? _activePointer;
 
   List get _steps => widget.letter['steps'] as List;
   bool get _solved => widget.given || _status == _CellStatus.solved;
@@ -102,18 +109,27 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
         : [];
   }
 
-  void _onPanStart(DragStartDetails d) {
+  void _onPointerDown(PointerDownEvent event) {
     if (widget.given ||
         !widget.isActive ||
         _activeStep == null ||
         _solved ||
-        _status == _CellStatus.retry) {
+        _status == _CellStatus.retry ||
+        _activePointer != null) {
       return;
     }
+    // Verrouille le défilement de la page pendant tout le tracé : un
+    // `Listener` (événements pointeur bruts) plutôt qu'un `GestureDetector`
+    // à base de pan, pour capter le tracé de façon fiable même quand un
+    // ascendant défilant (la page, `RepetitionRow`...) est aussi candidat
+    // au même geste -- notamment un trait vertical, visuellement identique
+    // à un scroll.
+    _activePointer = event.pointer;
+    context.read<TracingScrollLock>().start();
     setState(() {
       _status = _CellStatus.drawing;
       _userPoints.clear();
-      _userPoints.add(_toSvg(d.localPosition));
+      _userPoints.add(_toSvg(event.localPosition));
     });
   }
 
@@ -124,13 +140,19 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
     return Offset((p.dx - ox) / sc, (p.dy - oy) / sc);
   }
 
-  void _onPanUpdate(DragUpdateDetails d) {
-    if (_status != _CellStatus.drawing) return;
-    setState(() => _userPoints.add(_toSvg(d.localPosition)));
+  void _onPointerMove(PointerMoveEvent event) {
+    if (_status != _CellStatus.drawing || event.pointer != _activePointer) {
+      return;
+    }
+    setState(() => _userPoints.add(_toSvg(event.localPosition)));
   }
 
-  void _onPanEnd(DragEndDetails d) {
-    if (_status != _CellStatus.drawing) return;
+  void _onPointerUp(PointerUpEvent event) {
+    if (_status != _CellStatus.drawing || event.pointer != _activePointer) {
+      return;
+    }
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
     final result = validateTrace(
       _userPoints,
       _refPoints,
@@ -166,15 +188,37 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
     }
   }
 
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (_status != _CellStatus.drawing || event.pointer != _activePointer) {
+      return;
+    }
+    _activePointer = null;
+    context.read<TracingScrollLock>().stop();
+    setState(() {
+      _userPoints.clear();
+      _status = _CellStatus.idle;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Filet de sécurité : si le widget disparaît pendant un tracé (par ex.
+    // navigation en plein geste), le verrou ne doit jamais rester bloqué.
+    if (_status == _CellStatus.drawing) {
+      context.read<TracingScrollLock>().stop();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final borderColor = widget.given
-        ? AmaniColors.primary.withValues(alpha: widget.bold ? 0.7 : 0.4)
+        ? AmaniColors.primary.withValues(alpha: 0.4)
         : _solved
         ? AmaniColors.secondary
         : widget.isActive
         ? AmaniColors.primary.withValues(alpha: 0.5)
-        : AmaniColors.textPrimary.withValues(alpha: widget.bold ? 0.45 : 0.12);
+        : AmaniColors.textPrimary.withValues(alpha: 0.12);
     final bg = widget.transparent
         ? Colors.transparent
         : widget.given
@@ -187,7 +231,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor, width: widget.bold ? 3 : 2),
+        border: Border.all(color: borderColor, width: 2),
         color: bg,
       ),
       child: widget.given
@@ -215,14 +259,14 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
                     userPoints: _userPoints,
                     cellSize: widget.size,
                     isActive: widget.isActive,
-                    bold: widget.bold,
                     strokeWidthScale: widget.strokeWidthScale,
                   ),
                 ),
-                GestureDetector(
-                  onPanStart: _onPanStart,
-                  onPanUpdate: _onPanUpdate,
-                  onPanEnd: _onPanEnd,
+                Listener(
+                  onPointerDown: _onPointerDown,
+                  onPointerMove: _onPointerMove,
+                  onPointerUp: _onPointerUp,
+                  onPointerCancel: _onPointerCancel,
                   child: Container(
                     color: Colors.transparent,
                     width: widget.size,
@@ -244,7 +288,6 @@ class _CellPainter extends CustomPainter {
   final List<Offset> userPoints;
   final double cellSize;
   final bool isActive;
-  final bool bold;
   final double strokeWidthScale;
 
   _CellPainter({
@@ -256,14 +299,22 @@ class _CellPainter extends CustomPainter {
     required this.userPoints,
     required this.cellSize,
     required this.isActive,
-    this.bold = false,
     this.strokeWidthScale = 1.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final scale = cellSize / 200.0;
-    final lineWidth = (cellSize / 12 * strokeWidthScale).clamp(1.5, 100.0);
+    // Épaisseur fixe (au lieu de proportionnelle à `cellSize`) : les cases
+    // ont grandi bien au-delà de leur taille d'origine avec le réglage
+    // "Taille de l'interface", et l'ancienne formule (`cellSize / 12`)
+    // aurait donné un trait de plus en plus épais avec elles. Valeur alignée
+    // sur celle du tracé animé en cours (`MiniLetterFrame`, ex. le carré du
+    // Palier "Figures" : `strokeWidth: 10` dans un cadre ramené à l'échelle
+    // 140/200, soit 7px effectifs) -- reprise à l'identique partout (voir
+    // aussi `_OccurrencePainter` dans `repetition_row.dart`) pour un même
+    // trait de tracé quel que soit le palier.
+    final lineWidth = 7.0 * strokeWidthScale;
 
     if (solved) {
       final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
@@ -305,13 +356,13 @@ class _CellPainter extends CustomPainter {
       final color = isCurrentStep
           ? (status == _CellStatus.retry
                 ? AmaniColors.error
-                : (bold ? const Color(0xFF7A99B8) : const Color(0xFF9BB5CC)))
-          : (bold ? const Color(0xFF96AFC7) : const Color(0xFFB8CCE0));
+                : const Color(0xFF9BB5CC))
+          : const Color(0xFFB8CCE0);
       _drawPolyline(
         canvas,
         pts,
         scale,
-        color.withValues(alpha: isCurrentStep ? 0.85 : (bold ? 0.55 : 0.3)),
+        color.withValues(alpha: isCurrentStep ? 0.85 : 0.3),
         // `pts` est mis à l'échelle dans `_drawPolyline` (coordonnées
         // 0-200 d'origine) : l'épaisseur doit suivre la même échelle pour
         // rester proportionnelle à la taille de la cellule, comme le

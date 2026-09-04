@@ -11,12 +11,11 @@ const _uiScaleKey = 'amani_setting_ui_scale';
 const double kMinUiScale = 0.85;
 
 /// Chaque écran d'exercice qui lit ce réglage (voir [LetterTraceCell],
-/// [RepetitionRow], `WordTraceAttempt`, `_LetterDrawingCanvas`, la grille de
-/// `CrosswordPlay`...) borne lui-même sa taille finale à la largeur
-/// réellement disponible (`LayoutBuilder`/`Wrap`) ou vit dans un
-/// `InteractiveViewer` pannable (mots croisés) : on peut donc viser une
-/// plage large sans risque de débordement, y compris sur tablette où l'on
-/// veut des espaces de tracé aussi grands que possible.
+/// [RepetitionRow], `WordTraceAttempt`, `_LetterDrawingCanvas`...) borne
+/// lui-même sa taille finale à la largeur réellement disponible
+/// (`LayoutBuilder`/`Wrap`) : on peut donc viser une plage large sans
+/// risque de débordement, y compris sur tablette où l'on veut des espaces
+/// de tracé aussi grands que possible.
 const double kMaxUiScale = 1.8;
 
 /// Grand par défaut (au lieu de 1.0) : l'utilisateur veut des espaces de
