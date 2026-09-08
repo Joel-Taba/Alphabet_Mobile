@@ -685,12 +685,16 @@ class _LetterPuzzleRoundState extends State<_LetterPuzzleRound> {
                         ),
                     Padding(
                       padding: const EdgeInsets.only(left: 4),
+                      // Agrandi pour peser presque autant que les cadres
+                      // voisins (72×76) — sans être centré dessus : reste
+                      // simplement posé à côté, aligné comme n'importe quel
+                      // autre élément du `Wrap`.
                       child: Text(
                         '= "$char"',
                         style: TextStyle(
                           fontFamily: kBalooFontFamily,
                           fontWeight: FontWeight.w800,
-                          fontSize: 18,
+                          fontSize: 34,
                           color: AmaniColors.primary,
                         ),
                       ),

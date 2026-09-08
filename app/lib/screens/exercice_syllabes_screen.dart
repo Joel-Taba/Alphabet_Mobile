@@ -510,7 +510,14 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
   // se lire comme une seule unité, pas comme un mot en cours d'assemblage.
   static const double _letterCellSize = 62;
   static const double _repSpacingApart = 2;
-  static const double _repDesiredInkGap = 0;
+  // Léger chevauchement volontaire (négatif) plutôt qu'un simple contact
+  // (0) : la case active passe toujours au-dessus de sa voisine à l'écran
+  // (voir `WordTraceAttempt.build`, tri par z-order), donc le tracé n'en
+  // souffre jamais, même chevauchées. Volontairement modeste : au-delà, les
+  // traits des deux lettres commenceraient à se confondre visuellement l'un
+  // dans l'autre, ce qui nuirait à la lisibilité plutôt qu'au tracé
+  // lui-même — la vraie limite n'est donc pas technique mais visuelle.
+  static const double _repDesiredInkGap = -3;
 
   @override
   void initState() {

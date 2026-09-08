@@ -513,6 +513,12 @@ class _WordTraceRowState extends State<_WordTraceRow> {
   // même convention.
   static const double _letterCellSize = 62;
   static const double _repSpacingApart = 5;
+  // Même resserrement, même léger chevauchement volontaire, et même
+  // suppression du cadre par lettre qu'au Palier "Syllabes" (voir
+  // `_SyllableTraceRow`/`WordTraceAttempt.alwaysTight`) — un mot doit se
+  // lire comme une suite de lettres bien liées, pas comme des lettres
+  // cadrées séparément dans un cadre commun.
+  static const double _repDesiredInkGap = -3;
 
   @override
   void initState() {
@@ -672,8 +678,11 @@ class _WordTraceRowState extends State<_WordTraceRow> {
                               letters: letters,
                               cellSize: _letterCellSize,
                               spacingApart: _repSpacingApart,
+                              desiredInkGap: _repDesiredInkGap,
                               transparent: true,
                               showOwnGridLines: false,
+                              showLetterBorders: false,
+                              alwaysTight: true,
                               solved: _solvedByRep[rep],
                               isActive: rep == _activeRep,
                               isFuture: rep > _activeRep,

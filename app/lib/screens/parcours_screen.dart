@@ -71,6 +71,14 @@ class Step {
   /// lui-même — toujours synchronisé, dans les 4 langues).
   final String? signFamily;
 
+  /// Non `null` pour remplacer le libellé générique "Cours" d'une étape
+  /// `iconType: 'feuille'` par un titre court et illustratif du contenu réel
+  /// de ce cours (même principe que [signFamily] pour le Palier 1, étendu
+  /// aux Paliers 2-6 : titre du groupe de lettres/chiffres, thème de mots,
+  /// consonne de syllabes, sujet de calcul, figure ou puzzle tangram) — déjà
+  /// résolu dans la langue active par l'appelant, pas une clé de traduction.
+  final String? stepTitle;
+
   const Step({
     required this.kind,
     this.iconType,
@@ -82,6 +90,7 @@ class Step {
     this.bannerBorder,
     this.bannerIcon,
     this.signFamily,
+    this.stepTitle,
   });
 }
 
@@ -361,7 +370,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       final group = palier2Groups[idx];
       steps.add(
         StepEntry(
-          Step(kind: kind, iconType: 'feuille'),
+          Step(
+            kind: kind,
+            iconType: 'feuille',
+            stepTitle: group.title[lang.name],
+          ),
           -1,
           to: '/cours/lettres/formation/${group.chars.first}?pg=${group.id}',
         ),
@@ -413,7 +426,14 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         final group = SYLLABLE_GROUPS[idx] as Map<String, dynamic>;
         steps.add(
           StepEntry(
-            Step(kind: kind, iconType: 'feuille'),
+            Step(
+              kind: kind,
+              iconType: 'feuille',
+              stepTitle: tFormat(
+                t['coursSyllabes']?['consonantTitle'] ?? '',
+                {'consonant': group['consonant']},
+              ),
+            ),
             -1,
             to: '/cours/syllabes/${group['consonant']}',
           ),
@@ -460,7 +480,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       final group = PALIER3_GROUPS[idx];
       steps.add(
         StepEntry(
-          Step(kind: kind, iconType: 'feuille'),
+          Step(
+            kind: kind,
+            iconType: 'feuille',
+            stepTitle: group.title[lang.name],
+          ),
           -1,
           to: '/cours/mots/${group.id}',
         ),
@@ -518,7 +542,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         final topic = CALCUL_TOPICS[idx];
         steps.add(
           StepEntry(
-            Step(kind: kind, iconType: 'feuille'),
+            Step(kind: kind, iconType: 'feuille', stepTitle: topic.title),
             -1,
             to: '/cours/calcul/${topic.id}',
           ),
@@ -586,7 +610,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       final topic = SHAPE_TOPICS[idx];
       steps.add(
         StepEntry(
-          Step(kind: kind, iconType: 'feuille'),
+          Step(
+            kind: kind,
+            iconType: 'feuille',
+            stepTitle: topic.name[lang.name],
+          ),
           -1,
           to: '/cours/figure/${topic.id}',
         ),
@@ -605,7 +633,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       final puzzle = tangramSimple[idx];
       steps.add(
         StepEntry(
-          const Step(kind: kind, iconType: 'feuille'),
+          Step(
+            kind: kind,
+            iconType: 'feuille',
+            stepTitle: puzzle.name[lang.name],
+          ),
           -1,
           to: '/cours/tangram/${puzzle.id}',
         ),
@@ -1195,6 +1227,7 @@ class _StepNodeState extends State<_StepNode>
 
   String get _stepLabel {
     final parcours = widget.t['parcours'] as Map<String, dynamic>? ?? {};
+    if (widget.step.stepTitle != null) return widget.step.stepTitle!;
     if (widget.step.signFamily != null) {
       final titles =
           widget.t['coursFamily']?['titles'] as Map<String, dynamic>? ?? {};

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +11,6 @@ import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
-import '../widgets/cahier_frame.dart';
 import '../widgets/letter_trace_cell.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
@@ -166,7 +164,6 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     final lang = languageProvider.lang;
     final cf = t['coursFigure'] as Map<String, dynamic>? ?? {};
     final ef = t['exerciceFigure'] as Map<String, dynamic>? ?? {};
-    final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
     final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
     final session = context.watch<EvaluationSessionController>();
     final topic = findShapeTopic(widget.shapeId);
@@ -352,19 +349,19 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      for (var i = 0; i < _count; i++) ...[
-                        _ShapeAttemptCard(
-                          key: ValueKey('${topic.id}-$i-r$_restartKey'),
-                          topic: topic,
-                          isActive: i == _activeIdx,
-                          isFuture: i > _activeIdx,
-                          done: _doneIndices.contains(i),
-                          doneLabel: el['done'] ?? 'Terminé !',
-                          onDone: () => _onAttemptDone(i),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      const SizedBox(height: 12),
+                      // Répétitions en grille — remplit d'abord chaque
+                      // ligne horizontalement (autant qu'il en tient) puis
+                      // passe à la ligne suivante, exactement comme les
+                      // répétitions de lettres (`LetterRepetitionRow`),
+                      // plutôt qu'une carte pleine largeur par tentative.
+                      _ShapeAttemptGrid(
+                        key: ValueKey('${topic.id}-r$_restartKey'),
+                        topic: topic,
+                        count: _count,
+                        activeIdx: _activeIdx,
+                        doneIndices: _doneIndices,
+                        onAttemptDone: _onAttemptDone,
+                      ),
                     ],
                   ),
                 ),
@@ -425,94 +422,135 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   }
 }
 
-class _ShapeAttemptCard extends StatelessWidget {
+/// Grille des tentatives d'une figure — remplit chaque ligne horizontalement
+/// (autant de cases qu'il en tient) puis passe à la ligne suivante, même
+/// agencement que les répétitions de lettres (`LetterRepetitionRow`) : un
+/// unique quadrillage Seyès partagé derrière un `Wrap` de cases carrées,
+/// plutôt qu'une carte pleine largeur par tentative.
+class _ShapeAttemptGrid extends StatelessWidget {
   final ShapeTopic topic;
-  final bool isActive;
-  final bool isFuture;
-  final bool done;
-  final String doneLabel;
-  final VoidCallback onDone;
+  final int count;
+  final int activeIdx;
+  final Set<int> doneIndices;
+  final ValueChanged<int> onAttemptDone;
 
-  const _ShapeAttemptCard({
+  const _ShapeAttemptGrid({
     super.key,
     required this.topic,
-    required this.isActive,
-    required this.isFuture,
-    required this.done,
-    required this.doneLabel,
-    required this.onDone,
+    required this.count,
+    required this.activeIdx,
+    required this.doneIndices,
+    required this.onAttemptDone,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Cadre de tracé agrandi selon le réglage "Taille de l'interface"
-    // (Profil > Réglages) : la hauteur fixe du CahierFrame doit grandir en
-    // même temps que la case, sous peine d'être rognée par son `ClipRRect`.
-    final uiScale = context.read<AccessibilitySettings>().uiScale;
-    final cellSize = 160 * uiScale;
-    final frameHeight = 220 * uiScale;
+    // Cases agrandies selon le réglage "Taille de l'interface" (Profil >
+    // Réglages), comme `LetterRepetitionRow._effOccSize` — un peu plus
+    // grandes que pour une lettre simple (110) car une figure a plusieurs
+    // sommets/côtés à distinguer, tout en restant assez petites pour que
+    // plusieurs tiennent par ligne (l'agencement visé), pas une seule.
+    final occSize = 120 * context.watch<AccessibilitySettings>().uiScale;
 
-    return Opacity(
-      opacity: isFuture ? 0.4 : 1,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: done
-                ? AmaniColors.secondary.withValues(alpha: 0.6)
-                : AmaniColors.textPrimary.withValues(alpha: 0.1),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: done ? const Color(0x2E8FBF6F) : const Color(0x144A3B2A),
-              blurRadius: done ? 16 : 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
         ),
-        child: Column(
-          children: [
-            if (done)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '✓ $doneLabel',
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: AmaniColors.secondary,
-                  ),
-                ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x144A3B2A),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const spacing = 10.0;
+          final perRow = ((constraints.maxWidth + spacing) / (occSize + spacing))
+              .floor()
+              .clamp(1, count == 0 ? 1 : count);
+          final rows = (count / perRow).ceil();
+
+          return SizedBox(
+            width: constraints.maxWidth,
+            child: CustomPaint(
+              painter: _ShapeCahierLinesPainter(
+                rows: rows,
+                rowHeight: occSize,
+                rowSpacing: spacing,
+                lineScale: occSize / 200,
               ),
-            CahierFrame(
-              width: double.infinity,
-              height: frameHeight,
-              rounded: 12,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Sur un écran étroit, borne la case à la largeur
-                  // réellement disponible pour ne jamais déborder du
-                  // CahierFrame (qui rogne via son `ClipRRect`).
-                  final size = math.min(cellSize, constraints.maxWidth);
-                  return Center(
-                    child: LetterTraceCell(
+              child: Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (var i = 0; i < count; i++)
+                    LetterTraceCell(
+                      key: ValueKey('shape-rep-$i'),
                       letter: topic.traceData,
-                      size: size,
-                      isActive: isActive && !done,
+                      size: occSize,
+                      isActive: i == activeIdx && !doneIndices.contains(i),
                       transparent: true,
                       strokeWidthScale: 0.55,
-                      onSolved: isActive && !done ? onDone : null,
+                      onSolved: i == activeIdx && !doneIndices.contains(i)
+                          ? () => onAttemptDone(i)
+                          : null,
                     ),
-                  );
-                },
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
+}
+
+/// Quadrillage Seyès décoratif derrière la grille — copie de
+/// `_LetterCahierLinesPainter` (`letter_repetition_row.dart`), même choix de
+/// duplication plutôt que de partager un widget privé entre fichiers.
+class _ShapeCahierLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+
+  final int rows;
+  final double rowHeight;
+  final double rowSpacing;
+  final double lineScale;
+
+  _ShapeCahierLinesPainter({
+    required this.rows,
+    required this.rowHeight,
+    required this.rowSpacing,
+    required this.lineScale,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final originDy = (rowHeight - 200 * lineScale) / 2;
+    for (int r = 0; r < rows; r++) {
+      final rowTop = r * (rowHeight + rowSpacing);
+      for (int i = 0; i < _positions.length; i++) {
+        final y = rowTop + originDy + _positions[i] * lineScale;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ShapeCahierLinesPainter oldDelegate) =>
+      oldDelegate.rows != rows ||
+      oldDelegate.rowHeight != rowHeight ||
+      oldDelegate.rowSpacing != rowSpacing ||
+      oldDelegate.lineScale != lineScale;
 }
