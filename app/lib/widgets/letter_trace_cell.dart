@@ -40,6 +40,14 @@ class LetterTraceCell extends StatefulWidget {
   /// case, comme les cases de RepetitionRow au Palier 2.
   final bool transparent;
 
+  /// `true` (défaut) : cadre bordé propre à la case, comme au Palier "Les
+  /// Mots". `false` : aucune bordure ici — pour un appelant qui encadre déjà
+  /// plusieurs lettres ensemble dans un seul et même cadre englobant (Palier
+  /// "Syllabes" : une syllabe est une seule unité, pas deux lettres
+  /// juxtaposées) et qui perdrait ce sens visuel si chaque lettre gardait en
+  /// plus son propre cadre.
+  final bool showBorder;
+
   final VoidCallback? onSolved;
 
   /// Multiplicateur de l'épaisseur du feutre (guides, tracés complétés ET
@@ -55,6 +63,7 @@ class LetterTraceCell extends StatefulWidget {
     required this.isActive,
     this.given = false,
     this.transparent = false,
+    this.showBorder = true,
     this.strokeWidthScale = 1.0,
     this.onSolved,
   });
@@ -231,7 +240,9 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor, width: 2),
+        border: widget.showBorder
+            ? Border.all(color: borderColor, width: 2)
+            : null,
         color: bg,
       ),
       child: widget.given

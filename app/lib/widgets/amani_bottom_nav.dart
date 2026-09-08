@@ -17,7 +17,6 @@ class _NavItem {
 const List<_NavItem> _items = [
   _NavItem('/accueil', 'accueil', LucideIcons.leaf, isCenter: true),
   _NavItem('/bibliotheque', 'bibliotheque', LucideIcons.palette),
-  _NavItem('/communaute', 'communaute', LucideIcons.users),
   _NavItem('/mon-profil', 'profil', LucideIcons.user),
 ];
 

@@ -11,7 +11,7 @@ import '../services/mode_libre_controller.dart';
 const double kTabletBreakpoint = 600;
 
 /// Index de branche du Mode Libre dans le `StatefulNavigationShell`
-/// (0: /accueil, 1: /bibliotheque, 2: /communaute, 3: /mon-profil).
+/// (0: /accueil, 1: /bibliotheque, 2: /mon-profil).
 const int _modeLibreBranchIndex = 1;
 
 class AppShell extends StatefulWidget {
@@ -45,7 +45,7 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
     // Calcul de l'index courant pour la barre de navigation
-    // 0: /accueil, 1: /bibliotheque, 2: /communaute, 3: /mon-profil
+    // 0: /accueil, 1: /bibliotheque, 2: /mon-profil
     final index = navigationShell.currentIndex;
 
     return LayoutBuilder(

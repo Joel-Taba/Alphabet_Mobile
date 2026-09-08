@@ -97,7 +97,25 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
 
   void _handleResume(Map<String, dynamic> saved) {
     _session.resumeFrom(saved);
-    setState(() => _resumeOffer = null);
+    setState(() {
+      _resumeOffer = null;
+      // Identifiants sauvegardés `'$shapeId-$index'` (voir `_onAttemptDone`)
+      // — ne retient que ceux du sujet affiché ici, et seulement leur index.
+      final prefix = '${widget.shapeId}-';
+      _doneIndices.clear();
+      for (final id in _session.completedItems) {
+        if (id.startsWith(prefix)) {
+          final idx = int.tryParse(id.substring(prefix.length));
+          if (idx != null) _doneIndices.add(idx);
+        }
+      }
+      if (_doneIndices.isNotEmpty) {
+        _activeIdx = (_doneIndices.reduce((a, b) => a > b ? a : b) + 1).clamp(
+          0,
+          _count == 0 ? 0 : _count - 1,
+        );
+      }
+    });
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
     if (savedIdx >= 0 && savedIdx < SHAPE_TOPICS.length) {
       final savedTopic = SHAPE_TOPICS[savedIdx];
@@ -128,6 +146,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
       _doneIndices.add(i);
       if (i + 1 < _count) _activeIdx = i + 1;
     });
+    if (_isEvaluation) _session.recordItemDone('${widget.shapeId}-$i');
     context.read<ProgressProvider>().awardCompletion(
       typeEtape: 'FIGURE',
       modalite: 'EXERCICE',
@@ -378,6 +397,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
               EvaluationSubjectAnnouncement(
                 title: tFormat(ev['firstSubjectTitle'] ?? '', {'title': name}),
                 subtitle: ev['firstSubjectBody'] ?? '',
+                continueLabel: ev['startFirstSubject'],
                 onContinue: _handleStartFirstSubject,
               ),
             if (allDone &&

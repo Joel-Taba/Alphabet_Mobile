@@ -108,7 +108,12 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
 
   void _handleResume(Map<String, dynamic> saved) {
     _session.resumeFrom(saved);
-    setState(() => _resumeOffer = null);
+    setState(() {
+      _resumeOffer = null;
+      _doneSigns
+        ..clear()
+        ..addAll(_session.completedItems);
+    });
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
     if (savedIdx >= 0 && savedIdx < FAMILY_ORDER.length) {
       final savedFamily = FAMILY_ORDER[savedIdx];
@@ -128,6 +133,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
 
   void _onEntryDone(String id, int totalEntries) {
     setState(() => _doneSigns.add(id));
+    if (_isEvaluation) _session.recordItemDone(id);
     if (_doneSigns.length >= totalEntries && _awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
@@ -478,55 +484,105 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                     ),
                   ),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                  child: CustomScrollView(
                     physics: tracingAwareScrollPhysics(context),
-                    children: [
-                      for (final (_, titre, entries) in displayedGroups)
-                        if (entries.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (widget.family == null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 4,
-                                      bottom: 10,
-                                    ),
-                                    child: Text(
-                                      titre,
-                                      style: AmaniTheme.titleStyle.copyWith(
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                for (final entry in entries) ...[
-                                  _SignExerciseRow(
-                                    key: ValueKey(
-                                      '${entry['id']}-r$_restartKey',
-                                    ),
-                                    entry: entry,
-                                    repetitions: _settings.repetitions,
-                                    tolerance: _settings.tolerance,
-                                    hideFamilyBadge: widget.family != null,
-                                    el: el,
-                                    lang: lang,
-                                    speech: speech,
-                                    awardsProgress: !practiceMode,
-                                    onEntryDone: practiceMode
-                                        ? (_) => _onPracticeEntryDone()
-                                        : (id) => _onEntryDone(
-                                            id,
-                                            familyEntries.length,
-                                          ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                ],
-                              ],
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                        // Une seule feuille de cahier pour toute la page —
+                        // signes et lignes d'écriture décoratives de fin de
+                        // page (voir plus bas) partagent le même fond blanc/
+                        // bordure/ombre, peints derrière les deux slivers
+                        // groupés plutôt que par carte individuelle : le
+                        // `DecoratedSliver` habille leur étendue combinée
+                        // sans se soucier de où elle se termine réellement.
+                        sliver: DecoratedSliver(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AmaniColors.textPrimary.withValues(
+                                alpha: 0.1,
+                              ),
                             ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x144A3B2A),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
                           ),
+                          sliver: SliverMainAxisGroup(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.all(4),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    for (final (
+                                          _,
+                                          titre,
+                                          entries,
+                                        ) in displayedGroups)
+                                      if (entries.isNotEmpty) ...[
+                                        if (widget.family == null)
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(
+                                              12,
+                                              14,
+                                              12,
+                                              6,
+                                            ),
+                                            child: Text(
+                                              titre,
+                                              style: AmaniTheme.titleStyle
+                                                  .copyWith(fontSize: 16),
+                                            ),
+                                          ),
+                                        for (final entry in entries)
+                                          _SignExerciseRow(
+                                            key: ValueKey(
+                                              '${entry['id']}-r$_restartKey',
+                                            ),
+                                            entry: entry,
+                                            repetitions:
+                                                _settings.repetitions,
+                                            tolerance: _settings.tolerance,
+                                            hideFamilyBadge:
+                                                widget.family != null,
+                                            el: el,
+                                            lang: lang,
+                                            speech: speech,
+                                            awardsProgress: !practiceMode,
+                                            onEntryDone: practiceMode
+                                                ? (_) =>
+                                                      _onPracticeEntryDone()
+                                                : (id) => _onEntryDone(
+                                                    id,
+                                                    familyEntries.length,
+                                                  ),
+                                          ),
+                                      ],
+                                  ]),
+                                ),
+                              ),
+                              // Si les signes ne remplissent pas toute la
+                              // page (peu de signes et/ou peu de
+                              // répétitions), le reste de la même feuille
+                              // est rempli de lignes d'écriture décoratives
+                              // plutôt que de laisser un vide en bas — taille
+                              // nulle si le contenu déborde déjà du viewport.
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: CustomPaint(
+                                  painter: _TrailingCahierLinesPainter(),
+                                  size: Size.infinite,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -563,6 +619,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                   'title': familyDisplayName(widget.family ?? FAMILY_ORDER[0]),
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
+                continueLabel: ev['startFirstSubject'],
                 onContinue: _handleStartFirstSubject,
               ),
             if (allFamilyDone &&
@@ -776,6 +833,11 @@ class _SignExerciseRow extends StatelessWidget {
               ),
             )
           : null,
+      // Toutes les pages d'exercice du Palier 1 partagent UNE seule feuille
+      // de cahier (voir `_buildFamilyMode`) plutôt que chaque signe dans sa
+      // propre carte — cette rangée s'y intègre donc sans bordure/ombre/fond
+      // propres.
+      showCard: false,
     );
   }
 }
@@ -908,4 +970,48 @@ class _HintBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Prolonge visuellement la feuille de cahier partagée (voir
+/// `_buildFamilyMode`) jusqu'en bas de la page quand les signes ne
+/// suffisent pas à la remplir (peu de signes affichés et/ou peu de
+/// répétitions réglées) : mêmes lignes Seyès que dans chaque rangée de
+/// signe (voir `_SeyesLinesPainter` dans `repetition_row.dart`), répétées
+/// jusqu'en bas de l'espace disponible plutôt que de laisser un vide non
+/// ligné. Purement décoratif (aucune case de tracé) — dimensionné à zéro
+/// par le `SliverFillRemaining` englobant dès que le contenu déborde déjà
+/// du viewport ; fond/bordure/ombre déjà fournis par le `DecoratedSliver`
+/// qui l'englobe avec la liste des signes, pas de décor propre ici.
+class _TrailingCahierLinesPainter extends CustomPainter {
+  // Mêmes 4 lignes équidistantes (intervalle 60 dans l'espace 0-200) que
+  // `_SeyesLinesPainter` (`repetition_row.dart`) et `CahierFrame.dart, mais
+  // à une échelle fixe : purement décoratif, sans case de tracé à aligner
+  // dessus.
+  static const List<double> _positions = [10, 70, 130, 190];
+  static const double _rowHeight = 120;
+  static const double _rowSpacing = 10;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const scale = _rowHeight / 200;
+    var rowTop = 0.0;
+    while (rowTop < size.height) {
+      for (var i = 0; i < _positions.length; i++) {
+        final y = rowTop + _positions[i] * scale;
+        if (y > size.height) break;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
+      rowTop += _rowHeight + _rowSpacing;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TrailingCahierLinesPainter oldDelegate) =>
+      false;
 }

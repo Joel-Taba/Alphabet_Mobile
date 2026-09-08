@@ -642,7 +642,7 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-droit",
+        "variant": "oblique-gauche",
         "pathD": "M 69.67 100 L 125.9 125",
         "startXY": [
           69.67,
@@ -728,7 +728,7 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "crochet",
-        "variant": "top-right",
+        "variant": "top-left",
         "pathD": "M 82.23 92.77 C 82.23 80.56 88.89 75 98.89 75 C 108.89 75 117.77 80.56 117.77 92.77 L 117.77 125",
         "startXY": [
           82.23,
@@ -744,7 +744,7 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "crochet",
-        "variant": "top-right",
+        "variant": "top-left",
         "pathD": "M 117.77 92.77 C 117.77 80.56 124.43 75 134.43 75 C 144.43 75 153.31 80.56 153.31 92.77 L 153.31 125",
         "startXY": [
           117.77,
@@ -795,7 +795,7 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "crochet",
-        "variant": "top-right",
+        "variant": "top-left",
         "pathD": "M 82.23 92.77 C 82.23 80.56 88.89 75 98.89 75 C 108.89 75 117.77 80.56 117.77 92.77 L 117.77 125",
         "startXY": [
           82.23,
@@ -803,10 +803,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
         ],
         "strokeColor": "#4A90E2",
         "description": {
-          "fr": "Crochet accolé à droite du trait",
-          "en": "Hook attached to the right of the line",
-          "es": "Gancho pegado a la derecha del trazo",
-          "ar": "خطاف ملاصق يمين الخط"
+          "fr": "Crochet accolé à gauche du trait",
+          "en": "Hook attached to the left of the line",
+          "es": "Gancho pegado a la izquierda del trazo",
+          "ar": "خطاف ملاصق يسار الخط"
         }
       }
     ]
@@ -1270,22 +1270,6 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
     "steps": [
       {
         "family": "trait",
-        "variant": "oblique-droit",
-        "pathD": "M 74.78 75 L 97 125",
-        "startXY": [
-          74.78,
-          75
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Diagonale du haut-gauche vers le point de croisement sur la ligne de base",
-          "en": "Diagonal from upper left to the crossing point on the baseline",
-          "es": "Diagonal desde arriba a la izquierda hasta el punto de cruce en la línea de base",
-          "ar": "قطر من أعلى اليسار نحو نقطة التقاطع على خط الأساس"
-        }
-      },
-      {
-        "family": "trait",
         "variant": "oblique-gauche",
         "pathD": "M 119.22 75 L 97 125 L 87.28 150",
         "startXY": [
@@ -1298,6 +1282,22 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
           "en": "Diagonal from upper right, crosses, descends into the descender zone",
           "es": "Diagonal desde arriba a la derecha, cruza, baja a la zona baja",
           "ar": "قطر من أعلى اليمين، يتقاطع، وينزل إلى المنطقة السفلية"
+        }
+      },
+      {
+        "family": "trait",
+        "variant": "oblique-droit",
+        "pathD": "M 74.78 75 L 97 125",
+        "startXY": [
+          74.78,
+          75
+        ],
+        "strokeColor": "#4A3B2A",
+        "description": {
+          "fr": "Diagonale du haut-gauche vers le point de croisement sur la ligne de base",
+          "en": "Diagonal from upper left to the crossing point on the baseline",
+          "es": "Diagonal desde arriba a la izquierda hasta el punto de cruce en la línea de base",
+          "ar": "قطر من أعلى اليسار نحو نقطة التقاطع على خط الأساس"
         }
       }
     ]
@@ -1337,7 +1337,7 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-gauche",
+        "variant": "oblique-droit",
         "pathD": "M 120.61 75 L 73.39 125",
         "startXY": [
           120.61,
@@ -1393,22 +1393,6 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
     "steps": [
       {
         "family": "trait",
-        "variant": "oblique-gauche",
-        "pathD": "M 92.91 15.95 L 55.36 125",
-        "startXY": [
-          92.91,
-          15.95
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Oblique du sommet vers le bas-gauche",
-          "en": "Diagonal from the top to the lower left",
-          "es": "Oblicuo desde arriba hacia abajo a la izquierda",
-          "ar": "مائل من القمة نحو أسفل اليسار"
-        }
-      },
-      {
-        "family": "trait",
         "variant": "oblique-droit",
         "pathD": "M 93.24 15 L 128.88 124.67",
         "startXY": [
@@ -1421,6 +1405,22 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
           "en": "Diagonal from the top to the lower right",
           "es": "Oblicuo desde arriba hacia abajo a la derecha",
           "ar": "مائل من القمة نحو أسفل اليمين"
+        }
+      },
+      {
+        "family": "trait",
+        "variant": "oblique-gauche",
+        "pathD": "M 92.91 15.95 L 55.36 125",
+        "startXY": [
+          92.91,
+          15.95
+        ],
+        "strokeColor": "#4A3B2A",
+        "description": {
+          "fr": "Oblique du sommet vers le bas-gauche",
+          "en": "Diagonal from the top to the lower left",
+          "es": "Oblicuo desde arriba hacia abajo a la izquierda",
+          "ar": "مائل من القمة نحو أسفل اليسار"
         }
       },
       {
@@ -2051,7 +2051,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-droit",
+        "variant": "oblique-gauche",
         "pathD": "M 65.57 73.57 L 139.04 125",
         "startXY": [
           65.57,
@@ -2154,7 +2154,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-droit",
+        "variant": "oblique-gauche",
         "pathD": "M 63.41 15 L 97 98.12",
         "startXY": [
           63.41,
@@ -2237,7 +2237,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-droit",
+        "variant": "oblique-gauche",
         "pathD": "M 63.41 15 L 130.59 125",
         "startXY": [
           63.41,
@@ -2392,7 +2392,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-droit",
+        "variant": "oblique-gauche",
         "pathD": "M 103.53 103.82 L 118.2 125",
         "startXY": [
           103.53,
@@ -2461,7 +2461,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-droit",
+        "variant": "oblique-gauche",
         "pathD": "M 104.39 77.18 L 134.59 125",
         "startXY": [
           104.39,
@@ -2599,7 +2599,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
     "steps": [
       {
         "family": "crochet",
-        "variant": "bottom",
+        "variant": "bottom-right",
         "pathD": "M 63.06 15 L 63.06 93.86 A 31.17 31.17 0 0 0 123.52 104.5",
         "startXY": [
           63.06,
@@ -2920,7 +2920,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-gauche",
+        "variant": "oblique-droit",
         "pathD": "M 130.59 15 L 63.41 125",
         "startXY": [
           130.59,
@@ -3164,7 +3164,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "steps": [
       {
         "family": "trait",
-        "variant": "oblique-gauche",
+        "variant": "oblique-droit",
         "pathD": "M 98.86 75 L 84.58 107.07",
         "startXY": [
           98.86,
@@ -3223,10 +3223,10 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 5 se forme en trois gestes. Un trait horizontal en haut, un petit trait vertical qui descend à gauche, puis un crochet qui balaie un grand arc, de haut en bas, en restant aligné à la verticale entre son origine et son extrémité.",
-      "en": "The digit 5 is formed in three gestures. A horizontal line at the top, a small vertical line going down on the left, then a hook sweeping a large arc, top to bottom, with its start and end vertically aligned.",
-      "es": "El número 5 se forma en tres gestos. Un trazo horizontal arriba, un pequeño trazo vertical que baja a la izquierda, luego un gancho que traza un gran arco, de arriba abajo, quedando alineado verticalmente entre su origen y su extremo.",
-      "ar": "يتكون الرقم 5 من ثلاث حركات. خط أفقي في الأعلى، خط عمودي صغير ينزل إلى اليسار، ثم خطاف يرسم قوسًا كبيرًا، من الأعلى إلى الأسفل، مع بقائه محاذيًا عموديًا بين بدايته ونهايته."
+      "fr": "Le chiffre 5 se forme en trois gestes. Un trait horizontal en haut, un petit trait vertical qui descend à gauche, puis une courbe qui balaie un grand arc, de haut en bas, en restant alignée à la verticale entre son origine et son extrémité.",
+      "en": "The digit 5 is formed in three gestures. A horizontal line at the top, a small vertical line going down on the left, then a curve sweeping a large arc, top to bottom, with its start and end vertically aligned.",
+      "es": "El número 5 se forma en tres gestos. Un trazo horizontal arriba, un pequeño trazo vertical que baja a la izquierda, luego una curva que traza un gran arco, de arriba abajo, quedando alineada verticalmente entre su origen y su extremo.",
+      "ar": "يتكون الرقم 5 من ثلاث حركات. خط أفقي في الأعلى، خط عمودي صغير ينزل إلى اليسار، ثم منحنى يرسم قوسًا كبيرًا، من الأعلى إلى الأسفل، مع بقائه محاذيًا عموديًا بين بدايته ونهايته."
     },
     "steps": [
       {
@@ -3262,19 +3262,19 @@ final List<dynamic> DIGITS = jsonDecode(r'''
         }
       },
       {
-        "family": "crochet",
-        "variant": "bottom-right",
+        "family": "courbe",
+        "variant": "open-left",
         "pathD": "M 85.59 95.63 C 92.26 91.51 100.93 92.83 106.06 98.76 C 111.2 104.73 111.2 113.53 106.06 119.5 C 100.93 125.43 92.26 126.74 85.59 122.57",
         "startXY": [
           85.59,
           95.63
         ],
-        "strokeColor": "#4A90E2",
+        "strokeColor": "#E05252",
         "description": {
-          "fr": "Crochet qui balaie un grand arc et redescend aligné avec son point de départ",
-          "en": "Hook sweeping a large arc and coming back down aligned with its starting point",
-          "es": "Gancho que traza un gran arco y vuelve a bajar alineado con su punto de partida",
-          "ar": "خطاف يرسم قوسًا كبيرًا وينزل محاذيًا لنقطة انطلاقه"
+          "fr": "Courbe qui balaie un grand arc et redescend alignée avec son point de départ",
+          "en": "Curve sweeping a large arc and coming back down aligned with its starting point",
+          "es": "Curva que traza un gran arco y vuelve a bajar alineada con su punto de partida",
+          "ar": "منحنى يرسم قوسًا كبيرًا وينزل محاذيًا لنقطة انطلاقه"
         }
       }
     ]
@@ -3365,7 +3365,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "oblique-gauche",
+        "variant": "oblique-droit",
         "pathD": "M 119.06 75.29 L 95.89 125",
         "startXY": [
           119.06,

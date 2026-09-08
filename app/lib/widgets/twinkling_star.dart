@@ -6,8 +6,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// (échelle + halo lumineux pulsés) pendant que deux minuscules étoiles
 /// compagnes clignotent en décalé tout autour, comme un vol de lucioles.
 /// Extrait de `PointsToastHost` (bulle "+N" de fin d'exercice) pour être
-/// réutilisé partout où l'on affiche un score en points (ex. le classement
-/// de "La Clairière"), plutôt que la simple icône étoile statique.
+/// réutilisé partout où l'on affiche un score en points, plutôt que la
+/// simple icône étoile statique.
 class TwinklingStar extends StatefulWidget {
   final double size;
   final Color color;

@@ -36,12 +36,28 @@ class EvaluationSessionController extends ChangeNotifier {
   int _subjectsDone = 0;
   int _currentSubjectIndex = 0;
 
+  // Éléments (signe, lettre, syllabe, mot, calcul...) déjà réussis dans
+  // l'évaluation en cours, tous sujets confondus — permet une reprise EXACTE
+  // (voir [recordItemDone]/[isItemDone]) plutôt que la seule reprise au
+  // niveau du sujet courant. Un identifiant reste valable tel quel d'un
+  // sujet à l'autre du même palier (les paliers concernés ne réutilisent
+  // jamais le même identifiant dans deux sujets différents), donc un simple
+  // ensemble plat suffit, sans avoir besoin de le partitionner par sujet.
+  final Set<String> _completedItems = {};
+
   String? get evalId => _evalId;
   bool get isRunning => _endTime != null && !_expired;
   bool get expired => _expired;
   int get subjectTotal => _subjectTotal;
   int get subjectsDone => _subjectsDone;
   int get currentSubjectIndex => _currentSubjectIndex;
+  List<String> get completedItems => List.unmodifiable(_completedItems);
+
+  /// Faux tant qu'absolument rien n'a été réalisé dans cette évaluation
+  /// (aucun élément validé, aucun sujet terminé) — voir [persistProgress] :
+  /// une simple ouverture de la page sans la moindre action ne doit laisser
+  /// aucune trace derrière elle.
+  bool get hasAnyProgress => _completedItems.isNotEmpty || _subjectsDone > 0;
 
   int get remainingSeconds {
     if (_endTime == null) return 0;
@@ -79,6 +95,7 @@ class EvaluationSessionController extends ChangeNotifier {
     _subjectTotal = 0;
     _subjectsDone = 0;
     _currentSubjectIndex = 0;
+    _completedItems.clear();
     return false;
   }
 
@@ -122,12 +139,41 @@ class EvaluationSessionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Un signe/lettre/syllabe/mot/calcul vient d'être réussi — à appeler
+  /// depuis CHAQUE écran d'évaluation dès qu'un élément individuel est
+  /// validé (pas seulement à la fin du sujet entier), pour que la
+  /// progression soit sauvegardée immédiatement : même l'unique premier
+  /// signe de la toute première lettre doit survivre à une sortie
+  /// immédiate de la page. [itemId] doit être un identifiant stable d'une
+  /// visite à l'autre (ex. le caractère de la lettre, la syllabe elle-même,
+  /// ou `'$topicId-$index'` pour des éléments générés par position).
+  void recordItemDone(String itemId) {
+    if (_evalId == null || !_completedItems.add(itemId)) return;
+    notifyListeners();
+    unawaited(_persistSnapshot(_evalId!));
+  }
+
+  /// Cet élément a-t-il déjà été validé dans l'évaluation en cours — à
+  /// consulter par chaque écran pour ré-afficher déjà fait ce qui l'était
+  /// avant une sortie prématurée (voir [resumeFrom]).
+  bool isItemDone(String itemId) => _completedItems.contains(itemId);
+
   /// Sauvegarde immédiate de l'état actuel, pour permettre une reprise
   /// exacte plus tard — à appeler depuis le `dispose()` de chaque écran
   /// d'évaluation. Sans effet si aucune évaluation n'est active ou si elle
-  /// est déjà terminée (rien à reprendre dans ce cas).
+  /// est déjà terminée (rien à reprendre dans ce cas). Si en revanche
+  /// l'enfant n'a strictement rien réalisé depuis l'ouverture de cette
+  /// évaluation ([hasAnyProgress] faux), n'enregistre rien — mieux, efface
+  /// toute trace déjà présente — pour qu'une simple ouverture accidentelle,
+  /// aussitôt refermée, ne laisse jamais derrière elle une évaluation
+  /// "entamée" fantôme : la prochaine visite doit retrouver exactement la
+  /// toute première annonce ("Sujet 1"), jamais une proposition de reprise.
   Future<void> persistProgress() async {
     if (_evalId == null || _endTime == null || _expired) return;
+    if (!hasAnyProgress) {
+      await clearSavedProgress(_evalId!);
+      return;
+    }
     await _persistSnapshot(_evalId!);
   }
 
@@ -146,6 +192,7 @@ class EvaluationSessionController extends ChangeNotifier {
       'subjectTotal': _subjectTotal,
       'subjectsDone': _subjectsDone,
       'currentSubjectIndex': _currentSubjectIndex,
+      'completedItems': _completedItems.toList(),
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, snapshot);
@@ -181,6 +228,9 @@ class EvaluationSessionController extends ChangeNotifier {
     _subjectTotal = saved['subjectTotal'] as int? ?? _subjectTotal;
     _subjectsDone = saved['subjectsDone'] as int? ?? 0;
     _currentSubjectIndex = saved['currentSubjectIndex'] as int? ?? 0;
+    _completedItems
+      ..clear()
+      ..addAll((saved['completedItems'] as List?)?.cast<String>() ?? const []);
     final remaining = saved['remainingSeconds'] as int? ?? 0;
     _endTime = DateTime.now().add(Duration(seconds: remaining));
     _timer?.cancel();
@@ -204,6 +254,7 @@ class EvaluationSessionController extends ChangeNotifier {
     _subjectTotal = 0;
     _subjectsDone = 0;
     _currentSubjectIndex = 0;
+    _completedItems.clear();
     _evalId = null;
     notifyListeners();
   }
@@ -221,6 +272,7 @@ class EvaluationSessionController extends ChangeNotifier {
     _subjectTotal = 0;
     _subjectsDone = 0;
     _currentSubjectIndex = 0;
+    _completedItems.clear();
     _evalId = null;
     notifyListeners();
   }

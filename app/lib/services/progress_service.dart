@@ -14,8 +14,8 @@ import 'family_service.dart';
 /// tard, soit une substitution mécanique plutôt qu'une réécriture.
 ///
 /// Barème : un cours (découverte guidée) rapporte moins qu'un exercice
-/// (pratique active), pour valoriser l'effort. Ces points alimentent aussi
-/// bien "Mon Profil" (statistiques) que "La Clairière" (classement).
+/// (pratique active), pour valoriser l'effort. Ces points alimentent les
+/// statistiques de "Mon Profil" — aucun classement n'en est tiré.
 const Map<String, int> pointsParModalite = {'COURS': 5, 'EXERCICE': 10};
 
 const _progressStorageKey = 'amani_progress_log';

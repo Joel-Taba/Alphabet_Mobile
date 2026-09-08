@@ -15,7 +15,18 @@ import '../data/shape_catalog.dart';
 import '../data/tangram_catalog.dart';
 import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER;
 import '../utils/text_case.dart';
+import '../widgets/sign_glyph.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+/// Famille de signe (voir `SignGlyph`) associée à une étape "Cours" du
+/// Palier 1 — `null` pour toute autre étape "Cours" (livre générique).
+SignFamily? _signFamilyFromKey(String? key) => switch (key) {
+  'trait' => SignFamily.trait,
+  'courbe' => SignFamily.courbe,
+  'crochet' => SignFamily.crochet,
+  'point' => SignFamily.point,
+  _ => null,
+};
 
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
 const String _bonusArcSvg = 'M12 16 C14 8 26 8 28 16';
@@ -36,6 +47,7 @@ enum StepKind {
   figureQuiz,
   figureVraiFaux,
   figureObjet,
+  puzzleFormule,
   medal,
   header,
 }
@@ -51,6 +63,14 @@ class Step {
   final Color? bannerBorder;
   final IconData? bannerIcon;
 
+  /// Non `null` uniquement pour les étapes "Cours" (`iconType: 'feuille'`)
+  /// du Palier 1 ('trait' | 'crochet' | 'courbe' | 'point') : remplace alors
+  /// l'icône livre générique par le signe réellement enseigné dans ce cours
+  /// (voir `SignGlyph`), et le libellé "Cours" par le titre exact de la
+  /// leçon (`coursFamily.titles`, la même source que l'écran du cours
+  /// lui-même — toujours synchronisé, dans les 4 langues).
+  final String? signFamily;
+
   const Step({
     required this.kind,
     this.iconType,
@@ -61,6 +81,7 @@ class Step {
     this.bannerBg,
     this.bannerBorder,
     this.bannerIcon,
+    this.signFamily,
   });
 }
 
@@ -102,6 +123,38 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     for (var i = 1; i <= 6; i++) i: GlobalKey(),
   };
 
+  /// Ancre posée exactement sur le `Stack` qui superpose le sentier peint
+  /// (`_FootpathPainter`) et la colonne des étapes — sert de référentiel de
+  /// coordonnées pour convertir la position mesurée de chaque nœud
+  /// (`_nodeKeys`) dans le même espace que celui utilisé par le `Canvas` du
+  /// peintre (voir `_measureNodes`).
+  final GlobalKey _pathAreaKey = GlobalKey();
+
+  /// Une ancre stable par étape non-en-tête (cours, exercice, bonus,
+  /// médaille...), dans l'ORDRE d'apparition — volontairement indexées par
+  /// position (pas par identité de `StepEntry`, recréée à chaque `build()`)
+  /// pour rester stables d'un rebuild à l'autre. Étendue paresseusement
+  /// (jamais réduite) via [_nodeKeyFor] : la structure du parcours ne varie
+  /// qu'au changement de langue (Syllabes/Calculs absents hors français),
+  /// donc le nombre d'étapes peut légèrement varier, mais jamais en cours de
+  /// frame.
+  final List<GlobalKey> _nodeKeys = [];
+
+  GlobalKey _nodeKeyFor(int i) {
+    while (_nodeKeys.length <= i) {
+      _nodeKeys.add(GlobalKey());
+    }
+    return _nodeKeys[i];
+  }
+
+  /// Point bas-centre (voir `_measureNodes`) de chaque étape non-en-tête,
+  /// dans l'ordre — `null` tant que la toute première mesure post-layout
+  /// n'a pas encore eu lieu (le sentier n'est alors simplement pas encore
+  /// dessiné, le temps d'un frame). Alimente `_FootpathPainter` pour que le
+  /// sentier passe réellement sous chaque étape plutôt que de suivre un
+  /// zigzag générique approximatif.
+  List<Offset>? _nodeBottomCenters;
+
   @override
   void initState() {
     super.initState();
@@ -109,6 +162,48 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     if (widget.scrollToPalier != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToPalier());
     }
+  }
+
+  /// Programme une mesure des positions réelles des nœuds après le layout
+  /// du frame en cours — appelé à chaque `build()` : la plupart du temps
+  /// les positions mesurées seront identiques aux précédentes (aucun
+  /// `setState` déclenché, voir [_measureNodes]), donc sans boucle de
+  /// reconstruction ; elles ne changent réellement qu'au premier affichage,
+  /// au redimensionnement de la fenêtre, ou si un changement de langue
+  /// modifie la hauteur d'une étiquette.
+  void _scheduleNodeMeasurement() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureNodes());
+  }
+
+  void _measureNodes() {
+    if (!mounted) return;
+    final areaBox =
+        _pathAreaKey.currentContext?.findRenderObject() as RenderBox?;
+    if (areaBox == null || !areaBox.hasSize) return;
+    final positions = <Offset>[];
+    for (final key in _nodeKeys) {
+      final box = key.currentContext?.findRenderObject() as RenderBox?;
+      // Un nœud pas encore monté (ex. clé réservée pour une étape qui
+      // vient de disparaître après un changement de langue) : on
+      // réessaiera au prochain frame plutôt que de dessiner un sentier
+      // tronqué.
+      if (box == null || !box.hasSize) return;
+      final topLeft = box.localToGlobal(Offset.zero, ancestor: areaBox);
+      positions.add(topLeft + Offset(box.size.width / 2, box.size.height));
+    }
+    if (_nodeBottomCenters != null &&
+        _offsetsMatch(_nodeBottomCenters!, positions)) {
+      return;
+    }
+    setState(() => _nodeBottomCenters = positions);
+  }
+
+  bool _offsetsMatch(List<Offset> a, List<Offset> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if ((a[i] - b[i]).distanceSquared > 0.25) return false;
+    }
+    return true;
   }
 
   void _scrollToPalier() {
@@ -184,7 +279,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         0,
       ),
       StepEntry(
-        const Step(kind: StepKind.active, iconType: 'feuille'),
+        const Step(
+          kind: StepKind.active,
+          iconType: 'feuille',
+          signFamily: 'trait',
+        ),
         -1,
         to: '/cours/trait',
       ),
@@ -194,7 +293,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         to: '/exercice-liste?family=trait',
       ),
       StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        const Step(
+          kind: StepKind.locked,
+          iconType: 'feuille',
+          signFamily: 'crochet',
+        ),
         -1,
         to: '/cours/crochet',
       ),
@@ -204,7 +307,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         to: '/exercice-liste?family=crochet',
       ),
       StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        const Step(
+          kind: StepKind.locked,
+          iconType: 'feuille',
+          signFamily: 'courbe',
+        ),
         -1,
         to: '/cours/courbe',
       ),
@@ -214,7 +321,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         to: '/exercice-liste?family=courbe',
       ),
       StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'feuille'),
+        const Step(
+          kind: StepKind.locked,
+          iconType: 'feuille',
+          signFamily: 'point',
+        ),
         -1,
         to: '/cours/point',
       ),
@@ -260,6 +371,13 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
           Step(kind: kind, iconType: 'branche'),
           1,
           to: '/exercice-liste?group=${group.id}',
+        ),
+      );
+      steps.add(
+        StepEntry(
+          const Step(kind: StepKind.puzzleFormule),
+          0,
+          to: '/exercice/puzzle-formule/${group.chars.first}?pg=${group.id}',
         ),
       );
     }
@@ -564,10 +682,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     final t = context.watch<LanguageProvider>().t;
     final lang = context.watch<LanguageProvider>().lang;
     final steps = _buildSteps(t, lang);
-    final nonHeaderCount = steps
-        .where((s) => s.step.kind != StepKind.header)
-        .length;
-    final turns = math.max(8, (nonHeaderCount / 2).ceil());
+    _scheduleNodeMeasurement();
 
     return Container(
       decoration: const BoxDecoration(
@@ -620,24 +735,23 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
                 ),
               ),
 
-              // Chemin en zigzag
+              // Sentier de pas, calé sur la position réelle de chaque étape
+              // (voir `_measureNodes`) plutôt qu'un zigzag générique.
               LayoutBuilder(
                 builder: (context, constraints) {
                   final width =
                       constraints.maxWidth - 48; // padding horizontal 24+24
-                  const stepHeight = 62.0;
-                  final pathHeight = turns * stepHeight + 40;
+                  var nonHeaderIdx = 0;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Stack(
+                      key: _pathAreaKey,
                       children: [
                         Positioned.fill(
                           child: CustomPaint(
-                            painter: _ZigzagPainter(
-                              turns: turns,
-                              stepHeight: stepHeight,
-                              width: width,
+                            painter: _FootpathPainter(
+                              points: _nodeBottomCenters,
                             ),
                           ),
                         ),
@@ -654,8 +768,11 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
                                 anchorKey: steps[i].step.kind == StepKind.header
                                     ? _palierKeys[steps[i].step.palierNum]
                                     : null,
+                                nodeKey: steps[i].step.kind == StepKind.header
+                                    ? null
+                                    : _nodeKeyFor(nonHeaderIdx++),
                               ),
-                            SizedBox(height: pathHeight * 0.05 + 8),
+                            const SizedBox(height: 32),
                           ],
                         ),
                       ],
@@ -673,52 +790,65 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
 
 /// Trace le chemin reliant les étapes non pas par un simple pointillé mais
 /// par une piste de petites empreintes de pas alternées (gauche/droite),
-/// façon sentier — même géométrie en zigzag (courbes de Bézier quadratiques
-/// entre un point de contrôle gauche et un point de contrôle droit,
-/// alternés à chaque tour) qu'auparavant, seul le style du tracé change.
-class _ZigzagPainter extends CustomPainter {
-  final int turns;
-  final double stepHeight;
-  final double width;
+/// façon sentier — un segment indépendant par tronçon (d'une étape à la
+/// suivante, dans l'ordre), passant exactement par le point mesuré de
+/// l'icône de chaque étape (voir `_ParcoursScreenState._measureNodes` et
+/// `_StepNode.nodeKey`, posée sur l'icône seule, jamais sur l'étiquette de
+/// titre en dessous). Chaque tronçon est volontairement raccourci d'une
+/// marge (voir `_segmentMargin`) à CHACUNE de ses deux extrémités avant d'y
+/// semer des empreintes (voir la boucle par `PathMetric` plus bas, un par
+/// `moveTo`) plutôt que de prolonger un tracé continu sur toute la piste :
+/// les empreintes vont ainsi explicitement, et de façon visuellement
+/// saccadée, d'un bouton d'étape à l'autre — un groupe d'empreintes bien
+/// distinct par tronçon, jamais collé aux icônes ni raccordé au groupe
+/// voisin, plutôt qu'une continuité artificielle entre eux.
+class _FootpathPainter extends CustomPainter {
+  final List<Offset>? points;
 
-  _ZigzagPainter({
-    required this.turns,
-    required this.stepHeight,
-    required this.width,
-  });
+  _FootpathPainter({required this.points});
+
+  /// Distance retranchée à chaque extrémité d'un tronçon avant d'y semer des
+  /// empreintes : dégage l'icône de l'étape (jamais d'empreinte collée
+  /// dessus) et, combinée au fait que chaque tronçon reparte de zéro,
+  /// garantit un vide net et visible entre deux groupes d'empreintes
+  /// consécutifs plutôt qu'un enchaînement presque continu autour du nœud
+  /// partagé.
+  static const double _segmentMargin = 22.0;
+
+  /// Échelle de chaque empreinte (coussinet + orteils, voir
+  /// `_drawFootprint`) — répercutée aussi sur l'écart entre deux empreintes
+  /// et sur leur décalage latéral (démarche gauche/droite) pour que
+  /// l'agrandissement reste cohérent plutôt que de faire chevaucher des
+  /// empreintes devenues plus grosses mais toujours aussi rapprochées.
+  static const double _footScale = 1.4;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final centerX = width / 2;
-    final leftX = width * 0.2;
-    final rightX = width * 0.8;
-
-    // Le tracé n'a de sens que sur `turns` tours (une estimation à partir du
-    // nombre d'étapes), mais la colonne réelle des étapes peut être
-    // légèrement plus haute ou plus basse selon la mise en page effective —
-    // on construit directement le chemin à l'échelle finale (plutôt que de
-    // le dessiner "nature" puis d'appliquer un `canvas.scale` non-uniforme,
-    // qui déformerait chaque empreinte) pour qu'il couvre exactement toute
-    // la hauteur réservée, jusqu'à la dernière étape.
-    final naturalHeight = 20 + turns * stepHeight;
-    final vScale = (naturalHeight > 0 && size.height > 0)
-        ? size.height / naturalHeight
-        : 1.0;
-    final scaledStepHeight = stepHeight * vScale;
+    final pts = points;
+    if (pts == null || pts.length < 2) return;
 
     final path = Path();
-    double y = 20 * vScale;
-    path.moveTo(centerX, y);
-    for (var i = 0; i < turns; i++) {
-      final controlX = i.isEven ? leftX : rightX;
-      final endY = y + scaledStepHeight;
-      path.quadraticBezierTo(controlX, y + scaledStepHeight / 2, centerX, endY);
-      y = endY;
+    for (var i = 0; i < pts.length - 1; i++) {
+      final a = pts[i];
+      final b = pts[i + 1];
+      final delta = b - a;
+      final length = delta.distance;
+      // Tronçon trop court pour la marge des deux côtés (nœuds très
+      // rapprochés) : le laisser sans empreinte plutôt que d'inverser ses
+      // deux extrémités.
+      if (length <= _segmentMargin * 2) continue;
+      final unit = delta / length;
+      final start = a + unit * _segmentMargin;
+      final end = b - unit * _segmentMargin;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(end.dx, end.dy);
     }
 
     final footColor = const Color(0xFF000000).withValues(alpha: 0.32);
-    const stepDistance = 22.0; // écart entre deux empreintes le long du sentier
-    const strideOffset = 4.5; // écart latéral gauche/droite (démarche)
+    // Écart entre deux empreintes le long du sentier, et décalage latéral
+    // gauche/droite (démarche) — mis à l'échelle avec `_footScale`.
+    const stepDistance = 22.0 * _footScale;
+    const strideOffset = 4.5 * _footScale;
 
     var stepIndex = 0;
     for (final metric in path.computeMetrics()) {
@@ -765,22 +895,26 @@ class _ZigzagPainter extends CustomPainter {
 
     // Coussinet principal : ovale légèrement aplati, en arrière.
     canvas.save();
-    canvas.translate(-3.5, 0);
+    canvas.translate(-3.5 * _footScale, 0);
     canvas.rotate(0.05);
     canvas.scale(1.15, 0.9);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: 8.5, height: 7.5),
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: 8.5 * _footScale,
+        height: 7.5 * _footScale,
+      ),
       pad,
     );
     canvas.restore();
 
     // 4 coussinets d'orteils en éventail devant, chacun légèrement pivoté
     // pour évoquer des doigts qui s'écartent.
-    const toeOffsets = [
-      Offset(4.6, -4.4),
-      Offset(6.6, -1.6),
-      Offset(6.6, 1.6),
-      Offset(4.6, 4.4),
+    final toeOffsets = [
+      Offset(4.6, -4.4) * _footScale,
+      Offset(6.6, -1.6) * _footScale,
+      Offset(6.6, 1.6) * _footScale,
+      Offset(4.6, 4.4) * _footScale,
     ];
     const toeAngles = [-0.7, -0.25, 0.25, 0.7];
     for (var i = 0; i < 4; i++) {
@@ -788,7 +922,11 @@ class _ZigzagPainter extends CustomPainter {
       canvas.translate(toeOffsets[i].dx, toeOffsets[i].dy);
       canvas.rotate(toeAngles[i]);
       canvas.drawOval(
-        Rect.fromCenter(center: Offset.zero, width: 4.2, height: 2.8),
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: 4.2 * _footScale,
+          height: 2.8 * _footScale,
+        ),
         pad,
       );
       canvas.restore();
@@ -798,10 +936,8 @@ class _ZigzagPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ZigzagPainter oldDelegate) =>
-      oldDelegate.turns != turns ||
-      oldDelegate.width != width ||
-      oldDelegate.stepHeight != stepHeight;
+  bool shouldRepaint(covariant _FootpathPainter oldDelegate) =>
+      !identical(oldDelegate.points, points);
 }
 
 class _StepRow extends StatelessWidget {
@@ -816,6 +952,12 @@ class _StepRow extends StatelessWidget {
   /// non `null` uniquement pour une entrée d'en-tête de palier.
   final GlobalKey? anchorKey;
 
+  /// Ancre posée sur le nœud lui-même (voir `_ParcoursScreenState._nodeKeys`
+  /// / `_measureNodes`), pour que le sentier peint en arrière-plan
+  /// (`_FootpathPainter`) puisse passer exactement sous sa position réelle
+  /// — `null` uniquement pour une entrée d'en-tête de palier.
+  final GlobalKey? nodeKey;
+
   const _StepRow({
     required this.entry,
     required this.index,
@@ -824,6 +966,7 @@ class _StepRow extends StatelessWidget {
     required this.t,
     this.onTap,
     this.anchorKey,
+    this.nodeKey,
   });
 
   @override
@@ -851,6 +994,7 @@ class _StepRow extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: _StepNode(
+              nodeKey: nodeKey,
               step: step,
               isCurrent: isCurrent,
               color: entry.color ?? AmaniColors.secondary,
@@ -1009,6 +1153,13 @@ class _StepNode extends StatefulWidget {
   final int? number;
   final Map<String, dynamic> t;
 
+  /// Ancre posée sur l'icône seule (voir `_ParcoursScreenState._nodeKeys` /
+  /// `_measureNodes`) — jamais sur l'étiquette de titre en dessous (Cours,
+  /// Exercice, Traits...), pour que le sentier peint en arrière-plan
+  /// (`_FootpathPainter`) passe sous l'icône sans jamais chevaucher le
+  /// texte.
+  final GlobalKey? nodeKey;
+
   const _StepNode({
     required this.step,
     required this.isCurrent,
@@ -1016,6 +1167,7 @@ class _StepNode extends StatefulWidget {
     required this.borderColor,
     this.number,
     required this.t,
+    this.nodeKey,
   });
 
   @override
@@ -1043,6 +1195,13 @@ class _StepNodeState extends State<_StepNode>
 
   String get _stepLabel {
     final parcours = widget.t['parcours'] as Map<String, dynamic>? ?? {};
+    if (widget.step.signFamily != null) {
+      final titles =
+          widget.t['coursFamily']?['titles'] as Map<String, dynamic>? ?? {};
+      return (titles[widget.step.signFamily] as String?) ??
+          parcours['coursStep'] ??
+          '';
+    }
     if (widget.step.kind == StepKind.wordsearch) {
       return parcours['wordSearchStep'] ?? '';
     }
@@ -1060,6 +1219,9 @@ class _StepNodeState extends State<_StepNode>
     }
     if (widget.step.kind == StepKind.figureObjet) {
       return parcours['figureObjetStep'] ?? '';
+    }
+    if (widget.step.kind == StepKind.puzzleFormule) {
+      return parcours['puzzleFormuleStep'] ?? '';
     }
     if (widget.step.iconType == 'branche') {
       return parcours['exerciceStep'] ?? '';
@@ -1090,6 +1252,7 @@ class _StepNodeState extends State<_StepNode>
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
             SizedBox(
+              key: widget.nodeKey,
               width: dim + 24,
               height: dim + 24,
               child: Stack(
@@ -1119,17 +1282,34 @@ class _StepNodeState extends State<_StepNode>
                       boxShadow: AmaniShadows.card,
                     ),
                     alignment: Alignment.center,
-                    child: Icon(
-                      widget.step.iconType == 'branche'
-                          ? LucideIcons.pen
-                          : LucideIcons.bookOpen,
-                      size: bigNode
-                          ? (widget.step.iconType == 'branche' ? 38 : 40)
-                          : (widget.step.iconType == 'branche' ? 24 : 26),
-                      color: bigNode
-                          ? Colors.white
-                          : AmaniColors.textSecondary.withValues(alpha: 0.7),
-                    ),
+                    child: _signFamilyFromKey(widget.step.signFamily) != null
+                        ? SignGlyph(
+                            family: _signFamilyFromKey(widget.step.signFamily)!,
+                            variant: widget.step.signFamily == 'courbe'
+                                ? 'open-right'
+                                : 'vertical',
+                            stroke: bigNode
+                                ? Colors.white
+                                : AmaniColors.textSecondary.withValues(
+                                    alpha: 0.7,
+                                  ),
+                            size: bigNode ? 56 : 36,
+                          )
+                        : Icon(
+                            widget.step.iconType == 'branche'
+                                ? LucideIcons.pen
+                                : LucideIcons.bookOpen,
+                            size: bigNode
+                                ? (widget.step.iconType == 'branche' ? 38 : 40)
+                                : (widget.step.iconType == 'branche'
+                                      ? 24
+                                      : 26),
+                            color: bigNode
+                                ? Colors.white
+                                : AmaniColors.textSecondary.withValues(
+                                    alpha: 0.7,
+                                  ),
+                          ),
                   ),
                   if (widget.number != null)
                     Positioned(
@@ -1177,6 +1357,7 @@ class _StepNodeState extends State<_StepNode>
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
             Stack(
+              key: widget.nodeKey,
               clipBehavior: Clip.none,
               children: [
                 if (widget.isCurrent)
@@ -1235,6 +1416,7 @@ class _StepNodeState extends State<_StepNode>
       case StepKind.figureQuiz:
       case StepKind.figureVraiFaux:
       case StepKind.figureObjet:
+      case StepKind.puzzleFormule:
         final bool bigGame = widget.isCurrent;
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -1246,6 +1428,7 @@ class _StepNodeState extends State<_StepNode>
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
             Stack(
+              key: widget.nodeKey,
               clipBehavior: Clip.none,
               children: [
                 if (widget.isCurrent)
@@ -1309,6 +1492,7 @@ class _StepNodeState extends State<_StepNode>
 
       case StepKind.bonus:
         return Container(
+          key: widget.nodeKey,
           width: 64,
           height: 64,
           decoration: BoxDecoration(
@@ -1329,6 +1513,7 @@ class _StepNodeState extends State<_StepNode>
 
       case StepKind.medal:
         return Container(
+          key: widget.nodeKey,
           width: 80,
           height: 80,
           clipBehavior: Clip.antiAlias,

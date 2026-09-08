@@ -10,12 +10,12 @@ import 'screens/returning_user_screen.dart';
 import 'screens/app_shell.dart';
 import 'screens/parcours_screen.dart';
 import 'screens/bibliotheque_screen.dart';
-import 'screens/communaute_screen.dart';
 import 'screens/profil_hub_screen.dart';
 import 'screens/cours_family_screen.dart';
 import 'screens/exercice_liste_screen.dart';
 import 'screens/cours_lettres_formation_screen.dart';
 import 'screens/exercice_lettre_screen.dart';
+import 'screens/exercice_puzzle_formule_screen.dart';
 import 'screens/cours_mots_screen.dart';
 import 'screens/exercice_mots_screen.dart';
 import 'screens/exercice_mots_meles_screen.dart';
@@ -104,6 +104,14 @@ final _router = GoRouter(
         char: state.pathParameters['char']!,
         pg: state.uri.queryParameters['pg'],
         amaniEval: state.uri.queryParameters['amaniEval'],
+      ),
+    ),
+    GoRoute(
+      path: '/exercice/puzzle-formule/:char',
+      builder: (context, state) => ExercicePuzzleFormuleScreen(
+        key: ValueKey(state.uri.toString()),
+        char: state.pathParameters['char']!,
+        pg: state.uri.queryParameters['pg'],
       ),
     ),
     GoRoute(
@@ -236,14 +244,6 @@ final _router = GoRouter(
             GoRoute(
               path: '/bibliotheque',
               builder: (context, state) => const BibliothequeScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/communaute',
-              builder: (context, state) => const CommunauteScreen(),
             ),
           ],
         ),

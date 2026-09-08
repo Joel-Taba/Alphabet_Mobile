@@ -117,7 +117,6 @@ const Map<String, dynamic> fr = {
   'nav': {
     'accueil': 'Accueil',
     'bibliotheque': 'Mode libre',
-    'communaute': 'Clairière',
     'profil': 'Profil',
     'reglages': 'Paramètres',
     'mainNavAria': 'Navigation principale',
@@ -157,6 +156,7 @@ const Map<String, dynamic> fr = {
     'backToPath': 'Retour au parcours',
     'subjects': 'sujets',
     'continueSubject': 'Continuer',
+    'startFirstSubject': 'Commencer',
     'firstSubjectTitle': '1er sujet : {title}',
     'firstSubjectBody': "C'est parti pour l'évaluation !",
     'nextSubjectTitle': 'Bravo, sujet réussi !',
@@ -283,6 +283,7 @@ const Map<String, dynamic> fr = {
     'figureQuizStep': 'Quiz figures',
     'figureVraiFauxStep': 'Vrai ou faux',
     'figureObjetStep': 'Objets',
+    'puzzleFormuleStep': 'Puzzle',
     'paliers': [
       {
         'title': 'Les signes de base',
@@ -316,17 +317,6 @@ const Map<String, dynamic> fr = {
       'tagline': 'Carré, rectangle, triangle, cercle',
     },
     'comingSoon': 'Cette étape arrive bientôt !',
-  },
-  'community': {
-    'title': 'Notre communauté',
-    'subtitle': 'Le classement',
-    'othersTitle': 'Les autres pousses',
-    'you': 'moi',
-    'amaniQuote': "Chacun grandit à son rythme, l'important est d'y aller.",
-    'amaniLine': 'Bravo à toutes les pousses de la clairière !',
-    'footnote': '',
-    'starsSuffix': '⭐',
-    'stumpAria': 'Souche rang {rank}',
   },
   'profileHub': {
     'title': "Mon carnet d'explorateur",
@@ -443,7 +433,7 @@ const Map<String, dynamic> fr = {
     'titles': {
       'point': 'Le point',
       'courbe': 'Les courbes',
-      'crochet': 'Les crochets & doubles-crochets',
+      'crochet': 'Les crochets',
       'trait': 'Les traits',
     },
   },
@@ -590,6 +580,7 @@ const Map<String, dynamic> fr = {
     'title': 'Tracer',
     'stepPrefix': 'Signe',
     'signsReady': '{done}/{total} signes prêts',
+    'lettersReady': '{done}/{total} lettres tracées',
     'practiceStepsTitle': 'Entraîne-toi sur chaque signe',
     'practiceStepsHint':
         "Réussis chaque signe {reps} fois avant d'écrire la lettre complète.",
@@ -612,10 +603,17 @@ const Map<String, dynamic> fr = {
     'practiceAgain': "S'entrainer à nouveau",
     'backToNotebookLink': "Retour au cahier d'écriture",
     'speakStart': 'Entraine-toi sur la lettre {name}.',
-    'speakNextStep': 'Super ! Passe maintenant au signe suivant.',
     'speakLetterDone': 'Bravo ! Tu as parfaitement formé la lettre {name} !',
-    'speakRetryStep': 'Presque ! Réessaie juste ce geste : {desc}',
     'speakReset': 'On recommence la lettre {name}.',
+  },
+  'exercicePuzzle': {
+    'piecesReady': '{done}/{total} lettres reconstituées',
+    'introTitle': 'Assemble la formule',
+    'introBody':
+        "Fais glisser chaque pièce vers son emplacement — vert si elle est bien placée, jaune si elle appartient à la lettre mais pas ici, rouge si elle n'en fait pas partie.",
+    'allDoneTitle': 'Formules assemblées !',
+    'allDoneBody': "Tu as choisi tous les bons signes, dans le bon ordre.",
+    'speakSolved': 'Bravo ! Tu as reconstitué la lettre {name} !',
   },
   'coursSyllabes': {
     'title': 'Les syllabes',
@@ -773,7 +771,6 @@ const Map<String, dynamic> en = {
   'nav': {
     'accueil': 'Home',
     'bibliotheque': 'Free mode',
-    'communaute': 'Clearing',
     'profil': 'Profile',
     'reglages': 'Settings',
     'mainNavAria': 'Main navigation',
@@ -809,6 +806,7 @@ const Map<String, dynamic> en = {
     'backToPath': 'Back to the path',
     'subjects': 'subjects',
     'continueSubject': 'Continue',
+    'startFirstSubject': 'Start',
     'firstSubjectTitle': 'Subject 1: {title}',
     'firstSubjectBody': "Let's start the evaluation!",
     'nextSubjectTitle': 'Well done, subject passed!',
@@ -933,6 +931,7 @@ const Map<String, dynamic> en = {
     'figureQuizStep': 'Shape quiz',
     'figureVraiFauxStep': 'True or false',
     'figureObjetStep': 'Objects',
+    'puzzleFormuleStep': 'Puzzle',
     'paliers': [
       {
         'title': 'The Basic Signs',
@@ -961,18 +960,6 @@ const Map<String, dynamic> en = {
       'tagline': 'Square, rectangle, triangle, circle',
     },
     'comingSoon': 'This step is coming soon!',
-  },
-  'community': {
-    'title': 'Our Clearing Community',
-    'subtitle': "This week's leaderboard",
-    'othersTitle': 'The other sprouts',
-    'you': 'me',
-    'amaniQuote':
-        'Everyone grows at their own pace, what matters is moving forward.',
-    'amaniLine': 'Well done to every sprout in the clearing!',
-    'footnote': 'This leaderboard only covers this tablet.',
-    'starsSuffix': '⭐',
-    'stumpAria': 'Rank {rank} stump',
   },
   'profileHub': {
     'title': 'My explorer notebook',
@@ -1018,8 +1005,7 @@ const Map<String, dynamic> en = {
     'voiceGenderTestPhrase':
         "Hi, it's Flores Gong Nota! Shall we keep learning together?",
     'photoTitle': 'My profile photo',
-    'photoHint':
-        'It will show up next to your name on the Clearing leaderboard.',
+    'photoHint': '',
     'photoChangeAria': 'Change profile photo',
     'nameSave': 'Save',
     'nameEdit': 'Edit',
@@ -1236,6 +1222,7 @@ const Map<String, dynamic> en = {
     'title': 'Trace',
     'stepPrefix': 'Sign',
     'signsReady': '{done}/{total} signs ready',
+    'lettersReady': '{done}/{total} letters traced',
     'practiceStepsTitle': 'Practice each sign',
     'practiceStepsHint':
         'Succeed at each sign {reps} times before writing the complete letter.',
@@ -1257,10 +1244,17 @@ const Map<String, dynamic> en = {
     'practiceAgain': 'Practice again',
     'backToNotebookLink': 'Back to the writing notebook',
     'speakStart': 'Practice the letter {name}.',
-    'speakNextStep': 'Great! Now move on to the next sign.',
     'speakLetterDone': "Well done! You've perfectly formed the letter {name}!",
-    'speakRetryStep': 'Almost! Try just this gesture again: {desc}',
     'speakReset': "Let's start the letter {name} again.",
+  },
+  'exercicePuzzle': {
+    'piecesReady': '{done}/{total} letters rebuilt',
+    'introTitle': 'Build the formula',
+    'introBody':
+        "Drag each piece onto its slot — green if it's placed right, yellow if it belongs to the letter but not there, red if it doesn't belong at all.",
+    'allDoneTitle': 'Formulas rebuilt!',
+    'allDoneBody': "You've chosen all the right signs, in the right order.",
+    'speakSolved': "Well done! You've rebuilt the letter {name}!",
   },
   'coursSyllabes': {
     'title': 'Syllables',
@@ -1384,7 +1378,6 @@ const Map<String, dynamic> es = {
   'nav': {
     'accueil': 'Inicio',
     'bibliotheque': 'Modo libre',
-    'communaute': 'Claro',
     'profil': 'Perfil',
     'reglages': 'Ajustes',
     'mainNavAria': 'Navegación principal',
@@ -1423,6 +1416,7 @@ const Map<String, dynamic> es = {
     'backToPath': 'Volver al recorrido',
     'subjects': 'temas',
     'continueSubject': 'Continuar',
+    'startFirstSubject': 'Empezar',
     'firstSubjectTitle': 'Tema 1: {title}',
     'firstSubjectBody': '¡Empezamos la evaluación!',
     'nextSubjectTitle': '¡Bien hecho, tema superado!',
@@ -1549,6 +1543,7 @@ const Map<String, dynamic> es = {
     'figureQuizStep': 'Adivina la figura',
     'figureVraiFauxStep': 'Verdadero o falso',
     'figureObjetStep': 'Objetos',
+    'puzzleFormuleStep': 'Rompecabezas',
     'paliers': [
       {
         'title': 'Los signos básicos',
@@ -1577,17 +1572,6 @@ const Map<String, dynamic> es = {
       'tagline': 'Cuadrado, rectángulo, triángulo, círculo',
     },
     'comingSoon': '¡Esta etapa llega pronto!',
-  },
-  'community': {
-    'title': 'Nuestra comunidad del claro',
-    'subtitle': 'Clasificación de la semana',
-    'othersTitle': 'Los otros brotes',
-    'you': 'yo',
-    'amaniQuote': 'Cada uno crece a su propio ritmo, lo importante es avanzar.',
-    'amaniLine': '¡Bravo a todos los brotes del claro!',
-    'footnote': 'Esta clasificación solo corresponde a esta tableta.',
-    'starsSuffix': '⭐',
-    'stumpAria': 'Tocón puesto {rank}',
   },
   'profileHub': {
     'title': 'Mi cuaderno de explorador',
@@ -1633,7 +1617,7 @@ const Map<String, dynamic> es = {
     'voiceGenderTestPhrase':
         '¡Hola, soy Flores Gong Nota! ¿Seguimos aprendiendo juntos?',
     'photoTitle': 'Mi foto de perfil',
-    'photoHint': 'Aparecerá junto a tu nombre en la clasificación de el claro.',
+    'photoHint': '',
     'photoChangeAria': 'Cambiar la foto de perfil',
     'photoRemove': 'Eliminar',
     'nameSave': 'Guardar',
@@ -1855,6 +1839,7 @@ const Map<String, dynamic> es = {
     'title': 'Trazar',
     'stepPrefix': 'Signo',
     'signsReady': '{done}/{total} signos listos',
+    'lettersReady': '{done}/{total} letras trazadas',
     'practiceStepsTitle': 'Practica cada signo',
     'practiceStepsHint':
         'Consigue cada signo {reps} veces antes de escribir la letra completa.',
@@ -1877,11 +1862,18 @@ const Map<String, dynamic> es = {
     'practiceAgain': 'Practicar de nuevo',
     'backToNotebookLink': 'Volver al cuaderno de escritura',
     'speakStart': 'Practica la letra {name}.',
-    'speakNextStep': '¡Genial! Ahora pasa al siguiente signo.',
     'speakLetterDone':
         '¡Bien hecho! ¡Has formado perfectamente la letra {name}!',
-    'speakRetryStep': '¡Casi! Vuelve a intentar solo este gesto: {desc}',
     'speakReset': 'Empezamos de nuevo la letra {name}.',
+  },
+  'exercicePuzzle': {
+    'piecesReady': '{done}/{total} letras reconstruidas',
+    'introTitle': 'Arma la fórmula',
+    'introBody':
+        'Arrastra cada pieza a su casilla: verde si está bien colocada, amarillo si pertenece a la letra pero no ahí, rojo si no pertenece en absoluto.',
+    'allDoneTitle': '¡Fórmulas armadas!',
+    'allDoneBody': 'Has elegido todos los signos correctos, en el orden correcto.',
+    'speakSolved': '¡Bien hecho! ¡Has reconstruido la letra {name}!',
   },
   'coursSyllabes': {
     'title': 'Las sílabas',
@@ -2007,7 +1999,6 @@ const Map<String, dynamic> ar = {
   "nav": {
     "accueil": "الرئيسية",
     "bibliotheque": "الوضع الحر",
-    "communaute": "الساحة",
     "profil": "الملف الشخصي",
     "reglages": "الإعدادات",
     "mainNavAria": "التنقل الرئيسي",
@@ -2043,6 +2034,7 @@ const Map<String, dynamic> ar = {
     "backToPath": "العودة إلى المسار",
     "subjects": "مواضيع",
     "continueSubject": "متابعة",
+    "startFirstSubject": "ابدأ",
     "firstSubjectTitle": "الموضوع 1: {title}",
     "firstSubjectBody": "لنبدأ التقييم!",
     "nextSubjectTitle": "أحسنت، نجحت في الموضوع!",
@@ -2164,6 +2156,7 @@ const Map<String, dynamic> ar = {
     "figureQuizStep": "اختبار الأشكال",
     "figureVraiFauxStep": "صح أم خطأ",
     "figureObjetStep": "أغراض",
+    "puzzleFormuleStep": "أحجية",
     "paliers": [
       {
         "title": "الإشارات الأساسية",
@@ -2192,17 +2185,6 @@ const Map<String, dynamic> ar = {
       "tagline": "مربع، مستطيل، مثلث، دائرة",
     },
     "comingSoon": "هذه الخطوة قادمة قريبًا!",
-  },
-  "community": {
-    "title": "مجتمعنا في الساحة",
-    "subtitle": "ترتيب هذا الأسبوع",
-    "othersTitle": "البراعم الأخرى",
-    "you": "أنا",
-    "amaniQuote": "كل واحد ينمو بوتيرته الخاصة، المهم أن تتقدم دائمًا.",
-    "amaniLine": "أحسنتم يا براعم الساحة جميعًا!",
-    "footnote": "هذا الترتيب خاص بهذا الجهاز فقط.",
-    "starsSuffix": "⭐",
-    "stumpAria": "جذع المرتبة {rank}",
   },
   "profileHub": {
     "title": "دفتر مستكشفي",
@@ -2247,7 +2229,7 @@ const Map<String, dynamic> ar = {
     "voiceGenderTestPhrase":
         "مرحبًا، أنا فلوريس غونغ نوتا! هل نواصل التعلم معًا؟",
     "photoTitle": "صورتي الشخصية",
-    "photoHint": "ستظهر بجانب اسمك في ترتيب الساحة.",
+    "photoHint": "",
     "photoChangeAria": "تغيير الصورة الشخصية",
     "photoRemove": "حذف",
     "nameSave": "حفظ",
@@ -2462,6 +2444,7 @@ const Map<String, dynamic> ar = {
     "title": "ارسم",
     "stepPrefix": "إشارة",
     "signsReady": "{done}/{total} إشارات جاهزة",
+    "lettersReady": "{done}/{total} حروف مكتوبة",
     "practiceStepsTitle": "تدرّب على كل إشارة",
     "practiceStepsHint": "أنجز كل إشارة {reps} مرات قبل كتابة الحرف كاملاً.",
     "finalTitle": "اكتب الحرف كاملاً",
@@ -2482,10 +2465,17 @@ const Map<String, dynamic> ar = {
     "practiceAgain": "تدرّب مرة أخرى",
     "backToNotebookLink": "العودة إلى دفتر الكتابة",
     "speakStart": "تدرّب على الحرف {name}.",
-    "speakNextStep": "رائع! انتقل الآن إلى الإشارة التالية.",
     "speakLetterDone": "أحسنت! لقد كوّنت الحرف {name} بشكل مثالي!",
-    "speakRetryStep": "تقريبًا! أعد المحاولة في هذه الحركة فقط: {desc}",
     "speakReset": "لنبدأ الحرف {name} من جديد.",
+  },
+  "exercicePuzzle": {
+    "piecesReady": "{done}/{total} حروف مُعاد تركيبها",
+    "introTitle": "ركّب التركيبة",
+    "introBody":
+        "اسحب كل قطعة إلى مكانها — أخضر إذا وُضعت في المكان الصحيح، أصفر إذا كانت من مكونات الحرف لكن في غير مكانها، أحمر إذا لم تكن من مكوناته إطلاقًا.",
+    "allDoneTitle": "تم تركيب كل التركيبات!",
+    "allDoneBody": "لقد اخترت كل الإشارات الصحيحة، بالترتيب الصحيح.",
+    "speakSolved": "أحسنت! لقد أعدت تركيب الحرف {name}!",
   },
   "coursSyllabes": {
     "title": "المقاطع",

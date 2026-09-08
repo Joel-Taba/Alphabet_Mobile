@@ -13,27 +13,6 @@ const _langStorageKey = 'amani_setting_lang';
 /// resynchronisation silencieuse en arrière-plan.
 enum SignupOutcome { success, nomDejaUtilise, erreurReseau }
 
-/// Entrée du classement telle que renvoyée par
-/// `GET /api/v1/communaute/classement` (public, sans authentification).
-class ClassementEntryDto {
-  final int rang;
-  final String nom;
-  final int score;
-
-  const ClassementEntryDto({
-    required this.rang,
-    required this.nom,
-    required this.score,
-  });
-
-  factory ClassementEntryDto.fromJson(Map<String, dynamic> json) =>
-      ClassementEntryDto(
-        rang: json['rang'] as int,
-        nom: json['nom'] as String,
-        score: json['score'] as int,
-      );
-}
-
 /// Synchronisation "local-first" avec `back-end/` : les réglages, le mot de
 /// passe et la progression restent lus/écrits localement (SharedPreferences,
 /// voir `profile_auth.dart` et `progress_service.dart`) comme source de
@@ -284,21 +263,6 @@ class BackendSyncService extends ChangeNotifier {
       return null;
     } catch (_) {
       return null;
-    }
-  }
-
-  /// Classement public (aucune authentification requise). Retourne une
-  /// liste vide en cas d'échec réseau plutôt que de faire planter l'écran
-  /// "La Clairière", qui garde ses profils de remplissage dans ce cas.
-  Future<List<ClassementEntryDto>> fetchClassement() async {
-    try {
-      final res = await _api.get('/api/v1/communaute/classement');
-      final list = res['classement'] as List<dynamic>? ?? [];
-      return list
-          .map((e) => ClassementEntryDto.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
     }
   }
 }

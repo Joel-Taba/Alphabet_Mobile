@@ -421,10 +421,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   }
 
   /// Renomme le profil actif : passe par `FamilyService.renameChild` (source
-  /// réactive de `_displayName`, écoutée partout où le nom apparaît — voir
-  /// `communaute_screen.dart`) ET `setStoredName` (repli local), pour que le
-  /// changement se propage immédiatement dans toute l'application sans
-  /// attendre un redémarrage.
+  /// réactive de `_displayName`, écoutée partout où le nom apparaît) ET
+  /// `setStoredName` (repli local), pour que le changement se propage
+  /// immédiatement dans toute l'application sans attendre un redémarrage.
   Future<void> _saveNameEdit() async {
     final newName = _nameEditCtrl.text.trim();
     setState(() => _editingName = false);
@@ -658,7 +657,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             ),
             const SizedBox(height: 24),
 
-            // Photo de profil — utilisée dans le classement de la Clairière
+            // Photo de profil
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

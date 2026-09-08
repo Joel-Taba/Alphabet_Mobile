@@ -286,11 +286,18 @@ class EvaluationSubjectAnnouncement extends StatelessWidget {
   final String subtitle;
   final VoidCallback onContinue;
 
+  /// Libellé du bouton — `null` (défaut) reprend `evaluation.continueSubject`
+  /// ("Continuer"), utilisé pour l'annonce d'un sujet SUIVANT. La toute
+  /// première annonce ("Sujet 1", rien avant elle à "continuer") doit passer
+  /// explicitement `evaluation.startFirstSubject` ("Commencer") ici.
+  final String? continueLabel;
+
   const EvaluationSubjectAnnouncement({
     super.key,
     required this.title,
     required this.subtitle,
     required this.onContinue,
+    this.continueLabel,
   });
 
   @override
@@ -366,7 +373,7 @@ class EvaluationSubjectAnnouncement extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    ev['continueSubject'] ?? 'Continuer',
+                    continueLabel ?? ev['continueSubject'] ?? 'Continuer',
                     style: TextStyle(
                       fontFamily: kBalooFontFamily,
                       fontWeight: FontWeight.w800,

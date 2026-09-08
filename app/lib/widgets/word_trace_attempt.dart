@@ -36,6 +36,51 @@ class WordTraceAttempt extends StatefulWidget {
   final ValueChanged<int> onLetterSolved;
   final double cellSize;
 
+  /// Recouvrements par défaut (voir `_spacingApart`/`_desiredInkGap`) — un
+  /// appelant peut les resserrer (Palier "Syllabes", pour bien montrer que
+  /// ses 2 lettres forment une seule syllabe et non un mot) sans changer le
+  /// rendu par défaut du Palier "Les Mots".
+  final double? spacingApart;
+  final double? desiredInkGap;
+
+  /// `false` (défaut) : fond blanc opaque, apparence de carte autonome — le
+  /// rendu historique du Palier "Les Mots". `true` : fond transparent pour
+  /// s'intégrer sans carte propre dans une feuille de cahier partagée qui le
+  /// fournit déjà à l'échelle de toute la page (Palier "Syllabes", même
+  /// convention que [LetterTraceCell.transparent]).
+  final bool transparent;
+
+  /// `true` (défaut) : ce widget peint lui-même son quadrillage Seyès
+  /// (`_WordSeyesLinesPainter`), sur TOUTE la largeur qui lui est allouée.
+  /// `false` : aucun quadrillage propre — pour un appelant qui empile
+  /// plusieurs répétitions côte à côte dans une grille (voir
+  /// `_SyllableTraceRow`/`_WordTraceRow` au Palier "Syllabes"/"Mots") et
+  /// dont chaque case est donc plus étroite que la page : peindre le
+  /// quadrillage ICI donnerait des lignes tronquées à la largeur de la case
+  /// plutôt que continues sur toute la feuille de cahier partagée, comme au
+  /// Palier 1 — c'est alors à l'appelant de peindre un quadrillage unique
+  /// derrière toute la grille.
+  final bool showOwnGridLines;
+
+  /// `true` (défaut) : chaque lettre garde son propre cadre bordé (Palier
+  /// "Les Mots"). `false` : aucun cadre par lettre — l'appelant encadre déjà
+  /// l'ensemble dans un seul et même cadre englobant (Palier "Syllabes" :
+  /// une syllabe est une seule unité visuelle, pas deux lettres cadrées
+  /// séparément dans un cadre commun).
+  final bool showLetterBorders;
+
+  /// `false` (défaut) : les lettres démarrent espacées (voir
+  /// `_defaultSpacingApart`) et ne se resserrent qu'une fois TOUTES tracées
+  /// avec succès (animation de fermeture, Palier "Les Mots"). `true` : les
+  /// lettres démarrent déjà à l'écart resserré final (voir
+  /// `desiredInkGap`/`_letterInkBounds`), sans attendre la réussite — pour
+  /// que la syllabe se lise comme une seule unité dès le début de l'exercice
+  /// et pas seulement une fois terminée (Palier "Syllabes"). Sûr même avec
+  /// un fort recouvrement de cases car la lettre active passe toujours
+  /// au-dessus des autres à l'écran (voir `build`), qui ignorent de toute
+  /// façon le toucher tant qu'elles ne sont pas actives.
+  final bool alwaysTight;
+
   const WordTraceAttempt({
     super.key,
     required this.letters,
@@ -44,6 +89,12 @@ class WordTraceAttempt extends StatefulWidget {
     required this.isFuture,
     required this.onLetterSolved,
     this.cellSize = 64,
+    this.spacingApart,
+    this.desiredInkGap,
+    this.transparent = false,
+    this.showOwnGridLines = true,
+    this.showLetterBorders = true,
+    this.alwaysTight = false,
   });
 
   @override
@@ -55,11 +106,14 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
   // Espacement pendant le tracé (cases encore bien séparées, pour rester
   // lisible pendant l'exercice) — resserré par rapport à l'ancien espacement
   // fixe de 8px.
-  static const double _spacingApart = 5;
+  static const double _defaultSpacingApart = 5;
 
   // Écart visé entre l'encre de deux lettres consécutives une fois le mot
   // complet, façon interlettrage réel plutôt que des cases collées.
-  static const double _desiredInkGap = 3;
+  static const double _defaultDesiredInkGap = 3;
+
+  double get _spacingApart => widget.spacingApart ?? _defaultSpacingApart;
+  double get _desiredInkGap => widget.desiredInkGap ?? _defaultDesiredInkGap;
 
   late final AnimationController _closeCtrl;
   late final Animation<double> _closeAnim;
@@ -75,12 +129,13 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
       duration: const Duration(milliseconds: 700),
     );
     _closeAnim = CurvedAnimation(parent: _closeCtrl, curve: Curves.easeOut);
-    if (_isComplete(widget)) _closeCtrl.value = 1;
+    if (widget.alwaysTight || _isComplete(widget)) _closeCtrl.value = 1;
   }
 
   @override
   void didUpdateWidget(covariant WordTraceAttempt oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.alwaysTight) return;
     if (!_isComplete(oldWidget) && _isComplete(widget)) {
       _closeCtrl.forward();
     } else if (!_isComplete(widget)) {
@@ -118,7 +173,7 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
     return Opacity(
       opacity: widget.isFuture ? 0.4 : 1,
       child: Container(
-        color: Colors.white,
+        color: widget.transparent ? Colors.transparent : Colors.white,
         padding: const EdgeInsets.all(12),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -164,7 +219,7 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
             }
 
             final rowHeight = cellSize;
-            const rowSpacing = _spacingApart;
+            final rowSpacing = _spacingApart;
             final totalHeight = rows * rowHeight + (rows - 1) * rowSpacing;
 
             return AnimatedBuilder(
@@ -175,15 +230,39 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
                   width: constraints.maxWidth,
                   height: totalHeight < cellSize ? cellSize : totalHeight,
                   child: CustomPaint(
-                    painter: _WordSeyesLinesPainter(
-                      rows: rows,
-                      rowHeight: rowHeight,
-                      rowSpacing: rowSpacing,
-                    ),
+                    painter: widget.showOwnGridLines
+                        ? _WordSeyesLinesPainter(
+                            rows: rows,
+                            rowHeight: rowHeight,
+                            rowSpacing: rowSpacing,
+                          )
+                        : null,
                     child: Stack(
                       children: [
-                        for (var i = 0; i < n; i++)
+                        // La lettre active passe TOUJOURS en dernier (donc
+                        // au-dessus à l'écran ET prioritaire au toucher) —
+                        // indispensable dès que des cases voisines peuvent se
+                        // chevaucher visuellement (voir `alwaysTight`) : sans
+                        // ça, une lettre inactive posée par-dessus (simple
+                        // ordre d'index) intercepterait le tracé destiné à la
+                        // lettre active sous elle, près de leur frontière
+                        // commune.
+                        for (final i in [
+                          for (var i = 0; i < n; i++)
+                            if (i != activeIdx) i,
+                          if (activeIdx >= 0) activeIdx,
+                        ])
                           Positioned(
+                            // Clé stable par INDEX (pas par lettre : deux
+                            // lettres identiques peuvent apparaître dans un
+                            // même mot) — indispensable dès que l'ordre de la
+                            // liste change avec `activeIdx` : sans elle,
+                            // Flutter réattribuerait les `State` internes
+                            // (tracé en cours, statut résolu...) par simple
+                            // position dans la liste plutôt que par lettre
+                            // réelle, effaçant au passage la case déjà
+                            // réussie qui change de position.
+                            key: ValueKey(i),
                             left: spacedX[i] + (tightX[i] - spacedX[i]) * t,
                             top: rowOf[i] * (rowHeight + rowSpacing),
                             child: LetterTraceCell(
@@ -191,6 +270,7 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
                               size: cellSize,
                               isActive: i == activeIdx,
                               transparent: true,
+                              showBorder: widget.showLetterBorders,
                               onSolved: () => widget.onLetterSolved(i),
                             ),
                           ),

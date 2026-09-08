@@ -32,6 +32,17 @@ int letterFamilyZIndex(String family) => letterStrokeZOrder[family] ?? 0;
 
 String signFamilyKey(SignFamily f) => f.name;
 
+/// Inverse de [signFamilyKey] : convertit la chaîne `family` du catalogue
+/// (`"trait"`, `"courbe"`, `"crochet"`, `"point"`) vers l'énum [SignFamily],
+/// `null` si inconnue.
+SignFamily? signFamilyFromKey(String? key) => switch (key) {
+  'trait' => SignFamily.trait,
+  'courbe' => SignFamily.courbe,
+  'crochet' => SignFamily.crochet,
+  'point' => SignFamily.point,
+  _ => null,
+};
+
 const double _sw = 16.0;
 const double _pad = 28.0;
 const double _cx = 100.0;

@@ -125,7 +125,27 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
 
   void _handleResume(Map<String, dynamic> saved) {
     _session.resumeFrom(saved);
-    setState(() => _resumeOffer = null);
+    setState(() {
+      _resumeOffer = null;
+      // Les identifiants sauvegardés sont `'$topicId-$index'` (voir
+      // `_onProblemDone`/`_onProblemTimeout`) — ne retient que ceux du
+      // sujet affiché ici, et seulement leur index, pour retrouver l'état
+      // de `_doneIndices`/`_activeIdx` exactement comme avant la sortie.
+      final prefix = '${widget.topicId}-';
+      _doneIndices.clear();
+      for (final id in _session.completedItems) {
+        if (id.startsWith(prefix)) {
+          final idx = int.tryParse(id.substring(prefix.length));
+          if (idx != null) _doneIndices.add(idx);
+        }
+      }
+      if (_doneIndices.isNotEmpty) {
+        _activeIdx = (_doneIndices.reduce((a, b) => a > b ? a : b) + 1).clamp(
+          0,
+          _problems.isEmpty ? 0 : _problems.length - 1,
+        );
+      }
+    });
     _startMentalCountdownForActive();
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
     if (savedIdx >= 0 && savedIdx < CALCUL_TOPICS.length) {
@@ -193,6 +213,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
         _activeIdx = i + 1;
       }
     });
+    if (_isEvaluation) _session.recordItemDone('${widget.topicId}-$i');
     context.read<ProgressProvider>().awardCompletion(
       typeEtape: 'CALCUL',
       modalite: 'EXERCICE',
@@ -218,6 +239,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
         _activeIdx = i + 1;
       }
     });
+    if (_isEvaluation) _session.recordItemDone('${widget.topicId}-$i');
     if (_doneIndices.length >= _problems.length && _awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
@@ -362,80 +384,137 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    physics: tracingAwareScrollPhysics(context),
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AmaniColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AmaniColors.textPrimary.withValues(
-                              alpha: 0.1,
-                            ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        AmaniMascot(
+                          pose: allDone
+                              ? AmaniPose.celebration
+                              : AmaniPose.encouragement,
+                          size: AmaniSize.small,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                allDone
+                                    ? (ec['allDoneTitle'] ?? '')
+                                    : (ec['introTitle'] ?? ''),
+                                style: AmaniTheme.titleStyle.copyWith(
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                allDone
+                                    ? (ec['allDoneBody'] ?? '')
+                                    : (ec['introBody'] ?? ''),
+                                style: AmaniTheme.bodyStyle.copyWith(
+                                  fontSize: 12,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            AmaniMascot(
-                              pose: allDone
-                                  ? AmaniPose.celebration
-                                  : AmaniPose.encouragement,
-                              size: AmaniSize.small,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    allDone
-                                        ? (ec['allDoneTitle'] ?? '')
-                                        : (ec['introTitle'] ?? ''),
-                                    style: AmaniTheme.titleStyle.copyWith(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    allDone
-                                        ? (ec['allDoneBody'] ?? '')
-                                        : (ec['introBody'] ?? ''),
-                                    style: AmaniTheme.bodyStyle.copyWith(
-                                      fontSize: 12,
-                                      color: AmaniColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: tracingAwareScrollPhysics(context),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                        // Une seule feuille de cahier pour toute la page,
+                        // avec une séparation entre chaque problème — même
+                        // traitement qu'aux Paliers 1, 2, 3 et 4 (voir
+                        // `exercice_liste_screen.dart`,
+                        // `exercice_lettre_screen.dart`,
+                        // `exercice_syllabes_screen.dart`,
+                        // `exercice_mots_screen.dart`).
+                        sliver: DecoratedSliver(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AmaniColors.textPrimary.withValues(
+                                alpha: 0.1,
                               ),
                             ),
-                          ],
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x144A3B2A),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          sliver: SliverMainAxisGroup(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.all(4),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    for (
+                                      var i = 0;
+                                      i < _problems.length;
+                                      i++
+                                    ) ...[
+                                      if (i > 0)
+                                        Divider(
+                                          height: 1,
+                                          color: AmaniColors.textPrimary
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      _ProblemRow(
+                                        key: ValueKey(
+                                          '${topic.id}-$i-r$_restartKey',
+                                        ),
+                                        problem: _problems[i],
+                                        isActive: i == _activeIdx,
+                                        isFuture: i > _activeIdx,
+                                        done: _doneIndices.contains(i),
+                                        timedOut: _timedOutIndices.contains(
+                                          i,
+                                        ),
+                                        doneLabel: el['done'] ?? 'Terminé !',
+                                        timedOutLabel:
+                                            ec['mentalTimeout'] ??
+                                            'Temps écoulé !',
+                                        mentalRemaining: i == _activeIdx
+                                            ? _mentalCountdown?.remaining
+                                            : null,
+                                        onDone: () => _onProblemDone(i),
+                                      ),
+                                    ],
+                                  ]),
+                                ),
+                              ),
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: CustomPaint(
+                                  painter: _TrailingCahierLinesPainter(),
+                                  size: Size.infinite,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      for (var i = 0; i < _problems.length; i++) ...[
-                        _ProblemRow(
-                          key: ValueKey('${topic.id}-$i-r$_restartKey'),
-                          problem: _problems[i],
-                          isActive: i == _activeIdx,
-                          isFuture: i > _activeIdx,
-                          done: _doneIndices.contains(i),
-                          timedOut: _timedOutIndices.contains(i),
-                          doneLabel: el['done'] ?? 'Terminé !',
-                          timedOutLabel:
-                              ec['mentalTimeout'] ?? 'Temps écoulé !',
-                          mentalRemaining: i == _activeIdx
-                              ? _mentalCountdown?.remaining
-                              : null,
-                          onDone: () => _onProblemDone(i),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -473,6 +552,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                   'title': topic.title,
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
+                continueLabel: ev['startFirstSubject'],
                 onContinue: _handleStartFirstSubject,
               ),
             if (allDone &&
@@ -558,44 +638,23 @@ class _ProblemRowState extends State<_ProblemRow> {
 
     return Opacity(
       opacity: widget.isFuture ? 0.4 : 1,
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: widget.timedOut
-                ? AmaniColors.warning.withValues(alpha: 0.6)
-                : widget.done
-                ? AmaniColors.secondary.withValues(alpha: 0.6)
-                : AmaniColors.textPrimary.withValues(alpha: 0.1),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: widget.timedOut
-                  ? const Color(0x2EE3B873)
-                  : widget.done
-                  ? const Color(0x2E8FBF6F)
-                  : const Color(0x144A3B2A),
-              blurRadius: widget.done ? 16 : 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: AmaniColors.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                  ),
+      // Feuille de cahier partagée (voir `_ExerciceCalculScreenState.build`)
+      // : plus de carte blanche/bordure/ombre propre à chaque problème —
+      // juste un filet de séparation sous l'en-tête, comme aux Paliers 1 à
+      // 4.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                 ),
               ),
-              child: Row(
+            ),
+            child: Row(
                 children: [
                   Expanded(
                     child: Text(
@@ -699,18 +758,35 @@ class _ProblemRowState extends State<_ProblemRow> {
                 onSolved: widget.onDone,
               )
             else if (!_hasSecondPart)
-              WordTraceAttempt(
-                letters: digits,
-                cellSize: 64,
-                solved: _solved,
-                isActive: widget.isActive,
-                isFuture: widget.isFuture,
-                onLetterSolved: (i) {
-                  setState(() {
-                    _solved.add(i);
-                    _maybeDone(digits.length, digitsSecond.length);
-                  });
-                },
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: widget.done
+                          ? AmaniColors.secondary.withValues(alpha: 0.6)
+                          : widget.isActive
+                          ? const Color(0x40A9784F)
+                          : const Color(0x1A4A3B2A),
+                    ),
+                  ),
+                  child: WordTraceAttempt(
+                    letters: digits,
+                    cellSize: 64,
+                    transparent: true,
+                    solved: _solved,
+                    isActive: widget.isActive,
+                    isFuture: widget.isFuture,
+                    onLetterSolved: (i) {
+                      setState(() {
+                        _solved.add(i);
+                        _maybeDone(digits.length, digitsSecond.length);
+                      });
+                    },
+                  ),
+                ),
               )
             else
               Builder(
@@ -722,11 +798,22 @@ class _ProblemRowState extends State<_ProblemRow> {
                   // largeur restée calée sur l'ancienne taille de case,
                   // cassant la mise en page de l'équation.
                   final uiScale = context.read<AccessibilitySettings>().uiScale;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                  Widget bordered(Widget child) => Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: widget.done
+                            ? AmaniColors.secondary.withValues(alpha: 0.6)
+                            : widget.isActive
+                            ? const Color(0x40A9784F)
+                            : const Color(0x1A4A3B2A),
+                      ),
                     ),
+                    child: child,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.all(12),
                     // Défilement horizontal de secours : à taille
                     // d'interface élevée et pour de grands nombres,
                     // l'équation peut dépasser la largeur de l'écran --
@@ -739,23 +826,26 @@ class _ProblemRowState extends State<_ProblemRow> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            width: (digits.length * 62.0 + 24) * uiScale,
-                            child: WordTraceAttempt(
-                              letters: digits,
-                              cellSize: 56,
-                              solved: _solved,
-                              isActive: widget.isActive,
-                              isFuture: widget.isFuture,
-                              onLetterSolved: (i) {
-                                setState(() {
-                                  _solved.add(i);
-                                  _maybeDone(
-                                    digits.length,
-                                    digitsSecond.length,
-                                  );
-                                });
-                              },
+                          bordered(
+                            SizedBox(
+                              width: (digits.length * 62.0 + 24) * uiScale,
+                              child: WordTraceAttempt(
+                                letters: digits,
+                                cellSize: 56,
+                                transparent: true,
+                                solved: _solved,
+                                isActive: widget.isActive,
+                                isFuture: widget.isFuture,
+                                onLetterSolved: (i) {
+                                  setState(() {
+                                    _solved.add(i);
+                                    _maybeDone(
+                                      digits.length,
+                                      digitsSecond.length,
+                                    );
+                                  });
+                                },
+                              ),
                             ),
                           ),
                           Padding(
@@ -770,23 +860,27 @@ class _ProblemRowState extends State<_ProblemRow> {
                               ),
                             ),
                           ),
-                          SizedBox(
-                            width: (digitsSecond.length * 62.0 + 24) * uiScale,
-                            child: WordTraceAttempt(
-                              letters: digitsSecond,
-                              cellSize: 56,
-                              solved: _solvedSecond,
-                              isActive: widget.isActive,
-                              isFuture: widget.isFuture,
-                              onLetterSolved: (i) {
-                                setState(() {
-                                  _solvedSecond.add(i);
-                                  _maybeDone(
-                                    digits.length,
-                                    digitsSecond.length,
-                                  );
-                                });
-                              },
+                          bordered(
+                            SizedBox(
+                              width:
+                                  (digitsSecond.length * 62.0 + 24) * uiScale,
+                              child: WordTraceAttempt(
+                                letters: digitsSecond,
+                                cellSize: 56,
+                                transparent: true,
+                                solved: _solvedSecond,
+                                isActive: widget.isActive,
+                                isFuture: widget.isFuture,
+                                onLetterSolved: (i) {
+                                  setState(() {
+                                    _solvedSecond.add(i);
+                                    _maybeDone(
+                                      digits.length,
+                                      digitsSecond.length,
+                                    );
+                                  });
+                                },
+                              ),
                             ),
                           ),
                         ],
@@ -797,7 +891,39 @@ class _ProblemRowState extends State<_ProblemRow> {
               ),
           ],
         ),
-      ),
     );
   }
+}
+
+/// Prolonge visuellement la feuille de cahier partagée jusqu'en bas de la
+/// page quand le contenu ne suffit pas à la remplir — copie de
+/// `_TrailingCahierLinesPainter` (`exercice_liste_screen.dart`, Palier 1).
+class _TrailingCahierLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+  static const double _rowHeight = 120;
+  static const double _rowSpacing = 10;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const scale = _rowHeight / 200;
+    var rowTop = 0.0;
+    while (rowTop < size.height) {
+      for (var i = 0; i < _positions.length; i++) {
+        final y = rowTop + _positions[i] * scale;
+        if (y > size.height) break;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
+      rowTop += _rowHeight + _rowSpacing;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TrailingCahierLinesPainter oldDelegate) =>
+      false;
 }

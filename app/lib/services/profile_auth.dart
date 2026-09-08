@@ -50,9 +50,8 @@ Future<void> setStoredName(String name) async {
 }
 
 /// Photo de profil choisie sur l'appareil, stockée en base64 (déjà
-/// redimensionnée/compressée par `pickAndEncodeProfilePhoto`). Utilisée dans
-/// la page des classements ("Clairière") pour représenter l'explorateur.
-/// Isolée par enfant, comme le reste de cette classe.
+/// redimensionnée/compressée par `pickAndEncodeProfilePhoto`). Isolée par
+/// enfant, comme le reste de cette classe.
 Future<String?> getStoredPhoto() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString(scopeKey(_photoKey));

@@ -1,7 +1,35 @@
 // Nommage SCREAMING_SNAKE_CASE volontaire (miroir 1:1 du module TypeScript
 // source) — voir `calcul_catalog.dart` pour l'explication complète.
 // ignore_for_file: constant_identifier_names, non_constant_identifier_names
-
+//
+// Lignes réglées du Palier 1 (espace SVG 0-200) : hampe-top=10, corps-top=70,
+// ligne de base=130 (rouge). Sur le cahier d'exercice réel (voir
+// `_OccurrencePainter` dans `repetition_row.dart`), le tracé complété est
+// rendu avec `StrokeCap.round` et une épaisseur de trait de 7 (PAS celle de
+// `sign_glyph.dart`, `_sw = 16`, qui ne sert qu'aux icônes/badges génériques
+// ailleurs dans l'app) : au niveau de CHAQUE extrémité ouverte d'un tracé, et
+// de CHAQUE sommet d'arc où la tangente est momentanément horizontale
+// (haut/bas d'un cercle ou d'un crochet), l'encre déborde de exactement
+// `strokeWidth/2 = 3.5` unités au-delà du point mathématique — que ce point
+// soit un véritable bout de chemin (capuchon rond) ou un simple sommet au
+// milieu d'un arc (l'épaisseur du trait déborde alors perpendiculairement à
+// la tangente, donc verticalement pile au sommet). Pour qu'à l'écran l'encre
+// aille PILE jusqu'à effleurer une ligne réglée (sans aucun débordement,
+// même minime), chaque `pathD` est donc resserré de 3.5 unités par rapport à
+// la ligne visée — jamais `startXY`/`endXY`, qui restent le point sémantique
+// exact sur la ligne (marqueur de départ/arrivée affiché à l'enfant, et
+// tolérance de validation du tracé).
+//
+// Ouverture des courbes (open-right/open-left, pleine et réduite) : calquée
+// sur la lettre "c" script (`letter_formation_catalog.dart`, char "c"),
+// dont la courbe est un arc de cercle d'angle d'ouverture ≈ 78.1° (39.07°
+// de part et d'autre de l'axe horizontal). Le rayon (56.5 plein, 26.5
+// réduit) reste néanmoins celui d'un DEMI-cercle plein : c'est lui, pas la
+// position des extrémités, qui fixe l'étendue verticale de l'encre (le
+// trait passe par le sommet ET la base absolus du cercle bien avant
+// d'atteindre ses deux extrémités, puisque l'arc dessiné fait plus de 180°)
+// — seule la position (x, y) des deux extrémités change pour resserrer
+// l'ouverture, à rayon et centrage (x=100) inchangés.
 import 'dart:convert';
 
 final List<dynamic> TRAITS = jsonDecode(r'''
@@ -23,7 +51,7 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "vertical",
     "scale": "full",
-    "pathD": "M 100 10 L 100 130",
+    "pathD": "M 100 13.5 L 100 126.5",
     "startXY": [
       100,
       10
@@ -54,7 +82,7 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "vertical",
     "scale": "reduced",
-    "pathD": "M 100 70 L 100 130",
+    "pathD": "M 100 73.5 L 100 126.5",
     "startXY": [
       100,
       70
@@ -85,14 +113,14 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "horizontal",
     "scale": "full",
-    "pathD": "M 28 130 L 172 130",
+    "pathD": "M 28 100 L 172 100",
     "startXY": [
       28,
-      130
+      100
     ],
     "endXY": [
       172,
-      130
+      100
     ],
     "zone": "corps",
     "strokeColor": "#4A3B2A",
@@ -116,14 +144,14 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "horizontal",
     "scale": "reduced",
-    "pathD": "M 60 130 L 140 130",
+    "pathD": "M 60 100 L 140 100",
     "startXY": [
       60,
-      130
+      100
     ],
     "endXY": [
       140,
-      130
+      100
     ],
     "zone": "corps",
     "strokeColor": "#4A3B2A",
@@ -147,7 +175,7 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "oblique-gauche",
     "scale": "full",
-    "pathD": "M 40 10 L 160 130",
+    "pathD": "M 43.5 13.5 L 156.5 126.5",
     "startXY": [
       40,
       10
@@ -178,7 +206,7 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "oblique-droit",
     "scale": "full",
-    "pathD": "M 160 10 L 40 130",
+    "pathD": "M 156.5 13.5 L 43.5 126.5",
     "startXY": [
       160,
       10
@@ -209,7 +237,7 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "oblique-gauche",
     "scale": "reduced",
-    "pathD": "M 70 70 L 130 130",
+    "pathD": "M 73.5 73.5 L 126.5 126.5",
     "startXY": [
       70,
       70
@@ -240,7 +268,7 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "family": "trait",
     "variant": "oblique-droit",
     "scale": "reduced",
-    "pathD": "M 130 70 L 70 130",
+    "pathD": "M 126.5 73.5 L 73.5 126.5",
     "startXY": [
       130,
       70
@@ -276,13 +304,13 @@ final List<dynamic> COURBES = jsonDecode(r'''
     "family": "courbe",
     "variant": "open-right",
     "scale": "full",
-    "pathD": "M 130 10 A 60 60 0 0 0 130 130",
+    "pathD": "M 143.86 34.38 A 56.5 56.5 0 1 0 143.86 105.62",
     "startXY": [
-      130,
+      140.37,
       10
     ],
     "endXY": [
-      130,
+      140.37,
       130
     ],
     "zone": "hampe",
@@ -307,13 +335,13 @@ final List<dynamic> COURBES = jsonDecode(r'''
     "family": "courbe",
     "variant": "open-right",
     "scale": "reduced",
-    "pathD": "M 120 70 A 30 30 0 0 0 120 130",
+    "pathD": "M 120.57 83.29 A 26.5 26.5 0 1 0 120.57 116.71",
     "startXY": [
-      120,
+      117.08,
       70
     ],
     "endXY": [
-      120,
+      117.08,
       130
     ],
     "zone": "corps",
@@ -338,13 +366,13 @@ final List<dynamic> COURBES = jsonDecode(r'''
     "family": "courbe",
     "variant": "open-left",
     "scale": "full",
-    "pathD": "M 70 10 A 60 60 0 0 1 70 130",
+    "pathD": "M 56.14 34.38 A 56.5 56.5 0 1 1 56.14 105.62",
     "startXY": [
-      70,
+      59.63,
       10
     ],
     "endXY": [
-      70,
+      59.63,
       130
     ],
     "zone": "hampe",
@@ -369,13 +397,13 @@ final List<dynamic> COURBES = jsonDecode(r'''
     "family": "courbe",
     "variant": "open-left",
     "scale": "reduced",
-    "pathD": "M 80 70 A 30 30 0 0 1 80 130",
+    "pathD": "M 79.43 83.29 A 26.5 26.5 0 1 1 79.43 116.71",
     "startXY": [
-      80,
+      82.92,
       70
     ],
     "endXY": [
-      80,
+      82.92,
       130
     ],
     "zone": "corps",
@@ -400,7 +428,7 @@ final List<dynamic> COURBES = jsonDecode(r'''
     "family": "courbe",
     "variant": "closed",
     "scale": "full",
-    "pathD": "M 100 70 A 30 30 0 1 0 100.1 70",
+    "pathD": "M 100 78 A 22 22 0 1 0 100.1 78",
     "startXY": [
       100,
       70
@@ -436,14 +464,14 @@ final List<dynamic> POINTS = jsonDecode(r'''
     "family": "point",
     "variant": "center",
     "scale": "full",
-    "pathD": "M 100 82 A 10 10 0 1 0 100.1 82",
+    "pathD": "M 100 90 A 10 10 0 1 0 100.1 90",
     "startXY": [
       100,
-      82
+      90
     ],
     "endXY": [
       100,
-      82
+      90
     ],
     "zone": "corps",
     "strokeColor": "#4A3B2A",
@@ -472,7 +500,7 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "top-right",
     "scale": "full",
-    "pathD": "M 117.77 27.77 A 17.77 17.77 0 0 0 82.23 27.77 L 82.23 130",
+    "pathD": "M 119.31 32.81 A 19.31 19.31 0 0 0 80.69 32.81 L 80.69 126.5",
     "startXY": [
       117.77,
       27.77
@@ -503,7 +531,7 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "top-left",
     "scale": "full",
-    "pathD": "M 82.23 27.77 A 17.77 17.77 0 0 1 117.77 27.77 L 117.77 130",
+    "pathD": "M 80.69 32.81 A 19.31 19.31 0 0 1 119.31 32.81 L 119.31 126.5",
     "startXY": [
       82.23,
       27.77
@@ -534,14 +562,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "bottom-right",
     "scale": "full",
-    "pathD": "M 82.23 10 L 82.23 112.23 A 17.77 17.77 0 0 0 117.77 112.23",
+    "pathD": "M 80.69 13.5 L 80.69 107.19 A 19.31 19.31 0 0 0 119.31 107.19",
     "startXY": [
       82.23,
       10
     ],
     "endXY": [
       117.77,
-      112.23
+      104.23
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -565,14 +593,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "bottom-left",
     "scale": "full",
-    "pathD": "M 117.77 10 L 117.77 112.23 A 17.77 17.77 0 0 1 82.23 112.23",
+    "pathD": "M 119.31 13.5 L 119.31 107.19 A 19.31 19.31 0 0 1 80.69 107.19",
     "startXY": [
       117.77,
       10
     ],
     "endXY": [
       82.23,
-      112.23
+      104.23
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -596,14 +624,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-gauche",
     "scale": "full",
-    "pathD": "M 82.23 27.77 A 17.77 17.77 0 0 1 117.77 27.77 L 117.77 112.23 A 17.77 17.77 0 0 1 82.23 112.23",
+    "pathD": "M 80.69 32.81 A 19.31 19.31 0 0 1 119.31 32.81 L 119.31 107.19 A 19.31 19.31 0 0 1 80.69 107.19",
     "startXY": [
       82.23,
-      27.77
+      35.77
     ],
     "endXY": [
       82.23,
-      112.23
+      104.23
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -627,14 +655,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-droit",
     "scale": "full",
-    "pathD": "M 117.77 27.77 A 17.77 17.77 0 0 0 82.23 27.77 L 82.23 112.23 A 17.77 17.77 0 0 0 117.77 112.23",
+    "pathD": "M 119.31 32.81 A 19.31 19.31 0 0 0 80.69 32.81 L 80.69 107.19 A 19.31 19.31 0 0 0 119.31 107.19",
     "startXY": [
       117.77,
-      27.77
+      35.77
     ],
     "endXY": [
       117.77,
-      112.23
+      104.23
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -658,14 +686,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-gauche-droit",
     "scale": "full",
-    "pathD": "M 64.46 27.77 A 17.77 17.77 0 0 1 100 27.77 L 100 112.23 A 17.77 17.77 0 0 0 135.54 112.23",
+    "pathD": "M 61.38 32.81 A 19.31 19.31 0 0 1 100 32.81 L 100 107.19 A 19.31 19.31 0 0 0 138.62 107.19",
     "startXY": [
       64.46,
-      27.77
+      35.77
     ],
     "endXY": [
       135.54,
-      112.23
+      104.23
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -689,14 +717,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-droit-gauche",
     "scale": "full",
-    "pathD": "M 135.54 27.77 A 17.77 17.77 0 0 0 100 27.77 L 100 112.23 A 17.77 17.77 0 0 1 64.46 112.23",
+    "pathD": "M 138.62 32.81 A 19.31 19.31 0 0 0 100 32.81 L 100 107.19 A 19.31 19.31 0 0 1 61.38 107.19",
     "startXY": [
       135.54,
-      27.77
+      35.77
     ],
     "endXY": [
       64.46,
-      112.23
+      104.23
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",

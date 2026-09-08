@@ -14,6 +14,7 @@ import '../widgets/word_trace_attempt.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
+import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../widgets/directional_icon.dart';
@@ -87,7 +88,12 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
 
   void _handleResume(Map<String, dynamic> saved) {
     _session.resumeFrom(saved);
-    setState(() => _resumeOffer = null);
+    setState(() {
+      _resumeOffer = null;
+      _doneSyllables
+        ..clear()
+        ..addAll(_session.completedItems);
+    });
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
     if (savedIdx >= 0 && savedIdx < SYLLABLE_GROUPS.length) {
       final savedConsonant =
@@ -187,6 +193,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
 
     void onSyllableDone(String syllable) {
       setState(() => _doneSyllables.add(syllable));
+      if (_isEvaluation) _session.recordItemDone(syllable);
       context.read<ProgressProvider>().awardCompletion(
         typeEtape: 'SYLLABE',
         modalite: 'EXERCICE',
@@ -276,83 +283,136 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    physics: tracingAwareScrollPhysics(context),
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AmaniColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AmaniColors.textPrimary.withValues(
-                              alpha: 0.1,
-                            ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        AmaniMascot(
+                          pose: allDone
+                              ? AmaniPose.celebration
+                              : AmaniPose.encouragement,
+                          size: AmaniSize.small,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                allDone
+                                    ? (es['allDoneTitle'] ?? '')
+                                    : (es['introTitle'] ?? ''),
+                                style: AmaniTheme.titleStyle.copyWith(
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                allDone
+                                    ? (es['allDoneBody'] ?? '')
+                                    : (es['introBody'] ?? ''),
+                                style: AmaniTheme.bodyStyle.copyWith(
+                                  fontSize: 12,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            AmaniMascot(
-                              pose: allDone
-                                  ? AmaniPose.celebration
-                                  : AmaniPose.encouragement,
-                              size: AmaniSize.small,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    allDone
-                                        ? (es['allDoneTitle'] ?? '')
-                                        : (es['introTitle'] ?? ''),
-                                    style: AmaniTheme.titleStyle.copyWith(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    allDone
-                                        ? (es['allDoneBody'] ?? '')
-                                        : (es['introBody'] ?? ''),
-                                    style: AmaniTheme.bodyStyle.copyWith(
-                                      fontSize: 12,
-                                      color: AmaniColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: tracingAwareScrollPhysics(context),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                        // Une seule feuille de cahier pour toute la page,
+                        // avec une séparation entre chaque syllabe — même
+                        // traitement qu'aux Paliers 1 et 2 (voir
+                        // `exercice_liste_screen.dart`/`exercice_lettre_screen.dart`).
+                        sliver: DecoratedSliver(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AmaniColors.textPrimary.withValues(
+                                alpha: 0.1,
                               ),
                             ),
-                          ],
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x144A3B2A),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          sliver: SliverMainAxisGroup(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.all(4),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    for (
+                                      int gi = 0;
+                                      gi < syllables.length;
+                                      gi++
+                                    ) ...[
+                                      if (gi > 0)
+                                        Divider(
+                                          height: 1,
+                                          color: AmaniColors.textPrimary
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      _SyllableTraceRow(
+                                        key: ValueKey(
+                                          '${syllables[gi]['syllable']}-r$_restartKey',
+                                        ),
+                                        entry:
+                                            syllables[gi]
+                                                as Map<String, dynamic>,
+                                        onSpeak: () => speech.speak(
+                                          syllables[gi]['syllable'] as String,
+                                          lang,
+                                        ),
+                                        done: _doneSyllables.contains(
+                                          syllables[gi]['syllable'] as String,
+                                        ),
+                                        onDone: () => onSyllableDone(
+                                          syllables[gi]['syllable'] as String,
+                                        ),
+                                        doneLabel: el['done'] ?? 'Terminé !',
+                                        exampleWordPrefix:
+                                            es['exampleWordPrefix'] ?? '',
+                                        repetitions: _settings.repetitions,
+                                      ),
+                                    ],
+                                  ]),
+                                ),
+                              ),
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: CustomPaint(
+                                  painter: _TrailingCahierLinesPainter(),
+                                  size: Size.infinite,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      for (final syllable in syllables) ...[
-                        _SyllableTraceRow(
-                          key: ValueKey(
-                            '${syllable['syllable']}-r$_restartKey',
-                          ),
-                          entry: syllable as Map<String, dynamic>,
-                          onSpeak: () => speech.speak(
-                            syllable['syllable'] as String,
-                            lang,
-                          ),
-                          done: _doneSyllables.contains(
-                            syllable['syllable'] as String,
-                          ),
-                          onDone: () =>
-                              onSyllableDone(syllable['syllable'] as String),
-                          doneLabel: el['done'] ?? 'Terminé !',
-                          exampleWordPrefix: es['exampleWordPrefix'] ?? '',
-                          repetitions: _settings.repetitions,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -391,6 +451,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                   'title': widget.consonant,
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
+                continueLabel: ev['startFirstSubject'],
                 onContinue: _handleStartFirstSubject,
               ),
             if (allDone &&
@@ -444,6 +505,13 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
   late List<Set<int>> _solvedByRep;
   int _activeRep = 0;
 
+  // Case de répétition volontairement petite : les 2 lettres d'une syllabe
+  // sont resserrées (voir `_spacingApart`/`_desiredInkGap` ci-dessous) pour
+  // se lire comme une seule unité, pas comme un mot en cours d'assemblage.
+  static const double _letterCellSize = 62;
+  static const double _repSpacingApart = 2;
+  static const double _repDesiredInkGap = 0;
+
   @override
   void initState() {
     super.initState();
@@ -473,129 +541,261 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
         .toList();
+    // Largeur exacte pour les 2 lettres d'une syllabe, resserrées — voir
+    // `_letterCellSize`/`_repSpacingApart` ci-dessus. `WordTraceAttempt`
+    // multiplie sa taille de case par le réglage "Taille de l'interface"
+    // (défaut 1.4, voir `AccessibilitySettings.uiScale`) : cette largeur
+    // doit suivre la même échelle, sous peine de ne plus laisser assez de
+    // place pour les 2 lettres sur une seule ligne (empilées verticalement
+    // à la place). +24 pour le padding interne de `WordTraceAttempt`
+    // (`EdgeInsets.all(12)`, de chaque côté).
+    final uiScale = context.watch<AccessibilitySettings>().uiScale;
+    final effLetterCellSize = _letterCellSize * uiScale;
+    final cellContentWidth =
+        effLetterCellSize * 2 + _repSpacingApart + 24;
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: widget.done
-              ? AmaniColors.secondary.withValues(alpha: 0.6)
-              : AmaniColors.textPrimary.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: widget.done
-                ? const Color(0x2E8FBF6F)
-                : const Color(0x144A3B2A),
-            blurRadius: widget.done ? 16 : 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: AmaniColors.surface,
-              border: Border(
-                bottom: BorderSide(
-                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // En-tête — simple filet de séparation, la feuille de cahier
+        // partagée (voir `_buildBody` plus bas) fournit déjà fond/bordure/
+        // ombre à l'échelle de toute la page.
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: AmaniColors.textPrimary.withValues(alpha: 0.1),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        syllable,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      syllable,
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AmaniColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        '${widget.exampleWordPrefix} « ${widget.entry['exampleWord']} »',
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: kBalooFontFamily,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: AmaniColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                          color: AmaniColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '${widget.exampleWordPrefix} « ${widget.entry['exampleWord']} »',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 11,
-                            color: AmaniColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.done)
+                Text(
+                  '✓ ${widget.doneLabel}',
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AmaniColors.secondary,
+                  ),
+                ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: widget.onSpeak,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0x264A90E2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.volume2,
+                    size: 14,
+                    color: Color(0xFF2D6BBF),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          // Répétitions agencées horizontalement, comme les cases de
+          // répétition des signes (`RepetitionRow`) — chaque case bordée
+          // délimite clairement le début et la fin d'une itération de la
+          // syllabe. Un unique quadrillage Seyès peint sur TOUTE la largeur
+          // disponible derrière la grille (voir `showOwnGridLines: false`
+          // ci-dessous) — jamais un quadrillage propre à chaque case, qui
+          // s'arrêterait à sa largeur au lieu de couvrir toute la feuille de
+          // cahier, comme au Palier 1 (`RepetitionRow`).
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 10.0;
+              final rowHeight = effLetterCellSize + 24;
+              final perRow =
+                  ((constraints.maxWidth + spacing) /
+                          (cellContentWidth + spacing))
+                      .floor()
+                      .clamp(1, widget.repetitions == 0 ? 1 : widget.repetitions);
+              final rows = (widget.repetitions / perRow).ceil();
+
+              return SizedBox(
+                width: constraints.maxWidth,
+                child: CustomPaint(
+                  painter: _SyllableCahierLinesPainter(
+                    rows: rows,
+                    rowHeight: rowHeight,
+                    rowSpacing: spacing,
+                    lineScale: effLetterCellSize / 200,
+                  ),
+                  child: Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: [
+                      for (var rep = 0; rep < widget.repetitions; rep++)
+                        Container(
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _solvedByRep[rep].length == letters.length
+                                  ? AmaniColors.secondary.withValues(
+                                      alpha: 0.6,
+                                    )
+                                  : rep == _activeRep
+                                  ? const Color(0x40A9784F)
+                                  : const Color(0x1A4A3B2A),
+                            ),
+                          ),
+                          child: SizedBox(
+                            width: cellContentWidth,
+                            child: WordTraceAttempt(
+                              letters: letters,
+                              cellSize: _letterCellSize,
+                              spacingApart: _repSpacingApart,
+                              desiredInkGap: _repDesiredInkGap,
+                              transparent: true,
+                              showOwnGridLines: false,
+                              showLetterBorders: false,
+                              alwaysTight: true,
+                              solved: _solvedByRep[rep],
+                              isActive: rep == _activeRep,
+                              isFuture: rep > _activeRep,
+                              onLetterSolved: (i) {
+                                setState(() {
+                                  _solvedByRep[rep].add(i);
+                                  if (_solvedByRep[rep].length ==
+                                      letters.length) {
+                                    if (rep + 1 < widget.repetitions) {
+                                      _activeRep = rep + 1;
+                                    } else {
+                                      widget.onDone();
+                                    }
+                                  }
+                                });
+                              },
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-                if (widget.done)
-                  Text(
-                    '✓ ${widget.doneLabel}',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AmaniColors.secondary,
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: widget.onSpeak,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0x264A90E2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.volume2,
-                      size: 14,
-                      color: Color(0xFF2D6BBF),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
-          for (var rep = 0; rep < widget.repetitions; rep++) ...[
-            if (rep > 0)
-              Divider(
-                height: 1,
-                color: AmaniColors.textPrimary.withValues(alpha: 0.08),
-              ),
-            WordTraceAttempt(
-              letters: letters,
-              cellSize: 72,
-              solved: _solvedByRep[rep],
-              isActive: rep == _activeRep,
-              isFuture: rep > _activeRep,
-              onLetterSolved: (i) {
-                setState(() {
-                  _solvedByRep[rep].add(i);
-                  if (_solvedByRep[rep].length == letters.length) {
-                    if (rep + 1 < widget.repetitions) {
-                      _activeRep = rep + 1;
-                    } else {
-                      widget.onDone();
-                    }
-                  }
-                });
-              },
-            ),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
+
+/// Quadrillage Seyès partagé derrière toute la grille de répétitions d'une
+/// syllabe — copie de `_LetterCahierLinesPainter`
+/// (`letter_repetition_row.dart`), même formule de centrage (`originDy`)
+/// puisque `WordTraceAttempt` utilise le même padding interne de 12 de
+/// chaque côté.
+class _SyllableCahierLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+
+  final int rows;
+  final double rowHeight;
+  final double rowSpacing;
+  final double lineScale;
+
+  _SyllableCahierLinesPainter({
+    required this.rows,
+    required this.rowHeight,
+    required this.rowSpacing,
+    required this.lineScale,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final originDy = (rowHeight - 200 * lineScale) / 2;
+    for (int r = 0; r < rows; r++) {
+      final rowTop = r * (rowHeight + rowSpacing);
+      for (int i = 0; i < _positions.length; i++) {
+        final y = rowTop + originDy + _positions[i] * lineScale;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SyllableCahierLinesPainter oldDelegate) =>
+      oldDelegate.rows != rows ||
+      oldDelegate.rowHeight != rowHeight ||
+      oldDelegate.rowSpacing != rowSpacing ||
+      oldDelegate.lineScale != lineScale;
+}
+
+/// Prolonge visuellement la feuille de cahier partagée jusqu'en bas de la
+/// page quand le contenu ne suffit pas à la remplir — copie de
+/// `_TrailingCahierLinesPainter` (`exercice_liste_screen.dart`, Palier 1).
+class _TrailingCahierLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+  static const double _rowHeight = 120;
+  static const double _rowSpacing = 10;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const scale = _rowHeight / 200;
+    var rowTop = 0.0;
+    while (rowTop < size.height) {
+      for (var i = 0; i < _positions.length; i++) {
+        final y = rowTop + _positions[i] * scale;
+        if (y > size.height) break;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
+      rowTop += _rowHeight + _rowSpacing;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TrailingCahierLinesPainter oldDelegate) =>
+      false;
 }

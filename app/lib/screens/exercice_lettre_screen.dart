@@ -1,33 +1,31 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
-import '../hooks/use_accessibility_settings.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../data/palier2_groups.dart';
-import '../utils/trace_validation.dart';
 import '../widgets/amani_mascot.dart';
-import '../widgets/cahier_frame.dart';
 import '../widgets/repetition_row.dart';
+import '../widgets/letter_repetition_row.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
 import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
-import '../widgets/sign_glyph.dart' show letterFamilyZIndex;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
-/// exercé séparément) puis Phase B (la lettre écrite d'un seul geste continu).
-/// Port fidèle de `src/routes/exercice.lettre.$char.tsx`.
+/// exercé séparément) puis Phase B (la lettre entière, répétée autant de
+/// fois que le nombre de répétitions réglé) — les deux phases partagent une
+/// unique feuille de cahier, comme au Palier 1 (voir
+/// `exercice_liste_screen.dart`).
 class ExerciceLettreScreen extends StatefulWidget {
   final String char;
   final String? pg;
@@ -43,16 +41,6 @@ class ExerciceLettreScreen extends StatefulWidget {
   State<ExerciceLettreScreen> createState() => _ExerciceLettreScreenState();
 }
 
-enum _StepStatus { idle, drawing, success, retry }
-
-class _CompletedStep {
-  final int stepIdx;
-  final Color strokeColor;
-  const _CompletedStep(this.stepIdx, this.strokeColor);
-}
-
-const double _kLetterTolerancePx = 27;
-
 /// Identifiant fixe de cette évaluation (Palier "Combinatoire") — voir
 /// `EvaluationSessionController.ensureContext`.
 const String _kEvalId = 'combinatoire';
@@ -61,17 +49,15 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   late ExerciseSettings _settings;
   late final EvaluationSessionController _session;
   final Set<int> _doneSteps = {};
-  int _currentStepIdx = 0;
   bool _showFirstSubjectAnnouncement = false;
   Map<String, dynamic>? _resumeOffer;
 
-  /// Canevas de la Phase B (lettre entière) agrandi selon le réglage
-  /// "Taille de l'interface" (Profil > Réglages) : composant ciblé, pas un
-  /// zoom de tout l'écran.
-  double get _letterCanvasSize =>
-      270 * context.read<AccessibilitySettings>().uiScale;
-  final List<_CompletedStep> _completedSteps = [];
-  _StepStatus _stepStatus = _StepStatus.idle;
+  /// Lettres du groupe courant déjà réussies, en évaluation — voir
+  /// `_buildEvaluationBody` : toutes les lettres du sujet apparaissent sur
+  /// UNE seule page, réalisées successivement (chacune débloque la
+  /// suivante), au lieu de naviguer lettre par lettre.
+  final Set<String> _doneGroupLetters = {};
+
   bool _letterSuccess = false;
   // Incrémenté à chaque "Recommencer" pour forcer le remontage des
   // RepetitionRow de la Phase A (elles gèrent leur propre état interne).
@@ -122,7 +108,17 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final lang = context.read<LanguageProvider>().lang;
     final palier2Groups = getPalier2Groups(lang.name);
     _session.resumeFrom(saved);
-    setState(() => _resumeOffer = null);
+    setState(() {
+      _resumeOffer = null;
+      // Retrouve exactement les lettres déjà réussies avant la sortie de la
+      // page (voir `EvaluationSessionController.recordItemDone`) — les
+      // identifiants d'autres sujets/paliers présents dans cet ensemble ne
+      // correspondent à aucun caractère du groupe affiché ici, donc restent
+      // sans effet.
+      _doneGroupLetters
+        ..clear()
+        ..addAll(_session.completedItems);
+    });
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
     if (savedIdx >= 0 && savedIdx < palier2Groups.length) {
       final savedGroup = palier2Groups[savedIdx];
@@ -163,10 +159,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
 
   void _resetAll() {
     _doneSteps.clear();
-    _currentStepIdx = 0;
-    _completedSteps.clear();
-    _stepStatus = _StepStatus.idle;
     _letterSuccess = false;
+    _doneGroupLetters.clear();
   }
 
   @override
@@ -177,69 +171,62 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     super.dispose();
   }
 
-  void _handleStepSuccess(List steps) {
-    final activeStep = steps[_currentStepIdx];
+  /// Toutes les répétitions de la Phase B (lettre entière, voir
+  /// `LetterRepetitionRow`) sont réussies.
+  void _handleLetterRepetitionsDone() {
     final t = context.read<LanguageProvider>().t;
     final lang = context.read<LanguageProvider>().lang;
-    final speech = context.read<SignSpeechService>();
     final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
     final style = context.read<WritingStyleProvider>().style.name;
     final letter = getLetterFormation(widget.char, style)!;
 
-    setState(() {
-      _completedSteps.add(
-        _CompletedStep(
-          _currentStepIdx,
-          Color(
-            int.parse(
-              (activeStep['strokeColor'] as String).replaceFirst('#', '0xFF'),
-            ),
-          ),
-        ),
-      );
-    });
-
-    if (_currentStepIdx + 1 < steps.length) {
-      speech.speak(el['speakNextStep'] ?? '', lang);
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (!mounted) return;
-        setState(() {
-          _currentStepIdx += 1;
-          _stepStatus = _StepStatus.idle;
-        });
-      });
-    } else {
-      speech.speak(
-        tFormat(el['speakLetterDone'] ?? '', {
-          'name': letter['name'][lang.name] ?? '',
-        }),
-        lang,
-      );
-      context.read<ProgressProvider>().awardCompletion(
-        typeEtape: 'LETTRE',
-        modalite: 'EXERCICE',
-        etapeCode: widget.char,
-        palier: 2,
-      );
-      setState(() => _letterSuccess = true);
-      if (_awaitingRepeatCompletion) {
-        context.read<ProgressProvider>().awardRestartBonus();
-        setState(() => _awaitingRepeatCompletion = false);
-      }
-    }
-  }
-
-  void _handleStepRetry(List steps) {
-    final activeStep = steps[_currentStepIdx];
-    final t = context.read<LanguageProvider>().t;
-    final lang = context.read<LanguageProvider>().lang;
-    final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
     context.read<SignSpeechService>().speak(
-      tFormat(el['speakRetryStep'] ?? '', {
-        'desc': activeStep['description'][lang.name] ?? '',
+      tFormat(el['speakLetterDone'] ?? '', {
+        'name': letter['name'][lang.name] ?? '',
       }),
       lang,
     );
+    context.read<ProgressProvider>().awardCompletion(
+      typeEtape: 'LETTRE',
+      modalite: 'EXERCICE',
+      etapeCode: widget.char,
+      palier: 2,
+    );
+    setState(() => _letterSuccess = true);
+    if (_awaitingRepeatCompletion) {
+      context.read<ProgressProvider>().awardRestartBonus();
+      setState(() => _awaitingRepeatCompletion = false);
+    }
+  }
+
+  /// Toutes les répétitions d'UNE lettre du groupe (voir
+  /// `_buildEvaluationBody`) sont réussies — l'attribution de points reste
+  /// par lettre (comme en pratique), seul l'affichage les regroupe.
+  void _handleGroupLetterDone(dynamic letter, int totalGroupLetters) {
+    final t = context.read<LanguageProvider>().t;
+    final lang = context.read<LanguageProvider>().lang;
+    final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
+    final char = letter['char'] as String;
+
+    context.read<SignSpeechService>().speak(
+      tFormat(el['speakLetterDone'] ?? '', {
+        'name': letter['name'][lang.name] ?? '',
+      }),
+      lang,
+    );
+    context.read<ProgressProvider>().awardCompletion(
+      typeEtape: 'LETTRE',
+      modalite: 'EXERCICE',
+      etapeCode: char,
+      palier: 2,
+    );
+    setState(() => _doneGroupLetters.add(char));
+    _session.recordItemDone(char);
+    if (_doneGroupLetters.length >= totalGroupLetters &&
+        _awaitingRepeatCompletion) {
+      context.read<ProgressProvider>().awardRestartBonus();
+      setState(() => _awaitingRepeatCompletion = false);
+    }
   }
 
   @override
@@ -258,6 +245,22 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
         (widget.pg != null ? getPalier2GroupMap(lang.name)[widget.pg] : null) ??
         findGroupForChar(widget.char, lang.name);
     final groupId = progressionGroup?.id ?? 'l1';
+
+    // En évaluation, tout le sujet (5 lettres du groupe) tient sur une
+    // seule page, réalisées successivement — voir `_buildEvaluationBody`.
+    if (_isEvaluation && progressionGroup != null) {
+      return _buildEvaluationBody(
+        context,
+        t,
+        lang,
+        style,
+        el,
+        elL,
+        ev,
+        session,
+        progressionGroup,
+      );
+    }
 
     if (letter == null) {
       return Scaffold(
@@ -311,7 +314,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final nextLetter = currentIdx >= 0 && currentIdx < allLetters.length - 1
         ? allLetters[currentIdx + 1]
         : null;
-    final allStepsDone = _doneSteps.length == steps.length;
+    // Une lettre/chiffre composé d'un seul signe (ex. "c", "l", "o", "0")
+    // n'a pas de Phase A distincte à part entière : ce signe unique EST déjà
+    // la lettre complète, la répéter séparément puis la lettre entière
+    // reviendrait à demander deux fois le même geste. On saute directement
+    // à la Phase B (voir aussi la garde équivalente ci-dessous, qui masque
+    // la Phase A dans ce cas).
+    final allStepsDone = steps.length == 1 || _doneSteps.length == steps.length;
 
     // Cible du bouton "Suivant" du pop-up de fin d'exercice : la lettre
     // suivante du même groupe, sinon la première lettre du groupe suivant —
@@ -331,23 +340,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
             : null);
     final nextCoursPg = nextLetter != null ? groupId : nextGroupForCours?.id;
 
-    // Mode évaluation : à la fin d'un groupe, on enchaîne sur le premier
-    // caractère du groupe suivant (retour au premier groupe une fois le
-    // dernier atteint) — seul le chronomètre décide de la fin de la session.
-    final evalNextGroup = groupIdx >= 0
-        ? palier2Groups[(groupIdx + 1) % palier2Groups.length]
-        : null;
-    final evaluationNextLetter =
-        _isEvaluation && nextLetter == null && evalNextGroup != null
-        ? (evalNextGroup.chars.isNotEmpty
-              ? getLetterFormation(evalNextGroup.chars.first, style)
-              : null)
-        : null;
-    final evaluationNextGroupId = evalNextGroup?.id;
-    final evaluationNextGroupIndex = groupIdx >= 0
-        ? (groupIdx + 1) % palier2Groups.length
-        : null;
-
     return Scaffold(
       backgroundColor: AmaniColors.background,
       body: SafeArea(
@@ -355,12 +347,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
           children: [
             Column(
               children: [
-                if (_isEvaluation && session.isRunning)
-                  EvaluationTimerBadge(
-                    remaining: session.remainingSeconds,
-                    subjectsDone: session.subjectsDone,
-                    subjectTotal: session.subjectTotal,
-                  ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
@@ -413,7 +399,9 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ),
                             Text(
-                              '${tFormat(el['signsReady'] ?? '', {'done': _doneSteps.length, 'total': steps.length})} · ${letter['name'][lang.name] ?? ''}',
+                              steps.length == 1
+                                  ? (letter['name'][lang.name] ?? '')
+                                  : '${tFormat(el['signsReady'] ?? '', {'done': _doneSteps.length, 'total': steps.length})} · ${letter['name'][lang.name] ?? ''}',
                               style: AmaniTheme.bodyStyle.copyWith(
                                 fontSize: 12,
                                 color: AmaniColors.textSecondary,
@@ -425,275 +413,353 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    physics: tracingAwareScrollPhysics(context),
-                    children: [
-                      // Bandeau d'état
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AmaniColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AmaniColors.textPrimary.withValues(
-                              alpha: 0.1,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            AmaniMascot(
-                              pose: _letterSuccess
-                                  ? AmaniPose.celebration
-                                  : allStepsDone
-                                  ? AmaniPose.demonstration
-                                  : AmaniPose.encouragement,
-                              size: AmaniSize.small,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _letterSuccess
-                                        ? (el['successAll'] ?? '')
-                                        : allStepsDone
-                                        ? (el['finalTitle'] ?? '')
-                                        : (el['practiceStepsTitle'] ?? ''),
-                                    style: AmaniTheme.titleStyle.copyWith(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _letterSuccess
-                                        ? (el['successAllSub'] ?? '')
-                                        : allStepsDone
-                                        ? (el['finalHint'] ?? '')
-                                        : tFormat(
-                                            el['practiceStepsHint'] ?? '',
-                                            {'reps': _settings.repetitions},
-                                          ),
-                                    style: AmaniTheme.bodyStyle.copyWith(
-                                      fontSize: 12,
-                                      color: AmaniColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                // Bandeau d'état — hors de la feuille de cahier, comme le
+                // `_HintBar` du Palier 1 (`exercice_liste_screen.dart`).
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Phase A — un signe débloque le suivant une fois réussi
-                      for (int i = 0; i < steps.length; i++) ...[
-                        RepetitionRow(
-                          key: ValueKey(
-                            '${letter['char']}-step-$i-r$_restartKey',
-                          ),
-                          locked: i > 0 && !_doneSteps.contains(i - 1),
-                          entry: TraceableEntry(
-                            id: '${letter['char']}-step-$i',
-                            pathD: steps[i]['pathD'] as String,
-                            startXY: Offset(
-                              (steps[i]['startXY'] as List)[0].toDouble(),
-                              (steps[i]['startXY'] as List)[1].toDouble(),
-                            ),
-                            strokeColor: Color(
-                              int.parse(
-                                (steps[i]['strokeColor'] as String)
-                                    .replaceFirst('#', '0xFF'),
-                              ),
-                            ),
-                          ),
-                          label: steps[i]['description'][lang.name] ?? '',
-                          repetitions: _settings.repetitions,
-                          tolerance: _settings.tolerance,
-                          doneLabel: elL['done'] ?? 'Terminé !',
-                          onSpeak: () => speech.speak(
-                            steps[i]['description'][lang.name] ?? '',
-                            lang,
-                          ),
-                          onAllDone: () => setState(() => _doneSteps.add(i)),
-                          badge: Container(
-                            width: 26,
-                            height: 26,
-                            decoration: const BoxDecoration(
-                              color: AmaniColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              '${i + 1}',
-                              textHeightBehavior: const TextHeightBehavior(
-                                applyHeightToFirstAscent: false,
-                                applyHeightToLastDescent: false,
-                              ),
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
-                                color: Colors.white,
-                                height: 1,
-                              ),
-                            ),
-                          ),
+                    ),
+                    child: Row(
+                      children: [
+                        AmaniMascot(
+                          pose: _letterSuccess
+                              ? AmaniPose.celebration
+                              : allStepsDone
+                              ? AmaniPose.demonstration
+                              : AmaniPose.encouragement,
+                          size: AmaniSize.small,
                         ),
-                        const SizedBox(height: 12),
-                      ],
-
-                      // Phase B
-                      if (!allStepsDone)
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: AmaniColors.surface.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AmaniColors.textPrimary.withValues(
-                                alpha: 0.2,
-                              ),
-                              style: BorderStyle.solid,
-                            ),
-                          ),
+                        const SizedBox(width: 14),
+                        Expanded(
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                LucideIcons.lock,
-                                size: 22,
-                                color: AmaniColors.textPrimary.withValues(
-                                  alpha: 0.4,
+                              Text(
+                                _letterSuccess
+                                    ? (el['successAll'] ?? '')
+                                    : allStepsDone
+                                    ? (el['finalTitle'] ?? '')
+                                    : (el['practiceStepsTitle'] ?? ''),
+                                style: AmaniTheme.titleStyle.copyWith(
+                                  fontSize: 14,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 2),
                               Text(
-                                el['finalLocked'] ?? '',
-                                textAlign: TextAlign.center,
+                                _letterSuccess
+                                    ? (el['successAllSub'] ?? '')
+                                    : allStepsDone
+                                    ? (el['finalHint'] ?? '')
+                                    : tFormat(el['practiceStepsHint'] ?? '', {
+                                        'reps': _settings.repetitions,
+                                      }),
                                 style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12.5,
+                                  fontSize: 12,
                                   color: AmaniColors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
-                        )
-                      else ...[
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            // Sur un écran étroit, la taille désirée
-                            // (réglage "Taille de l'interface") peut
-                            // dépasser la largeur réellement disponible :
-                            // on la borne pour ne jamais déborder.
-                            final size = math.min(
-                              _letterCanvasSize,
-                              constraints.maxWidth,
-                            );
-                            return Center(
-                              child: _LetterDrawingCanvas(
-                                letter: letter,
-                                currentStepIdx: _currentStepIdx,
-                                completedSteps: _completedSteps,
-                                stepStatus: _stepStatus,
-                                onStatusChange: (s) =>
-                                    setState(() => _stepStatus = s),
-                                onSuccess: () => _handleStepSuccess(steps),
-                                onRetry: () => _handleStepRetry(steps),
-                                w: size,
-                                h: size,
-                              ),
-                            );
-                          },
                         ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(14),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: tracingAwareScrollPhysics(context),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                        // Une seule feuille de cahier pour toute la page,
+                        // Phase A et Phase B comprises — même traitement
+                        // qu'au Palier 1 (voir `exercice_liste_screen.dart`).
+                        sliver: DecoratedSliver(
                           decoration: BoxDecoration(
-                            color: AmaniColors.surface,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: AmaniColors.textPrimary.withValues(
                                 alpha: 0.1,
                               ),
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '${el['formulaTitle'] ?? ''} "${letter['char']}"',
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 13,
-                                      color: AmaniColors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${_completedSteps.length} / ${steps.length} ${el['validated'] ?? ''}',
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12,
-                                      color: AmaniColors.secondary,
-                                    ),
-                                  ),
-                                ],
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x144A3B2A),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
                               ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  for (int i = 0; i < steps.length; i++)
-                                    _FormulaBadge(
-                                      label:
-                                          ((steps[i]['description'][lang
-                                                          .name] ??
-                                                      '')
-                                                  as String)
-                                              .split(' ')
-                                              .first,
-                                      index: i,
-                                      isDone: _completedSteps.any(
-                                        (c) => c.stepIdx == i,
+                            ],
+                          ),
+                          sliver: SliverMainAxisGroup(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.all(4),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    // Phase A — un signe débloque le suivant
+                                    // une fois réussi. Absente en évaluation,
+                                    // et absente aussi pour une lettre/chiffre
+                                    // à signe unique (voir `allStepsDone`
+                                    // ci-dessus) : seule la lettre entière
+                                    // (Phase B) y compte alors.
+                                    if (!_isEvaluation && steps.length > 1)
+                                      for (
+                                        int i = 0;
+                                        i < steps.length;
+                                        i++
+                                      ) ...[
+                                      RepetitionRow(
+                                        key: ValueKey(
+                                          '${letter['char']}-step-$i-r$_restartKey',
+                                        ),
+                                        locked:
+                                            i > 0 &&
+                                            !_doneSteps.contains(i - 1),
+                                        entry: TraceableEntry(
+                                          id: '${letter['char']}-step-$i',
+                                          pathD: steps[i]['pathD'] as String,
+                                          startXY: Offset(
+                                            (steps[i]['startXY']
+                                                    as List)[0]
+                                                .toDouble(),
+                                            (steps[i]['startXY']
+                                                    as List)[1]
+                                                .toDouble(),
+                                          ),
+                                          strokeColor: Color(
+                                            int.parse(
+                                              (steps[i]['strokeColor']
+                                                      as String)
+                                                  .replaceFirst('#', '0xFF'),
+                                            ),
+                                          ),
+                                        ),
+                                        label:
+                                            steps[i]['description'][lang
+                                                .name] ??
+                                            '',
+                                        repetitions: _settings.repetitions,
+                                        tolerance: _settings.tolerance,
+                                        doneLabel: elL['done'] ?? 'Terminé !',
+                                        onSpeak: () => speech.speak(
+                                          steps[i]['description'][lang.name] ??
+                                              '',
+                                          lang,
+                                        ),
+                                        onAllDone: () =>
+                                            setState(() => _doneSteps.add(i)),
+                                        badge: Container(
+                                          width: 26,
+                                          height: 26,
+                                          decoration: const BoxDecoration(
+                                            color: AmaniColors.primary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            '${i + 1}',
+                                            textHeightBehavior:
+                                                const TextHeightBehavior(
+                                                  applyHeightToFirstAscent:
+                                                      false,
+                                                  applyHeightToLastDescent:
+                                                      false,
+                                                ),
+                                            style: TextStyle(
+                                              fontFamily: kBalooFontFamily,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                              height: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        showCard: false,
                                       ),
-                                      isCurrent:
-                                          i == _currentStepIdx &&
-                                          !_letterSuccess,
-                                    ),
-                                  Text(
-                                    '=  ${letter['char']}',
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 18,
-                                      color: AmaniColors.primary,
-                                    ),
-                                  ),
-                                ],
+                                      const SizedBox(height: 12),
+                                    ],
+
+                                    // Phase B — la lettre entière, répétée
+                                    // autant de fois que le nombre de
+                                    // répétitions réglé.
+                                    if (!allStepsDone)
+                                      Container(
+                                        padding: const EdgeInsets.all(24),
+                                        decoration: BoxDecoration(
+                                          color: AmaniColors.surface
+                                              .withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: AmaniColors.textPrimary
+                                                .withValues(alpha: 0.2),
+                                            style: BorderStyle.solid,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              LucideIcons.lock,
+                                              size: 22,
+                                              color: AmaniColors.textPrimary
+                                                  .withValues(alpha: 0.4),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              el['finalLocked'] ?? '',
+                                              textAlign: TextAlign.center,
+                                              style: AmaniTheme.bodyStyle
+                                                  .copyWith(
+                                                    fontSize: 12.5,
+                                                    color: AmaniColors
+                                                        .textSecondary,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else ...[
+                                      LetterRepetitionRow(
+                                        key: ValueKey(
+                                          '${letter['char']}-letter-r$_restartKey',
+                                        ),
+                                        letter: letter,
+                                        label:
+                                            '${el['finalTitle'] ?? ''} "${letter['char']}"',
+                                        repetitions: _settings.repetitions,
+                                        doneLabel: elL['done'] ?? 'Terminé !',
+                                        onSpeak: () => speech.speak(
+                                          tFormat(el['speakStart'] ?? '', {
+                                            'name':
+                                                letter['name'][lang.name] ??
+                                                '',
+                                          }),
+                                          lang,
+                                        ),
+                                        onAllDone: _letterSuccess
+                                            ? null
+                                            : _handleLetterRepetitionsDone,
+                                        showCard: false,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
+                                          color: AmaniColors.surface,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: AmaniColors.textPrimary
+                                                .withValues(alpha: 0.1),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  '${el['formulaTitle'] ?? ''} "${letter['char']}"',
+                                                  style: TextStyle(
+                                                    fontFamily:
+                                                        kBalooFontFamily,
+                                                    fontWeight:
+                                                        FontWeight.w800,
+                                                    fontSize: 13,
+                                                    color: AmaniColors
+                                                        .textPrimary,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${steps.length} / ${steps.length} ${el['validated'] ?? ''}',
+                                                  style: TextStyle(
+                                                    fontFamily:
+                                                        kBalooFontFamily,
+                                                    fontWeight:
+                                                        FontWeight.w800,
+                                                    fontSize: 12,
+                                                    color:
+                                                        AmaniColors.secondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Wrap(
+                                              spacing: 8,
+                                              runSpacing: 8,
+                                              crossAxisAlignment:
+                                                  WrapCrossAlignment.center,
+                                              children: [
+                                                for (
+                                                  int i = 0;
+                                                  i < steps.length;
+                                                  i++
+                                                )
+                                                  _FormulaBadge(
+                                                    label:
+                                                        ((steps[i]['description'][lang
+                                                                    .name] ??
+                                                                '')
+                                                            as String)
+                                                            .split(' ')
+                                                            .first,
+                                                    index: i,
+                                                    isDone: true,
+                                                    isCurrent: false,
+                                                  ),
+                                                Text(
+                                                  '=  ${letter['char']}',
+                                                  style: TextStyle(
+                                                    fontFamily:
+                                                        kBalooFontFamily,
+                                                    fontWeight:
+                                                        FontWeight.w800,
+                                                    fontSize: 18,
+                                                    color: AmaniColors.primary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ]),
+                                ),
+                              ),
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: CustomPaint(
+                                  painter: _TrailingCahierLinesPainter(),
+                                  size: Size.infinite,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 12),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
 
-            if (_letterSuccess && !_isEvaluation)
+            if (_letterSuccess)
               ExerciseCompletePopup(
                 onBackHome: () => context.go('/accueil'),
                 onNext: nextCoursChar != null
@@ -709,240 +775,394 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                   });
                 },
               ),
-            // Overlay de célébration finale — uniquement en évaluation, qui
-            // enchaîne les lettres en continu ; hors évaluation, c'est
-            // ExerciseCompletePopup qui gère la fin.
-            if (_letterSuccess && _isEvaluation)
-              _LetterSuccessOverlay(
-                letter: letter,
-                nextLetter: nextLetter,
-                groupId: groupId,
-                isEvaluation: _isEvaluation,
-                evaluationNextLetter: evaluationNextLetter,
-                evaluationNextGroupId: evaluationNextGroupId,
-                evaluationNextGroupIndex: evaluationNextGroupIndex,
-                onReset: () {
-                  setState(() {
-                    _resetAll();
-                    _restartKey++;
-                    _awaitingRepeatCompletion = true;
-                  });
-                },
-              ),
-            if (_isEvaluation && session.expired)
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Vue d'évaluation du Palier 2 : toutes les lettres du sujet (groupe,
+  /// voir `palier2Groups`) sur UNE seule page, réalisées successivement —
+  /// chacune débloque la suivante, exactement dans l'ordre de progression
+  /// des cours de ce palier. Plus besoin de naviguer lettre par lettre :
+  /// le sujet suivant (5 lettres suivantes) n'apparaît qu'une fois toutes
+  /// réussies, via `EvaluationSubjectAnnouncement` — même mécanisme que les
+  /// Paliers "Syllabes"/"Mots"/"Calculs".
+  Widget _buildEvaluationBody(
+    BuildContext context,
+    Map<String, dynamic> t,
+    Lang lang,
+    String style,
+    Map<String, dynamic> el,
+    Map<String, dynamic> elL,
+    Map<String, dynamic> ev,
+    EvaluationSessionController session,
+    ProgressionGroup progressionGroup,
+  ) {
+    final speech = context.read<SignSpeechService>();
+    final groupLetters = progressionGroup.chars
+        .map((c) => getLetterFormation(c, style))
+        .whereType<dynamic>()
+        .toList();
+    final allGroupDone =
+        groupLetters.isNotEmpty &&
+        _doneGroupLetters.length == groupLetters.length;
+
+    final palier2Groups = getPalier2Groups(lang.name);
+    final groupIdx = palier2Groups.indexWhere(
+      (g) => g.id == progressionGroup.id,
+    );
+    // Une fois la dernière lettre du dernier groupe atteinte, on reboucle
+    // sur le premier — seul le chronomètre décide de la fin de la session.
+    final evalNextGroup = groupIdx >= 0
+        ? palier2Groups[(groupIdx + 1) % palier2Groups.length]
+        : null;
+
+    return Scaffold(
+      backgroundColor: AmaniColors.background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                if (session.isRunning)
+                  EvaluationTimerBadge(
+                    remaining: session.remainingSeconds,
+                    subjectsDone: session.subjectsDone,
+                    subjectTotal: session.subjectTotal,
+                  ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  decoration: BoxDecoration(
+                    color: AmaniColors.background,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.canPop()
+                            ? context.pop()
+                            : context.go('/accueil'),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: AmaniColors.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1F000000),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: DirectionalIcon(
+                            LucideIcons.arrowLeft,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              progressionGroup.title[lang.name] ?? '',
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 20,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              tFormat(el['lettersReady'] ?? '', {
+                                'done': _doneGroupLetters.length,
+                                'total': groupLetters.length,
+                              }),
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 12,
+                                color: AmaniColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        AmaniMascot(
+                          pose: allGroupDone
+                              ? AmaniPose.celebration
+                              : AmaniPose.demonstration,
+                          size: AmaniSize.small,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                allGroupDone
+                                    ? (el['successAll'] ?? '')
+                                    : (el['finalTitle'] ?? ''),
+                                style: AmaniTheme.titleStyle.copyWith(
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                allGroupDone
+                                    ? (el['successAllSub'] ?? '')
+                                    : (el['finalHint'] ?? ''),
+                                style: AmaniTheme.bodyStyle.copyWith(
+                                  fontSize: 12,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: tracingAwareScrollPhysics(context),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                        sliver: DecoratedSliver(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AmaniColors.textPrimary.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x144A3B2A),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          sliver: SliverMainAxisGroup(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.all(4),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    for (
+                                      var li = 0;
+                                      li < groupLetters.length;
+                                      li++
+                                    ) ...[
+                                      if (li > 0)
+                                        Divider(
+                                          height: 1,
+                                          color: AmaniColors.textPrimary
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      _buildEvaluationLetterBlock(
+                                        groupLetters,
+                                        li,
+                                        lang,
+                                        el,
+                                        elL,
+                                        speech,
+                                      ),
+                                    ],
+                                  ]),
+                                ),
+                              ),
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: CustomPaint(
+                                  painter: _TrailingCahierLinesPainter(),
+                                  size: Size.infinite,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (session.expired)
               EvaluationCompleteOverlay(
                 onBack: () => context.go('/accueil?scrollToPalier=3'),
               ),
-            if (_isEvaluation && _resumeOffer != null && !session.expired)
+            if (_resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
                 onResume: () => _handleResume(_resumeOffer!),
                 onRestart: _handleRestart,
               ),
-            if (_isEvaluation &&
-                _showFirstSubjectAnnouncement &&
-                !session.expired)
+            if (_showFirstSubjectAnnouncement && !session.expired)
               EvaluationSubjectAnnouncement(
                 title: tFormat(ev['firstSubjectTitle'] ?? '', {
-                  'title': progressionGroup?.title[lang.name] ?? groupId,
+                  'title':
+                      progressionGroup.title[lang.name] ?? progressionGroup.id,
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
+                continueLabel: ev['startFirstSubject'],
                 onContinue: _handleStartFirstSubject,
+              ),
+            if (allGroupDone && evalNextGroup != null && !session.expired)
+              EvaluationSubjectAnnouncement(
+                title: ev['nextSubjectTitle'] ?? '',
+                subtitle: tFormat(ev['nextSubjectBody'] ?? '', {
+                  'title': evalNextGroup.title[lang.name] ?? '',
+                }),
+                onContinue: () {
+                  session.advanceSubject(
+                    (groupIdx + 1) % palier2Groups.length,
+                  );
+                  context.go(
+                    '/exercice/lettre/${evalNextGroup.chars.first}?pg=${evalNextGroup.id}&amaniEval=1',
+                  );
+                },
               ),
           ],
         ),
       ),
     );
   }
-}
 
-class _LetterSuccessOverlay extends StatelessWidget {
-  final dynamic letter;
-  final dynamic nextLetter;
-  final String groupId;
-  final bool isEvaluation;
-  final dynamic evaluationNextLetter;
-  final String? evaluationNextGroupId;
-  final int? evaluationNextGroupIndex;
-  final VoidCallback onReset;
+  Widget _buildEvaluationLetterBlock(
+    List groupLetters,
+    int li,
+    Lang lang,
+    Map<String, dynamic> el,
+    Map<String, dynamic> elL,
+    SignSpeechService speech,
+  ) {
+    final letter = groupLetters[li];
+    final char = letter['char'] as String;
+    final steps = letter['steps'] as List;
+    final locked =
+        li > 0 && !_doneGroupLetters.contains(groupLetters[li - 1]['char']);
+    final done = _doneGroupLetters.contains(char);
 
-  const _LetterSuccessOverlay({
-    required this.letter,
-    required this.nextLetter,
-    required this.groupId,
-    required this.isEvaluation,
-    required this.evaluationNextLetter,
-    required this.evaluationNextGroupId,
-    required this.evaluationNextGroupIndex,
-    required this.onReset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.watch<LanguageProvider>().t;
-    final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
-
-    return Positioned.fill(
-      child: Container(
-        color: const Color(0x66000000),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 320),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LetterRepetitionRow(
+            key: ValueKey('$char-eval-letter'),
+            letter: letter,
+            label: '${el['finalTitle'] ?? ''} "$char"',
+            repetitions: _settings.repetitions,
+            doneLabel: elL['done'] ?? 'Terminé !',
+            locked: locked,
+            onSpeak: () => speech.speak(
+              tFormat(el['speakStart'] ?? '', {
+                'name': letter['name'][lang.name] ?? '',
+              }),
+              lang,
+            ),
+            onAllDone: done
+                ? null
+                : () => _handleGroupLetterDone(letter, groupLetters.length),
+            showCard: false,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AmaniMascot(
-                pose: AmaniPose.celebration,
-                size: AmaniSize.medium,
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AmaniColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AmaniColors.textPrimary.withValues(alpha: 0.1),
               ),
-              const SizedBox(height: 12),
-              Text(
-                el['successTitle'] ?? '',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                  color: AmaniColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${el['successBody'] ?? ''} "${letter['char']}" !',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontSize: 14,
-                  color: AmaniColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AmaniColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AmaniColors.secondary, width: 2),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  letter['char'] as String,
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 36,
-                    color: AmaniColors.secondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (nextLetter != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.go(
-                      '/exercice/lettre/${nextLetter['char']}?pg=$groupId&amaniEval=1',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AmaniColors.secondary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      '${el['nextLetter'] ?? ''} (${nextLetter['char']})',
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${el['formulaTitle'] ?? ''} "$char"',
                       style: TextStyle(
                         fontFamily: kBalooFontFamily,
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: Colors.white,
+                        fontSize: 13,
+                        color: AmaniColors.textPrimary,
                       ),
                     ),
-                  ),
-                )
-              else if (evaluationNextLetter != null &&
-                  evaluationNextGroupId != null &&
-                  evaluationNextGroupIndex != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context
-                          .read<EvaluationSessionController>()
-                          .advanceSubject(evaluationNextGroupIndex!);
-                      context.go(
-                        '/exercice/lettre/${evaluationNextLetter['char']}?pg=$evaluationNextGroupId&amaniEval=1',
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AmaniColors.secondary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      '${el['nextLetter'] ?? ''} (${evaluationNextLetter['char']})',
+                    Text(
+                      '${steps.length} / ${steps.length} ${el['validated'] ?? ''}',
                       style: TextStyle(
                         fontFamily: kBalooFontFamily,
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: Colors.white,
+                        fontSize: 12,
+                        color: AmaniColors.secondary,
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: onReset,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AmaniColors.primary,
-                    side: BorderSide.none,
-                    backgroundColor: AmaniColors.primary.withValues(
-                      alpha: 0.15,
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (int i = 0; i < steps.length; i++)
+                      _FormulaBadge(
+                        label:
+                            ((steps[i]['description'][lang.name] ?? '')
+                                    as String)
+                                .split(' ')
+                                .first,
+                        index: i,
+                        isDone: true,
+                        isCurrent: false,
+                      ),
+                    Text(
+                      '=  $char',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        color: AmaniColors.primary,
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    el['practiceAgain'] ?? '',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AmaniColors.primary,
-                    ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
+
 
 class _FormulaBadge extends StatelessWidget {
   final String label;
@@ -1024,332 +1244,36 @@ class _FormulaBadge extends StatelessWidget {
   }
 }
 
-class _LetterDrawingCanvas extends StatefulWidget {
-  final dynamic letter;
-  final int currentStepIdx;
-  final List<_CompletedStep> completedSteps;
-  final _StepStatus stepStatus;
-  final ValueChanged<_StepStatus> onStatusChange;
-  final VoidCallback onSuccess;
-  final VoidCallback onRetry;
-  final double w;
-  final double h;
 
-  const _LetterDrawingCanvas({
-    required this.letter,
-    required this.currentStepIdx,
-    required this.completedSteps,
-    required this.stepStatus,
-    required this.onStatusChange,
-    required this.onSuccess,
-    required this.onRetry,
-    required this.w,
-    required this.h,
-  });
-
-  @override
-  State<_LetterDrawingCanvas> createState() => _LetterDrawingCanvasState();
-}
-
-class _LetterDrawingCanvasState extends State<_LetterDrawingCanvas> {
-  final List<Offset> _userPoints = [];
-  List<Offset> _refPoints = [];
-
-  /// Identifiant du doigt qui a démarré le tracé en cours — voir
-  /// `LetterTraceCell._activePointer` pour l'explication complète : sans ce
-  /// suivi, un second doigt posé pendant qu'on trace déjà romprait
-  /// l'équilibre start/stop de `TracingScrollLock` et bloquerait le
-  /// défilement pour le reste de la session.
-  int? _activePointer;
-
-  dynamic get _activeStep {
-    final steps = widget.letter['steps'] as List;
-    return widget.currentStepIdx < steps.length
-        ? steps[widget.currentStepIdx]
-        : null;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _sampleRef();
-  }
-
-  @override
-  void didUpdateWidget(_LetterDrawingCanvas oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentStepIdx != widget.currentStepIdx) _sampleRef();
-  }
-
-  void _sampleRef() {
-    final step = _activeStep;
-    _refPoints = step != null ? sampleSvgPath(step['pathD'] as String, 45) : [];
-  }
-
-  double get _scale => (widget.w < widget.h ? widget.w : widget.h) / 200.0;
-  Offset get _origin =>
-      Offset((widget.w - 200 * _scale) / 2, (widget.h - 200 * _scale) / 2);
-  Offset _toSvg(Offset p) =>
-      Offset((p.dx - _origin.dx) / _scale, (p.dy - _origin.dy) / _scale);
-
-  void _onPointerDown(PointerDownEvent event) {
-    if (_activeStep == null ||
-        widget.stepStatus == _StepStatus.success ||
-        widget.stepStatus == _StepStatus.retry ||
-        _activePointer != null) {
-      return;
-    }
-    // Verrouille le défilement de la page pendant tout le tracé -- voir
-    // `LetterTraceCell` pour l'explication complète du choix d'un
-    // `Listener` (événements pointeur bruts) plutôt qu'un `GestureDetector`
-    // à base de pan.
-    _activePointer = event.pointer;
-    context.read<TracingScrollLock>().start();
-    setState(() {
-      widget.onStatusChange(_StepStatus.drawing);
-      _userPoints.clear();
-      _userPoints.add(_toSvg(event.localPosition));
-    });
-  }
-
-  void _onPointerMove(PointerMoveEvent event) {
-    if (widget.stepStatus != _StepStatus.drawing ||
-        event.pointer != _activePointer) {
-      return;
-    }
-    setState(() => _userPoints.add(_toSvg(event.localPosition)));
-  }
-
-  void _onPointerUp(PointerUpEvent event) {
-    if (widget.stepStatus != _StepStatus.drawing ||
-        event.pointer != _activePointer) {
-      return;
-    }
-    _activePointer = null;
-    context.read<TracingScrollLock>().stop();
-    final result = validateTrace(_userPoints, _refPoints, _kLetterTolerancePx);
-    if (result.valid) {
-      widget.onStatusChange(_StepStatus.success);
-      widget.onSuccess();
-    } else {
-      widget.onStatusChange(_StepStatus.retry);
-      widget.onRetry();
-      Future.delayed(const Duration(milliseconds: 2400), () {
-        if (!mounted) return;
-        setState(() {
-          _userPoints.clear();
-          widget.onStatusChange(_StepStatus.idle);
-        });
-      });
-    }
-  }
-
-  void _onPointerCancel(PointerCancelEvent event) {
-    if (widget.stepStatus != _StepStatus.drawing ||
-        event.pointer != _activePointer) {
-      return;
-    }
-    _activePointer = null;
-    context.read<TracingScrollLock>().stop();
-    setState(() {
-      _userPoints.clear();
-      widget.onStatusChange(_StepStatus.idle);
-    });
-  }
-
-  @override
-  void dispose() {
-    // Filet de sécurité : si le widget disparaît pendant un tracé (par ex.
-    // navigation en plein geste), le verrou ne doit jamais rester bloqué.
-    if (widget.stepStatus == _StepStatus.drawing) {
-      context.read<TracingScrollLock>().stop();
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = widget.stepStatus == _StepStatus.success
-        ? AmaniColors.secondary
-        : widget.stepStatus == _StepStatus.retry
-        ? AmaniColors.error
-        : const Color(0x40A9784F);
-
-    return Container(
-      width: widget.w,
-      height: widget.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 2),
-      ),
-      child: CahierFrame(
-        width: widget.w,
-        height: widget.h,
-        child: Stack(
-          children: [
-            CustomPaint(
-              size: Size(widget.w, widget.h),
-              painter: _LetterCanvasPainter(
-                letter: widget.letter,
-                currentStepIdx: widget.currentStepIdx,
-                completedSteps: widget.completedSteps,
-                stepStatus: widget.stepStatus,
-                userPoints: _userPoints,
-                scale: _scale,
-                origin: _origin,
-              ),
-            ),
-            Listener(
-              onPointerDown: _onPointerDown,
-              onPointerMove: _onPointerMove,
-              onPointerUp: _onPointerUp,
-              onPointerCancel: _onPointerCancel,
-              child: Container(
-                color: Colors.transparent,
-                width: widget.w,
-                height: widget.h,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LetterCanvasPainter extends CustomPainter {
-  final dynamic letter;
-  final int currentStepIdx;
-  final List<_CompletedStep> completedSteps;
-  final _StepStatus stepStatus;
-  final List<Offset> userPoints;
-  final double scale;
-  final Offset origin;
-
-  _LetterCanvasPainter({
-    required this.letter,
-    required this.currentStepIdx,
-    required this.completedSteps,
-    required this.stepStatus,
-    required this.userPoints,
-    required this.scale,
-    required this.origin,
-  });
+/// Prolonge visuellement la feuille de cahier partagée jusqu'en bas de la
+/// page quand le contenu ne suffit pas à la remplir — copie de
+/// `_TrailingCahierLinesPainter` (`exercice_liste_screen.dart`, Palier 1).
+class _TrailingCahierLinesPainter extends CustomPainter {
+  static const List<double> _positions = [10, 70, 130, 190];
+  static const double _rowHeight = 120;
+  static const double _rowSpacing = 10;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final steps = letter['steps'] as List;
-    final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
-      ..sort(
-        (a, b) => letterFamilyZIndex(
-          steps[a]['family'] as String,
-        ).compareTo(letterFamilyZIndex(steps[b]['family'] as String)),
-      );
-
-    for (final i in zOrderedIdx) {
-      final isCompleted = completedSteps.any((c) => c.stepIdx == i);
-      if (isCompleted) continue;
-      final isActiveStep = i == currentStepIdx;
-      final pts = sampleSvgPath(steps[i]['pathD'] as String, 30);
-      if (pts.length < 2) continue;
-      final path = Path()
-        ..moveTo(
-          pts.first.dx * scale + origin.dx,
-          pts.first.dy * scale + origin.dy,
-        );
-      for (final p in pts.skip(1)) {
-        path.lineTo(p.dx * scale + origin.dx, p.dy * scale + origin.dy);
+    const scale = _rowHeight / 200;
+    var rowTop = 0.0;
+    while (rowTop < size.height) {
+      for (var i = 0; i < _positions.length; i++) {
+        final y = rowTop + _positions[i] * scale;
+        if (y > size.height) break;
+        final isBaseline = i == 2;
+        final paint = Paint()
+          ..color =
+              (isBaseline ? const Color(0xFFE05252) : const Color(0xFF4A90E2))
+                  .withValues(alpha: 0.5)
+          ..strokeWidth = isBaseline ? 1.5 : 1;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
       }
-      final color = isActiveStep
-          ? (stepStatus == _StepStatus.retry
-                ? AmaniColors.error
-                : const Color(0xFF9BB5CC))
-          : const Color(0xFFB8CCE0);
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = color.withValues(alpha: isActiveStep ? 0.85 : 0.35)
-          ..style = PaintingStyle.stroke
-          // `pts` est déjà en coordonnées finales (pré-multipliées par
-          // `scale` ci-dessus) : l'épaisseur doit l'être aussi pour rester
-          // proportionnelle à la taille du cadre, comme le
-          // `viewBox="0 0 200 200"` de `exercice.lettre.$char.tsx`.
-          ..strokeWidth = (isActiveStep ? 10 : 8) * scale
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-
-    final zOrderedCompleted = List<_CompletedStep>.from(completedSteps)
-      ..sort(
-        (a, b) => letterFamilyZIndex(
-          steps[a.stepIdx]['family'] as String,
-        ).compareTo(letterFamilyZIndex(steps[b.stepIdx]['family'] as String)),
-      );
-    for (final completed in zOrderedCompleted) {
-      final step = steps[completed.stepIdx];
-      final pts = sampleSvgPath(step['pathD'] as String, 35);
-      if (pts.length < 2) continue;
-      final path = Path()
-        ..moveTo(
-          pts.first.dx * scale + origin.dx,
-          pts.first.dy * scale + origin.dy,
-        );
-      for (final p in pts.skip(1)) {
-        path.lineTo(p.dx * scale + origin.dx, p.dy * scale + origin.dy);
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = completed.strokeColor
-          ..style = PaintingStyle.stroke
-          // Fixe, alignée sur l'épaisseur du tracé animé en cours (voir
-          // `MiniLetterFrame`/`_OccurrencePainter`), plutôt que de grandir
-          // avec le cadre (comme `scale` ci-dessus).
-          ..strokeWidth = 7.0
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-
-    if (userPoints.isNotEmpty) {
-      final path = Path()
-        ..moveTo(
-          userPoints.first.dx * scale + origin.dx,
-          userPoints.first.dy * scale + origin.dy,
-        );
-      for (final p in userPoints.skip(1)) {
-        path.lineTo(p.dx * scale + origin.dx, p.dy * scale + origin.dy);
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = const Color(0xFF5BAA6A)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 7.0
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-
-    if (currentStepIdx < steps.length &&
-        (stepStatus == _StepStatus.idle || stepStatus == _StepStatus.retry)) {
-      final startXY = steps[currentStepIdx]['startXY'] as List;
-      final startPt = Offset(
-        startXY[0].toDouble() * scale + origin.dx,
-        startXY[1].toDouble() * scale + origin.dy,
-      );
-      canvas.drawCircle(startPt, 8, Paint()..color = const Color(0xFF5BAA6A));
-      canvas.drawCircle(
-        startPt,
-        8,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
+      rowTop += _rowHeight + _rowSpacing;
     }
   }
 
   @override
-  bool shouldRepaint(covariant _LetterCanvasPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _TrailingCahierLinesPainter oldDelegate) =>
+      false;
 }

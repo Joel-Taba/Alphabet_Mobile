@@ -57,6 +57,14 @@ class RepetitionRow extends StatefulWidget {
   /// (reproduction dans l'ordre des signes d'une lettre).
   final bool locked;
 
+  /// `false` pour s'intégrer sans bordure/ombre/fond propres dans une
+  /// feuille de cahier partagée qui les fournit déjà à l'échelle de toute
+  /// la page (voir `exercice_liste_screen.dart` — Palier 1) — l'en-tête
+  /// garde alors un simple filet de séparation plutôt qu'un bandeau de
+  /// carte à part entière. `true` (défaut) : apparence de carte autonome
+  /// complète, utilisée partout ailleurs (ex. `exercice_lettre_screen.dart`).
+  final bool showCard;
+
   const RepetitionRow({
     super.key,
     required this.entry,
@@ -68,6 +76,7 @@ class RepetitionRow extends StatefulWidget {
     required this.doneLabel,
     this.onAllDone,
     this.locked = false,
+    this.showCard = true,
   });
 
   @override
@@ -133,32 +142,36 @@ class _RepetitionRowState extends State<RepetitionRow> {
     return Opacity(
       opacity: widget.locked ? 0.5 : 1,
       child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: _allDone
-                ? AmaniColors.secondary.withValues(alpha: 0.6)
-                : AmaniColors.textPrimary.withValues(alpha: 0.1),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _allDone
-                  ? const Color(0x2E8FBF6F)
-                  : const Color(0x144A3B2A),
-              blurRadius: _allDone ? 16 : 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+        clipBehavior: widget.showCard ? Clip.antiAlias : Clip.none,
+        decoration: widget.showCard
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _allDone
+                      ? AmaniColors.secondary.withValues(alpha: 0.6)
+                      : AmaniColors.textPrimary.withValues(alpha: 0.1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _allDone
+                        ? const Color(0x2E8FBF6F)
+                        : const Color(0x144A3B2A),
+                    blurRadius: _allDone ? 16 : 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              )
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // En-tête
+            // En-tête — bandeau de carte à part entière (fond + filet en
+            // pied) en mode autonome, simple filet de séparation en mode
+            // intégré à une feuille de cahier partagée (voir [showCard]).
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AmaniColors.surface,
+                color: widget.showCard ? AmaniColors.surface : null,
                 border: Border(
                   bottom: BorderSide(
                     color: AmaniColors.textPrimary.withValues(alpha: 0.1),
@@ -232,11 +245,18 @@ class _RepetitionRowState extends State<RepetitionRow> {
             // remplissent chaque ligne horizontalement (autant qu'il en
             // tient, généralement 3) puis passent à la ligne suivante une
             // fois la largeur disponible pleine, plutôt que de s'étirer sur
-            // une seule ligne à défilement horizontal.
+            // une seule ligne à défilement horizontal. Hauteur plafonnée
+            // (défilement interne) uniquement en carte autonome — jusqu'à
+            // 20 répétitions, un défilement imbriqué serait maladroit dans
+            // une feuille de cahier partagée qui défile déjà elle-même
+            // (voir [showCard]) : la zone y prend simplement toute sa
+            // hauteur naturelle.
             Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              constraints: const BoxConstraints(maxHeight: 330),
+              constraints: widget.showCard
+                  ? const BoxConstraints(maxHeight: 330)
+                  : null,
               child: SingleChildScrollView(
                 physics: tracingAwareScrollPhysics(context),
                 child: LayoutBuilder(
