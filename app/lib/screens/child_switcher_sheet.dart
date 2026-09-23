@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
@@ -257,16 +258,29 @@ class _ChildTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: AmaniColors.primary.withValues(alpha: 0.15),
-              child: Text(
-                child.nom.isNotEmpty ? child.nom[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AmaniColors.primary,
-                ),
-              ),
+            FutureBuilder<String?>(
+              future: getStoredPhotoFor(child.id),
+              builder: (context, snapshot) {
+                final photo = snapshot.data;
+                return CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AmaniColors.primary.withValues(alpha: 0.15),
+                  backgroundImage: photo != null
+                      ? MemoryImage(base64Decode(photo))
+                      : null,
+                  child: photo == null
+                      ? Text(
+                          child.nom.isNotEmpty
+                              ? child.nom[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AmaniColors.primary,
+                          ),
+                        )
+                      : null,
+                );
+              },
             ),
             const SizedBox(width: 14),
             Expanded(

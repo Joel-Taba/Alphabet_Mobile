@@ -12,8 +12,11 @@ import '../widgets/sign_glyph.dart';
 import '../widgets/cahier_frame.dart';
 import '../hooks/use_animation_speed.dart';
 import '../utils/text_case.dart';
+import '../utils/trace_validation.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 const Map<String, Color> _familyColor = {
   'point': AmaniColors.textPrimary,
@@ -84,20 +87,41 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
     }
   }
 
-  void _playAnimation() {
+  /// Sur ouverture de page (première apparition ou changement de famille via
+  /// "Suivant"/"Retour") -- délai volontaire avant le lancement de
+  /// l'animation, pour laisser l'enfant repérer le contenu de la page avant
+  /// que le cours ne démarre. Un rejeu explicite (bouton "Relancer" ou tap
+  /// sur une autre variante de la grille) reste, lui, immédiat --
+  /// `immediate: true`. Le bouton "Relancer" ne fait toutefois plus parler
+  /// la synthèse vocale (`speak: false`) -- seul le bouton "Consigne" la
+  /// déclenche désormais, le tap sur une variante de la grille continuant
+  /// lui à l'annoncer (comportement inchangé, hors "Relancer").
+  void _playAnimation({bool immediate = false, bool speak = true}) {
+    if (immediate) {
+      _startPlayback(speak: speak);
+    } else {
+      Future.delayed(kCoursAnimationDelay, () {
+        if (mounted) _startPlayback(speak: speak);
+      });
+    }
+  }
+
+  void _startPlayback({bool speak = true}) {
     if (_selectedSign == null) return;
     _controller
       ..reset()
       ..forward();
     final lang = context.read<LanguageProvider>().lang;
-    context.read<SignSpeechService>().speak(
-      spokenSignInstruction(
+    if (speak) {
+      context.read<SignSpeechService>().speak(
+        spokenSignInstruction(
+          lang,
+          _selectedSign['label'][lang.name] ?? '',
+          _selectedSign['consigne'][lang.name] ?? '',
+        ),
         lang,
-        _selectedSign['label'][lang.name] ?? '',
-        _selectedSign['consigne'][lang.name] ?? '',
-      ),
-      lang,
-    );
+      );
+    }
     // Les points du cours ne sont attribués qu'une fois TOUTES les variantes
     // de la famille consultées — jamais dès l'ouverture du cours.
     context.read<ProgressProvider>().markCoursItemViewed(
@@ -111,7 +135,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
   void _selectSign(dynamic sign) {
     setState(() => _selectedSign = sign);
-    _playAnimation();
+    _playAnimation(immediate: true);
     // Remonte tout en haut de la page : la carte du tracé animé est en tête
     // de liste, au-dessus de la grille des variantes — sans ça, l'enfant qui
     // vient de toucher une vignette plus bas ne verrait jamais le nouveau
@@ -160,9 +184,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -173,7 +195,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                           BoxShadow(color: Color(0x1A000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -218,96 +240,113 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                             style: AmaniTheme.titleStyle.copyWith(fontSize: 19),
                           ),
                           const SizedBox(height: 12),
-                          Center(
-                            child: SizedBox(
-                              width: 240,
-                              height: 240,
-                              child: CahierFrame(
-                                width: 240,
-                                height: 240,
-                                child: AnimatedBuilder(
-                                  animation: _controller,
-                                  builder: (context, _) => CustomPaint(
-                                    painter: _StrokeAnimPainter(
-                                      pathD: _selectedSign['pathD'] as String,
-                                      startXY: Offset(
-                                        (_selectedSign['startXY'] as List)[0]
-                                            .toDouble(),
-                                        (_selectedSign['startXY'] as List)[1]
-                                            .toDouble(),
-                                      ),
-                                      endXY: Offset(
-                                        (_selectedSign['endXY'] as List)[0]
-                                            .toDouble(),
-                                        (_selectedSign['endXY'] as List)[1]
-                                            .toDouble(),
-                                      ),
-                                      strokeColor: Color(
-                                        int.parse(
-                                          (_selectedSign['strokeColor']
-                                                  as String)
-                                              .replaceFirst('#', '0xFF'),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: TraceControlsToolbar.heightFor(3),
+                            ),
+                            child: Stack(
+                              children: [
+                                Center(
+                                  child: SizedBox(
+                                    width: 240,
+                                    height: 240,
+                                    child: CahierFrame(
+                                      width: 240,
+                                      height: 240,
+                                      child: AnimatedBuilder(
+                                        animation: _controller,
+                                        builder: (context, _) => CustomPaint(
+                                          painter: _StrokeAnimPainter(
+                                            pathD:
+                                                _selectedSign['pathD']
+                                                    as String,
+                                            // Dérivés du tracé lui-même — voir
+                                            // `pathStartPoint`/`pathEndPoint` —
+                                            // plutôt que des champs
+                                            // startXY/endXY du catalogue,
+                                            // parfois désalignés.
+                                            startXY: pathStartPoint(
+                                              _selectedSign['pathD'] as String,
+                                            ),
+                                            endXY: pathEndPoint(
+                                              _selectedSign['pathD'] as String,
+                                            ),
+                                            strokeColor: Color(
+                                              int.parse(
+                                                (_selectedSign['strokeColor']
+                                                        as String)
+                                                    .replaceFirst('#', '0xFF'),
+                                              ),
+                                            ),
+                                            progress: _controller.value,
+                                            animDurationMs: _animDurationMs,
+                                            family:
+                                                _selectedSign['family']
+                                                    as String? ??
+                                                '',
+                                          ),
+                                          size: const Size(240, 240),
                                         ),
                                       ),
-                                      progress: _controller.value,
-                                      animDurationMs: _animDurationMs,
-                                      family:
-                                          _selectedSign['family'] as String? ??
-                                          '',
                                     ),
-                                    size: const Size(240, 240),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _PillButton(
-                                  icon: LucideIcons.rotateCcw,
-                                  label: t['common']?['replay'] ?? 'Revoir',
-                                  bg: AmaniColors.secondary.withValues(
-                                    alpha: 0.15,
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: TraceControlsToolbar(
+                                    expandAria:
+                                        t['common']?['toolbarExpandAria'] ?? '',
+                                    collapseAria:
+                                        t['common']?['toolbarCollapseAria'] ??
+                                        '',
+                                    actions: [
+                                      ToolbarAction(
+                                        icon: LucideIcons.rotateCcw,
+                                        label:
+                                            t['common']?['replay'] ?? 'Revoir',
+                                        background: AmaniColors.secondary
+                                            .withValues(alpha: 0.15),
+                                        foreground: const Color(0xFF2F4B1C),
+                                        onTap: () => _playAnimation(
+                                          immediate: true,
+                                          speak: false,
+                                        ),
+                                      ),
+                                      ToolbarAction(
+                                        icon: LucideIcons.volume2,
+                                        label:
+                                            t['common']?['instruction'] ??
+                                            'Consigne',
+                                        background: AmaniColors.background,
+                                        foreground: Colors.black,
+                                        onTap: () => speech.speak(
+                                          spokenSignInstruction(
+                                            lang,
+                                            _selectedSign['label'][lang.name] ??
+                                                '',
+                                            _selectedSign['consigne'][lang
+                                                    .name] ??
+                                                '',
+                                          ),
+                                          lang,
+                                        ),
+                                      ),
+                                      ToolbarAction(
+                                        icon: Icons.play_arrow_rounded,
+                                        label:
+                                            coursFamily['exercer'] ??
+                                            "S'entrainer",
+                                        background: AmaniColors.secondary,
+                                        foreground: Colors.white,
+                                        onTap: () => context.push(
+                                          '/exercice-liste?family=${widget.family}&sign=${_selectedSign['id']}',
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  fg: const Color(0xFF2F4B1C),
-                                  onTap: _playAnimation,
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _PillButton(
-                                  icon: LucideIcons.volume2,
-                                  label:
-                                      t['common']?['instruction'] ?? 'Consigne',
-                                  bg: AmaniColors.background,
-                                  fg: Colors.black,
-                                  onTap: () => speech.speak(
-                                    spokenSignInstruction(
-                                      lang,
-                                      _selectedSign['label'][lang.name] ?? '',
-                                      _selectedSign['consigne'][lang.name] ??
-                                          '',
-                                    ),
-                                    lang,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _PillButton(
-                              icon: Icons.play_arrow_rounded,
-                              label: coursFamily['exercer'] ?? "S'entrainer",
-                              bg: AmaniColors.secondary,
-                              fg: Colors.white,
-                              filled: true,
-                              onTap: () => context.push(
-                                '/exercice-liste?family=${widget.family}&sign=${_selectedSign['id']}',
-                              ),
+                              ],
                             ),
                           ),
                         ],
@@ -318,8 +357,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                   Text(
                     capitalizeFirst(
                       _entries.length == 1
-                          ? (coursFamily['oneVariant'] ??
-                                'Une seule variante')
+                          ? (coursFamily['oneVariant'] ?? 'Une seule variante')
                           : tFormat(
                               coursFamily['variantsCount'] ??
                                   '{count} variantes',
@@ -338,12 +376,22 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    // Cadres resserrés, dans l'esprit des cases-lettres du
+                    // Palier 2 (plus de colonnes, marges réduites) : une
+                    // largeur MAXIMALE plutôt qu'un nombre de colonnes fixe
+                    // fait automatiquement grandir le nombre de colonnes sur
+                    // les grands écrans (jusqu'à 5, comme au Palier 2) sans
+                    // jamais rétrécir sous cette largeur sur téléphone. La
+                    // hauteur, elle, reste fixe (`mainAxisExtent`) -- assez
+                    // pour la coche + le cercle du signe (inchangé, voir
+                    // `size:` plus bas) + l'étiquette de nom, quelle que
+                    // soit la largeur réellement obtenue.
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: 0.92,
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 150,
+                          mainAxisExtent: 160,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
                         ),
                     itemCount: _entries.length,
                     itemBuilder: (context, i) {
@@ -355,7 +403,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                         onTap: () => _selectSign(item),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AmaniColors.surface
@@ -446,7 +494,8 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                   style: TextStyle(
                                     fontFamily: kBalooFontFamily,
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 12.5,
+                                    fontSize: 10.5,
+                                    height: 1.1,
                                     color: isSelected
                                         ? AmaniColors.secondaryDark
                                         : const Color(0xFF333333),
@@ -462,13 +511,14 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
                   const SizedBox(height: 24),
                   GestureDetector(
-                    onTap: () =>
-                        context.go('/exercice-liste?family=${widget.family}'),
+                    onTap: () => context.push(
+                      '/exercice-liste?family=${widget.family}',
+                    ),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: color,
+                        color: AmaniColors.palier1,
                         borderRadius: BorderRadius.circular(999),
                         boxShadow: const [
                           BoxShadow(
@@ -483,11 +533,8 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                         children: [
                           Flexible(
                             child: Text(
-                              tFormat(
-                                t['coursFamily']?['passExercices'] ??
-                                    'Passer aux exercices ({title})',
-                                {'title': title},
-                              ),
+                              t['coursFamily']?['passExercices'] ??
+                                  'Passer aux exercices',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
@@ -509,57 +556,6 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                   ),
                   const SizedBox(height: 12),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PillButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color bg;
-  final Color fg;
-  final VoidCallback onTap;
-  final bool filled;
-
-  const _PillButton({
-    required this.icon,
-    required this.label,
-    required this.bg,
-    required this.fg,
-    required this.onTap,
-    this.filled = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: fg),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: fg,
-                ),
               ),
             ),
           ],

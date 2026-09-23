@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
@@ -8,8 +7,10 @@ import '../hooks/use_tracing_scroll_lock.dart';
 import '../utils/word_search_generator.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/word_search_play.dart';
+import '../widgets/free_writing_sheet.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice de mots mêlés à difficulté progressive (`lvl2` → 2 mots,
 /// `lvl10` → 10 mots), intercalé dans le Palier 4. Port fidèle de
@@ -61,7 +62,7 @@ class _ExerciceMotsMelesScreenState extends State<ExerciceMotsMelesScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -108,9 +109,7 @@ class _ExerciceMotsMelesScreenState extends State<ExerciceMotsMelesScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/accueil'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -125,7 +124,7 @@ class _ExerciceMotsMelesScreenState extends State<ExerciceMotsMelesScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -161,11 +160,18 @@ class _ExerciceMotsMelesScreenState extends State<ExerciceMotsMelesScreen> {
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     physics: tracingAwareScrollPhysics(context),
-                    child: WordSearchPlay(
-                      wordSearch: wordSearch,
-                      puzzleId: widget.puzzleId,
-                      level: level,
-                      onSolved: () => _confettiKey.currentState?.play(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        WordSearchPlay(
+                          wordSearch: wordSearch,
+                          puzzleId: widget.puzzleId,
+                          level: level,
+                          onSolved: () => _confettiKey.currentState?.play(),
+                        ),
+                        const SizedBox(height: 24),
+                        FreeWritingSheet(),
+                      ],
                     ),
                   ),
                 ),

@@ -65,6 +65,12 @@ class RepetitionRow extends StatefulWidget {
   /// complète, utilisée partout ailleurs (ex. `exercice_lettre_screen.dart`).
   final bool showCard;
 
+  /// `true` si cette rangée a déjà été marquée terminée lors d'une session
+  /// précédente (persistance permanente -- voir `ProgressProvider.isCompleted`) :
+  /// la rangée s'affiche d'emblée toutes occurrences réussies, verrouillée,
+  /// sans jamais redéclencher [onAllDone] (déjà comptabilisé alors).
+  final bool initiallyDone;
+
   const RepetitionRow({
     super.key,
     required this.entry,
@@ -77,6 +83,7 @@ class RepetitionRow extends StatefulWidget {
     this.onAllDone,
     this.locked = false,
     this.showCard = true,
+    this.initiallyDone = false,
   });
 
   @override
@@ -113,6 +120,15 @@ class _RepetitionRowState extends State<RepetitionRow> {
   }
 
   void _resetOccurrences() {
+    if (widget.initiallyDone) {
+      _occurrences = List.generate(
+        widget.repetitions,
+        (_) => OccurrenceState(status: OccurrenceStatus.success),
+      );
+      _activeIndex = widget.repetitions;
+      _allDone = true;
+      return;
+    }
     _occurrences = List.generate(widget.repetitions, (_) => OccurrenceState());
     _activeIndex = 0;
     _allDone = false;

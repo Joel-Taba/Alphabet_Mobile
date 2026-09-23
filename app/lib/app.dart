@@ -12,6 +12,7 @@ import 'screens/parcours_screen.dart';
 import 'screens/bibliotheque_screen.dart';
 import 'screens/profil_hub_screen.dart';
 import 'screens/cours_family_screen.dart';
+import 'screens/cours_signes_intro_screen.dart';
 import 'screens/exercice_liste_screen.dart';
 import 'screens/cours_lettres_formation_screen.dart';
 import 'screens/exercice_lettre_screen.dart';
@@ -70,6 +71,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/connexion',
       builder: (context, state) => const ReturningUserScreen(),
+    ),
+    GoRoute(
+      path: '/cours-signes-intro',
+      builder: (context, state) => const CoursSignesIntroScreen(),
     ),
     GoRoute(
       path: '/cours/:family',
@@ -231,11 +236,7 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: '/accueil',
-              builder: (context, state) => ParcoursScreen(
-                scrollToPalier: int.tryParse(
-                  state.uri.queryParameters['scrollToPalier'] ?? '',
-                ),
-              ),
+              builder: (context, state) => const ParcoursScreen(),
             ),
           ],
         ),

@@ -6,13 +6,12 @@ import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
 import '../data/calcul_catalog.dart';
-import '../data/letter_style_resolver.dart';
-import '../hooks/use_writing_style.dart';
-import '../widgets/mini_letter_frame.dart';
 import '../widgets/posed_operation_demo.dart';
 import '../widgets/small_calc_balls.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Extrait les deux opérandes d'un `CalculProblem.display` (ex. "34 + 89")
 /// pour les widgets de démonstration "opération posée" — évite d'ajouter des
@@ -65,7 +64,9 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
   void didUpdateWidget(covariant CoursCalculScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.topicId != widget.topicId) {
-      setState(() => _replaySeed = 0);
+      setState(() {
+        _replaySeed = 0;
+      });
       WidgetsBinding.instance.addPostFrameCallback((_) => _onTopicActivated());
     }
   }
@@ -81,17 +82,18 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
     );
   }
 
-  void _speakConsigne(CalculTopic topic) {
-    final lang = context.read<LanguageProvider>().lang;
-    context.read<SignSpeechService>().speak(topic.mnemonicBody, lang);
+  void _speakConsigne(CalculTopic topic, Lang lang) {
+    final body = topic.mnemonicBody[lang.name] ?? topic.mnemonicBody['fr']!;
+    context.read<SignSpeechService>().speak(body, lang);
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = context.watch<LanguageProvider>().t;
+    final languageProvider = context.watch<LanguageProvider>();
+    final t = languageProvider.t;
+    final lang = languageProvider.lang;
     final cc = t['coursCalcul'] as Map<String, dynamic>? ?? {};
     final common = t['common'] as Map<String, dynamic>? ?? {};
-    final style = context.watch<WritingStyleProvider>().style.name;
     final topic = findCalculTopic(widget.topicId);
 
     if (topic == null) {
@@ -109,7 +111,7 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -164,18 +166,6 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                   }[topic.posedOperation]!,
                 ))
         : null;
-    final answerDigits = demo == null
-        ? const <dynamic>[]
-        : demo.answer
-              .split('')
-              .map((c) => getLetterFormation(c, style))
-              .whereType<dynamic>()
-              .toList();
-    final answerDigitsSecond = demo?.answerSecondPart
-        ?.split('')
-        .map((c) => getLetterFormation(c, style))
-        .whereType<dynamic>()
-        .toList();
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -195,9 +185,7 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -208,7 +196,7 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -217,7 +205,8 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          topic.niveau,
+                          '${cc['levelLabel'] ?? 'Niveau'}: '
+                          '${calculNiveauLabel(topic.niveau, lang.name)}',
                           style: TextStyle(
                             fontFamily: kBalooFontFamily,
                             fontWeight: FontWeight.w800,
@@ -227,11 +216,11 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                           ),
                         ),
                         Text(
-                          topic.title,
+                          topic.title[lang.name] ?? topic.title['fr']!,
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),
                         Text(
-                          topic.subtitle,
+                          topic.subtitle[lang.name] ?? topic.subtitle['fr']!,
                           style: AmaniTheme.bodyStyle.copyWith(
                             fontSize: 12,
                             color: AmaniColors.textSecondary,
@@ -247,137 +236,191 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  if (isTableTopic)
-                    _MultiplicationTableCard(tableNumber: topic.tableNumber!)
-                  else if (isPosedTopic && posedOperands != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x1F000000),
-                            blurRadius: 20,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: switch (topic.posedOperation) {
-                          'addition' => AdditionPoseeDemo(
-                            a: posedOperands[0],
-                            b: posedOperands[1],
-                          ),
-                          'soustraction' => SoustractionPoseeDemo(
-                            a: posedOperands[0],
-                            b: posedOperands[1],
-                          ),
-                          'multiplication' => MultiplicationPoseeDemo(
-                            a: posedOperands[0],
-                            b: posedOperands[1],
-                          ),
-                          'division' => DivisionPoseeDemo(
-                            dividend: posedOperands[0],
-                            divisor: posedOperands[1],
-                          ),
-                          'fraction' => FractionPoseeDemo(
-                            numA: posedOperands[0],
-                            denomA: posedOperands[1],
-                            numB: posedOperands[2],
-                            denomB: posedOperands[3],
-                          ),
-                          _ => const SizedBox.shrink(),
-                        },
-                      ),
-                    )
-                  else
-                    // Carte de démonstration : objets à compter (si
-                    // présents) + équation + réponse animée chiffre par
-                    // chiffre.
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x1F000000),
-                            blurRadius: 20,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          if (demo!.illustrateA != null &&
-                              demo.illustrateB != null) ...[
-                            demo.display.contains('-')
-                                ? SoustractionBallsDemo(
-                                    countA: demo.illustrateA!,
-                                    countRemoved: demo.illustrateB!,
-                                  )
-                                : AdditionBallsDemo(
-                                    countA: demo.illustrateA!,
-                                    countB: demo.illustrateB!,
-                                  ),
-                            const SizedBox(height: 12),
-                          ],
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                demo.display,
-                                style: TextStyle(
-                                  fontFamily: kBalooFontFamily,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 28,
-                                  color: AmaniColors.textPrimary,
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: TraceControlsToolbar.heightFor(3),
+                    ),
+                    child: Stack(
+                      children: [
+                        if (isTableTopic)
+                          _MultiplicationTableCard(
+                            tableNumber: topic.tableNumber!,
+                          )
+                        else if (isPosedTopic && posedOperands != null)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x1F000000),
+                                  blurRadius: 20,
+                                  offset: Offset(0, 6),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                '=',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: AmaniColors.textSecondary,
+                              ],
+                            ),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: switch (topic.posedOperation) {
+                                'addition' => AdditionPoseeDemo(
+                                  a: posedOperands[0],
+                                  b: posedOperands[1],
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Row(
-                                key: ValueKey('answer-$_replaySeed'),
-                                children: [
-                                  for (final d in answerDigits) ...[
-                                    MiniLetterFrame(letter: d, size: 52),
-                                    const SizedBox(width: 4),
-                                  ],
-                                  if (answerDigitsSecond != null) ...[
-                                    const SizedBox(width: 6),
+                                'soustraction' => SoustractionPoseeDemo(
+                                  a: posedOperands[0],
+                                  b: posedOperands[1],
+                                ),
+                                'multiplication' => MultiplicationPoseeDemo(
+                                  a: posedOperands[0],
+                                  b: posedOperands[1],
+                                ),
+                                'division' => DivisionPoseeDemo(
+                                  dividend: posedOperands[0],
+                                  divisor: posedOperands[1],
+                                ),
+                                'fraction' => FractionPoseeDemo(
+                                  numA: posedOperands[0],
+                                  denomA: posedOperands[1],
+                                  numB: posedOperands[2],
+                                  denomB: posedOperands[3],
+                                ),
+                                _ => const SizedBox.shrink(),
+                              },
+                            ),
+                          )
+                        else
+                          // Carte de démonstration : objets à compter (si
+                          // présents) + équation + réponse animée chiffre par
+                          // chiffre.
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x1F000000),
+                                  blurRadius: 20,
+                                  offset: Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                if (demo!.illustrateA != null &&
+                                    demo.illustrateB != null) ...[
+                                  demo.display.contains('-')
+                                      ? SoustractionBallsDemo(
+                                          countA: demo.illustrateA!,
+                                          countRemoved: demo.illustrateB!,
+                                        )
+                                      : AdditionBallsDemo(
+                                          countA: demo.illustrateA!,
+                                          countB: demo.illustrateB!,
+                                        ),
+                                  const SizedBox(height: 12),
+                                ],
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
                                     Text(
-                                      demo.secondPartSeparator,
+                                      demo.display,
                                       style: TextStyle(
                                         fontFamily: kBalooFontFamily,
                                         fontWeight: FontWeight.w800,
-                                        fontSize: 22,
+                                        fontSize: 28,
                                         color: AmaniColors.textPrimary,
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    for (final d in answerDigitsSecond) ...[
-                                      MiniLetterFrame(letter: d, size: 52),
-                                      const SizedBox(width: 4),
-                                    ],
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      '=',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        color: AmaniColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Row(
+                                      key: ValueKey('answer-$_replaySeed'),
+                                      children: [
+                                        Text(
+                                          demo.answer,
+                                          style: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 32,
+                                            color: AmaniColors.textPrimary,
+                                          ),
+                                        ),
+                                        if (demo.answerSecondPart != null) ...[
+                                          Text(
+                                            demo.secondPartSeparator,
+                                            style: TextStyle(
+                                              fontFamily: kBalooFontFamily,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 22,
+                                              color: AmaniColors.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            demo.answerSecondPart!,
+                                            style: const TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 32,
+                                              color: AmaniColors.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                   ],
-                                ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: TraceControlsToolbar(
+                            expandAria: common['toolbarExpandAria'] ?? '',
+                            collapseAria: common['toolbarCollapseAria'] ?? '',
+                            actions: [
+                              ToolbarAction(
+                                icon: LucideIcons.rotateCcw,
+                                label: common['replay'] ?? 'Relancer',
+                                background: const Color(0x1F6B3F94),
+                                foreground: const Color(0xFF3F2456),
+                                onTap: () => setState(() {
+                                  _replaySeed++;
+                                }),
+                              ),
+                              ToolbarAction(
+                                icon: LucideIcons.volume2,
+                                label: common['instruction'] ?? 'Consigne',
+                                background: AmaniColors.background,
+                                foreground: Colors.black,
+                                onTap: () => _speakConsigne(topic, lang),
+                              ),
+                              ToolbarAction(
+                                icon: Icons.play_arrow_rounded,
+                                label: cc['practice'] ?? "S'entrainer",
+                                background: const Color(0xFF8B5FBF),
+                                foreground: Colors.white,
+                                onTap: () => context.push(
+                                  '/exercice/calcul/${topic.id}',
+                                ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
                   const SizedBox(height: 16),
 
                   // Carte mnémotechnique "Le sais-tu ?"
@@ -398,7 +441,8 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                topic.mnemonicTitle,
+                                topic.mnemonicTitle[lang.name] ??
+                                    topic.mnemonicTitle['fr']!,
                                 style: AmaniTheme.titleStyle.copyWith(
                                   fontSize: 14,
                                   color: const Color(0xFF6B3F94),
@@ -406,7 +450,8 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                topic.mnemonicBody,
+                                topic.mnemonicBody[lang.name] ??
+                                    topic.mnemonicBody['fr']!,
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 13,
                                   color: AmaniColors.textSecondary,
@@ -416,74 +461,6 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PillButton(
-                          icon: LucideIcons.rotateCcw,
-                          label: common['replay'] ?? 'Relancer',
-                          bg: const Color(0x1F6B3F94),
-                          fg: const Color(0xFF3F2456),
-                          onTap: () => setState(() => _replaySeed++),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _PillButton(
-                          icon: LucideIcons.volume2,
-                          label: common['instruction'] ?? 'Consigne',
-                          bg: AmaniColors.background,
-                          fg: Colors.black,
-                          onTap: () => _speakConsigne(topic),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Passe aux exercices — pas de "cours suivant" : l'enfant
-                  // doit s'entraîner avant de continuer, comme pour les
-                  // autres paliers récents (Mots, Syllabes).
-                  GestureDetector(
-                    onTap: () => context.push('/exercice/calcul/${topic.id}'),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8B5FBF),
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x338B5FBF),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            cc['practice'] ?? "S'entrainer",
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -586,55 +563,6 @@ class _MultiplicationTableCard extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _PillButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color bg;
-  final Color fg;
-  final VoidCallback onTap;
-
-  const _PillButton({
-    required this.icon,
-    required this.label,
-    required this.bg,
-    required this.fg,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: fg),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: fg,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
+import '../services/sound_effect_service.dart';
 import 'amani_mascot.dart';
 import 'confetti_burst.dart';
 import 'directional_icon.dart';
@@ -15,7 +16,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 ///
 /// [onNext] est optionnel : quand il n'y a plus de cours suivant dans le
 /// palier (dernier élément), le bouton "Suivant" est simplement absent.
-/// [onRestart], lui, est toujours disponible.
+/// [onRestart], lui, est toujours disponible. [onFreeMode] ("Continuer en
+/// mode libre") est optionnel lui aussi -- absent des écrans qui n'ont pas
+/// encore de feuille d'écriture libre en bas de page ; à la différence de
+/// [onRestart], il ne réinitialise rien : tous les exercices restent acquis,
+/// seule la feuille libre en bas de page reste praticable ensuite.
 ///
 /// Ce pop-up n'est monté qu'une seule fois, au moment précis où l'exercice
 /// se termine (les écrans appelants le conditionnent avec `if (...)`) : s'y
@@ -26,12 +31,14 @@ class ExerciseCompletePopup extends StatefulWidget {
   final VoidCallback onBackHome;
   final VoidCallback? onNext;
   final VoidCallback onRestart;
+  final VoidCallback? onFreeMode;
 
   const ExerciseCompletePopup({
     super.key,
     required this.onBackHome,
     this.onNext,
     required this.onRestart,
+    this.onFreeMode,
   });
 
   @override
@@ -50,6 +57,7 @@ class _ExerciseCompletePopupState extends State<ExerciseCompletePopup> {
     // inséré dans l'arbre.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _confettiKey.currentState?.play();
+      SoundEffectService.playCelebration();
     });
   }
 
@@ -138,11 +146,25 @@ class _ExerciseCompletePopupState extends State<ExerciseCompletePopup> {
                         ),
                       ),
                     ],
+                    if (widget.onFreeMode != null) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _PopupButton(
+                          icon: LucideIcons.pencil,
+                          label: common['freeMode'] ?? 'Mode libre',
+                          bg: const Color(0x264A90E2),
+                          fg: const Color(0xFF2D6BBF),
+                          border: const Color(0x664A90E2),
+                          onTap: widget.onFreeMode!,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: _PopupButton(
-                        label: common['backToHome'] ?? "Retour à l'accueil",
+                        label: common['backToHome'] ?? 'Accueil',
                         bg: Colors.white,
                         fg: AmaniColors.textPrimary,
                         border: AmaniColors.textPrimary.withValues(alpha: 0.15),

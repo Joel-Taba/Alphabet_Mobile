@@ -12,6 +12,7 @@ import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Cours de mots du Palier 3 : chaque mot est déjà écrit avec des lettres
 /// connues, l'enfant écoute et regarde. Port fidèle de
@@ -44,7 +45,7 @@ class CoursMotsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -91,9 +92,7 @@ class CoursMotsScreen extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -104,7 +103,7 @@ class CoursMotsScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -182,12 +181,16 @@ class CoursMotsScreen extends StatelessWidget {
                       word: word,
                       lang: lang,
                       practiceWordAria: cm['practiceWordAria'] ?? '',
+                      imageAria: cm['imageAria'] ?? '',
+                      closeLabel: (t['common'] as Map<String, dynamic>? ??
+                              {})['close'] ??
+                          '',
                       // Le mot n'est considéré "consulté" que lorsque l'enfant
                       // en écoute la prononciation — pas dès l'affichage de
                       // la carte, qui se produit pour tous les mots dès
                       // l'ouverture de la page.
                       onSpeak: () {
-                        speech.speak(word.text(lang.name), lang);
+                        speech.speak(word.spokenText(lang.name), lang);
                         context.read<ProgressProvider>().markCoursItemViewed(
                           typeEtape: 'MOT',
                           groupCode: groupId,
@@ -260,15 +263,65 @@ class _WordCard extends StatelessWidget {
   final WordEntry word;
   final Lang lang;
   final String practiceWordAria;
+  final String imageAria;
+  final String closeLabel;
   final VoidCallback onSpeak;
   final VoidCallback onPractice;
   const _WordCard({
     required this.word,
     required this.lang,
     required this.practiceWordAria,
+    required this.imageAria,
+    required this.closeLabel,
     required this.onSpeak,
     required this.onPractice,
   });
+
+  void _showEnlargedImage(BuildContext context, String text) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(24),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/words/${word.id}.jpg',
+                fit: BoxFit.contain,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Semantics(
+                button: true,
+                label: closeLabel,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: AmaniColors.textPrimary,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +352,30 @@ class _WordCard extends StatelessWidget {
           ),
           child: Row(
             children: [
+              Semantics(
+                button: true,
+                label: tFormat(imageAria, {'mot': text}),
+                child: GestureDetector(
+                  onTap: () => _showEnlargedImage(context, text),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.12),
+                        width: 2,
+                      ),
+                    ),
+                    child: Image.asset(
+                      'assets/images/words/${word.id}.jpg',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: letters.isEmpty
                     ? Text(

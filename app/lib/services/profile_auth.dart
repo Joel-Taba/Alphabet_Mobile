@@ -66,3 +66,13 @@ Future<void> removeStoredPhoto() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove(scopeKey(_photoKey));
 }
+
+/// Photo d'un enfant précis, quel que soit l'enfant actuellement actif —
+/// contourne volontairement [scopeKey] (qui ne connaît que l'enfant actif)
+/// pour permettre d'afficher la vraie photo de chaque profil dans le
+/// sélecteur de fratrie (`child_switcher_sheet.dart`), plutôt que ses seules
+/// initiales.
+Future<String?> getStoredPhotoFor(String childId) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('${_photoKey}__$childId');
+}

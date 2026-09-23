@@ -9,6 +9,7 @@ import '../widgets/tangram_board.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Cours "Tangram" du Palier "Figures géométriques" : montre la silhouette
 /// déjà résolue (aperçu du résultat, non interactif) puis explique le
@@ -54,7 +55,7 @@ class _CoursTangramScreenState extends State<CoursTangramScreen> {
           child: Center(
             child: GestureDetector(
               onTap: () =>
-                  context.canPop() ? context.pop() : context.go('/accueil'),
+                  goHome(context),
               child: Text(ct['notFound'] ?? ''),
             ),
           ),
@@ -86,9 +87,7 @@ class _CoursTangramScreenState extends State<CoursTangramScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -99,7 +98,7 @@ class _CoursTangramScreenState extends State<CoursTangramScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -180,7 +179,7 @@ class _CoursTangramScreenState extends State<CoursTangramScreen> {
                   ),
                   const SizedBox(height: 14),
                   GestureDetector(
-                    onTap: () => context.go('/exercice/tangram/${puzzle.id}'),
+                    onTap: () => context.push('/exercice/tangram/${puzzle.id}'),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -221,7 +220,7 @@ class _CoursTangramScreenState extends State<CoursTangramScreen> {
                     const SizedBox(height: 10),
                     GestureDetector(
                       onTap: () =>
-                          context.go('/cours/tangram/${nextPuzzle.id}'),
+                          context.replace('/cours/tangram/${nextPuzzle.id}'),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 14),

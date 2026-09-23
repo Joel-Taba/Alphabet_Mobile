@@ -15,6 +15,22 @@ class ValidationResult {
   const ValidationResult(this.valid, this.coverage, [this.failReason]);
 }
 
+/// Point de départ réel d'un chemin SVG — dérivé du tracé lui-même plutôt que
+/// d'un champ `startXY` saisi séparément dans un catalogue, pour qu'un repère
+/// de départ (pastille verte) tombe toujours exactement sur l'origine du
+/// tracé qu'il annote, même si ce champ a été mal renseigné ou si le tracé a
+/// été retouché depuis sans mettre à jour ce champ.
+Offset pathStartPoint(String pathD) {
+  final pts = sampleSvgPath(pathD, 2);
+  return pts.isNotEmpty ? pts.first : Offset.zero;
+}
+
+/// Point d'arrivée réel d'un chemin SVG — voir [pathStartPoint].
+Offset pathEndPoint(String pathD) {
+  final pts = sampleSvgPath(pathD, 2);
+  return pts.length > 1 ? pts.last : Offset.zero;
+}
+
 /// Échantillonne un chemin SVG en N points régulièrement espacés.
 List<Offset> sampleSvgPath(String pathD, [int numPoints = 40]) {
   try {

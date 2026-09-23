@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
@@ -8,6 +7,7 @@ import '../hooks/use_exercise_settings.dart';
 import '../widgets/number_compose_puzzle.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Compose le nombre !" du Palier "Les Calculs" — purement
 /// ludique, sans points ni progression, comme les mots mêlés du Palier
@@ -79,7 +79,9 @@ class _ExerciceCalculComposeScreenState
 
   @override
   Widget build(BuildContext context) {
-    final t = context.watch<LanguageProvider>().t;
+    final languageProvider = context.watch<LanguageProvider>();
+    final t = languageProvider.t;
+    final lang = languageProvider.lang;
     final cc = t['calculCompose'] as Map<String, dynamic>? ?? {};
     final common = t['common'] as Map<String, dynamic>? ?? {};
     final idx = _levelIdx;
@@ -95,7 +97,7 @@ class _ExerciceCalculComposeScreenState
           child: Center(
             child: GestureDetector(
               onTap: () =>
-                  context.canPop() ? context.pop() : context.go('/accueil'),
+                  goHome(context),
               child: Text((common['backToHome'] ?? '').toString()),
             ),
           ),
@@ -124,9 +126,7 @@ class _ExerciceCalculComposeScreenState
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -137,7 +137,7 @@ class _ExerciceCalculComposeScreenState
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -146,7 +146,8 @@ class _ExerciceCalculComposeScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          level.niveau,
+                          '${cc['levelLabel'] ?? 'Niveau'}: '
+                          '${calculNiveauLabel(level.niveau, lang.name)}',
                           style: TextStyle(
                             fontFamily: kBalooFontFamily,
                             fontWeight: FontWeight.w800,
@@ -156,7 +157,10 @@ class _ExerciceCalculComposeScreenState
                           ),
                         ),
                         Text(
-                          (cc['title'] ?? level.title).toString(),
+                          (cc['title'] ??
+                                  level.title[lang.name] ??
+                                  level.title['fr'])
+                              .toString(),
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),
                       ],

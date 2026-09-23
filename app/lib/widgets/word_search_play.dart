@@ -12,6 +12,7 @@ import '../data/word_catalog.dart';
 import 'amani_mascot.dart';
 import 'exercise_complete_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Palette cyclique — un mot trouvé = une couleur, réutilisée dans la grille
 /// et la liste.
@@ -104,6 +105,28 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
   bool _awaitingRepeatCompletion = false;
 
   @override
+  void initState() {
+    super.initState();
+    _restoreFromProgress();
+  }
+
+  /// Persistance permanente : une grille déjà entièrement résolue lors d'une
+  /// session précédente le reste pour toujours (voir `ProgressProvider`) --
+  /// jamais affichée à nouveau vierge. Sans effet en Mode Libre
+  /// ([puzzleId] absent, grilles régénérées à la demande).
+  void _restoreFromProgress() {
+    if (widget.puzzleId == null) return;
+    if (context.read<ProgressProvider>().isCompleted(
+      typeEtape: 'MOTS_MELES',
+      modalite: 'EXERCICE',
+      etapeCode: widget.puzzleId!,
+    )) {
+      _pointsAwarded = true;
+      _found.addAll(widget.wordSearch.placed.map((p) => p.word.id));
+    }
+  }
+
+  @override
   void didUpdateWidget(WordSearchPlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.wordSearch != widget.wordSearch) {
@@ -112,6 +135,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
       _pointsAwarded = false;
       _dragStart = null;
       _dragCurrent = null;
+      _restoreFromProgress();
     }
   }
 
@@ -144,7 +168,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
       final reversed = cells.reversed.toList();
       if (_sameCells(wordCells, cells) || _sameCells(wordCells, reversed)) {
         setState(() => _found.add(p.word.id));
-        speech.speak(p.word.fr, lang);
+        speech.speak(p.word.spokenText('fr'), lang);
         if (_found.length == widget.wordSearch.placed.length) {
           Future.delayed(const Duration(milliseconds: 300), () {
             if (!mounted) return;
@@ -412,7 +436,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                     final isFound = _found.contains(p.word.id);
                     final color = wordColor[p.word.id]!;
                     return GestureDetector(
-                      onTap: () => speech.speak(p.word.fr, lang),
+                      onTap: () => speech.speak(p.word.spokenText('fr'), lang),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -477,9 +501,9 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
         ),
         if (_showCompletePopup)
           ExerciseCompletePopup(
-            onBackHome: () => context.go('/accueil'),
+            onBackHome: () => goHome(context),
             onNext: nextWordGroup != null
-                ? () => context.go('/cours/mots/${nextWordGroup.id}')
+                ? () => context.replace('/cours/mots/${nextWordGroup.id}')
                 : null,
             onRestart: () {
               setState(() {

@@ -15,8 +15,10 @@ import '../hooks/use_writing_style.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/puzzle_piece.dart';
 import '../widgets/exercise_complete_popup.dart';
+import '../widgets/free_writing_sheet.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Jeu "Formule en puzzle" du Palier 2 : pour chaque lettre/chiffre du
 /// groupe, l'enfant choisit — dans le bon ordre — les pièces portant les
@@ -38,17 +40,30 @@ class ExercicePuzzleFormuleScreen extends StatefulWidget {
 class _ExercicePuzzleFormuleScreenState
     extends State<ExercicePuzzleFormuleScreen> {
   final Set<String> _doneChars = {};
+  bool _restoredFromProgress = false;
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
+
+  /// `true` après "Continuer en mode libre" (voir [ExerciseCompletePopup]) :
+  /// masque la pop-up de fin sans jamais toucher à `_doneChars` -- toutes les
+  /// lettres/chiffres restent acquis, seule la feuille d'écriture libre en
+  /// bas de page reste praticable ensuite.
+  bool _freeModeOnly = false;
+
+  /// Voir `exercice_calcul_screen.dart::_justCompletedThisVisit`.
+  bool _justCompletedThisVisit = false;
 
   void _handleCharSolved(dynamic letter, int totalLetters) {
     final t = context.read<LanguageProvider>().t;
     final lang = context.read<LanguageProvider>().lang;
     final ep = t['exercicePuzzle'] as Map<String, dynamic>? ?? {};
     final char = letter['char'] as String;
+    final isDigit = letter['category'] == 'chiffre';
 
     context.read<SignSpeechService>().speak(
-      tFormat(ep['speakSolved'] ?? '', {'name': letter['name'][lang.name] ?? ''}),
+      tFormat((isDigit ? ep['speakSolvedDigit'] : ep['speakSolved']) ?? '', {
+        'name': letter['name'][lang.name] ?? '',
+      }),
       lang,
     );
     context.read<ProgressProvider>().awardCompletion(
@@ -57,7 +72,10 @@ class _ExercicePuzzleFormuleScreenState
       etapeCode: '$char-puzzle',
       palier: 2,
     );
-    setState(() => _doneChars.add(char));
+    setState(() {
+      _doneChars.add(char);
+      if (_doneChars.length >= totalLetters) _justCompletedThisVisit = true;
+    });
     if (_doneChars.length >= totalLetters && _awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
@@ -91,7 +109,7 @@ class _ExercicePuzzleFormuleScreenState
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/exercice-liste?group=l1'),
+                  onTap: () => context.replace('/exercice-liste?group=l1'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -118,10 +136,26 @@ class _ExercicePuzzleFormuleScreenState
       );
     }
 
+    final isGroupDigits =
+        progressionGroup.kind == ProgressionGroupKind.chiffres;
     final groupLetters = progressionGroup.chars
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
         .toList();
+    if (!_restoredFromProgress && groupLetters.isNotEmpty) {
+      _restoredFromProgress = true;
+      final progress = context.read<ProgressProvider>();
+      for (final l in groupLetters) {
+        final char = l['char'] as String;
+        if (progress.isCompleted(
+          typeEtape: 'LETTRE',
+          modalite: 'EXERCICE',
+          etapeCode: '$char-puzzle',
+        )) {
+          _doneChars.add(char);
+        }
+      }
+    }
     final allDone =
         groupLetters.isNotEmpty && _doneChars.length == groupLetters.length;
 
@@ -153,9 +187,7 @@ class _ExercicePuzzleFormuleScreenState
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/accueil'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -170,7 +202,7 @@ class _ExercicePuzzleFormuleScreenState
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -189,10 +221,16 @@ class _ExercicePuzzleFormuleScreenState
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              tFormat(ep['piecesReady'] ?? '', {
-                                'done': _doneChars.length,
-                                'total': groupLetters.length,
-                              }),
+                              tFormat(
+                                (isGroupDigits
+                                        ? ep['piecesReadyDigit']
+                                        : ep['piecesReady']) ??
+                                    '',
+                                {
+                                  'done': _doneChars.length,
+                                  'total': groupLetters.length,
+                                },
+                              ),
                               style: AmaniTheme.bodyStyle.copyWith(
                                 fontSize: 12,
                                 color: AmaniColors.textSecondary,
@@ -240,7 +278,10 @@ class _ExercicePuzzleFormuleScreenState
                               Text(
                                 allDone
                                     ? (ep['allDoneBody'] ?? '')
-                                    : (ep['introBody'] ?? ''),
+                                    : ((isGroupDigits
+                                            ? ep['introBodyDigit']
+                                            : ep['introBody']) ??
+                                        ''),
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 12,
                                   color: AmaniColors.textSecondary,
@@ -320,6 +361,15 @@ class _ExercicePuzzleFormuleScreenState
                                     ),
                                   ),
                                 ],
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    20,
+                                    12,
+                                    8,
+                                  ),
+                                  child: FreeWritingSheet(),
+                                ),
                               ]),
                             ),
                           ),
@@ -330,11 +380,11 @@ class _ExercicePuzzleFormuleScreenState
                 ),
               ],
             ),
-            if (allDone)
+            if (allDone && !_freeModeOnly && _justCompletedThisVisit)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextGroup != null
-                    ? () => context.go(
+                    ? () => context.replace(
                         '/exercice/puzzle-formule/${nextGroup.chars.first}?pg=${nextGroup.id}',
                       )
                     : null,
@@ -343,8 +393,11 @@ class _ExercicePuzzleFormuleScreenState
                     _doneChars.clear();
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
+                    _freeModeOnly = false;
+                    _justCompletedThisVisit = false;
                   });
                 },
+                onFreeMode: () => setState(() => _freeModeOnly = true),
               ),
           ],
         ),

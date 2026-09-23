@@ -62,3 +62,11 @@ class AnimationSpeedProvider extends ChangeNotifier {
 int scaleDuration(int baseDurationMs, AnimationSpeed speed) {
   return (baseDurationMs / _speedMultiplier[speed]!).round();
 }
+
+/// Délai avant le tout premier lancement de l'animation de démonstration
+/// d'une page de cours (Paliers 1 à 6) -- laisse à l'enfant le temps de
+/// repérer le contenu de la page avant que le cours ne démarre. Ne
+/// s'applique jamais à un rejeu explicite (bouton "Relancer", tap sur une
+/// autre variante) : uniquement à l'ouverture d'une page ou au changement de
+/// sujet qui la remplace (ex. "Suivant"/"Précédent").
+const Duration kCoursAnimationDelay = Duration(milliseconds: 2000);

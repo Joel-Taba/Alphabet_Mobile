@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:path_drawing/path_drawing.dart' as pd;
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
-import '../widgets/cahier_frame.dart';
 import '../widgets/scribble_canvas.dart';
+import '../widgets/free_writing_sheet.dart' show FreeWritingLinesPainter;
 import '../widgets/free_word_search_section.dart';
 import '../widgets/free_tangram_section.dart';
 import '../widgets/free_mental_calc_section.dart';
@@ -247,36 +247,9 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Onglets de modèle -- hauteur non figée (contrairement à un
-            // `SizedBox(height: 44)` calé sur la taille de police d'origine)
-            // : avec le réglage "Taille de l'interface" (Profil > Réglages),
-            // les libellés grandissent et un cadre figé les aurait rognés.
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTab(
-                    ModeLibreTab.scribble,
-                    tabs['scribble'] ?? 'Gribouillage',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildTab(ModeLibreTab.signe, tabs['sign'] ?? 'Signe'),
-                  const SizedBox(width: 8),
-                  _buildTab(ModeLibreTab.lettre, tabs['letter'] ?? 'Lettre'),
-                  const SizedBox(width: 8),
-                  _buildTab(ModeLibreTab.chiffre, tabs['digit'] ?? 'Chiffre'),
-                  const SizedBox(width: 8),
-                  _buildTab(
-                    ModeLibreTab.wordsearch,
-                    tabs['wordsearch'] ?? 'Mots mêlés',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildTab(ModeLibreTab.tangram, tabs['tangram'] ?? 'Tangram'),
-                  const SizedBox(width: 8),
-                  _buildTab(ModeLibreTab.calcul, tabs['calcul'] ?? 'Calcul'),
-                ],
-              ),
-            ),
+            // Grille des rubriques -- remplace l'ancienne rangée d'onglets à
+            // défilement horizontal (source de confusion).
+            _buildTabMenu(tabs),
             const SizedBox(height: 16),
 
             if (_drawingTabs.contains(_currentTab))
@@ -313,39 +286,58 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
 
         // Canvas — page de dessin libre — uniquement des lignes d'écriture façon
         // cahier, sans aucun tracé-guide superposé : c'est l'enfant qui
-        // dessine seul, quel que soit l'onglet. Port fidèle du canevas
-        // unique partagé par les 4 onglets dans `_app.bibliotheque.tsx`
-        // (`<CahierFrame ... /><canvas .../>`, sans `targetSvgPath`).
-        AspectRatio(
-          aspectRatio: 1.0,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AmaniColors.disabled, width: 2),
-            ),
-            child: CahierFrame(
-              rounded: 22,
-              child: ScribbleCanvas(key: _scribbleKey, penColor: _penColor),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Barre d'outils : couleurs + effacer, commune à tous les
-        // onglets (même barre que sur le web).
+        // dessine seul, quel que soit l'onglet. Même quadrillage répété par
+        // groupes de lignes que la feuille d'écriture libre des pages
+        // d'exercice (voir `FreeWritingLinesPainter`, `free_writing_sheet.dart`)
+        // -- plutôt que `CahierFrame`, qui étire un unique groupe de 4 lignes
+        // sur toute la hauteur au lieu de le répéter.
+        //
+        // La barre d'outils (couleurs + gomme) est placée à DROITE du canevas
+        // plutôt qu'en dessous : les cinq couleurs et la gomme restent ainsi
+        // toujours visibles à côté de l'espace d'écriture, sans avoir à
+        // défiler la page pour y accéder.
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AmaniColors.disabled, width: 2),
+                  ),
+                  child: CustomPaint(
+                    foregroundPainter: const FreeWritingLinesPainter(),
+                    child: ScribbleCanvas(
+                      key: _scribbleKey,
+                      penColor: _penColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 for (final c in _penColors) ...[
                   _buildColorSwatch(c),
-                  const SizedBox(width: 10),
+                  const SizedBox(height: 10),
                 ],
+                // Sépare visuellement la palette de couleurs de la gomme,
+                // pour éviter toute confusion entre les deux.
+                Container(
+                  width: 24,
+                  height: 1,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  color: AmaniColors.disabled,
+                ),
+                _buildEraserMenu(),
               ],
             ),
-            _buildEraserMenu(),
           ],
         ),
         const SizedBox(height: 20),
@@ -451,7 +443,7 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
 
     if (_currentTab == ModeLibreTab.scribble) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
         decoration: BoxDecoration(
           color: AmaniColors.surface,
           borderRadius: BorderRadius.circular(24),
@@ -464,39 +456,15 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x1A4A3B2A), blurRadius: 6),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: const Text('✏️', style: TextStyle(fontSize: 32)),
-            ),
-            const SizedBox(width: 16),
+            const Text('✏️', style: TextStyle(fontSize: 30)),
+            const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    modeLibre['noModelTitle'] ?? '',
-                    style: AmaniTheme.titleStyle.copyWith(fontSize: 15),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    modeLibre['noModelBody'] ?? '',
-                    style: AmaniTheme.bodyStyle.copyWith(
-                      fontSize: 13,
-                      color: AmaniColors.textSecondary,
-                    ),
-                  ),
-                ],
+              child: Text(
+                modeLibre['noModelTitle'] ?? '',
+                overflow: TextOverflow.ellipsis,
+                style: AmaniTheme.titleStyle.copyWith(fontSize: 15),
               ),
             ),
           ],
@@ -601,6 +569,35 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
     );
   }
 
+  /// Menu déroulant regroupant les 7 rubriques (Gribouillage, Signe, Lettre,
+  /// Chiffre, Mots mêlés, Tangram, Calcul) -- un seul bouton affichant la
+  /// rubrique active, dont le tap ouvre la liste complète. Remplace l'ancien
+  /// alignement horizontal d'onglets qui, une fois toutes les rubriques
+  /// ajoutées, dépassait la largeur de l'écran et nécessitait un défilement
+  /// horizontal invisible au premier coup d'œil.
+  /// Grille des rubriques -- tous les boutons restent visibles en
+  /// permanence, répartis sur plusieurs lignes selon la largeur disponible
+  /// (`Wrap`), au lieu d'une seule ligne qui déborde. Remplace l'ancienne
+  /// rangée à défilement horizontal (source de confusion : rien n'indiquait
+  /// qu'il fallait glisser pour voir les rubriques masquées hors-écran).
+  Widget _buildTabMenu(Map<String, dynamic> tabs) {
+    final items = <MapEntry<ModeLibreTab, String>>[
+      MapEntry(ModeLibreTab.scribble, tabs['scribble'] ?? 'Gribouillage'),
+      MapEntry(ModeLibreTab.signe, tabs['sign'] ?? 'Signe'),
+      MapEntry(ModeLibreTab.lettre, tabs['letter'] ?? 'Lettre'),
+      MapEntry(ModeLibreTab.chiffre, tabs['digit'] ?? 'Chiffre'),
+      MapEntry(ModeLibreTab.wordsearch, tabs['wordsearch'] ?? 'Mots mêlés'),
+      MapEntry(ModeLibreTab.tangram, tabs['tangram'] ?? 'Tangram'),
+      MapEntry(ModeLibreTab.calcul, tabs['calcul'] ?? 'Calcul'),
+    ];
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [for (final entry in items) _buildTab(entry.key, entry.value)],
+    );
+  }
+
   Widget _buildTab(ModeLibreTab tab, String label) {
     final isSelected = _currentTab == tab;
     return GestureDetector(
@@ -624,15 +621,13 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
               ),
           ],
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: kBalooFontFamily,
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              color: isSelected ? Colors.white : AmaniColors.textSecondary,
-            ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: kBalooFontFamily,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: isSelected ? Colors.white : AmaniColors.textSecondary,
           ),
         ),
       ),
@@ -655,6 +650,11 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       color: Colors.white,
       elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      // Le menu par défaut (largeur mini 112, padding horizontal 16 par
+      // item) reste bien plus large que nécessaire pour deux simples icônes
+      // sans texte -- resserré ici pour ne pas déborder visuellement de la
+      // barre d'outils.
+      constraints: const BoxConstraints(minWidth: 56, maxWidth: 64),
       onSelected: (value) {
         if (value == 'full') {
           _clearCanvas();
@@ -665,6 +665,7 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       itemBuilder: (context) => [
         PopupMenuItem(
           value: 'full',
+          padding: EdgeInsets.zero,
           child: Center(
             child: Semantics(
               label: modeLibre['eraseAllAria'] ?? 'Tout effacer',
@@ -678,6 +679,7 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
         ),
         PopupMenuItem(
           value: 'targeted',
+          padding: EdgeInsets.zero,
           child: Center(
             child: Semantics(
               label: modeLibre['eraseTargetedAria'] ?? 'Effacement ciblé',

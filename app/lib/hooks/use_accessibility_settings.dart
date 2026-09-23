@@ -16,7 +16,7 @@ const double kMinUiScale = 0.85;
 /// (`LayoutBuilder`/`Wrap`) : on peut donc viser une plage large sans
 /// risque de débordement, y compris sur tablette où l'on veut des espaces
 /// de tracé aussi grands que possible.
-const double kMaxUiScale = 1.8;
+const double kMaxUiScale = 2.4;
 
 /// Grand par défaut (au lieu de 1.0) : l'utilisateur veut des espaces de
 /// tracé bien visibles dès l'installation, tout en gardant de la marge pour

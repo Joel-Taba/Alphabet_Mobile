@@ -5,10 +5,13 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
+import '../hooks/use_animation_speed.dart';
 import '../data/shape_catalog.dart';
 import '../widgets/mini_letter_frame.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Cours du Palier "Figures géométriques" : anime le tracé de la figure
 /// (réutilise `MiniLetterFrame`, déjà générique), présente ses propriétés en
@@ -27,6 +30,12 @@ class CoursFigureScreen extends StatefulWidget {
 class _CoursFigureScreenState extends State<CoursFigureScreen> {
   int _replaySeed = 0;
 
+  /// `true` juste après l'ouverture de la page ou un changement de figure --
+  /// applique alors le délai avant le lancement de l'animation (voir
+  /// [kCoursAnimationDelay]). Repassé à `false` dès qu'un rejeu explicite
+  /// (bouton "Relancer") est demandé, pour que celui-ci reste immédiat.
+  bool _autoplayDelay = true;
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +46,10 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
   void didUpdateWidget(covariant CoursFigureScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.shapeId != widget.shapeId) {
-      setState(() => _replaySeed = 0);
+      setState(() {
+        _replaySeed = 0;
+        _autoplayDelay = true;
+      });
       WidgetsBinding.instance.addPostFrameCallback((_) => _onTopicActivated());
     }
   }
@@ -82,7 +94,7 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -114,6 +126,10 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
         topic.funFactTitle[lang.name] ?? topic.funFactTitle['fr']!;
     final funFactBody =
         topic.funFactBody[lang.name] ?? topic.funFactBody['fr']!;
+    final perimeterFormula =
+        topic.perimeterFormula[lang.name] ?? topic.perimeterFormula['fr']!;
+    final areaFormula =
+        topic.areaFormula[lang.name] ?? topic.areaFormula['fr']!;
     final properties = topic.hasCurvedSides
         ? (cf['propertiesRound'] ?? '')
         : (cf['propertiesWithCorners'] ?? '{sides}/{corners}')
@@ -139,9 +155,7 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -152,7 +166,7 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -182,31 +196,81 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                         ),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        MiniLetterFrame(
-                          key: ValueKey('shape-$_replaySeed'),
-                          letter: topic.traceData,
-                          size: 140,
-                          // Chaque côté doit se tracer entièrement avant que
-                          // le suivant ne commence (pas de chevauchement),
-                          // pour bien distinguer la formation figure par
-                          // figure — contrairement aux lettres, où un léger
-                          // chevauchement reste acceptable.
-                          stepGapMs: 700,
-                          stepDrawMs: 700,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          properties,
-                          textAlign: TextAlign.center,
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AmaniColors.textPrimary,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: TraceControlsToolbar.heightFor(3),
+                      ),
+                      child: Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          Column(
+                            children: [
+                              MiniLetterFrame(
+                                key: ValueKey('shape-$_replaySeed'),
+                                letter: topic.traceData,
+                                size: 140,
+                                delayMs: _autoplayDelay
+                                    ? kCoursAnimationDelay.inMilliseconds
+                                    : 0,
+                                // Chaque côté doit se tracer entièrement avant
+                                // que le suivant ne commence (pas de
+                                // chevauchement), pour bien distinguer la
+                                // formation figure par figure — contrairement
+                                // aux lettres, où un léger chevauchement reste
+                                // acceptable.
+                                stepGapMs: 700,
+                                stepDrawMs: 700,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                properties,
+                                textAlign: TextAlign.center,
+                                style: AmaniTheme.bodyStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AmaniColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: TraceControlsToolbar(
+                              expandAria: common['toolbarExpandAria'] ?? '',
+                              collapseAria: common['toolbarCollapseAria'] ?? '',
+                              actions: [
+                                ToolbarAction(
+                                  icon: LucideIcons.rotateCcw,
+                                  label: common['replay'] ?? 'Relancer',
+                                  background: const Color(0x1FB85454),
+                                  foreground: const Color(0xFF7A2E2E),
+                                  onTap: () => setState(() {
+                                    _replaySeed++;
+                                    _autoplayDelay = false;
+                                  }),
+                                ),
+                                ToolbarAction(
+                                  icon: LucideIcons.volume2,
+                                  label: common['instruction'] ?? 'Consigne',
+                                  background: AmaniColors.background,
+                                  foreground: Colors.black,
+                                  onTap: () => _speakConsigne(topic, lang),
+                                ),
+                                ToolbarAction(
+                                  icon: Icons.play_arrow_rounded,
+                                  label: cf['practice'] ?? "S'entrainer",
+                                  background: const Color(0xFFB85454),
+                                  foreground: Colors.white,
+                                  onTap: () => context.push(
+                                    '/exercice/figure/${topic.id}',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -249,69 +313,47 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PillButton(
-                          icon: LucideIcons.rotateCcw,
-                          label: common['replay'] ?? 'Relancer',
-                          bg: const Color(0x1FB85454),
-                          fg: const Color(0xFF7A2E2E),
-                          onTap: () => setState(() => _replaySeed++),
+                  // Carte "Astuces" : formules de périmètre et d'aire.
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFBBDEFB)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('📐', style: TextStyle(fontSize: 26)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (cf['astuceTitle'] ?? 'Astuces').toString(),
+                                style: AmaniTheme.titleStyle.copyWith(
+                                  fontSize: 14,
+                                  color: const Color(0xFF1565C0),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _FormulaLine(
+                                label: (cf['perimeterLabel'] ?? 'Périmètre')
+                                    .toString(),
+                                formula: perimeterFormula,
+                              ),
+                              const SizedBox(height: 4),
+                              _FormulaLine(
+                                label: (cf['areaLabel'] ?? 'Aire').toString(),
+                                formula: areaFormula,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _PillButton(
-                          icon: LucideIcons.volume2,
-                          label: common['instruction'] ?? 'Consigne',
-                          bg: AmaniColors.background,
-                          fg: Colors.black,
-                          onTap: () => _speakConsigne(topic, lang),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  GestureDetector(
-                    onTap: () => context.push('/exercice/figure/${topic.id}'),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFB85454),
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x33B85454),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            cf['practice'] ?? "S'entrainer",
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -325,51 +367,46 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
   }
 }
 
-class _PillButton extends StatelessWidget {
-  final IconData icon;
+/// Une ligne "Label : formule" de la carte "Astuces" — label en gras
+/// (`AmaniTheme.bodyStyle`), formule en dessous dans une pastille blanche
+/// pour bien la distinguer du texte courant, comme une valeur mise en
+/// évidence plutôt qu'une simple suite de mots.
+class _FormulaLine extends StatelessWidget {
   final String label;
-  final Color bg;
-  final Color fg;
-  final VoidCallback onTap;
+  final String formula;
 
-  const _PillButton({
-    required this.icon,
-    required this.label,
-    required this.bg,
-    required this.fg,
-    required this.onTap,
-  });
+  const _FormulaLine({required this.label, required this.formula});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AmaniTheme.bodyStyle.copyWith(
+            fontSize: 12,
+            color: AmaniColors.textSecondary,
+          ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: fg),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: fg,
-                ),
-              ),
+        const SizedBox(height: 2),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            formula,
+            style: TextStyle(
+              fontFamily: kBalooFontFamily,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: const Color(0xFF1A1A1A),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -26,6 +26,7 @@ import '../data/shape_catalog.dart';
 import '../data/tangram_catalog.dart';
 import 'child_switcher_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ProfilHubScreen extends StatefulWidget {
   const ProfilHubScreen({super.key});
@@ -275,6 +276,14 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   bool _editingName = false;
   final _nameEditCtrl = TextEditingController();
 
+  /// Dernier enfant actif pour lequel `_loadSettings` a été appelé — sert à
+  /// détecter un changement d'enfant actif (voir `build`) alors que cet
+  /// écran reste monté (le sélecteur de fratrie ferme juste sa feuille par
+  /// dessus, sans jamais recréer cet État). Sans ce suivi, la photo, le nom
+  /// et les réglages pédagogiques affichés restaient ceux de l'enfant
+  /// précédent jusqu'au prochain redémarrage complet de l'app.
+  String? _lastLoadedChildId;
+
   @override
   void initState() {
     super.initState();
@@ -305,7 +314,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final gender = await getStoredVoiceGender();
     final photo = await getStoredPhoto();
     final name = await getStoredName();
+    if (!mounted) return;
     setState(() {
+      _lastLoadedChildId = context.read<FamilyService>().activeChildId;
       _soundEnabled = prefs.getBool('amani_setting_sound') ?? true;
       _volume = prefs.getDouble('amani_setting_volume') ?? 0.85;
       _repetitions =
@@ -328,7 +339,16 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   /// `t['parcours']['paliers']`/`figuresPalier`) plutôt que d'en dupliquer.
   /// Syllabes et Calculs n'apparaissent qu'en français, comme dans le
   /// parcours lui-même (nomenclature scolaire française).
-  List<({IconData icon, Color color, String name, int done, int total})>
+  List<
+    ({
+      IconData icon,
+      String? iconAsset,
+      Color color,
+      String name,
+      int done,
+      int total,
+    })
+  >
   _buildForestBranches(
     ProgressProvider progress,
     Map<String, dynamic> t,
@@ -353,14 +373,16 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
     return [
       (
-        icon: LucideIcons.sparkles,
+        icon: LucideIcons.leaf,
+        iconAsset: null,
         color: const Color(0xFF8FBF6F),
         name: palName(0),
         done: progress.completedCountForType('SIGNE'),
         total: FAMILY_ORDER.length + EXERCISE_CATALOG.length,
       ),
       (
-        icon: LucideIcons.pencilLine,
+        icon: LucideIcons.penLine,
+        iconAsset: null,
         color: const Color(0xFFA9784F),
         name: palName(1),
         done: progress.completedCountForType('LETTRE'),
@@ -368,7 +390,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       ),
       if (lang == Lang.fr)
         (
-          icon: LucideIcons.messageCircle,
+          icon: LucideIcons.bookOpen,
+          iconAsset: null,
           color: const Color(0xFFD07A04),
           name: palName(2),
           done: progress.completedCountForType('SYLLABE'),
@@ -376,6 +399,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         ),
       (
         icon: LucideIcons.bookOpen,
+        iconAsset: 'assets/images/abc-svgrepo-com.svg',
         color: const Color(0xFF4A90E2),
         name: palName(lang == Lang.fr ? 3 : 2),
         done: progress.completedCountForType('MOT'),
@@ -384,6 +408,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       if (lang == Lang.fr)
         (
           icon: LucideIcons.calculator,
+          iconAsset: null,
           color: const Color(0xFF8B5FBF),
           name: palName(4),
           done: progress.completedTopicsForType('CALCUL'),
@@ -391,6 +416,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         ),
       (
         icon: LucideIcons.shapes,
+        iconAsset: null,
         color: const Color(0xFFB85454),
         name: figuresPalier?['title'] ?? '',
         done:
@@ -546,6 +572,15 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final family = context.watch<FamilyService>();
     final accessibility = context.watch<AccessibilitySettings>();
     final forestBranches = _buildForestBranches(progress, t, langProvider.lang);
+
+    // L'enfant actif a changé (bascule via `showChildSwitcherSheet`) sans
+    // que cet État soit jamais recréé : la feuille de sélection se contente
+    // de se fermer par dessus cet écran. Sans ce rattrapage, la photo, le
+    // nom et les réglages pédagogiques affichés restaient ceux de l'enfant
+    // précédent jusqu'au prochain redémarrage complet de l'app.
+    if (_lastLoadedChildId != family.activeChildId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadSettings());
+    }
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -818,231 +853,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Points totaux — mise en avant du système de notation
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFF6C453), Color(0xFFD9A84A)],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x59D9A84A),
-                    offset: Offset(0, 6),
-                    blurRadius: 18,
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      LucideIcons.award,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${stats.totalPoints}',
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 28,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          hub['totalPointsLabel'] ?? 'Points totaux',
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          hub['totalPointsHint'] ?? '',
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Série de jours consécutifs — badge flamme mis en valeur, avec
-            // un rappel visuel si l'enfant n'a pas encore joué aujourd'hui
-            // alors qu'une série est en cours.
-            if (streak > 0)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: streakAtRisk
-                        ? const [Color(0xFFFBEFE0), Color(0xFFF7DCC0)]
-                        : const [Color(0xFFFFF6E9), Color(0xFFFFE9C7)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: streakAtRisk
-                        ? AmaniColors.warning
-                        : const Color(0xFFF3D07A),
-                    width: streakAtRisk ? 2 : 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFFFFB74D), Color(0xFFF3703A)],
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x66F3703A),
-                            blurRadius: 14,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        LucideIcons.flame,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            streak == 1
-                                ? (hub['streakDaySingular'] ??
-                                      '1 jour de suite !')
-                                : tFormat(
-                                    hub['streakDayPlural'] ??
-                                        '{count} jours de suite !',
-                                    {'count': streak},
-                                  ),
-                            style: AmaniTheme.titleStyle.copyWith(
-                              fontSize: 16,
-                              color: const Color(0xFFB85C1E),
-                            ),
-                          ),
-                          if (streakAtRisk) ...[
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                const Icon(
-                                  LucideIcons.alertCircle,
-                                  size: 14,
-                                  color: AmaniColors.warning,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    hub['streakAtRisk'] ??
-                                        "Joue aujourd'hui pour continuer ta série !",
-                                    style: AmaniTheme.bodyStyle.copyWith(
-                                      fontSize: 12,
-                                      color: AmaniColors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            if (streak > 0) const SizedBox(height: 16),
-
-            // Statistiques
-            Row(
-              children: [
-                Expanded(
-                  child: _StatTile(
-                    icon: LucideIcons.bookOpen,
-                    value: '${stats.signesMaitrises}',
-                    label: hub['statsSignes'] ?? '',
-                    color: AmaniColors.secondary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatTile(
-                    icon: LucideIcons.award,
-                    value: '${stats.exercicesReussis}',
-                    label: hub['statsExercices'] ?? '',
-                    color: AmaniColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatTile(
-                    icon: LucideIcons.calendar,
-                    value: '${stats.joursAventure}',
-                    label: hub['statsDays'] ?? '',
-                    color: const Color(0xFF4A90E2),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 28),
-
-            // Progression par palier
-            Text(
-              hub['progressionTitle'] ?? '',
-              style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
-            ),
-            const SizedBox(height: 14),
-            for (final branch in forestBranches) ...[
-              _PalierProgressCard(
-                icon: branch.icon,
-                color: branch.color,
-                name: branch.name,
-                done: branch.done,
-                total: branch.total,
-                stepsTemplate:
-                    hub['stepsValidated'] ?? 'sur {total} étapes validées',
-              ),
-              const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 12),
 
             // Section Réglages
             Text(
@@ -1474,7 +1284,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                           value: accessibility.uiScale,
                           min: kMinUiScale,
                           max: kMaxUiScale,
-                          divisions: 23,
+                          divisions: 38,
                           activeColor: AmaniColors.primary,
                           onChanged: (v) => context
                               .read<AccessibilitySettings>()
@@ -1609,6 +1419,233 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Points totaux — mise en avant du système de notation
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF6C453), Color(0xFFD9A84A)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x59D9A84A),
+                    offset: Offset(0, 6),
+                    blurRadius: 18,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      LucideIcons.award,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${stats.totalPoints}',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                            color: Colors.white,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          hub['totalPointsLabel'] ?? 'Points totaux',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          hub['totalPointsHint'] ?? '',
+                          style: AmaniTheme.bodyStyle.copyWith(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Série de jours consécutifs — badge flamme mis en valeur, avec
+            // un rappel visuel si l'enfant n'a pas encore joué aujourd'hui
+            // alors qu'une série est en cours.
+            if (streak > 0)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: streakAtRisk
+                        ? const [Color(0xFFFBEFE0), Color(0xFFF7DCC0)]
+                        : const [Color(0xFFFFF6E9), Color(0xFFFFE9C7)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: streakAtRisk
+                        ? AmaniColors.warning
+                        : const Color(0xFFF3D07A),
+                    width: streakAtRisk ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFFFB74D), Color(0xFFF3703A)],
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x66F3703A),
+                            blurRadius: 14,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        LucideIcons.flame,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            streak == 1
+                                ? (hub['streakDaySingular'] ??
+                                      '1 jour de suite !')
+                                : tFormat(
+                                    hub['streakDayPlural'] ??
+                                        '{count} jours de suite !',
+                                    {'count': streak},
+                                  ),
+                            style: AmaniTheme.titleStyle.copyWith(
+                              fontSize: 16,
+                              color: const Color(0xFFB85C1E),
+                            ),
+                          ),
+                          if (streakAtRisk) ...[
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                const Icon(
+                                  LucideIcons.alertCircle,
+                                  size: 14,
+                                  color: AmaniColors.warning,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    hub['streakAtRisk'] ??
+                                        "Joue aujourd'hui pour continuer ta série !",
+                                    style: AmaniTheme.bodyStyle.copyWith(
+                                      fontSize: 12,
+                                      color: AmaniColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (streak > 0) const SizedBox(height: 16),
+
+            // Statistiques
+            Row(
+              children: [
+                Expanded(
+                  child: _StatTile(
+                    icon: LucideIcons.bookOpen,
+                    value: '${stats.signesMaitrises}',
+                    label: hub['statsSignes'] ?? '',
+                    color: AmaniColors.secondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _StatTile(
+                    icon: LucideIcons.award,
+                    value: '${stats.exercicesReussis}',
+                    label: hub['statsExercices'] ?? '',
+                    color: AmaniColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _StatTile(
+                    icon: LucideIcons.calendar,
+                    value: '${stats.joursAventure}',
+                    label: hub['statsDays'] ?? '',
+                    color: const Color(0xFF4A90E2),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+
+            // Progression par palier
+            Text(
+              hub['progressionTitle'] ?? '',
+              style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
+            ),
+            const SizedBox(height: 14),
+            for (final branch in forestBranches) ...[
+              _PalierProgressCard(
+                icon: branch.icon,
+                iconAsset: branch.iconAsset,
+                color: branch.color,
+                name: branch.name,
+                done: branch.done,
+                total: branch.total,
+                stepsTemplate:
+                    hub['stepsValidated'] ?? 'sur {total} étapes validées',
+              ),
+              const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 12),
 
             const SizedBox(height: 24),
           ],
@@ -1760,6 +1797,7 @@ class _StatTile extends StatelessWidget {
 
 class _PalierProgressCard extends StatelessWidget {
   final IconData icon;
+  final String? iconAsset;
   final Color color;
   final String name;
   final int done;
@@ -1768,6 +1806,7 @@ class _PalierProgressCard extends StatelessWidget {
 
   const _PalierProgressCard({
     required this.icon,
+    this.iconAsset,
     required this.color,
     required this.name,
     required this.done,
@@ -1803,7 +1842,18 @@ class _PalierProgressCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: Icon(icon, color: color, size: 22),
+                child: iconAsset != null
+                    ? Padding(
+                        padding: const EdgeInsets.all(11),
+                        child: SvgPicture.asset(
+                          iconAsset!,
+                          colorFilter: ColorFilter.mode(
+                            color,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      )
+                    : Icon(icon, color: color, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(

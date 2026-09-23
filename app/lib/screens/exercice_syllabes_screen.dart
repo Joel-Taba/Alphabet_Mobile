@@ -12,6 +12,7 @@ import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/word_trace_attempt.dart';
 import '../widgets/exercise_complete_popup.dart';
+import '../widgets/free_writing_sheet.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
 import '../hooks/use_accessibility_settings.dart';
@@ -19,6 +20,7 @@ import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice d'écriture des syllabes : trace la consonne puis la voyelle pour
 /// former chaque syllabe. Port fidèle de
@@ -44,6 +46,28 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
   final Set<String> _doneSyllables = {};
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
+
+  /// `true` après "Continuer en mode libre" (voir [ExerciseCompletePopup]) :
+  /// masque la pop-up de fin sans jamais toucher à `_doneSyllables` -- toutes
+  /// les syllabes restent acquises, seule la feuille d'écriture libre en bas
+  /// de page reste praticable ensuite.
+  bool _freeModeOnly = false;
+
+  /// `true` après la toute première restauration de `_doneSyllables` depuis
+  /// `ProgressProvider` (voir `build`) -- une seule fois, sans quoi elle se
+  /// referait à chaque reconstruction et annulerait aussitôt le
+  /// "Recommencer" explicite de `ExerciseCompletePopup` (voir le
+  /// commentaire équivalent dans `exercice_liste_screen.dart`).
+  bool _restoredFromProgress = false;
+
+  /// `true` uniquement lorsque la dernière syllabe manquante vient d'être
+  /// réussie PENDANT cette visite (voir `onSyllableDone`) -- jamais lors de
+  /// la restauration ci-dessus. Sans cette distinction, rouvrir un groupe
+  /// déjà entièrement réussi lors d'une visite précédente faisait
+  /// immédiatement réapparaître la pop-up de félicitations (confettis
+  /// compris), alors qu'aucune syllabe n'avait encore été tracée lors de
+  /// CETTE visite.
+  bool _justCompletedThisVisit = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
@@ -100,7 +124,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
           (SYLLABLE_GROUPS[savedIdx] as Map<String, dynamic>)['consonant']
               as String;
       if (savedConsonant != widget.consonant) {
-        context.go('/exercice/syllabes/$savedConsonant?amaniEval=1');
+        context.replace('/exercice/syllabes/$savedConsonant?amaniEval=1');
       }
     }
   }
@@ -161,7 +185,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -189,10 +213,29 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
     }
 
     final syllables = group['syllables'] as List;
+    if (!_restoredFromProgress && !_isEvaluation && syllables.isNotEmpty) {
+      _restoredFromProgress = true;
+      final progress = context.read<ProgressProvider>();
+      for (final entry in syllables) {
+        final syllable = entry['syllable'] as String;
+        if (progress.isCompleted(
+          typeEtape: 'SYLLABE',
+          modalite: 'EXERCICE',
+          etapeCode: syllable,
+        )) {
+          _doneSyllables.add(syllable);
+        }
+      }
+    }
     final allDone = _doneSyllables.length == syllables.length;
 
     void onSyllableDone(String syllable) {
-      setState(() => _doneSyllables.add(syllable));
+      setState(() {
+        _doneSyllables.add(syllable);
+        if (_doneSyllables.length >= syllables.length) {
+          _justCompletedThisVisit = true;
+        }
+      });
       if (_isEvaluation) _session.recordItemDone(syllable);
       context.read<ProgressProvider>().awardCompletion(
         typeEtape: 'SYLLABE',
@@ -233,8 +276,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            context.go('/cours/syllabes/${widget.consonant}'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -249,7 +291,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -399,6 +441,21 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                                         repetitions: _settings.repetitions,
                                       ),
                                     ],
+                                    // Jamais de feuille d'écriture libre sur
+                                    // une page d'évaluation chronométrée
+                                    // (voir `_isEvaluation`) -- le temps
+                                    // imparti ne doit servir qu'au sujet
+                                    // évalué.
+                                    if (!_isEvaluation)
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          20,
+                                          12,
+                                          8,
+                                        ),
+                                        child: FreeWritingSheet(),
+                                      ),
                                   ]),
                                 ),
                               ),
@@ -418,25 +475,28 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                 ),
               ],
             ),
-            if (allDone && !_isEvaluation)
+            if (allDone && _justCompletedThisVisit && !_isEvaluation && !_freeModeOnly)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextGroup != null
-                    ? () => context.go(
+                    ? () => context.replace(
                         '/cours/syllabes/${nextGroup['consonant']}',
                       )
                     : null,
                 onRestart: () {
                   setState(() {
                     _doneSyllables.clear();
+                    _justCompletedThisVisit = false;
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
+                    _freeModeOnly = false;
                   });
                 },
+                onFreeMode: () => setState(() => _freeModeOnly = true),
               ),
             if (_isEvaluation && session.expired)
               EvaluationCompleteOverlay(
-                onBack: () => context.go('/accueil?scrollToPalier=4'),
+                onBack: () => goHome(context),
               ),
             if (_isEvaluation && _resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
@@ -465,7 +525,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                 }),
                 onContinue: () {
                   session.advanceSubject((groupIdx + 1) % SYLLABLE_GROUPS.length);
-                  context.go(
+                  context.replace(
                     '/exercice/syllabes/${evaluationNextGroup['consonant']}?amaniEval=1',
                   );
                 },
@@ -517,7 +577,11 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
   // traits des deux lettres commenceraient à se confondre visuellement l'un
   // dans l'autre, ce qui nuirait à la lisibilité plutôt qu'au tracé
   // lui-même — la vraie limite n'est donc pas technique mais visuelle.
-  static const double _repDesiredInkGap = -3;
+  // Exprimé en encre VISIBLE : cette valeur valait -3 quand le calcul
+  // ignorait encore l'épaisseur du trait, ce qui produisait en réalité -10 ;
+  // on la fixe donc à -10 pour conserver exactement le rendu déjà validé
+  // des syllabes (voir `WordTraceAttempt`, calcul de `overlap`).
+  static const double _repDesiredInkGap = -10;
 
   @override
   void initState() {
@@ -535,6 +599,15 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
   }
 
   void _resetReps() {
+    if (widget.done) {
+      final letterCount = (widget.entry['syllable'] as String).length;
+      _solvedByRep = List.generate(
+        widget.repetitions,
+        (_) => Set<int>.of(List.generate(letterCount, (i) => i)),
+      );
+      _activeRep = widget.repetitions;
+      return;
+    }
     _solvedByRep = List.generate(widget.repetitions, (_) => <int>{});
     _activeRep = 0;
   }
@@ -542,6 +615,7 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
   @override
   Widget build(BuildContext context) {
     final style = context.watch<WritingStyleProvider>().style.name;
+    final lang = context.watch<LanguageProvider>().lang;
     final syllable = widget.entry['syllable'] as String;
     final letters = syllable
         .split('')
@@ -594,7 +668,7 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        '${widget.exampleWordPrefix} « ${widget.entry['exampleWord']} »',
+                        '${widget.exampleWordPrefix} « ${((widget.entry['exampleWord'] as Map<String, dynamic>)[lang.name] ?? (widget.entry['exampleWord'] as Map<String, dynamic>)['fr'])} »',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: kBalooFontFamily,

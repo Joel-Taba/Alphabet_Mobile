@@ -6,9 +6,15 @@ import 'dart:convert';
 
 /// PALIER "Les syllabes" — entre les lettres (Palier 2) et les mots (Palier 4).
 /// Méthode syllabique classique : consonne + voyelle = syllabe (ex. "b + a = ba").
-/// Disponible en français uniquement (pédagogie de lecture spécifique au français) —
-/// voir le filtre par langue dans parcours_screen.dart. Port fidèle de
-/// `src/data/syllable-catalog.ts`.
+/// Les syllabes elles-mêmes restent en alphabet latin dans les 4 langues de
+/// l'app (l'infrastructure de traçage ne connaît que a-z/A-Z, voir
+/// `letter_formation_catalog.dart`) : seul `exampleWord` varie par langue
+/// (`fr`/`en`/`es`, plus `frSpoken` quand la version accentuée correcte
+/// diffère de l'orthographe non accentuée utilisée pour le traçage lettre
+/// par lettre -- voir `cours_syllabes_screen.dart`). L'arabe réutilise le
+/// mot français (`fr`) : mêmes syllabes que le français, narrées en arabe --
+/// même principe que `WordEntry.text('ar')` dans `word_catalog.dart`. Port
+/// fidèle de `src/data/syllable-catalog.ts`, étendu pour le multi-langue.
 final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
 [
   {
@@ -19,31 +25,52 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ba",
         "consonant": "b",
         "vowel": "a",
-        "exampleWord": "banane"
+        "exampleWord": {
+          "fr": "banane",
+          "en": "banana",
+          "es": "banana"
+        }
       },
       {
         "syllable": "be",
         "consonant": "b",
         "vowel": "e",
-        "exampleWord": "bebe"
+        "exampleWord": {
+          "fr": "bebe",
+          "en": "bed",
+          "es": "bebe",
+          "frSpoken": "bébé"
+        }
       },
       {
         "syllable": "bi",
         "consonant": "b",
         "vowel": "i",
-        "exampleWord": "biche"
+        "exampleWord": {
+          "fr": "biche",
+          "en": "bib",
+          "es": "bicho"
+        }
       },
       {
         "syllable": "bo",
         "consonant": "b",
         "vowel": "o",
-        "exampleWord": "bobo"
+        "exampleWord": {
+          "fr": "bobo",
+          "en": "box",
+          "es": "bota"
+        }
       },
       {
         "syllable": "bu",
         "consonant": "b",
         "vowel": "u",
-        "exampleWord": "bulle"
+        "exampleWord": {
+          "fr": "bulle",
+          "en": "bus",
+          "es": "burro"
+        }
       }
     ]
   },
@@ -55,31 +82,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ca",
         "consonant": "c",
         "vowel": "a",
-        "exampleWord": "canard"
+        "exampleWord": {
+          "fr": "canard",
+          "en": "cat",
+          "es": "casa"
+        }
       },
       {
         "syllable": "ce",
         "consonant": "c",
         "vowel": "e",
-        "exampleWord": "cerise"
+        "exampleWord": {
+          "fr": "cerise",
+          "en": "cent",
+          "es": "cereza"
+        }
       },
       {
         "syllable": "ci",
         "consonant": "c",
         "vowel": "i",
-        "exampleWord": "citron"
+        "exampleWord": {
+          "fr": "citron",
+          "en": "city",
+          "es": "cinco"
+        }
       },
       {
         "syllable": "co",
         "consonant": "c",
         "vowel": "o",
-        "exampleWord": "coco"
+        "exampleWord": {
+          "fr": "coco",
+          "en": "corn",
+          "es": "coco"
+        }
       },
       {
         "syllable": "cu",
         "consonant": "c",
         "vowel": "u",
-        "exampleWord": "cube"
+        "exampleWord": {
+          "fr": "cube",
+          "en": "cup",
+          "es": "cuna"
+        }
       }
     ]
   },
@@ -91,31 +138,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "da",
         "consonant": "d",
         "vowel": "a",
-        "exampleWord": "dada"
+        "exampleWord": {
+          "fr": "dada",
+          "en": "dad",
+          "es": "dado"
+        }
       },
       {
         "syllable": "de",
         "consonant": "d",
         "vowel": "e",
-        "exampleWord": "dent"
+        "exampleWord": {
+          "fr": "dent",
+          "en": "desk",
+          "es": "dedo"
+        }
       },
       {
         "syllable": "di",
         "consonant": "d",
         "vowel": "i",
-        "exampleWord": "dix"
+        "exampleWord": {
+          "fr": "dix",
+          "en": "dig",
+          "es": "diez"
+        }
       },
       {
         "syllable": "do",
         "consonant": "d",
         "vowel": "o",
-        "exampleWord": "dodo"
+        "exampleWord": {
+          "fr": "dodo",
+          "en": "dog",
+          "es": "dos"
+        }
       },
       {
         "syllable": "du",
         "consonant": "d",
         "vowel": "u",
-        "exampleWord": "dune"
+        "exampleWord": {
+          "fr": "dune",
+          "en": "duck",
+          "es": "duna"
+        }
       }
     ]
   },
@@ -127,31 +194,52 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "fa",
         "consonant": "f",
         "vowel": "a",
-        "exampleWord": "face"
+        "exampleWord": {
+          "fr": "face",
+          "en": "fan",
+          "es": "falda"
+        }
       },
       {
         "syllable": "fe",
         "consonant": "f",
         "vowel": "e",
-        "exampleWord": "fee"
+        "exampleWord": {
+          "fr": "fee",
+          "en": "fence",
+          "es": "fecha",
+          "frSpoken": "fée"
+        }
       },
       {
         "syllable": "fi",
         "consonant": "f",
         "vowel": "i",
-        "exampleWord": "fil"
+        "exampleWord": {
+          "fr": "fil",
+          "en": "fish",
+          "es": "figura"
+        }
       },
       {
         "syllable": "fo",
         "consonant": "f",
         "vowel": "o",
-        "exampleWord": "fort"
+        "exampleWord": {
+          "fr": "fort",
+          "en": "fox",
+          "es": "foca"
+        }
       },
       {
         "syllable": "fu",
         "consonant": "f",
         "vowel": "u",
-        "exampleWord": "fume"
+        "exampleWord": {
+          "fr": "fume",
+          "en": "fun",
+          "es": "fuego"
+        }
       }
     ]
   },
@@ -163,31 +251,52 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ga",
         "consonant": "g",
         "vowel": "a",
-        "exampleWord": "gare"
+        "exampleWord": {
+          "fr": "gare",
+          "en": "gap",
+          "es": "gato"
+        }
       },
       {
         "syllable": "ge",
         "consonant": "g",
         "vowel": "e",
-        "exampleWord": "genou"
+        "exampleWord": {
+          "fr": "genou",
+          "en": "gem",
+          "es": "gente"
+        }
       },
       {
         "syllable": "gi",
         "consonant": "g",
         "vowel": "i",
-        "exampleWord": "girafe"
+        "exampleWord": {
+          "fr": "girafe",
+          "en": "gift",
+          "es": "gigante"
+        }
       },
       {
         "syllable": "go",
         "consonant": "g",
         "vowel": "o",
-        "exampleWord": "gomme"
+        "exampleWord": {
+          "fr": "gomme",
+          "en": "got",
+          "es": "goma"
+        }
       },
       {
         "syllable": "gu",
         "consonant": "g",
         "vowel": "u",
-        "exampleWord": "legume"
+        "exampleWord": {
+          "fr": "legume",
+          "en": "gum",
+          "es": "guante",
+          "frSpoken": "légume"
+        }
       }
     ]
   },
@@ -199,31 +308,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ha",
         "consonant": "h",
         "vowel": "a",
-        "exampleWord": "habit"
+        "exampleWord": {
+          "fr": "habit",
+          "en": "hat",
+          "es": "hamaca"
+        }
       },
       {
         "syllable": "he",
         "consonant": "h",
         "vowel": "e",
-        "exampleWord": "herbe"
+        "exampleWord": {
+          "fr": "herbe",
+          "en": "hen",
+          "es": "helado"
+        }
       },
       {
         "syllable": "hi",
         "consonant": "h",
         "vowel": "i",
-        "exampleWord": "hibou"
+        "exampleWord": {
+          "fr": "hibou",
+          "en": "hill",
+          "es": "hilo"
+        }
       },
       {
         "syllable": "ho",
         "consonant": "h",
         "vowel": "o",
-        "exampleWord": "homme"
+        "exampleWord": {
+          "fr": "homme",
+          "en": "hot",
+          "es": "hoja"
+        }
       },
       {
         "syllable": "hu",
         "consonant": "h",
         "vowel": "u",
-        "exampleWord": "huile"
+        "exampleWord": {
+          "fr": "huile",
+          "en": "hug",
+          "es": "huevo"
+        }
       }
     ]
   },
@@ -235,25 +364,41 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ja",
         "consonant": "j",
         "vowel": "a",
-        "exampleWord": "jambe"
+        "exampleWord": {
+          "fr": "jambe",
+          "en": "jam",
+          "es": "jabon"
+        }
       },
       {
         "syllable": "je",
         "consonant": "j",
         "vowel": "e",
-        "exampleWord": "jeu"
+        "exampleWord": {
+          "fr": "jeu",
+          "en": "jet",
+          "es": "jefe"
+        }
       },
       {
         "syllable": "jo",
         "consonant": "j",
         "vowel": "o",
-        "exampleWord": "joue"
+        "exampleWord": {
+          "fr": "joue",
+          "en": "job",
+          "es": "joya"
+        }
       },
       {
         "syllable": "ju",
         "consonant": "j",
         "vowel": "u",
-        "exampleWord": "jupe"
+        "exampleWord": {
+          "fr": "jupe",
+          "en": "jug",
+          "es": "jugo"
+        }
       }
     ]
   },
@@ -265,19 +410,31 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ka",
         "consonant": "k",
         "vowel": "a",
-        "exampleWord": "kayak"
+        "exampleWord": {
+          "fr": "kayak",
+          "en": "kayak",
+          "es": "kayak"
+        }
       },
       {
         "syllable": "ki",
         "consonant": "k",
         "vowel": "i",
-        "exampleWord": "kiwi"
+        "exampleWord": {
+          "fr": "kiwi",
+          "en": "kiwi",
+          "es": "kiwi"
+        }
       },
       {
         "syllable": "ko",
         "consonant": "k",
         "vowel": "o",
-        "exampleWord": "koala"
+        "exampleWord": {
+          "fr": "koala",
+          "en": "koala",
+          "es": "koala"
+        }
       }
     ]
   },
@@ -289,31 +446,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "la",
         "consonant": "l",
         "vowel": "a",
-        "exampleWord": "lama"
+        "exampleWord": {
+          "fr": "lama",
+          "en": "lamp",
+          "es": "lama"
+        }
       },
       {
         "syllable": "le",
         "consonant": "l",
         "vowel": "e",
-        "exampleWord": "lettre"
+        "exampleWord": {
+          "fr": "lettre",
+          "en": "leg",
+          "es": "leche"
+        }
       },
       {
         "syllable": "li",
         "consonant": "l",
         "vowel": "i",
-        "exampleWord": "lion"
+        "exampleWord": {
+          "fr": "lion",
+          "en": "lid",
+          "es": "libro"
+        }
       },
       {
         "syllable": "lo",
         "consonant": "l",
         "vowel": "o",
-        "exampleWord": "loup"
+        "exampleWord": {
+          "fr": "loup",
+          "en": "log",
+          "es": "lobo"
+        }
       },
       {
         "syllable": "lu",
         "consonant": "l",
         "vowel": "u",
-        "exampleWord": "lune"
+        "exampleWord": {
+          "fr": "lune",
+          "en": "lung",
+          "es": "luna"
+        }
       }
     ]
   },
@@ -325,31 +502,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ma",
         "consonant": "m",
         "vowel": "a",
-        "exampleWord": "maman"
+        "exampleWord": {
+          "fr": "maman",
+          "en": "map",
+          "es": "mano"
+        }
       },
       {
         "syllable": "me",
         "consonant": "m",
         "vowel": "e",
-        "exampleWord": "melon"
+        "exampleWord": {
+          "fr": "melon",
+          "en": "melon",
+          "es": "melon"
+        }
       },
       {
         "syllable": "mi",
         "consonant": "m",
         "vowel": "i",
-        "exampleWord": "midi"
+        "exampleWord": {
+          "fr": "midi",
+          "en": "milk",
+          "es": "miel"
+        }
       },
       {
         "syllable": "mo",
         "consonant": "m",
         "vowel": "o",
-        "exampleWord": "moto"
+        "exampleWord": {
+          "fr": "moto",
+          "en": "mop",
+          "es": "mono"
+        }
       },
       {
         "syllable": "mu",
         "consonant": "m",
         "vowel": "u",
-        "exampleWord": "mur"
+        "exampleWord": {
+          "fr": "mur",
+          "en": "mud",
+          "es": "muneca"
+        }
       }
     ]
   },
@@ -361,31 +558,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "na",
         "consonant": "n",
         "vowel": "a",
-        "exampleWord": "natte"
+        "exampleWord": {
+          "fr": "natte",
+          "en": "nap",
+          "es": "nariz"
+        }
       },
       {
         "syllable": "ne",
         "consonant": "n",
         "vowel": "e",
-        "exampleWord": "neige"
+        "exampleWord": {
+          "fr": "neige",
+          "en": "net",
+          "es": "negro"
+        }
       },
       {
         "syllable": "ni",
         "consonant": "n",
         "vowel": "i",
-        "exampleWord": "nid"
+        "exampleWord": {
+          "fr": "nid",
+          "en": "nine",
+          "es": "nido"
+        }
       },
       {
         "syllable": "no",
         "consonant": "n",
         "vowel": "o",
-        "exampleWord": "note"
+        "exampleWord": {
+          "fr": "note",
+          "en": "nose",
+          "es": "noche"
+        }
       },
       {
         "syllable": "nu",
         "consonant": "n",
         "vowel": "u",
-        "exampleWord": "nuit"
+        "exampleWord": {
+          "fr": "nuit",
+          "en": "nut",
+          "es": "nube"
+        }
       }
     ]
   },
@@ -397,31 +614,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "pa",
         "consonant": "p",
         "vowel": "a",
-        "exampleWord": "papa"
+        "exampleWord": {
+          "fr": "papa",
+          "en": "panda",
+          "es": "pato"
+        }
       },
       {
         "syllable": "pe",
         "consonant": "p",
         "vowel": "e",
-        "exampleWord": "petit"
+        "exampleWord": {
+          "fr": "petit",
+          "en": "pen",
+          "es": "pelota"
+        }
       },
       {
         "syllable": "pi",
         "consonant": "p",
         "vowel": "i",
-        "exampleWord": "pile"
+        "exampleWord": {
+          "fr": "pile",
+          "en": "pig",
+          "es": "pie"
+        }
       },
       {
         "syllable": "po",
         "consonant": "p",
         "vowel": "o",
-        "exampleWord": "pomme"
+        "exampleWord": {
+          "fr": "pomme",
+          "en": "pot",
+          "es": "polo"
+        }
       },
       {
         "syllable": "pu",
         "consonant": "p",
         "vowel": "u",
-        "exampleWord": "pull"
+        "exampleWord": {
+          "fr": "pull",
+          "en": "pup",
+          "es": "puerta"
+        }
       }
     ]
   },
@@ -433,7 +670,11 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "qu",
         "consonant": "q",
         "vowel": "u",
-        "exampleWord": "quatre"
+        "exampleWord": {
+          "fr": "quatre",
+          "en": "queen",
+          "es": "queso"
+        }
       }
     ]
   },
@@ -445,31 +686,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ra",
         "consonant": "r",
         "vowel": "a",
-        "exampleWord": "radis"
+        "exampleWord": {
+          "fr": "radis",
+          "en": "rat",
+          "es": "rana"
+        }
       },
       {
         "syllable": "re",
         "consonant": "r",
         "vowel": "e",
-        "exampleWord": "renard"
+        "exampleWord": {
+          "fr": "renard",
+          "en": "red",
+          "es": "regalo"
+        }
       },
       {
         "syllable": "ri",
         "consonant": "r",
         "vowel": "i",
-        "exampleWord": "riz"
+        "exampleWord": {
+          "fr": "riz",
+          "en": "rib",
+          "es": "rio"
+        }
       },
       {
         "syllable": "ro",
         "consonant": "r",
         "vowel": "o",
-        "exampleWord": "robe"
+        "exampleWord": {
+          "fr": "robe",
+          "en": "rock",
+          "es": "robot"
+        }
       },
       {
         "syllable": "ru",
         "consonant": "r",
         "vowel": "u",
-        "exampleWord": "rue"
+        "exampleWord": {
+          "fr": "rue",
+          "en": "rug",
+          "es": "rueda"
+        }
       }
     ]
   },
@@ -481,31 +742,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "sa",
         "consonant": "s",
         "vowel": "a",
-        "exampleWord": "salade"
+        "exampleWord": {
+          "fr": "salade",
+          "en": "sand",
+          "es": "sapo"
+        }
       },
       {
         "syllable": "se",
         "consonant": "s",
         "vowel": "e",
-        "exampleWord": "sel"
+        "exampleWord": {
+          "fr": "sel",
+          "en": "six",
+          "es": "seis"
+        }
       },
       {
         "syllable": "si",
         "consonant": "s",
         "vowel": "i",
-        "exampleWord": "singe"
+        "exampleWord": {
+          "fr": "singe",
+          "en": "sit",
+          "es": "silla"
+        }
       },
       {
         "syllable": "so",
         "consonant": "s",
         "vowel": "o",
-        "exampleWord": "soleil"
+        "exampleWord": {
+          "fr": "soleil",
+          "en": "sock",
+          "es": "sol"
+        }
       },
       {
         "syllable": "su",
         "consonant": "s",
         "vowel": "u",
-        "exampleWord": "sucre"
+        "exampleWord": {
+          "fr": "sucre",
+          "en": "sun",
+          "es": "suma"
+        }
       }
     ]
   },
@@ -517,31 +798,52 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ta",
         "consonant": "t",
         "vowel": "a",
-        "exampleWord": "tasse"
+        "exampleWord": {
+          "fr": "tasse",
+          "en": "tap",
+          "es": "taza"
+        }
       },
       {
         "syllable": "te",
         "consonant": "t",
         "vowel": "e",
-        "exampleWord": "tete"
+        "exampleWord": {
+          "fr": "tete",
+          "en": "ten",
+          "es": "techo",
+          "frSpoken": "tête"
+        }
       },
       {
         "syllable": "ti",
         "consonant": "t",
         "vowel": "i",
-        "exampleWord": "tigre"
+        "exampleWord": {
+          "fr": "tigre",
+          "en": "tiger",
+          "es": "tigre"
+        }
       },
       {
         "syllable": "to",
         "consonant": "t",
         "vowel": "o",
-        "exampleWord": "toto"
+        "exampleWord": {
+          "fr": "toto",
+          "en": "top",
+          "es": "tomate"
+        }
       },
       {
         "syllable": "tu",
         "consonant": "t",
         "vowel": "u",
-        "exampleWord": "tulipe"
+        "exampleWord": {
+          "fr": "tulipe",
+          "en": "tub",
+          "es": "tubo"
+        }
       }
     ]
   },
@@ -553,31 +855,51 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "va",
         "consonant": "v",
         "vowel": "a",
-        "exampleWord": "vache"
+        "exampleWord": {
+          "fr": "vache",
+          "en": "van",
+          "es": "vaca"
+        }
       },
       {
         "syllable": "ve",
         "consonant": "v",
         "vowel": "e",
-        "exampleWord": "verre"
+        "exampleWord": {
+          "fr": "verre",
+          "en": "vet",
+          "es": "vela"
+        }
       },
       {
         "syllable": "vi",
         "consonant": "v",
         "vowel": "i",
-        "exampleWord": "vite"
+        "exampleWord": {
+          "fr": "vite",
+          "en": "vine",
+          "es": "vibora"
+        }
       },
       {
         "syllable": "vo",
         "consonant": "v",
         "vowel": "o",
-        "exampleWord": "voile"
+        "exampleWord": {
+          "fr": "voile",
+          "en": "voice",
+          "es": "volcan"
+        }
       },
       {
         "syllable": "vu",
         "consonant": "v",
         "vowel": "u",
-        "exampleWord": "vue"
+        "exampleWord": {
+          "fr": "vue",
+          "en": "vulture",
+          "es": "vuelo"
+        }
       }
     ]
   },
@@ -589,7 +911,11 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "wa",
         "consonant": "w",
         "vowel": "a",
-        "exampleWord": "wagon"
+        "exampleWord": {
+          "fr": "wagon",
+          "en": "wagon",
+          "es": "wafle"
+        }
       }
     ]
   },
@@ -601,19 +927,31 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "ya",
         "consonant": "y",
         "vowel": "a",
-        "exampleWord": "yaourt"
+        "exampleWord": {
+          "fr": "yaourt",
+          "en": "yarn",
+          "es": "yate"
+        }
       },
       {
         "syllable": "ye",
         "consonant": "y",
         "vowel": "e",
-        "exampleWord": "yeux"
+        "exampleWord": {
+          "fr": "yeux",
+          "en": "yellow",
+          "es": "yeso"
+        }
       },
       {
         "syllable": "yo",
         "consonant": "y",
         "vowel": "o",
-        "exampleWord": "yoyo"
+        "exampleWord": {
+          "fr": "yoyo",
+          "en": "yoyo",
+          "es": "yogur"
+        }
       }
     ]
   },
@@ -625,19 +963,32 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "syllable": "za",
         "consonant": "z",
         "vowel": "a",
-        "exampleWord": "pizza"
+        "exampleWord": {
+          "fr": "pizza",
+          "en": "pizza",
+          "es": "pizza"
+        }
       },
       {
         "syllable": "ze",
         "consonant": "z",
         "vowel": "e",
-        "exampleWord": "zero"
+        "exampleWord": {
+          "fr": "zero",
+          "en": "zebra",
+          "es": "cebra",
+          "frSpoken": "zéro"
+        }
       },
       {
         "syllable": "zo",
         "consonant": "z",
         "vowel": "o",
-        "exampleWord": "zoo"
+        "exampleWord": {
+          "fr": "zoo",
+          "en": "zoo",
+          "es": "zoo"
+        }
       }
     ]
   }

@@ -11,7 +11,10 @@ import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/word_trace_attempt.dart';
+import '../widgets/word_cloze_attempt.dart';
+import '../data/word_cloze.dart';
 import '../widgets/exercise_complete_popup.dart';
+import '../widgets/free_writing_sheet.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
 import '../hooks/use_accessibility_settings.dart';
@@ -19,6 +22,7 @@ import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice d'écriture des mots du Palier 3 : trace chaque lettre du mot dans
 /// l'ordre. Port fidèle de `src/routes/exercice.mots.$groupId.tsx`.
@@ -49,6 +53,28 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   final Set<String> _doneWords = {};
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
+
+  /// `true` après "Continuer en mode libre" (voir [ExerciseCompletePopup]) :
+  /// masque la pop-up de fin sans jamais toucher à `_doneWords` -- tous les
+  /// mots restent acquis, seule la feuille d'écriture libre en bas de page
+  /// reste praticable ensuite.
+  bool _freeModeOnly = false;
+
+  /// `true` après la toute première restauration de `_doneWords` depuis
+  /// `ProgressProvider` (voir `build`) -- une seule fois, sans quoi elle se
+  /// referait à chaque reconstruction et annulerait aussitôt le
+  /// "Recommencer" explicite de `ExerciseCompletePopup` (voir le
+  /// commentaire équivalent dans `exercice_liste_screen.dart`).
+  bool _restoredFromProgress = false;
+
+  /// `true` uniquement lorsque le dernier mot manquant du groupe vient
+  /// d'être réussi PENDANT cette visite (voir `onWordDone`) -- jamais lors
+  /// de la restauration ci-dessus. Sans cette distinction, rouvrir un
+  /// groupe déjà entièrement réussi lors d'une visite précédente faisait
+  /// immédiatement réapparaître la pop-up de félicitations (confettis
+  /// compris), alors qu'aucun mot n'avait encore été tracé lors de CETTE
+  /// visite.
+  bool _justCompletedThisVisit = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
@@ -103,7 +129,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
     if (savedIdx >= 0 && savedIdx < PALIER3_GROUPS.length) {
       final savedGroup = PALIER3_GROUPS[savedIdx];
       if (savedGroup.id != widget.groupId) {
-        context.go('/exercice/mots/${savedGroup.id}?amaniEval=1');
+        context.replace('/exercice/mots/${savedGroup.id}?amaniEval=1');
       }
     }
   }
@@ -161,7 +187,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -193,10 +219,28 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
         ? group.words.where((w) => w.id == widget.onlyWordId).toList()
         : <WordEntry>[];
     final wordsToShow = filteredWords.isNotEmpty ? filteredWords : group.words;
+    if (!_restoredFromProgress && !_isEvaluation && wordsToShow.isNotEmpty) {
+      _restoredFromProgress = true;
+      final progress = context.read<ProgressProvider>();
+      for (final word in wordsToShow) {
+        if (progress.isCompleted(
+          typeEtape: 'MOT',
+          modalite: 'EXERCICE',
+          etapeCode: word.id,
+        )) {
+          _doneWords.add(word.id);
+        }
+      }
+    }
     final allDone = _doneWords.length == wordsToShow.length;
 
     void onWordDone(String wordId) {
-      setState(() => _doneWords.add(wordId));
+      setState(() {
+        _doneWords.add(wordId);
+        if (_doneWords.length >= wordsToShow.length) {
+          _justCompletedThisVisit = true;
+        }
+      });
       if (_isEvaluation) _session.recordItemDone(wordId);
       context.read<ProgressProvider>().awardCompletion(
         typeEtape: 'MOT',
@@ -237,8 +281,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            context.go('/cours/mots/${widget.groupId}'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -253,7 +296,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -380,25 +423,69 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                                           color: AmaniColors.textPrimary
                                               .withValues(alpha: 0.1),
                                         ),
-                                      _WordTraceRow(
-                                        key: ValueKey(
-                                          '${wordsToShow[wi].id}-r$_restartKey',
+                                      if (_isEvaluation ||
+                                          kClozeGroupIds.contains(
+                                            widget.groupId,
+                                          ))
+                                        _WordClozeRow(
+                                          key: ValueKey(
+                                            '${wordsToShow[wi].id}-r$_restartKey',
+                                          ),
+                                          word: wordsToShow[wi],
+                                          group: group,
+                                          lang: lang,
+                                          onSpeak: () => speech.speak(
+                                            wordsToShow[wi].spokenText(
+                                              lang.name,
+                                            ),
+                                            lang,
+                                          ),
+                                          done: _doneWords.contains(
+                                            wordsToShow[wi].id,
+                                          ),
+                                          onDone: () =>
+                                              onWordDone(wordsToShow[wi].id),
+                                          doneLabel: el['done'] ?? 'Terminé !',
+                                          instruction:
+                                              em['clozeInstruction'] ?? '',
+                                        )
+                                      else
+                                        _WordTraceRow(
+                                          key: ValueKey(
+                                            '${wordsToShow[wi].id}-r$_restartKey',
+                                          ),
+                                          word: wordsToShow[wi],
+                                          lang: lang,
+                                          onSpeak: () => speech.speak(
+                                            wordsToShow[wi].spokenText(
+                                              lang.name,
+                                            ),
+                                            lang,
+                                          ),
+                                          done: _doneWords.contains(
+                                            wordsToShow[wi].id,
+                                          ),
+                                          onDone: () =>
+                                              onWordDone(wordsToShow[wi].id),
+                                          doneLabel: el['done'] ?? 'Terminé !',
+                                          repetitions: _settings.repetitions,
                                         ),
-                                        word: wordsToShow[wi],
-                                        lang: lang,
-                                        onSpeak: () => speech.speak(
-                                          wordsToShow[wi].text(lang.name),
-                                          lang,
-                                        ),
-                                        done: _doneWords.contains(
-                                          wordsToShow[wi].id,
-                                        ),
-                                        onDone: () =>
-                                            onWordDone(wordsToShow[wi].id),
-                                        doneLabel: el['done'] ?? 'Terminé !',
-                                        repetitions: _settings.repetitions,
-                                      ),
                                     ],
+                                    // Jamais de feuille d'écriture libre sur
+                                    // une page d'évaluation chronométrée
+                                    // (voir `_isEvaluation`) -- le temps
+                                    // imparti ne doit servir qu'au sujet
+                                    // évalué.
+                                    if (!_isEvaluation)
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          20,
+                                          12,
+                                          8,
+                                        ),
+                                        child: FreeWritingSheet(),
+                                      ),
                                   ]),
                                 ),
                               ),
@@ -418,29 +505,25 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 ),
               ],
             ),
-            if (allDone && !_isEvaluation)
+            if (allDone && _justCompletedThisVisit && !_isEvaluation && !_freeModeOnly)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextGroup != null
-                    ? () => context.go('/cours/mots/${nextGroup.id}')
+                    ? () => context.replace('/cours/mots/${nextGroup.id}')
                     : null,
                 onRestart: () {
                   setState(() {
                     _doneWords.clear();
+                    _justCompletedThisVisit = false;
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
+                    _freeModeOnly = false;
                   });
                 },
+                onFreeMode: () => setState(() => _freeModeOnly = true),
               ),
             if (_isEvaluation && session.expired)
-              EvaluationCompleteOverlay(
-                // Après Mots, le prochain palier dépend de la langue : les
-                // Calculs (5) n'existent qu'en français, sinon on saute
-                // directement aux Figures (6).
-                onBack: () => context.go(
-                  '/accueil?scrollToPalier=${lang == Lang.fr ? 5 : 6}',
-                ),
-              ),
+              EvaluationCompleteOverlay(onBack: () => goHome(context)),
             if (_isEvaluation && _resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
                 onResume: () => _handleResume(_resumeOffer!),
@@ -468,7 +551,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 }),
                 onContinue: () {
                   session.advanceSubject((groupIdx + 1) % PALIER3_GROUPS.length);
-                  context.go(
+                  context.replace(
                     '/exercice/mots/${evaluationNextGroup.id}?amaniEval=1',
                   );
                 },
@@ -512,13 +595,17 @@ class _WordTraceRowState extends State<_WordTraceRow> {
   // `_SyllableTraceRow._letterCellSize` (`exercice_syllabes_screen.dart`),
   // même convention.
   static const double _letterCellSize = 62;
-  static const double _repSpacingApart = 5;
-  // Même resserrement, même léger chevauchement volontaire, et même
-  // suppression du cadre par lettre qu'au Palier "Syllabes" (voir
-  // `_SyllableTraceRow`/`WordTraceAttempt.alwaysTight`) — un mot doit se
-  // lire comme une suite de lettres bien liées, pas comme des lettres
-  // cadrées séparément dans un cadre commun.
-  static const double _repDesiredInkGap = -3;
+  static const double _repSpacingApart = 8;
+  // Espace blanc VISIBLE entre l'encre de deux lettres voisines, en pixels
+  // écran (l'épaisseur du trait est déjà déduite par `WordTraceAttempt`).
+  // Positif, contrairement au Palier "Syllabes" volontairement chevauché
+  // pour ne former qu'une seule unité de 2 lettres : un mot compte
+  // davantage de lettres et doit se lire comme une suite de lettres bien
+  // liées mais chacune clairement distincte. Une valeur de 2 avait été
+  // essayée avant que l'épaisseur du trait ne soit prise en compte : elle
+  // correspondait en fait à un CHEVAUCHEMENT de 5 px, d'où le contact
+  // signalé entre le « u » et le « p » de « loup ».
+  static const double _repDesiredInkGap = 7;
 
   @override
   void initState() {
@@ -536,6 +623,15 @@ class _WordTraceRowState extends State<_WordTraceRow> {
   }
 
   void _resetReps() {
+    if (widget.done) {
+      final n = widget.word.text(widget.lang.name).length;
+      _solvedByRep = List.generate(
+        widget.repetitions,
+        (_) => Set<int>.of(List.generate(n, (i) => i)),
+      );
+      _activeRep = widget.repetitions;
+      return;
+    }
     _solvedByRep = List.generate(widget.repetitions, (_) => <int>{});
     _activeRep = 0;
   }
@@ -706,6 +802,126 @@ class _WordTraceRowState extends State<_WordTraceRow> {
                 ),
               );
             },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Rangée d'exercice "à trous" pour un mot : une lettre manquante à
+/// glisser-déposer depuis une pioche de jetons, plutôt que le tracé lettre
+/// par lettre de `_WordTraceRow`. Utilisée pour les groupes listés dans
+/// `kClozeGroupIds`, et pour TOUS les groupes pendant l'évaluation
+/// chronométrée (voir le branchement dans `build`, ci-dessus). Un seul
+/// essai par mot, pas de répétitions.
+class _WordClozeRow extends StatelessWidget {
+  final WordEntry word;
+  final WordGroup group;
+  final Lang lang;
+  final VoidCallback onSpeak;
+  final bool done;
+  final VoidCallback onDone;
+  final String doneLabel;
+  final String instruction;
+
+  const _WordClozeRow({
+    super.key,
+    required this.word,
+    required this.group,
+    required this.lang,
+    required this.onSpeak,
+    required this.done,
+    required this.onDone,
+    required this.doneLabel,
+    required this.instruction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = context.watch<WritingStyleProvider>().style.name;
+    final text = word.text(lang.name);
+    final spec = buildWordCloze(word, lang.name, group);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AmaniColors.textPrimary,
+                  ),
+                ),
+              ),
+              if (done)
+                Text(
+                  '✓ $doneLabel',
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AmaniColors.secondary,
+                  ),
+                ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onSpeak,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0x264A90E2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.volume2,
+                    size: 14,
+                    color: Color(0xFF2D6BBF),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (instruction.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    instruction,
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontSize: 13,
+                      color: AmaniColors.textSecondary,
+                    ),
+                  ),
+                ),
+              WordClozeAttempt(
+                spec: spec,
+                style: style,
+                onSolved: onDone,
+                initiallyDone: done,
+              ),
+            ],
           ),
         ),
       ],

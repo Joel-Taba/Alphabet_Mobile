@@ -16,6 +16,7 @@ import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice du Palier "Figures géométriques" : trace la figure à main levée,
 /// `ExerciseSettings.repetitions` fois de suite, en réutilisant tel quel le
@@ -45,6 +46,9 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
 
+  /// Voir `exercice_calcul_screen.dart::_justCompletedThisVisit`.
+  bool _justCompletedThisVisit = false;
+
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
   Map<String, dynamic>? _resumeOffer;
@@ -70,6 +74,25 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     _count = _settings.repetitions;
     _activeIdx = 0;
     _doneIndices.clear();
+    _justCompletedThisVisit = false;
+    // Persistance permanente : voir `exercice_calcul_screen.dart::_regenerate`.
+    if (!_isEvaluation && _restartKey == 0 && mounted) {
+      final progress = context.read<ProgressProvider>();
+      for (var i = 0; i < _count; i++) {
+        if (progress.isCompleted(
+          typeEtape: 'FIGURE',
+          modalite: 'EXERCICE',
+          etapeCode: '${widget.shapeId}-$i',
+        )) {
+          _doneIndices.add(i);
+        }
+      }
+      final firstNotDone = List.generate(
+        _count,
+        (i) => i,
+      ).firstWhere((i) => !_doneIndices.contains(i), orElse: () => _count - 1);
+      _activeIdx = _count == 0 ? 0 : firstNotDone;
+    }
   }
 
   Future<void> _initEvaluation() async {
@@ -118,7 +141,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     if (savedIdx >= 0 && savedIdx < SHAPE_TOPICS.length) {
       final savedTopic = SHAPE_TOPICS[savedIdx];
       if (savedTopic.id != widget.shapeId) {
-        context.go('/exercice/figure/${savedTopic.id}?amaniEval=1');
+        context.replace('/exercice/figure/${savedTopic.id}?amaniEval=1');
       }
     }
   }
@@ -142,7 +165,11 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   void _onAttemptDone(int i) {
     setState(() {
       _doneIndices.add(i);
-      if (i + 1 < _count) _activeIdx = i + 1;
+      if (i + 1 < _count) {
+        _activeIdx = i + 1;
+      } else {
+        _justCompletedThisVisit = true;
+      }
     });
     if (_isEvaluation) _session.recordItemDone('${widget.shapeId}-$i');
     context.read<ProgressProvider>().awardCompletion(
@@ -183,7 +210,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -246,8 +273,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            context.go('/cours/figure/${widget.shapeId}'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -262,7 +288,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -367,11 +393,11 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                 ),
               ],
             ),
-            if (allDone && !_isEvaluation)
+            if (allDone && !_isEvaluation && _justCompletedThisVisit)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextTopic != null
-                    ? () => context.go('/cours/figure/${nextTopic.id}')
+                    ? () => context.replace('/cours/figure/${nextTopic.id}')
                     : null,
                 onRestart: () {
                   setState(() {
@@ -382,7 +408,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                 },
               ),
             if (_isEvaluation && session.expired)
-              EvaluationCompleteOverlay(onBack: () => context.go('/accueil')),
+              EvaluationCompleteOverlay(onBack: () => goHome(context)),
             if (_isEvaluation && _resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
                 onResume: () => _handleResume(_resumeOffer!),
@@ -410,7 +436,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                 }),
                 onContinue: () {
                   session.advanceSubject((topicIdx + 1) % SHAPE_TOPICS.length);
-                  context.go(
+                  context.replace(
                     '/exercice/figure/${evaluationNextTopic.id}?amaniEval=1',
                   );
                 },

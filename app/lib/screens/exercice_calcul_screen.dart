@@ -7,21 +7,18 @@ import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
 import '../data/calcul_catalog.dart';
-import '../data/letter_style_resolver.dart';
-import '../hooks/use_accessibility_settings.dart';
-import '../hooks/use_writing_style.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_countdown.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
-import '../widgets/word_trace_attempt.dart';
 import '../widgets/mcq_answer.dart';
 import '../widgets/digit_keypad_answer.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice du Palier "Les Calculs" : trace la réponse de chaque problème,
 /// chiffre par chiffre, en réutilisant le même mécanisme de traçage que les
@@ -53,6 +50,15 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
   final Set<int> _doneIndices = {};
   final Set<int> _timedOutIndices = {};
   int _restartKey = 0;
+
+  /// `true` uniquement lorsque le dernier problème manquant vient d'être
+  /// résolu PENDANT cette visite (voir `_onProblemDone`) -- jamais lors de
+  /// la restauration d'un exercice déjà entièrement résolu lors d'une
+  /// session précédente (voir `_regenerate`). Sans cette distinction,
+  /// rouvrir un exercice déjà terminé ferait immédiatement réapparaître la
+  /// pop-up de félicitations (confettis compris), comme dans
+  /// `exercice_lettre_screen.dart`.
+  bool _justCompletedThisVisit = false;
   bool _awaitingRepeatCompletion = false;
   List<CalculProblem> _problems = const [];
 
@@ -93,6 +99,28 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
     _activeIdx = 0;
     _doneIndices.clear();
     _timedOutIndices.clear();
+    _justCompletedThisVisit = false;
+    // Persistance permanente : un problème déjà résolu lors d'une session
+    // précédente le reste pour toujours (voir `ProgressProvider`) -- jamais
+    // en évaluation (session chronométrée à part) ni après "Recommencer"
+    // (l'enfant vient alors explicitement de choisir de tout refaire).
+    if (!_isEvaluation && _restartKey == 0 && mounted) {
+      final progress = context.read<ProgressProvider>();
+      for (var i = 0; i < _problems.length; i++) {
+        if (progress.isCompleted(
+          typeEtape: 'CALCUL',
+          modalite: 'EXERCICE',
+          etapeCode: '${widget.topicId}-$i',
+        )) {
+          _doneIndices.add(i);
+        }
+      }
+      final firstNotDone = List.generate(
+        _problems.length,
+        (i) => i,
+      ).firstWhere((i) => !_doneIndices.contains(i), orElse: () => _problems.length - 1);
+      _activeIdx = _problems.isEmpty ? 0 : firstNotDone;
+    }
   }
 
   Future<void> _initEvaluation() async {
@@ -151,7 +179,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
     if (savedIdx >= 0 && savedIdx < CALCUL_TOPICS.length) {
       final savedTopic = CALCUL_TOPICS[savedIdx];
       if (savedTopic.id != widget.topicId) {
-        context.go('/exercice/calcul/${savedTopic.id}?amaniEval=1');
+        context.replace('/exercice/calcul/${savedTopic.id}?amaniEval=1');
       }
     }
   }
@@ -211,6 +239,8 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
       _doneIndices.add(i);
       if (i + 1 < _problems.length) {
         _activeIdx = i + 1;
+      } else {
+        _justCompletedThisVisit = true;
       }
     });
     if (_isEvaluation) _session.recordItemDone('${widget.topicId}-$i');
@@ -249,7 +279,9 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.watch<LanguageProvider>().t;
+    final languageProvider = context.watch<LanguageProvider>();
+    final t = languageProvider.t;
+    final lang = languageProvider.lang;
     final cc = t['coursCalcul'] as Map<String, dynamic>? ?? {};
     final ec = t['exerciceCalcul'] as Map<String, dynamic>? ?? {};
     final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
@@ -272,7 +304,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -336,8 +368,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            context.go('/cours/calcul/${widget.topicId}'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -352,7 +383,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -363,7 +394,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              topic.title,
+                              topic.title[lang.name] ?? topic.title['fr']!,
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,
                               ),
@@ -520,11 +551,11 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 ),
               ],
             ),
-            if (allDone && !_isEvaluation)
+            if (allDone && !_isEvaluation && _justCompletedThisVisit)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextTopic != null
-                    ? () => context.go('/cours/calcul/${nextTopic.id}')
+                    ? () => context.replace('/cours/calcul/${nextTopic.id}')
                     : null,
                 onRestart: () {
                   setState(() {
@@ -537,7 +568,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
               ),
             if (_isEvaluation && session.expired)
               EvaluationCompleteOverlay(
-                onBack: () => context.go('/accueil?scrollToPalier=6'),
+                onBack: () => goHome(context),
               ),
             if (_isEvaluation && _resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
@@ -549,7 +580,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 !session.expired)
               EvaluationSubjectAnnouncement(
                 title: tFormat(ev['firstSubjectTitle'] ?? '', {
-                  'title': topic.title,
+                  'title': topic.title[lang.name] ?? topic.title['fr']!,
                 }),
                 subtitle: ev['firstSubjectBody'] ?? '',
                 continueLabel: ev['startFirstSubject'],
@@ -562,11 +593,13 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
               EvaluationSubjectAnnouncement(
                 title: ev['nextSubjectTitle'] ?? '',
                 subtitle: tFormat(ev['nextSubjectBody'] ?? '', {
-                  'title': evaluationNextTopic.title,
+                  'title':
+                      evaluationNextTopic.title[lang.name] ??
+                      evaluationNextTopic.title['fr']!,
                 }),
                 onContinue: () {
                   session.advanceSubject((topicIdx + 1) % CALCUL_TOPICS.length);
-                  context.go(
+                  context.replace(
                     '/exercice/calcul/${evaluationNextTopic.id}?amaniEval=1',
                   );
                 },
@@ -607,34 +640,10 @@ class _ProblemRow extends StatefulWidget {
 }
 
 class _ProblemRowState extends State<_ProblemRow> {
-  final Set<int> _solved = {};
-  final Set<int> _solvedSecond = {};
-
-  bool get _hasSecondPart => widget.problem.answerSecondPart != null;
-
-  void _maybeDone(int totalFirst, int totalSecond) {
-    final firstDone = _solved.length == totalFirst;
-    final secondDone = !_hasSecondPart || _solvedSecond.length == totalSecond;
-    if (firstDone && secondDone) widget.onDone();
-  }
-
   @override
   Widget build(BuildContext context) {
     final speech = context.read<SignSpeechService>();
     final lang = context.watch<LanguageProvider>().lang;
-    final style = context.watch<WritingStyleProvider>().style.name;
-    final digits = widget.problem.answer
-        .split('')
-        .map((c) => getLetterFormation(c, style))
-        .whereType<dynamic>()
-        .toList();
-    final digitsSecond = _hasSecondPart
-        ? widget.problem.answerSecondPart!
-              .split('')
-              .map((c) => getLetterFormation(c, style))
-              .whereType<dynamic>()
-              .toList()
-        : const <dynamic>[];
 
     return Opacity(
       opacity: widget.isFuture ? 0.4 : 1,
@@ -751,143 +760,15 @@ class _ProblemRowState extends State<_ProblemRow> {
             else if (widget.problem.choices != null)
               McqAnswer(
                 choices: widget.problem.choices!,
-                correctAnswer: widget.problem.answer,
+                correctAnswer: widget.problem.answerSecondPart != null
+                    ? '${widget.problem.answer}'
+                          '${widget.problem.secondPartSeparator}'
+                          '${widget.problem.answerSecondPart}'
+                    : widget.problem.answer,
                 isActive: widget.isActive,
                 isFuture: widget.isFuture,
                 solved: widget.done,
                 onSolved: widget.onDone,
-              )
-            else if (!_hasSecondPart)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: widget.done
-                          ? AmaniColors.secondary.withValues(alpha: 0.6)
-                          : widget.isActive
-                          ? const Color(0x40A9784F)
-                          : const Color(0x1A4A3B2A),
-                    ),
-                  ),
-                  child: WordTraceAttempt(
-                    letters: digits,
-                    cellSize: 64,
-                    transparent: true,
-                    solved: _solved,
-                    isActive: widget.isActive,
-                    isFuture: widget.isFuture,
-                    onLetterSolved: (i) {
-                      setState(() {
-                        _solved.add(i);
-                        _maybeDone(digits.length, digitsSecond.length);
-                      });
-                    },
-                  ),
-                ),
-              )
-            else
-              Builder(
-                builder: (context) {
-                  // Boîtes englobantes des deux nombres élargies avec le
-                  // réglage "Taille de l'interface" (Profil > Réglages) --
-                  // sans ça, une fois `WordTraceAttempt` agrandi, ses
-                  // chiffres wrapperaient sur plusieurs lignes dans une
-                  // largeur restée calée sur l'ancienne taille de case,
-                  // cassant la mise en page de l'équation.
-                  final uiScale = context.read<AccessibilitySettings>().uiScale;
-                  Widget bordered(Widget child) => Container(
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: widget.done
-                            ? AmaniColors.secondary.withValues(alpha: 0.6)
-                            : widget.isActive
-                            ? const Color(0x40A9784F)
-                            : const Color(0x1A4A3B2A),
-                      ),
-                    ),
-                    child: child,
-                  );
-                  return Padding(
-                    padding: const EdgeInsets.all(12),
-                    // Défilement horizontal de secours : à taille
-                    // d'interface élevée et pour de grands nombres,
-                    // l'équation peut dépasser la largeur de l'écran --
-                    // mieux vaut pouvoir la faire défiler que la voir
-                    // débordée/rognée.
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: tracingAwareScrollPhysics(context),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          bordered(
-                            SizedBox(
-                              width: (digits.length * 62.0 + 24) * uiScale,
-                              child: WordTraceAttempt(
-                                letters: digits,
-                                cellSize: 56,
-                                transparent: true,
-                                solved: _solved,
-                                isActive: widget.isActive,
-                                isFuture: widget.isFuture,
-                                onLetterSolved: (i) {
-                                  setState(() {
-                                    _solved.add(i);
-                                    _maybeDone(
-                                      digits.length,
-                                      digitsSecond.length,
-                                    );
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              widget.problem.secondPartSeparator,
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 20,
-                                color: AmaniColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          bordered(
-                            SizedBox(
-                              width:
-                                  (digitsSecond.length * 62.0 + 24) * uiScale,
-                              child: WordTraceAttempt(
-                                letters: digitsSecond,
-                                cellSize: 56,
-                                transparent: true,
-                                solved: _solvedSecond,
-                                isActive: widget.isActive,
-                                isFuture: widget.isFuture,
-                                onLetterSolved: (i) {
-                                  setState(() {
-                                    _solvedSecond.add(i);
-                                    _maybeDone(
-                                      digits.length,
-                                      digitsSecond.length,
-                                    );
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
           ],
         ),

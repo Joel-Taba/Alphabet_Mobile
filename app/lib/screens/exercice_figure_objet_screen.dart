@@ -1,22 +1,24 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../data/shape_catalog.dart';
+import '../data/shape_object_bank.dart';
 import '../hooks/use_exercise_settings.dart';
-import '../widgets/realistic_object_icon.dart';
 import '../widgets/shape_glyph.dart';
 import '../widgets/quiz_bubble_card.dart';
 import '../widgets/lettered_choice_grid.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Quel objet a cette forme ?" — associe une figure à un
-/// objet du quotidien de même forme (emoji, aucun asset nécessaire).
-/// Réutilise `McqAnswer` (choix textuels génériques, ici des emoji).
+/// objet du quotidien de même forme, piqué au hasard dans une banque d'une
+/// centaine d'objets par figure (`SHAPE_OBJECT_BANK`, `shape_object_bank.dart`)
+/// pour renouveler le jeu à chaque tour et à chaque relance, plutôt qu'un
+/// unique objet fixe par figure. Rendu en emoji, aucun asset nécessaire.
 class ExerciceFigureObjetScreen extends StatefulWidget {
   const ExerciceFigureObjetScreen({super.key});
 
@@ -103,9 +105,7 @@ class _ExerciceFigureObjetScreenState extends State<ExerciceFigureObjetScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -116,7 +116,7 @@ class _ExerciceFigureObjetScreenState extends State<ExerciceFigureObjetScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -263,9 +263,17 @@ class _ObjetCard extends StatelessWidget {
     final fo = t['figureObjet'] as Map<String, dynamic>? ?? {};
     final topic = findShapeTopic(shapeId)!;
     final shapeName = topic.name[lang.name] ?? topic.name['fr']!;
-    final correctKey = SHAPE_OBJECT_KEY[shapeId]!;
-    final choices = SHAPE_OBJECT_KEY.values.toList()
-      ..shuffle(Random(choiceSeed));
+    final rand = Random(choiceSeed);
+    // Un objet différent piqué au hasard pour la figure ciblée, et un objet
+    // différent piqué au hasard dans chacune des trois autres figures pour
+    // les leurres -- jamais les 4 mêmes objets fixes d'un tour à l'autre.
+    final correctChoice =
+        SHAPE_OBJECT_BANK[shapeId]![rand.nextInt(SHAPE_OBJECT_BANK[shapeId]!.length)];
+    final choices = [
+      correctChoice,
+      for (final otherId in SHAPE_TOPICS.map((t) => t.id).where((id) => id != shapeId))
+        SHAPE_OBJECT_BANK[otherId]![rand.nextInt(SHAPE_OBJECT_BANK[otherId]!.length)],
+    ]..shuffle(rand);
 
     return Opacity(
       opacity: isFuture ? 0.4 : 1,
@@ -293,9 +301,18 @@ class _ObjetCard extends StatelessWidget {
           ),
           LetteredChoiceGrid<String>(
             choices: choices,
-            correctChoice: correctKey,
-            contentBuilder: (choice) =>
-                RealisticObjectIcon(objectKey: choice, size: 34),
+            correctChoice: correctChoice,
+            contentBuilder: (choice) => Text(
+              choice,
+              style: const TextStyle(
+                fontSize: 34,
+                fontFamilyFallback: [
+                  'Noto Color Emoji',
+                  'Apple Color Emoji',
+                  'Segoe UI Emoji',
+                ],
+              ),
+            ),
             isActive: isActive,
             isFuture: isFuture,
             solved: done,

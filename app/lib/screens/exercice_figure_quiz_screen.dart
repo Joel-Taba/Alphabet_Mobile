@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
@@ -12,6 +11,7 @@ import '../widgets/shape_glyph.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Quelle est cette figure ?" du Palier "Figures
 /// géométriques" — purement ludique, sans points ni progression, comme les
@@ -111,9 +111,7 @@ class _ExerciceFigureQuizScreenState extends State<ExerciceFigureQuizScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -124,7 +122,7 @@ class _ExerciceFigureQuizScreenState extends State<ExerciceFigureQuizScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),

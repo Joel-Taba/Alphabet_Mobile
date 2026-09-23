@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
@@ -9,6 +8,7 @@ import '../widgets/confetti_burst.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/wrong_answer_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Vrai ou Faux ?" du Palier "Les Calculs" — purement
 /// ludique, sans points ni progression, comme les mots mêlés du Palier
@@ -118,7 +118,9 @@ class _ExerciceCalculVraiFauxScreenState
 
   @override
   Widget build(BuildContext context) {
-    final t = context.watch<LanguageProvider>().t;
+    final languageProvider = context.watch<LanguageProvider>();
+    final t = languageProvider.t;
+    final lang = languageProvider.lang;
     final vf = t['calculVraiFaux'] as Map<String, dynamic>? ?? {};
     final common = t['common'] as Map<String, dynamic>? ?? {};
     final idx = _levelIdx;
@@ -133,7 +135,7 @@ class _ExerciceCalculVraiFauxScreenState
           child: Center(
             child: GestureDetector(
               onTap: () =>
-                  context.canPop() ? context.pop() : context.go('/accueil'),
+                  goHome(context),
               child: Text(common['backToHome'] ?? ''),
             ),
           ),
@@ -164,9 +166,7 @@ class _ExerciceCalculVraiFauxScreenState
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/accueil'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -181,7 +181,7 @@ class _ExerciceCalculVraiFauxScreenState
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -192,7 +192,8 @@ class _ExerciceCalculVraiFauxScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              level.niveau,
+                              '${vf['levelLabel'] ?? 'Niveau'}: '
+                              '${calculNiveauLabel(level.niveau, lang.name)}',
                               style: TextStyle(
                                 fontFamily: kBalooFontFamily,
                                 fontWeight: FontWeight.w800,
@@ -202,7 +203,10 @@ class _ExerciceCalculVraiFauxScreenState
                               ),
                             ),
                             Text(
-                              (vf['title'] ?? level.title).toString(),
+                              (vf['title'] ??
+                                      level.title[lang.name] ??
+                                      level.title['fr'])
+                                  .toString(),
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,
                               ),

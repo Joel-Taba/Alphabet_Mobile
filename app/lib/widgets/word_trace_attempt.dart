@@ -108,8 +108,10 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
   // fixe de 8px.
   static const double _defaultSpacingApart = 5;
 
-  // Écart visé entre l'encre de deux lettres consécutives une fois le mot
-  // complet, façon interlettrage réel plutôt que des cases collées.
+  // Écart blanc VISIBLE (en pixels écran) entre l'encre de deux lettres
+  // consécutives une fois le mot complet, façon interlettrage réel plutôt
+  // que des cases collées — épaisseur du trait déjà prise en compte, voir
+  // le calcul de `overlap` plus bas.
   static const double _defaultDesiredInkGap = 3;
 
   double get _spacingApart => widget.spacingApart ?? _defaultSpacingApart;
@@ -210,8 +212,23 @@ class _WordTraceAttemptState extends State<WordTraceAttempt>
                   final leftMarginNext = _letterInkBounds(
                     widget.letters[i + 1],
                   ).left;
+                  // `_letterInkBounds` mesure l'AXE du tracé
+                  // (`Path.getBounds()`), or le trait est dessiné avec une
+                  // épaisseur de `kLetterTraceStrokeWidth` pixels écran et
+                  // des bouts arrondis : l'encre visible déborde donc de la
+                  // moitié de cette épaisseur de chaque côté, soit une
+                  // épaisseur entière entre deux lettres voisines. Sans la
+                  // retrancher ici, `desiredInkGap` ne décrivait pas l'écart
+                  // réellement visible mais celui entre les axes -- avec un
+                  // écart demandé de 2 px, les lettres se CHEVAUCHAIENT en
+                  // réalité de 5 px (cas signalé : le « u » et le « p » de
+                  // « loup »). En la retranchant, `desiredInkGap` vaut enfin
+                  // ce qu'il annonce : l'espace blanc visible entre l'encre
+                  // de deux lettres.
                   final overlap =
-                      ((rightMargin + leftMarginNext) * scale - _desiredInkGap)
+                      ((rightMargin + leftMarginNext) * scale -
+                              _desiredInkGap -
+                              kLetterTraceStrokeWidth)
                           .clamp(0.0, cellSize * 0.65);
                   tx += cellSize - overlap;
                 }

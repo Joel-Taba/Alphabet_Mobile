@@ -27,6 +27,10 @@ class LetterRepetitionRow extends StatefulWidget {
   /// feuille de cahier partagée (voir [RepetitionRow.showCard]).
   final bool showCard;
 
+  /// `true` si cette rangée a déjà été marquée terminée lors d'une session
+  /// précédente (voir [RepetitionRow.initiallyDone]).
+  final bool initiallyDone;
+
   const LetterRepetitionRow({
     super.key,
     required this.letter,
@@ -38,6 +42,7 @@ class LetterRepetitionRow extends StatefulWidget {
     this.onAllDone,
     this.locked = false,
     this.showCard = true,
+    this.initiallyDone = false,
   });
 
   @override
@@ -71,6 +76,11 @@ class _LetterRepetitionRowState extends State<LetterRepetitionRow> {
   }
 
   void _reset() {
+    if (widget.initiallyDone) {
+      _activeIndex = widget.repetitions;
+      _allDone = true;
+      return;
+    }
     _activeIndex = 0;
     _allDone = false;
   }

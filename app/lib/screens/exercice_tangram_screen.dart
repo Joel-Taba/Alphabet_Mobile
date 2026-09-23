@@ -10,6 +10,7 @@ import '../widgets/amani_mascot.dart';
 import '../widgets/exercise_complete_popup.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice "Tangram" : glisser-déposer chaque pièce colorée dans la case
 /// qui lui correspond pour reconstituer la silhouette. Après
@@ -27,8 +28,26 @@ class _ExerciceTangramScreenState extends State<ExerciceTangramScreen> {
   bool _done = false;
   int _restartKey = 0;
 
+  /// Voir `exercice_calcul_screen.dart::_justCompletedThisVisit`.
+  bool _justCompletedThisVisit = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Persistance permanente : un tangram déjà résolu lors d'une session
+    // précédente le reste pour toujours (voir `ProgressProvider`).
+    _done = context.read<ProgressProvider>().isCompleted(
+      typeEtape: 'TANGRAM',
+      modalite: 'EXERCICE',
+      etapeCode: widget.puzzleId,
+    );
+  }
+
   void _onSolved() {
-    setState(() => _done = true);
+    setState(() {
+      _done = true;
+      _justCompletedThisVisit = true;
+    });
     context.read<ProgressProvider>().awardCompletion(
       typeEtape: 'TANGRAM',
       modalite: 'EXERCICE',
@@ -52,7 +71,7 @@ class _ExerciceTangramScreenState extends State<ExerciceTangramScreen> {
           child: Center(
             child: GestureDetector(
               onTap: () =>
-                  context.canPop() ? context.pop() : context.go('/accueil'),
+                  goHome(context),
               child: Text(et['notFound'] ?? ''),
             ),
           ),
@@ -86,8 +105,7 @@ class _ExerciceTangramScreenState extends State<ExerciceTangramScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            context.go('/cours/tangram/${widget.puzzleId}'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -102,7 +120,7 @@ class _ExerciceTangramScreenState extends State<ExerciceTangramScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -173,6 +191,7 @@ class _ExerciceTangramScreenState extends State<ExerciceTangramScreen> {
                           key: ValueKey('${puzzle.id}-$_restartKey'),
                           puzzle: puzzle,
                           onSolved: _onSolved,
+                          startSolved: _done && _restartKey == 0,
                         ),
                       ),
                     ],
@@ -180,16 +199,17 @@ class _ExerciceTangramScreenState extends State<ExerciceTangramScreen> {
                 ),
               ],
             ),
-            if (_done)
+            if (_done && _justCompletedThisVisit)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextPuzzle != null
-                    ? () => context.go('/cours/tangram/${nextPuzzle.id}')
+                    ? () => context.replace('/cours/tangram/${nextPuzzle.id}')
                     : null,
                 onRestart: () {
                   setState(() {
                     _restartKey++;
                     _done = false;
+                    _justCompletedThisVisit = false;
                   });
                 },
               ),

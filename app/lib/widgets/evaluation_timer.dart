@@ -5,6 +5,7 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../hooks/use_countdown.dart';
 import '../services/evaluation_session.dart';
+import '../services/sound_effect_service.dart';
 import 'amani_mascot.dart';
 import 'confetti_burst.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -417,6 +418,7 @@ class _EvaluationCompleteOverlayState extends State<EvaluationCompleteOverlay> {
     // `context.size` pour répartir ses confettis sur tout l'écran.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _confettiKey.currentState?.play();
+      SoundEffectService.playCelebration();
     });
   }
 

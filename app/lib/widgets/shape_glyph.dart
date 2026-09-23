@@ -44,6 +44,16 @@ class ShapeGlyph extends StatelessWidget {
             border: Border.all(color: color, width: size * 0.08),
           ),
         );
+      case 'parallelogramme':
+        return CustomPaint(
+          size: Size(size * 1.4, size * 0.8),
+          painter: _ParallelogramPainter(color: color, strokeWidth: size * 0.08),
+        );
+      case 'losange':
+        return CustomPaint(
+          size: Size(size, size),
+          painter: _LosangePainter(color: color, strokeWidth: size * 0.08),
+        );
       default:
         return SizedBox(width: size, height: size);
     }
@@ -74,5 +84,61 @@ class _TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TrianglePainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth;
+}
+
+class _ParallelogramPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  const _ParallelogramPainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width * 0.25, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width * 0.75, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParallelogramPainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth;
+}
+
+class _LosangePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  const _LosangePainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width / 2, 0)
+      ..lineTo(size.width, size.height / 2)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(0, size.height / 2)
+      ..close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LosangePainter old) =>
       old.color != color || old.strokeWidth != strokeWidth;
 }

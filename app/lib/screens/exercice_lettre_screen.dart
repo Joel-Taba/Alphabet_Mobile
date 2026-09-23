@@ -13,13 +13,16 @@ import '../hooks/use_writing_style.dart';
 import '../data/palier2_groups.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/repetition_row.dart';
+import '../utils/trace_validation.dart';
 import '../widgets/letter_repetition_row.dart';
 import '../widgets/exercise_complete_popup.dart';
+import '../widgets/free_writing_sheet.dart';
 import '../widgets/evaluation_timer.dart';
 import '../services/evaluation_session.dart';
 import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
 /// exercé séparément) puis Phase B (la lettre entière, répétée autant de
@@ -59,12 +62,27 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   final Set<String> _doneGroupLetters = {};
 
   bool _letterSuccess = false;
+
+  /// `true` uniquement lorsque `_letterSuccess` vient de passer à `true`
+  /// PENDANT cette visite (dans `_handleLetterRepetitionsDone`) -- jamais
+  /// lors de la restauration depuis une réussite déjà acquise (`initState`).
+  /// Sans cette distinction, rouvrir un exercice déjà réussi lors d'une
+  /// visite précédente faisait immédiatement réapparaître la pop-up de
+  /// félicitations (avec ses confettis), alors qu'aucun tracé n'avait
+  /// encore eu lieu lors de CETTE visite.
+  bool _justCompletedThisVisit = false;
   // Incrémenté à chaque "Recommencer" pour forcer le remontage des
   // RepetitionRow de la Phase A (elles gèrent leur propre état interne).
   int _restartKey = 0;
   // Vrai entre le clic sur "Recommencer" et la prochaine réussite complète :
   // le bonus n'est attribué qu'à ce moment-là, jamais au clic lui-même.
   bool _awaitingRepeatCompletion = false;
+
+  /// `true` après "Continuer en mode libre" (voir [ExerciseCompletePopup]) :
+  /// masque la pop-up de fin sans jamais toucher à `_letterSuccess`/aux
+  /// signes déjà validés -- seule la feuille d'écriture libre en bas de page
+  /// reste praticable ensuite.
+  bool _freeModeOnly = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
 
@@ -75,7 +93,27 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     _settings = ExerciseSettings()..addListener(_onSettingsChanged);
     _settings.load();
     WidgetsBinding.instance.addPostFrameCallback((_) => _speakStart());
-    if (_isEvaluation) _initEvaluation();
+    if (_isEvaluation) {
+      _initEvaluation();
+    } else if (context.read<ProgressProvider>().isCompleted(
+      typeEtape: 'LETTRE',
+      modalite: 'EXERCICE',
+      etapeCode: widget.char,
+    )) {
+      // Cette lettre/ce chiffre a déjà été tracé(e) avec succès lors d'une
+      // précédente visite de cet écran (voir `_handleLetterRepetitionsDone`) :
+      // le retrouver acquis plutôt que redemander un tracé déjà réussi.
+      _letterSuccess = true;
+      // Aucun `etapeCode` propre à chaque étape de la Phase A (un seul
+      // `awardCompletion` global pour toute la lettre) : si la lettre entière
+      // est déjà acquise, toutes ses étapes le sont nécessairement aussi.
+      final letter = getLetterFormation(
+        widget.char,
+        context.read<WritingStyleProvider>().style.name,
+      );
+      final stepCount = (letter?['steps'] as List?)?.length ?? 0;
+      _doneSteps.addAll(List.generate(stepCount, (i) => i));
+    }
   }
 
   Future<void> _initEvaluation() async {
@@ -123,7 +161,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     if (savedIdx >= 0 && savedIdx < palier2Groups.length) {
       final savedGroup = palier2Groups[savedIdx];
       if (savedGroup.id != widget.pg && savedGroup.chars.isNotEmpty) {
-        context.go(
+        context.replace(
           '/exercice/lettre/${savedGroup.chars.first}?pg=${savedGroup.id}&amaniEval=1',
         );
       }
@@ -149,8 +187,9 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final lang = context.read<LanguageProvider>().lang;
     final t = context.read<LanguageProvider>().t;
     final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
+    final isDigit = letter['category'] == 'chiffre';
     context.read<SignSpeechService>().speak(
-      tFormat(el['speakStart'] ?? '', {
+      tFormat((isDigit ? el['speakStartDigit'] : el['speakStart']) ?? '', {
         'name': letter['name'][lang.name] ?? '',
       }),
       lang,
@@ -160,6 +199,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   void _resetAll() {
     _doneSteps.clear();
     _letterSuccess = false;
+    _justCompletedThisVisit = false;
     _doneGroupLetters.clear();
   }
 
@@ -179,11 +219,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
     final style = context.read<WritingStyleProvider>().style.name;
     final letter = getLetterFormation(widget.char, style)!;
+    final isDigit = letter['category'] == 'chiffre';
 
     context.read<SignSpeechService>().speak(
-      tFormat(el['speakLetterDone'] ?? '', {
-        'name': letter['name'][lang.name] ?? '',
-      }),
+      tFormat(
+        (isDigit ? el['speakLetterDoneDigit'] : el['speakLetterDone']) ?? '',
+        {'name': letter['name'][lang.name] ?? ''},
+      ),
       lang,
     );
     context.read<ProgressProvider>().awardCompletion(
@@ -192,7 +234,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
       etapeCode: widget.char,
       palier: 2,
     );
-    setState(() => _letterSuccess = true);
+    setState(() {
+      _letterSuccess = true;
+      _justCompletedThisVisit = true;
+    });
     if (_awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
@@ -207,11 +252,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final lang = context.read<LanguageProvider>().lang;
     final el = t['exerciceLettre'] as Map<String, dynamic>? ?? {};
     final char = letter['char'] as String;
+    final isDigit = letter['category'] == 'chiffre';
 
     context.read<SignSpeechService>().speak(
-      tFormat(el['speakLetterDone'] ?? '', {
-        'name': letter['name'][lang.name] ?? '',
-      }),
+      tFormat(
+        (isDigit ? el['speakLetterDoneDigit'] : el['speakLetterDone']) ?? '',
+        {'name': letter['name'][lang.name] ?? ''},
+      ),
       lang,
     );
     context.read<ProgressProvider>().awardCompletion(
@@ -240,6 +287,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
     final session = context.watch<EvaluationSessionController>();
     final letter = getLetterFormation(widget.char, style);
+    final isDigit = letter?['category'] == 'chiffre';
 
     final progressionGroup =
         (widget.pg != null ? getPalier2GroupMap(lang.name)[widget.pg] : null) ??
@@ -276,7 +324,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => context.go('/exercice-liste?group=l1'),
+                  onTap: () => context.replace('/exercice-liste?group=l1'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -365,9 +413,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                         // en évaluation — toujours atteint via `push`),
                         // plutôt que de forcer systématiquement la liste
                         // d'exercices du groupe.
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/accueil'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -382,7 +428,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -443,9 +489,15 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                             children: [
                               Text(
                                 _letterSuccess
-                                    ? (el['successAll'] ?? '')
+                                    ? (isDigit
+                                          ? el['successAllDigit']
+                                          : el['successAll']) ??
+                                          ''
                                     : allStepsDone
-                                    ? (el['finalTitle'] ?? '')
+                                    ? (isDigit
+                                          ? el['finalTitleDigit']
+                                          : el['finalTitle']) ??
+                                          ''
                                     : (el['practiceStepsTitle'] ?? ''),
                                 style: AmaniTheme.titleStyle.copyWith(
                                   fontSize: 14,
@@ -456,10 +508,17 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                 _letterSuccess
                                     ? (el['successAllSub'] ?? '')
                                     : allStepsDone
-                                    ? (el['finalHint'] ?? '')
-                                    : tFormat(el['practiceStepsHint'] ?? '', {
-                                        'reps': _settings.repetitions,
-                                      }),
+                                    ? (isDigit
+                                          ? el['finalHintDigit']
+                                          : el['finalHint']) ??
+                                          ''
+                                    : tFormat(
+                                        (isDigit
+                                                ? el['practiceStepsHintDigit']
+                                                : el['practiceStepsHint']) ??
+                                            '',
+                                        {'reps': _settings.repetitions},
+                                      ),
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 12,
                                   color: AmaniColors.textSecondary,
@@ -526,13 +585,11 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                         entry: TraceableEntry(
                                           id: '${letter['char']}-step-$i',
                                           pathD: steps[i]['pathD'] as String,
-                                          startXY: Offset(
-                                            (steps[i]['startXY']
-                                                    as List)[0]
-                                                .toDouble(),
-                                            (steps[i]['startXY']
-                                                    as List)[1]
-                                                .toDouble(),
+                                          // Dérivé du tracé lui-même — voir
+                                          // `pathStartPoint` — plutôt que du
+                                          // champ startXY du catalogue.
+                                          startXY: pathStartPoint(
+                                            steps[i]['pathD'] as String,
                                           ),
                                           strokeColor: Color(
                                             int.parse(
@@ -549,6 +606,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                         repetitions: _settings.repetitions,
                                         tolerance: _settings.tolerance,
                                         doneLabel: elL['done'] ?? 'Terminé !',
+                                        initiallyDone: _doneSteps.contains(i),
                                         onSpeak: () => speech.speak(
                                           steps[i]['description'][lang.name] ??
                                               '',
@@ -634,15 +692,22 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                         ),
                                         letter: letter,
                                         label:
-                                            '${el['finalTitle'] ?? ''} "${letter['char']}"',
+                                            '${(isDigit ? el['finalTitleDigit'] : el['finalTitle']) ?? ''} "${letter['char']}"',
                                         repetitions: _settings.repetitions,
                                         doneLabel: elL['done'] ?? 'Terminé !',
+                                        initiallyDone: _letterSuccess,
                                         onSpeak: () => speech.speak(
-                                          tFormat(el['speakStart'] ?? '', {
-                                            'name':
-                                                letter['name'][lang.name] ??
+                                          tFormat(
+                                            (isDigit
+                                                    ? el['speakStartDigit']
+                                                    : el['speakStart']) ??
                                                 '',
-                                          }),
+                                            {
+                                              'name':
+                                                  letter['name'][lang.name] ??
+                                                  '',
+                                            },
+                                          ),
                                           lang,
                                         ),
                                         onAllDone: _letterSuccess
@@ -739,6 +804,23 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                         ),
                                       ),
                                     ],
+                                    // Feuille d'écriture libre : jamais sur
+                                    // une page d'évaluation chronométrée
+                                    // (voir `_isEvaluation`) -- le temps
+                                    // imparti ne doit servir qu'au sujet
+                                    // évalué, ce garde-fou reste défensif ici
+                                    // puisque `_buildEvaluationBody` couvre
+                                    // déjà le cas normal de l'évaluation.
+                                    if (!_isEvaluation)
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          20,
+                                          12,
+                                          8,
+                                        ),
+                                        child: FreeWritingSheet(),
+                                      ),
                                   ]),
                                 ),
                               ),
@@ -759,11 +841,11 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
               ],
             ),
 
-            if (_letterSuccess)
+            if (_letterSuccess && _justCompletedThisVisit && !_freeModeOnly)
               ExerciseCompletePopup(
-                onBackHome: () => context.go('/accueil'),
+                onBackHome: () => goHome(context),
                 onNext: nextCoursChar != null
-                    ? () => context.go(
+                    ? () => context.replace(
                         '/cours/lettres/formation/$nextCoursChar${nextCoursPg != null ? '?pg=$nextCoursPg' : ''}',
                       )
                     : null,
@@ -772,8 +854,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                     _resetAll();
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
+                    _freeModeOnly = false;
                   });
                 },
+                onFreeMode: () => setState(() => _freeModeOnly = true),
               ),
           ],
         ),
@@ -800,6 +884,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     ProgressionGroup progressionGroup,
   ) {
     final speech = context.read<SignSpeechService>();
+    final isGroupDigits =
+        progressionGroup.kind == ProgressionGroupKind.chiffres;
     final groupLetters = progressionGroup.chars
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
@@ -844,9 +930,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/accueil'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -861,7 +945,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),
@@ -880,10 +964,16 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              tFormat(el['lettersReady'] ?? '', {
-                                'done': _doneGroupLetters.length,
-                                'total': groupLetters.length,
-                              }),
+                              tFormat(
+                                (isGroupDigits
+                                        ? el['lettersReadyDigit']
+                                        : el['lettersReady']) ??
+                                    '',
+                                {
+                                  'done': _doneGroupLetters.length,
+                                  'total': groupLetters.length,
+                                },
+                              ),
                               style: AmaniTheme.bodyStyle.copyWith(
                                 fontSize: 12,
                                 color: AmaniColors.textSecondary,
@@ -921,8 +1011,14 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                             children: [
                               Text(
                                 allGroupDone
-                                    ? (el['successAll'] ?? '')
-                                    : (el['finalTitle'] ?? ''),
+                                    ? (isGroupDigits
+                                          ? el['successAllDigit']
+                                          : el['successAll']) ??
+                                          ''
+                                    : (isGroupDigits
+                                          ? el['finalTitleDigit']
+                                          : el['finalTitle']) ??
+                                          '',
                                 style: AmaniTheme.titleStyle.copyWith(
                                   fontSize: 14,
                                 ),
@@ -931,7 +1027,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               Text(
                                 allGroupDone
                                     ? (el['successAllSub'] ?? '')
-                                    : (el['finalHint'] ?? ''),
+                                    : (isGroupDigits
+                                          ? el['finalHintDigit']
+                                          : el['finalHint']) ??
+                                          '',
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 12,
                                   color: AmaniColors.textSecondary,
@@ -1014,7 +1113,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
             ),
             if (session.expired)
               EvaluationCompleteOverlay(
-                onBack: () => context.go('/accueil?scrollToPalier=3'),
+                onBack: () => goHome(context),
               ),
             if (_resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
@@ -1041,7 +1140,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                   session.advanceSubject(
                     (groupIdx + 1) % palier2Groups.length,
                   );
-                  context.go(
+                  context.replace(
                     '/exercice/lettre/${evalNextGroup.chars.first}?pg=${evalNextGroup.id}&amaniEval=1',
                   );
                 },
@@ -1063,6 +1162,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     final letter = groupLetters[li];
     final char = letter['char'] as String;
     final steps = letter['steps'] as List;
+    final isDigit = letter['category'] == 'chiffre';
     final locked =
         li > 0 && !_doneGroupLetters.contains(groupLetters[li - 1]['char']);
     final done = _doneGroupLetters.contains(char);
@@ -1075,12 +1175,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
           LetterRepetitionRow(
             key: ValueKey('$char-eval-letter'),
             letter: letter,
-            label: '${el['finalTitle'] ?? ''} "$char"',
+            label:
+                '${(isDigit ? el['finalTitleDigit'] : el['finalTitle']) ?? ''} "$char"',
             repetitions: _settings.repetitions,
             doneLabel: elL['done'] ?? 'Terminé !',
             locked: locked,
             onSpeak: () => speech.speak(
-              tFormat(el['speakStart'] ?? '', {
+              tFormat((isDigit ? el['speakStartDigit'] : el['speakStart']) ?? '', {
                 'name': letter['name'][lang.name] ?? '',
               }),
               lang,

@@ -8,6 +8,15 @@ import 'sign_glyph.dart' show letterFamilyZIndex;
 
 enum _CellStatus { idle, drawing, retry, solved }
 
+/// Épaisseur du trait d'écriture, en pixels ÉCRAN (voir `lineWidth` dans
+/// `_CellPainter.paint` : les points du tracé sont mis à l'échelle, pas
+/// l'épaisseur). Exposée parce que l'encre réellement visible déborde donc
+/// de la moitié de cette valeur de chaque côté du chemin — ce dont doit
+/// tenir compte tout calcul d'espacement entre deux lettres voisines (voir
+/// `WordTraceAttempt`, qui mesure les lettres via `Path.getBounds()`,
+/// c'est-à-dire l'AXE du tracé, sans son épaisseur).
+const double kLetterTraceStrokeWidth = 7.0;
+
 const double _kCellTolerancePx = 27;
 
 /// Tolérance de contact minimale visée à l'écran, en pixels réels,
@@ -249,6 +258,22 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
           ? Center(
               child: Text(
                 widget.letter['char'] as String,
+                // `strutStyle` force une hauteur de ligne strictement égale
+                // à `fontSize` (aucune marge d'ascent/descent supplémentaire
+                // du fichier de police) : sans ça, la police "Baloo" est
+                // mise en page avec une boîte de ligne différente selon la
+                // plateforme (le moteur de texte natif d'Android l'interprète
+                // avec plus de marge sous la ligne de base que le moteur
+                // desktop/web), ce qui poussait visuellement la lettre vers
+                // le bas dans la case et coupait les jambages (ex. "g") —
+                // reproductible uniquement sur tablette/Android, jamais sur
+                // PC.
+                strutStyle: StrutStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontSize: widget.size * 0.5,
+                  height: 1.0,
+                  forceStrutHeight: true,
+                ),
                 style: TextStyle(
                   fontFamily: kBalooFontFamily,
                   fontWeight: FontWeight.w800,
@@ -325,7 +350,7 @@ class _CellPainter extends CustomPainter {
     // 140/200, soit 7px effectifs) -- reprise à l'identique partout (voir
     // aussi `_OccurrencePainter` dans `repetition_row.dart`) pour un même
     // trait de tracé quel que soit le palier.
-    final lineWidth = 7.0 * strokeWidthScale;
+    final lineWidth = kLetterTraceStrokeWidth * strokeWidthScale;
 
     if (solved) {
       final zOrderedIdx = List<int>.generate(steps.length, (i) => i)
@@ -416,11 +441,10 @@ class _CellPainter extends CustomPainter {
         !solved &&
         (status == _CellStatus.idle || status == _CellStatus.retry) &&
         currentStepIdx < steps.length) {
-      final startXY = steps[currentStepIdx]['startXY'] as List;
-      final startPt = Offset(
-        startXY[0].toDouble() * scale,
-        startXY[1].toDouble() * scale,
-      );
+      // Dérivé du tracé lui-même (voir `pathStartPoint`) plutôt que du champ
+      // startXY du catalogue, parfois désaligné avec le pathD réel.
+      final startXY = pathStartPoint(steps[currentStepIdx]['pathD'] as String);
+      final startPt = Offset(startXY.dx * scale, startXY.dy * scale);
       canvas.drawCircle(startPt, 6, Paint()..color = const Color(0xFF5BAA6A));
       canvas.drawCircle(
         startPt,

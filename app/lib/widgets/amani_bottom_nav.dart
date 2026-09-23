@@ -15,7 +15,7 @@ class _NavItem {
 }
 
 const List<_NavItem> _items = [
-  _NavItem('/accueil', 'accueil', LucideIcons.leaf, isCenter: true),
+  _NavItem('/accueil', 'accueil', LucideIcons.house, isCenter: true),
   _NavItem('/bibliotheque', 'bibliotheque', LucideIcons.palette),
   _NavItem('/mon-profil', 'profil', LucideIcons.user),
 ];
@@ -300,7 +300,23 @@ class _NotchBarPainter extends CustomPainter {
     final w = size.width;
     const h = 64.0;
     const r = 32.0;
-    final nx = notchCenterX.clamp(r + 35, w - r - 35);
+    // `clamp` lève une ArgumentError dès que la borne basse (r + 35 = 67)
+    // dépasse la borne haute (w - r - 35) -- ce qui arrive dès que `w` (la
+    // largeur réellement allouée à cette barre) descend sous 134 logical
+    // px, par ex. lors d'une toute première passe de layout où les
+    // contraintes ne sont pas encore stabilisées, ou dans une mise en page
+    // réactive plus étroite. Cette exception se produit en plein `paint()`,
+    // hors du chemin protégé par les error boundaries de `build()` : elle
+    // interrompt toute la passe de rendu de la frame en cours, ce qui
+    // laissait alors le contenu d'AUTRES widgets sans rapport (ex. les
+    // étapes du parcours) simplement non peints pour cette frame -- observé
+    // en conditions réelles (voir logs `flutter run` du 2026-09-10, tablette
+    // MTK S130). Se rabattre sur le centre disponible plutôt que planter.
+    final lowerBound = r + 35;
+    final upperBound = w - r - 35;
+    final nx = upperBound < lowerBound
+        ? w / 2
+        : notchCenterX.clamp(lowerBound, upperBound);
 
     final path = Path()
       ..moveTo(r, 0)

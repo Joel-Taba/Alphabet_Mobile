@@ -7,16 +7,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../i18n/translations.dart';
 import '../theme/amani_theme.dart';
 import '../widgets/amani_mascot.dart';
+import '../services/progress_service.dart';
 import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
 import '../data/syllable_catalog.dart';
 import '../data/calcul_catalog.dart';
 import '../data/shape_catalog.dart';
 import '../data/tangram_catalog.dart';
-import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER;
+import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER, EXERCISE_CATALOG;
 import '../utils/text_case.dart';
 import '../widgets/sign_glyph.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Famille de signe (voir `SignGlyph`) associée à une étape "Cours" du
 /// Palier 1 — `null` pour toute autre étape "Cours" (livre générique).
@@ -27,6 +29,13 @@ SignFamily? _signFamilyFromKey(String? key) => switch (key) {
   'point' => SignFamily.point,
   _ => null,
 };
+
+/// Teinte grisée d'une couleur de palier (ex. vert → vert-gris, marron →
+/// marron-gris...), utilisée pour distinguer une étape déjà réalisée de la
+/// véritable étape courante (voir `Step.isDone`) -- un simple mélange avec
+/// du gris fonctionne pour n'importe quelle couleur de palier, sans avoir à
+/// définir une variante grisée dédiée pour chacune.
+Color _mutedColor(Color c) => Color.lerp(c, const Color(0xFF9C9690), 0.55)!;
 
 const String _bonusRibbonSvg = 'M6 16 H34 L30 34 H10 Z M10 22 H30 M12 28 H28';
 const String _bonusArcSvg = 'M12 16 C14 8 26 8 28 16';
@@ -63,6 +72,13 @@ class Step {
   final Color? bannerBorder;
   final IconData? bannerIcon;
 
+  /// Chemin d'une image SVG à utiliser à la place de [bannerIcon] (icône de
+  /// police) -- teintée en blanc via `ColorFilter` exactement comme les
+  /// `Icon(bannerIcon)` environnants, pour rester cohérente avec les autres
+  /// paliers tout en permettant une illustration propre à ce palier (ex.
+  /// Palier Mots : `abc-svgrepo-com.svg` plutôt que l'icône livre générique).
+  final String? bannerIconAsset;
+
   /// Non `null` uniquement pour les étapes "Cours" (`iconType: 'feuille'`)
   /// du Palier 1 ('trait' | 'crochet' | 'courbe' | 'point') : remplace alors
   /// l'icône livre générique par le signe réellement enseigné dans ce cours
@@ -79,6 +95,14 @@ class Step {
   /// résolu dans la langue active par l'appelant, pas une clé de traduction.
   final String? stepTitle;
 
+  /// `true` pour une étape "Cours"/"Exercice" (`kind: active`) dont le
+  /// groupe entier (cours ET exercice) a déjà été réalisé -- distingue
+  /// visuellement (voir la boucle de coloration dans `_buildSteps`, qui
+  /// teinte alors [Step.bannerBg]/[Step.bannerBorder] hérités d'un gris) une
+  /// étape déjà acquise de la véritable étape courante, qui garde elle la
+  /// couleur pleine du palier.
+  final bool isDone;
+
   const Step({
     required this.kind,
     this.iconType,
@@ -89,8 +113,10 @@ class Step {
     this.bannerBg,
     this.bannerBorder,
     this.bannerIcon,
+    this.bannerIconAsset,
     this.signFamily,
     this.stepTitle,
+    this.isDone = false,
   });
 }
 
@@ -106,21 +132,22 @@ class StepEntry {
 }
 
 class ParcoursScreen extends StatefulWidget {
-  /// Numéro de palier (1-6, voir `awardCompletion(palier: ...)`) vers lequel
-  /// défiler au premier affichage — utilisé au retour d'une évaluation de
-  /// fin de palier réussie, pour amener directement l'enfant au palier
-  /// suivant plutôt que de le laisser en haut de la liste.
-  final int? scrollToPalier;
-
-  const ParcoursScreen({super.key, this.scrollToPalier});
+  const ParcoursScreen({super.key});
 
   @override
   State<ParcoursScreen> createState() => _ParcoursScreenState();
 }
 
-class _ParcoursScreenState extends State<ParcoursScreen> {
+class _ParcoursScreenState extends State<ParcoursScreen>
+    with WidgetsBindingObserver {
   int _activeStepIdx = 1;
   final ScrollController _scrollController = ScrollController();
+
+  /// État du menu déroulant de navigation rapide entre paliers (voir
+  /// `_PalierQuickNav`) — replié par défaut pour rester discret, déplié au
+  /// tap sur le bouton "signpost", et automatiquement replié après avoir
+  /// choisi un palier.
+  bool _quickNavOpen = false;
 
   /// Une ancre stable par numéro de palier (1-6), posée sur la bannière
   /// d'en-tête correspondante (`_PalierBanner`) — permet de défiler jusqu'à
@@ -156,20 +183,54 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     return _nodeKeys[i];
   }
 
-  /// Point bas-centre (voir `_measureNodes`) de chaque étape non-en-tête,
-  /// dans l'ordre — `null` tant que la toute première mesure post-layout
-  /// n'a pas encore eu lieu (le sentier n'est alors simplement pas encore
-  /// dessiné, le temps d'un frame). Alimente `_FootpathPainter` pour que le
-  /// sentier passe réellement sous chaque étape plutôt que de suivre un
-  /// zigzag générique approximatif.
-  List<Offset>? _nodeBottomCenters;
+  /// Rectangle englobant réel (voir `_measureNodes`) de chaque étape
+  /// non-en-tête, dans l'ordre — `null` tant que la toute première mesure
+  /// post-layout n'a pas encore eu lieu (le sentier n'est alors simplement
+  /// pas encore dessiné, le temps d'un frame). Couvre TOUTE l'étape (icône
+  /// + étiquette de titre, et la bulle "Commencer" le cas échéant, voir
+  /// `_StepNode` où la clé est désormais posée sur la colonne entière plutôt
+  /// que sur l'icône seule) : alimente `_FootpathPainter`, qui découpe
+  /// chaque tronçon du sentier pour qu'il ne pénètre jamais dans aucun de
+  /// ces rectangles, quels que soient la langue, la taille d'écran ou le
+  /// réglage d'échelle de l'interface -- plutôt qu'une marge fixe le long du
+  /// tracé, insuffisante dès qu'un tronçon est peu incliné (voir l'historique
+  /// de ce fichier).
+  List<Rect>? _nodeRects;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadActiveStep();
-    if (widget.scrollToPalier != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToPalier());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Une rotation d'écran (portrait ↔ paysage) sur un appareil réel déclenche
+  /// PLUSIEURS passes de layout successives pendant que la fenêtre se
+  /// redimensionne (contrairement à un simple redimensionnement de fenêtre
+  /// desktop, en une seule passe) : une unique mesure programmée juste après
+  /// le premier frame qui suit peut donc capter une géométrie encore
+  /// transitoire, jamais rattrapée ensuite puisque `_measureNodes` ne se
+  /// redéclenche plus une fois `_nodeRects` stabilisé sur cette valeur
+  /// erronée. Sans ce filet de sécurité, le sentier d'empreintes restait
+  /// figé sur les positions (verticales, façon portrait) mesurées avant la
+  /// rotation, alors que les étapes elles-mêmes s'étaient déjà réorganisées
+  /// selon le nouveau zigzag (plus large, façon paysage) -- d'où le
+  /// décalage constaté. Trois mesures de rattrapage, espacées, suffisent à
+  /// couvrir la fin de la transition quel que soit l'appareil.
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    _scheduleNodeMeasurement();
+    for (final delayMs in [100, 250, 500]) {
+      Future.delayed(Duration(milliseconds: delayMs), () {
+        if (mounted) _scheduleNodeMeasurement();
+      });
     }
   }
 
@@ -189,7 +250,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     final areaBox =
         _pathAreaKey.currentContext?.findRenderObject() as RenderBox?;
     if (areaBox == null || !areaBox.hasSize) return;
-    final positions = <Offset>[];
+    final rects = <Rect>[];
     for (final key in _nodeKeys) {
       final box = key.currentContext?.findRenderObject() as RenderBox?;
       // Un nœud pas encore monté (ex. clé réservée pour une étape qui
@@ -198,25 +259,32 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       // tronqué.
       if (box == null || !box.hasSize) return;
       final topLeft = box.localToGlobal(Offset.zero, ancestor: areaBox);
-      positions.add(topLeft + Offset(box.size.width / 2, box.size.height));
+      rects.add(topLeft & box.size);
     }
-    if (_nodeBottomCenters != null &&
-        _offsetsMatch(_nodeBottomCenters!, positions)) {
+    if (_nodeRects != null && _rectsMatch(_nodeRects!, rects)) {
       return;
     }
-    setState(() => _nodeBottomCenters = positions);
+    setState(() => _nodeRects = rects);
   }
 
-  bool _offsetsMatch(List<Offset> a, List<Offset> b) {
+  bool _rectsMatch(List<Rect> a, List<Rect> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
-      if ((a[i] - b[i]).distanceSquared > 0.25) return false;
+      final ra = a[i], rb = b[i];
+      if ((ra.topLeft - rb.topLeft).distanceSquared > 0.25) return false;
+      if ((ra.width - rb.width).abs() > 0.5) return false;
+      if ((ra.height - rb.height).abs() > 0.5) return false;
     }
     return true;
   }
 
-  void _scrollToPalier() {
-    final key = _palierKeys[widget.scrollToPalier];
+  /// Défile jusqu'à la bannière du palier [num]. Utilisée par le menu
+  /// déroulant `_PalierQuickNav` pour sauter directement à n'importe quel
+  /// palier choisi par l'enfant, sans devoir défiler manuellement tout le
+  /// parcours — particulièrement fastidieux sur les paliers à beaucoup
+  /// d'étapes (Calculs, Mots).
+  void _scrollToPalier(int num) {
+    final key = _palierKeys[num];
     final ctx = key?.currentContext;
     if (ctx == null) return;
     Scrollable.ensureVisible(
@@ -224,6 +292,17 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
       alignment: 0.05,
+    );
+  }
+
+  void _onQuickNavSelect(int palierNum) {
+    setState(() => _quickNavOpen = false);
+    // Laisse le menu se replier visuellement avant de lancer le défilement
+    // (les deux animations en même temps rendraient le repli du menu peu
+    // lisible, caché sous le mouvement de la page).
+    Future.delayed(
+      const Duration(milliseconds: 150),
+      () => _scrollToPalier(palierNum),
     );
   }
 
@@ -266,7 +345,113 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
     );
   }
 
-  List<StepEntry> _buildSteps(Map<String, dynamic> t, Lang lang) {
+  /// Index effectif de l'étape "courante" (première non terminée) parmi
+  /// [doneFlags] -- si tout est terminé, retombe sur la dernière plutôt que
+  /// de ne jamais désigner d'étape courante (il doit toujours en rester une,
+  /// en couleur pleine, même une fois le palier entièrement acquis).
+  int _currentGroupIndex(List<bool> doneFlags) {
+    final firstNotDone = doneFlags.indexWhere((d) => !d);
+    return firstNotDone == -1 ? doneFlags.length - 1 : firstNotDone;
+  }
+
+  bool _signFamilyDone(ProgressProvider progress, String family) {
+    final items = EXERCISE_CATALOG.where((e) => e['family'] == family);
+    if (items.isEmpty) return false;
+    final coursDone = progress.isCompleted(
+      typeEtape: 'SIGNE',
+      modalite: 'COURS',
+      etapeCode: family,
+    );
+    return coursDone &&
+        items.every(
+          (e) => progress.isCompleted(
+            typeEtape: 'SIGNE',
+            modalite: 'EXERCICE',
+            etapeCode: e['id'] as String,
+          ),
+        );
+  }
+
+  bool _letterGroupDone(ProgressProvider progress, dynamic group) {
+    final coursDone = progress.isCompleted(
+      typeEtape: 'LETTRE',
+      modalite: 'COURS',
+      etapeCode: group.id as String,
+    );
+    final chars = group.chars as List;
+    return coursDone &&
+        chars.every(
+          (c) => progress.isCompleted(
+            typeEtape: 'LETTRE',
+            modalite: 'EXERCICE',
+            etapeCode: c as String,
+          ),
+        );
+  }
+
+  bool _syllableGroupDone(
+    ProgressProvider progress,
+    Map<String, dynamic> group,
+  ) {
+    final consonant = group['consonant'] as String;
+    final coursDone = progress.isCompleted(
+      typeEtape: 'SYLLABE',
+      modalite: 'COURS',
+      etapeCode: consonant,
+    );
+    final syllables = group['syllables'] as List;
+    return coursDone &&
+        syllables.every(
+          (s) => progress.isCompleted(
+            typeEtape: 'SYLLABE',
+            modalite: 'EXERCICE',
+            etapeCode: (s as Map)['syllable'] as String,
+          ),
+        );
+  }
+
+  bool _wordGroupDone(ProgressProvider progress, dynamic group) {
+    final coursDone = progress.isCompleted(
+      typeEtape: 'MOT',
+      modalite: 'COURS',
+      etapeCode: group.id as String,
+    );
+    final words = group.words as List;
+    return coursDone &&
+        words.every(
+          (w) => progress.isCompleted(
+            typeEtape: 'MOT',
+            modalite: 'EXERCICE',
+            etapeCode: w.id as String,
+          ),
+        );
+  }
+
+  bool _calculTopicDone(ProgressProvider progress, dynamic topic) {
+    final id = topic.id as String;
+    return progress.isCompleted(
+          typeEtape: 'CALCUL',
+          modalite: 'COURS',
+          etapeCode: id,
+        ) &&
+        progress.isTopicExercised('CALCUL', id);
+  }
+
+  bool _shapeTopicDone(ProgressProvider progress, dynamic topic) {
+    final id = topic.id as String;
+    return progress.isCompleted(
+          typeEtape: 'FIGURE',
+          modalite: 'COURS',
+          etapeCode: id,
+        ) &&
+        progress.isTopicExercised('FIGURE', id);
+  }
+
+  List<StepEntry> _buildSteps(
+    Map<String, dynamic> t,
+    Lang lang,
+    ProgressProvider progress,
+  ) {
     final paliers = (t['parcours']?['paliers'] as List?) ?? [];
     String pal(int i, String key) =>
         (paliers.length > i ? paliers[i][key] : null) ?? '';
@@ -287,69 +472,75 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         ),
         0,
       ),
-      StepEntry(
-        const Step(
-          kind: StepKind.active,
-          iconType: 'feuille',
-          signFamily: 'trait',
+    ];
+
+    // Leçon d'introduction aux 4 signes de base, avant le premier signe
+    // (le trait) -- contenu institutionnel French-only (méthode Flores Gong
+    // Nota, UNESCO/Francophonie), non traduite dans les autres langues
+    // (voir `coursSignesIntro` dans translations.dart).
+    final showSignesIntro = lang == Lang.fr;
+    final signesIntroDone = progress.isCompleted(
+      typeEtape: 'SIGNE_INTRO',
+      modalite: 'COURS',
+      etapeCode: 'intro',
+    );
+    final signDoneFlags = [
+      if (showSignesIntro) signesIntroDone,
+      for (final family in FAMILY_ORDER) _signFamilyDone(progress, family),
+    ];
+    final signCurrentIdx = _currentGroupIndex(signDoneFlags);
+    final signIdxOffset = showSignesIntro ? 1 : 0;
+    if (showSignesIntro) {
+      steps.add(
+        StepEntry(
+          Step(
+            kind: 0 <= signCurrentIdx ? StepKind.active : StepKind.locked,
+            iconType: 'feuille',
+            isDone: signesIntroDone,
+            stepTitle: t['coursSignesIntro']?['stepLabel'] ?? 'Introduction',
+          ),
+          -1,
+          to: '/cours-signes-intro',
         ),
-        -1,
-        to: '/cours/trait',
-      ),
-      StepEntry(
-        const Step(kind: StepKind.active, iconType: 'branche'),
-        1,
-        to: '/exercice-liste?family=trait',
-      ),
-      StepEntry(
-        const Step(
-          kind: StepKind.locked,
-          iconType: 'feuille',
-          signFamily: 'crochet',
+      );
+    }
+    for (var idx = 0; idx < FAMILY_ORDER.length; idx++) {
+      final family = FAMILY_ORDER[idx];
+      final offsetIdx = idx + signIdxOffset;
+      final kind = offsetIdx <= signCurrentIdx
+          ? StepKind.active
+          : StepKind.locked;
+      final done = offsetIdx < signCurrentIdx;
+      steps.add(
+        StepEntry(
+          Step(
+            kind: kind,
+            iconType: 'feuille',
+            signFamily: family,
+            isDone: done,
+          ),
+          -1,
+          to: '/cours/$family',
         ),
-        -1,
-        to: '/cours/crochet',
-      ),
-      StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'branche'),
-        1,
-        to: '/exercice-liste?family=crochet',
-      ),
-      StepEntry(
-        const Step(
-          kind: StepKind.locked,
-          iconType: 'feuille',
-          signFamily: 'courbe',
+      );
+      steps.add(
+        StepEntry(
+          Step(kind: kind, iconType: 'branche', isDone: done),
+          1,
+          to: '/exercice-liste?family=$family',
         ),
-        -1,
-        to: '/cours/courbe',
-      ),
-      StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'branche'),
-        1,
-        to: '/exercice-liste?family=courbe',
-      ),
-      StepEntry(
-        const Step(
-          kind: StepKind.locked,
-          iconType: 'feuille',
-          signFamily: 'point',
-        ),
-        -1,
-        to: '/cours/point',
-      ),
-      StepEntry(
-        const Step(kind: StepKind.locked, iconType: 'branche'),
-        1,
-        to: '/exercice-liste?family=point',
-      ),
+      );
+    }
+    steps.add(
       StepEntry(
         const Step(kind: StepKind.medal),
         0,
         to: '/exercice-liste?family=${FAMILY_ORDER[0]}&amaniEval=1',
       ),
+    );
 
-      // ─── PALIER 2 : Combinatoire ───
+    // ─── PALIER 2 : Combinatoire ───
+    steps.add(
       StepEntry(
         Step(
           kind: StepKind.header,
@@ -363,10 +554,15 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         ),
         0,
       ),
-    ];
+    );
 
+    final letterDoneFlags = [
+      for (final group in palier2Groups) _letterGroupDone(progress, group),
+    ];
+    final letterCurrentIdx = _currentGroupIndex(letterDoneFlags);
     for (var idx = 0; idx < palier2Groups.length; idx++) {
-      final kind = idx == 0 ? StepKind.active : StepKind.locked;
+      final kind = idx <= letterCurrentIdx ? StepKind.active : StepKind.locked;
+      final done = idx < letterCurrentIdx;
       final group = palier2Groups[idx];
       steps.add(
         StepEntry(
@@ -374,6 +570,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
             kind: kind,
             iconType: 'feuille',
             stepTitle: group.title[lang.name],
+            isDone: done,
           ),
           -1,
           to: '/cours/lettres/formation/${group.chars.first}?pg=${group.id}',
@@ -381,7 +578,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       );
       steps.add(
         StepEntry(
-          Step(kind: kind, iconType: 'branche'),
+          Step(kind: kind, iconType: 'branche', isDone: done),
           1,
           to: '/exercice-liste?group=${group.id}',
         ),
@@ -402,63 +599,70 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       ),
     );
 
-    // ─── PALIER 3 : Les Syllabes (français uniquement — méthode de lecture
-    // "consonne + voyelle" spécifique au français) ───
-    if (lang == Lang.fr) {
+    // ─── PALIER 3 : Les Syllabes (méthode consonne + voyelle) — disponible
+    // dans les 4 langues ; les syllabes elles-mêmes restent en alphabet
+    // latin (voir la doc de `syllable_catalog.dart`), seule la narration
+    // change. ───
+    steps.add(
+      StepEntry(
+        Step(
+          kind: StepKind.header,
+          title: pal(2, 'title'),
+          subtitle: pal(2, 'subtitle'),
+          tagline: pal(2, 'tagline'),
+          palierNum: 3,
+          bannerBg: const Color(0xFFD07A04),
+          bannerBorder: const Color(0xFFA25F03),
+          bannerIcon: LucideIcons.bookOpen,
+        ),
+        0,
+      ),
+    );
+
+    final syllableDoneFlags = [
+      for (final group in SYLLABLE_GROUPS)
+        _syllableGroupDone(progress, group as Map<String, dynamic>),
+    ];
+    final syllableCurrentIdx = _currentGroupIndex(syllableDoneFlags);
+    for (var idx = 0; idx < SYLLABLE_GROUPS.length; idx++) {
+      final kind = idx <= syllableCurrentIdx
+          ? StepKind.active
+          : StepKind.locked;
+      final done = idx < syllableCurrentIdx;
+      final group = SYLLABLE_GROUPS[idx] as Map<String, dynamic>;
       steps.add(
         StepEntry(
           Step(
-            kind: StepKind.header,
-            title: pal(2, 'title'),
-            subtitle: pal(2, 'subtitle'),
-            tagline: pal(2, 'tagline'),
-            palierNum: 3,
-            bannerBg: const Color(0xFFD07A04),
-            bannerBorder: const Color(0xFFA25F03),
-            bannerIcon: LucideIcons.bookOpen,
+            kind: kind,
+            iconType: 'feuille',
+            stepTitle: tFormat(t['coursSyllabes']?['consonantTitle'] ?? '', {
+              'consonant': group['consonant'],
+            }),
+            isDone: done,
           ),
-          0,
+          -1,
+          to: '/cours/syllabes/${group['consonant']}',
         ),
       );
-
-      for (var idx = 0; idx < SYLLABLE_GROUPS.length; idx++) {
-        final kind = idx == 0 ? StepKind.active : StepKind.locked;
-        final group = SYLLABLE_GROUPS[idx] as Map<String, dynamic>;
-        steps.add(
-          StepEntry(
-            Step(
-              kind: kind,
-              iconType: 'feuille',
-              stepTitle: tFormat(
-                t['coursSyllabes']?['consonantTitle'] ?? '',
-                {'consonant': group['consonant']},
-              ),
-            ),
-            -1,
-            to: '/cours/syllabes/${group['consonant']}',
-          ),
-        );
-        steps.add(
-          StepEntry(
-            Step(kind: kind, iconType: 'branche'),
-            1,
-            to: '/exercice/syllabes/${group['consonant']}',
-          ),
-        );
-      }
-      final firstConsonant =
-          (SYLLABLE_GROUPS.first as Map<String, dynamic>)['consonant'];
       steps.add(
         StepEntry(
-          const Step(kind: StepKind.medal),
-          0,
-          to: '/exercice/syllabes/$firstConsonant?amaniEval=1',
+          Step(kind: kind, iconType: 'branche', isDone: done),
+          1,
+          to: '/exercice/syllabes/${group['consonant']}',
         ),
       );
     }
+    final firstConsonant =
+        (SYLLABLE_GROUPS.first as Map<String, dynamic>)['consonant'];
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.medal),
+        0,
+        to: '/exercice/syllabes/$firstConsonant?amaniEval=1',
+      ),
+    );
 
-    // ─── PALIER 3/4 : Les Mots (numéro 4 seulement si le palier Syllabes
-    // précède, c'est-à-dire en français) ───
+    // ─── PALIER 4 : Les Mots ───
     steps.add(
       StepEntry(
         Step(
@@ -466,17 +670,22 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
           title: pal(3, 'title'),
           subtitle: pal(3, 'subtitle'),
           tagline: pal(3, 'tagline'),
-          palierNum: lang == Lang.fr ? 4 : 3,
+          palierNum: 4,
           bannerBg: const Color(0xFF4A90E2),
           bannerBorder: const Color(0xFF2D6BBF),
-          bannerIcon: LucideIcons.bookOpen,
+          bannerIconAsset: 'assets/images/abc-svgrepo-com.svg',
         ),
         0,
       ),
     );
 
+    final wordDoneFlags = [
+      for (final group in PALIER3_GROUPS) _wordGroupDone(progress, group),
+    ];
+    final wordCurrentIdx = _currentGroupIndex(wordDoneFlags);
     for (var idx = 0; idx < PALIER3_GROUPS.length; idx++) {
-      final kind = idx == 0 ? StepKind.active : StepKind.locked;
+      final kind = idx <= wordCurrentIdx ? StepKind.active : StepKind.locked;
+      final done = idx < wordCurrentIdx;
       final group = PALIER3_GROUPS[idx];
       steps.add(
         StepEntry(
@@ -484,6 +693,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
             kind: kind,
             iconType: 'feuille',
             stepTitle: group.title[lang.name],
+            isDone: done,
           ),
           -1,
           to: '/cours/mots/${group.id}',
@@ -491,7 +701,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       );
       steps.add(
         StepEntry(
-          Step(kind: kind, iconType: 'branche'),
+          Step(kind: kind, iconType: 'branche', isDone: done),
           1,
           to: '/exercice/mots/${group.id}',
         ),
@@ -518,75 +728,88 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       ),
     );
 
-    // ─── PALIER 5 : Les Calculs (français uniquement — nomenclature CP/CE1/
-    // CE2/CM1/CM2 propre au système scolaire français) ───
-    if (lang == Lang.fr) {
+    // ─── PALIER 5 : Les Calculs — disponible dans les 4 langues ; les
+    // niveaux CP/CE1/CE2/CM1/CM2 restent des identifiants internes de
+    // regroupement/tri mais s'affichent sous une étiquette générique
+    // traduite ("Niveau 1".."Niveau 5", voir `calculNiveauLabel` dans
+    // `calcul_catalog.dart`) plutôt que la nomenclature scolaire française.
+    // ───
+    steps.add(
+      StepEntry(
+        Step(
+          kind: StepKind.header,
+          title: pal(4, 'title'),
+          subtitle: pal(4, 'subtitle'),
+          tagline: pal(4, 'tagline'),
+          palierNum: 5,
+          bannerBg: const Color(0xFF8B5FBF),
+          bannerBorder: const Color(0xFF6B3F94),
+          bannerIcon: LucideIcons.calculator,
+        ),
+        0,
+      ),
+    );
+
+    final calculDoneFlags = [
+      for (final topic in CALCUL_TOPICS) _calculTopicDone(progress, topic),
+    ];
+    final calculCurrentIdx = _currentGroupIndex(calculDoneFlags);
+    for (var idx = 0; idx < CALCUL_TOPICS.length; idx++) {
+      final kind = idx <= calculCurrentIdx
+          ? StepKind.active
+          : StepKind.locked;
+      final done = idx < calculCurrentIdx;
+      final topic = CALCUL_TOPICS[idx];
       steps.add(
         StepEntry(
           Step(
-            kind: StepKind.header,
-            title: pal(4, 'title'),
-            subtitle: pal(4, 'subtitle'),
-            tagline: pal(4, 'tagline'),
-            palierNum: 5,
-            bannerBg: const Color(0xFF8B5FBF),
-            bannerBorder: const Color(0xFF6B3F94),
-            bannerIcon: LucideIcons.calculator,
+            kind: kind,
+            iconType: 'feuille',
+            stepTitle: topic.title[lang.name] ?? topic.title['fr']!,
+            isDone: done,
           ),
-          0,
+          -1,
+          to: '/cours/calcul/${topic.id}',
         ),
       );
-
-      for (var idx = 0; idx < CALCUL_TOPICS.length; idx++) {
-        final kind = idx == 0 ? StepKind.active : StepKind.locked;
-        final topic = CALCUL_TOPICS[idx];
-        steps.add(
-          StepEntry(
-            Step(kind: kind, iconType: 'feuille', stepTitle: topic.title),
-            -1,
-            to: '/cours/calcul/${topic.id}',
-          ),
-        );
-        steps.add(
-          StepEntry(
-            Step(kind: kind, iconType: 'branche'),
-            1,
-            to: '/exercice/calcul/${topic.id}',
-          ),
-        );
-        final isLastOfNiveau =
-            idx == CALCUL_TOPICS.length - 1 ||
-            CALCUL_TOPICS[idx + 1].niveau != topic.niveau;
-        if (isLastOfNiveau) {
-          final niveauIdx = _calculNiveaux.indexOf(topic.niveau);
-          steps.add(
-            StepEntry(
-              const Step(kind: StepKind.vraiFaux),
-              0,
-              to: '/exercice/calcul-vrai-faux/$niveauIdx',
-            ),
-          );
-          steps.add(
-            StepEntry(
-              const Step(kind: StepKind.composeNombre),
-              0,
-              to: '/exercice/calcul-compose/$niveauIdx',
-            ),
-          );
-        }
-      }
       steps.add(
         StepEntry(
-          const Step(kind: StepKind.medal),
-          0,
-          to: '/exercice/calcul/${CALCUL_TOPICS[0].id}?amaniEval=1',
+          Step(kind: kind, iconType: 'branche', isDone: done),
+          1,
+          to: '/exercice/calcul/${topic.id}',
         ),
       );
+      final isLastOfNiveau =
+          idx == CALCUL_TOPICS.length - 1 ||
+          CALCUL_TOPICS[idx + 1].niveau != topic.niveau;
+      if (isLastOfNiveau) {
+        final niveauIdx = _calculNiveaux.indexOf(topic.niveau);
+        steps.add(
+          StepEntry(
+            const Step(kind: StepKind.vraiFaux),
+            0,
+            to: '/exercice/calcul-vrai-faux/$niveauIdx',
+          ),
+        );
+        steps.add(
+          StepEntry(
+            const Step(kind: StepKind.composeNombre),
+            0,
+            to: '/exercice/calcul-compose/$niveauIdx',
+          ),
+        );
+      }
     }
+    steps.add(
+      StepEntry(
+        const Step(kind: StepKind.medal),
+        0,
+        to: '/exercice/calcul/${CALCUL_TOPICS[0].id}?amaniEval=1',
+      ),
+    );
 
     // ─── PALIER 6 : Les Figures géométriques (vocabulaire universel, pas
-    // lié au système scolaire français — disponible dans les 4 langues,
-    // contrairement à Syllabes/Calculs) ───
+    // lié au système scolaire français — disponible dans les 4 langues) ───
     final figuresPalier =
         t['parcours']?['figuresPalier'] as Map<String, dynamic>?;
     steps.add(
@@ -605,8 +828,13 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       ),
     );
 
+    final shapeDoneFlags = [
+      for (final topic in SHAPE_TOPICS) _shapeTopicDone(progress, topic),
+    ];
+    final shapeCurrentIdx = _currentGroupIndex(shapeDoneFlags);
     for (var idx = 0; idx < SHAPE_TOPICS.length; idx++) {
-      final kind = idx == 0 ? StepKind.active : StepKind.locked;
+      final kind = idx <= shapeCurrentIdx ? StepKind.active : StepKind.locked;
+      final done = idx < shapeCurrentIdx;
       final topic = SHAPE_TOPICS[idx];
       steps.add(
         StepEntry(
@@ -614,6 +842,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
             kind: kind,
             iconType: 'feuille',
             stepTitle: topic.name[lang.name],
+            isDone: done,
           ),
           -1,
           to: '/cours/figure/${topic.id}',
@@ -621,7 +850,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
       );
       steps.add(
         StepEntry(
-          Step(kind: kind, iconType: 'branche'),
+          Step(kind: kind, iconType: 'branche', isDone: done),
           1,
           to: '/exercice/figure/${topic.id}',
         ),
@@ -696,8 +925,12 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
         currentColor = entry.step.bannerBg ?? currentColor;
         currentBorder = entry.step.bannerBorder ?? currentBorder;
       } else {
-        entry.color = currentColor;
-        entry.borderColor = currentBorder;
+        entry.color = entry.step.isDone
+            ? _mutedColor(currentColor)
+            : currentColor;
+        entry.borderColor = entry.step.isDone
+            ? _mutedColor(currentBorder)
+            : currentBorder;
         if (entry.step.kind != StepKind.bonus &&
             entry.step.kind != StepKind.medal) {
           stepNumber += 1;
@@ -713,9 +946,37 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
     final lang = context.watch<LanguageProvider>().lang;
-    final steps = _buildSteps(t, lang);
+    final progress = context.watch<ProgressProvider>();
+    final steps = _buildSteps(t, lang, progress);
     _scheduleNodeMeasurement();
+    final palierHeaders = [
+      for (final entry in steps)
+        if (entry.step.kind == StepKind.header) entry.step,
+    ];
 
+    return Stack(
+      children: [
+        _buildPath(steps, t),
+        Positioned(
+          right: 12,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: _PalierQuickNav(
+              headers: palierHeaders,
+              isOpen: _quickNavOpen,
+              onToggle: () => setState(() => _quickNavOpen = !_quickNavOpen),
+              onSelect: _onQuickNavSelect,
+              openAria: t['parcours']?['quickNavOpenAria'] ?? '',
+              closeAria: t['parcours']?['quickNavCloseAria'] ?? '',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPath(List<StepEntry> steps, Map<String, dynamic> t) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -771,8 +1032,33 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
               // (voir `_measureNodes`) plutôt qu'un zigzag générique.
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final width =
-                      constraints.maxWidth - 48; // padding horizontal 24+24
+                  // `maxWidth` n'est PAS garantie finie : selon le moment où
+                  // la toute première passe de layout tombe par rapport à
+                  // l'arrivée des vraies dimensions de fenêtre côté plateforme
+                  // (course bien plus probable en AOT -- release/profile
+                  // démarrent beaucoup plus vite qu'en debug/JIT), cette
+                  // contrainte peut valoir `double.infinity`. La largeur
+                  // servait ensuite au décalage latéral de chaque étape
+                  // (`_StepRow`, `Transform.translate`) : un `Infinity`/`NaN`
+                  // y corrompait la matrice de transformation de TOUTE la
+                  // sous-arborescence, et faisait lever, en pleine phase de
+                  // peinture, « Unsupported operation: Infinity or NaN toInt »
+                  // au moment de peindre l'image du badge de palier
+                  // (`StepKind.medal`). Comme l'exception survient dans
+                  // `paint()` (hors du filet de sécurité de `build()`), la
+                  // sous-arborescence restait définitivement non peinte --
+                  // bannières de palier ET étapes invisibles, sans aucune
+                  // erreur visible, alors que le sentier d'empreintes (peint
+                  // juste avant dans le même `Stack`) s'affichait, lui,
+                  // normalement. Diagnostiqué sur appareil réel (voir la trace
+                  // complète en profile, 2026-09-10).
+                  final maxWidth = constraints.maxWidth.isFinite
+                      ? constraints.maxWidth
+                      : MediaQuery.sizeOf(context).width;
+                  final width = math.max(
+                    0.0,
+                    maxWidth - 48,
+                  ); // padding horizontal 24+24
                   var nonHeaderIdx = 0;
 
                   return Padding(
@@ -782,9 +1068,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
                       children: [
                         Positioned.fill(
                           child: CustomPaint(
-                            painter: _FootpathPainter(
-                              points: _nodeBottomCenters,
-                            ),
+                            painter: _FootpathPainter(rects: _nodeRects),
                           ),
                         ),
                         Column(
@@ -820,32 +1104,190 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
   }
 }
 
+/// Menu déroulant de navigation rapide entre paliers, ancré verticalement
+/// centré sur le bord droit de l'écran. Replié, un simple bouton rond
+/// ("signpost") reste discret par-dessus le sentier ; déplié, il révèle un
+/// petit bouton rond par palier (couleur et icône reprises de sa bannière,
+/// voir `Step.bannerBg`/`bannerBorder`/`bannerIcon`), qui fait défiler
+/// directement jusqu'à ce palier (`_ParcoursScreenState._scrollToPalier`) —
+/// pensé pour les paliers à beaucoup d'étapes (Calculs, Mots), où défiler
+/// manuellement toute la liste est fastidieux.
+class _PalierQuickNav extends StatelessWidget {
+  final List<Step> headers;
+  final bool isOpen;
+  final VoidCallback onToggle;
+  final ValueChanged<int> onSelect;
+  final String openAria;
+  final String closeAria;
+
+  const _PalierQuickNav({
+    required this.headers,
+    required this.isOpen,
+    required this.onToggle,
+    required this.onSelect,
+    required this.openAria,
+    required this.closeAria,
+  });
+
+  static const double _buttonSize = 44;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AmaniColors.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+        ),
+        boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 10)],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            alignment: Alignment.bottomCenter,
+            child: !isOpen
+                ? const SizedBox(width: _buttonSize)
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final header in headers) ...[
+                        _QuickNavButton(
+                          color: header.bannerBg ?? AmaniColors.secondary,
+                          borderColor:
+                              header.bannerBorder ?? AmaniColors.secondaryDark,
+                          icon: header.bannerIcon ?? LucideIcons.leaf,
+                          iconAsset: header.bannerIconAsset,
+                          label: header.title ?? '',
+                          size: _buttonSize,
+                          onTap: () => onSelect(header.palierNum!),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ],
+                  ),
+          ),
+          // Sépare visuellement les boutons d'accès aux paliers de la croix
+          // de fermeture, pour éviter toute confusion entre les deux --
+          // absent quand le menu est replié (rien à séparer).
+          if (isOpen)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Container(
+                width: _buttonSize,
+                height: 1,
+                color: AmaniColors.textPrimary.withValues(alpha: 0.15),
+              ),
+            ),
+          Semantics(
+            button: true,
+            label: isOpen ? closeAria : openAria,
+            child: GestureDetector(
+              onTap: onToggle,
+              child: Container(
+                width: _buttonSize,
+                height: _buttonSize,
+                decoration: const BoxDecoration(
+                  color: AmaniColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isOpen ? LucideIcons.x : LucideIcons.menu,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickNavButton extends StatelessWidget {
+  final Color color;
+  final Color borderColor;
+  final IconData icon;
+  final String? iconAsset;
+  final String label;
+  final double size;
+  final VoidCallback onTap;
+
+  const _QuickNavButton({
+    required this.color,
+    required this.borderColor,
+    required this.icon,
+    this.iconAsset,
+    required this.label,
+    required this.size,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 2),
+          ),
+          child: iconAsset != null
+              ? Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: SvgPicture.asset(
+                    iconAsset!,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                )
+              : Icon(icon, color: Colors.white, size: 18),
+        ),
+      ),
+    );
+  }
+}
+
 /// Trace le chemin reliant les étapes non pas par un simple pointillé mais
 /// par une piste de petites empreintes de pas alternées (gauche/droite),
 /// façon sentier — un segment indépendant par tronçon (d'une étape à la
-/// suivante, dans l'ordre), passant exactement par le point mesuré de
-/// l'icône de chaque étape (voir `_ParcoursScreenState._measureNodes` et
-/// `_StepNode.nodeKey`, posée sur l'icône seule, jamais sur l'étiquette de
-/// titre en dessous). Chaque tronçon est volontairement raccourci d'une
-/// marge (voir `_segmentMargin`) à CHACUNE de ses deux extrémités avant d'y
-/// semer des empreintes (voir la boucle par `PathMetric` plus bas, un par
-/// `moveTo`) plutôt que de prolonger un tracé continu sur toute la piste :
-/// les empreintes vont ainsi explicitement, et de façon visuellement
-/// saccadée, d'un bouton d'étape à l'autre — un groupe d'empreintes bien
-/// distinct par tronçon, jamais collé aux icônes ni raccordé au groupe
-/// voisin, plutôt qu'une continuité artificielle entre eux.
+/// suivante, dans l'ordre), visant le centre du rectangle mesuré de chaque
+/// étape (voir `_ParcoursScreenState._measureNodes` et `_StepNode.nodeKey`,
+/// désormais posée sur la colonne ENTIÈRE de l'étape -- icône, bulle
+/// "Commencer" éventuelle et étiquette de titre comprises -- plutôt que sur
+/// la seule icône). Chaque tronçon est découpé (voir
+/// `_clipSegmentOutsideRects`) pour ne JAMAIS pénétrer dans le rectangle
+/// mesuré d'aucune des deux étapes qu'il relie, quels que soient la langue,
+/// la longueur du titre (y compris sur 2 lignes) ou le réglage d'échelle de
+/// l'interface -- plutôt qu'une simple marge fixe le long du tracé, qui
+/// laissait passer les empreintes sur l'étiquette dès qu'un tronçon était
+/// peu incliné (proche de l'horizontale). Les empreintes vont ainsi
+/// explicitement, et de façon visuellement saccadée, d'un bouton d'étape à
+/// l'autre — un groupe d'empreintes bien distinct par tronçon, jamais collé
+/// aux icônes ni aux étiquettes, ni raccordé au groupe voisin.
 class _FootpathPainter extends CustomPainter {
-  final List<Offset>? points;
+  final List<Rect>? rects;
 
-  _FootpathPainter({required this.points});
+  _FootpathPainter({required this.rects});
 
-  /// Distance retranchée à chaque extrémité d'un tronçon avant d'y semer des
-  /// empreintes : dégage l'icône de l'étape (jamais d'empreinte collée
-  /// dessus) et, combinée au fait que chaque tronçon reparte de zéro,
-  /// garantit un vide net et visible entre deux groupes d'empreintes
-  /// consécutifs plutôt qu'un enchaînement presque continu autour du nœud
-  /// partagé.
-  static const double _segmentMargin = 22.0;
+  /// Marge additionnelle, au-delà du rectangle mesuré lui-même, avant d'y
+  /// semer des empreintes -- purement esthétique (un vide net et visible
+  /// entre deux groupes d'empreintes consécutifs) une fois que le rectangle
+  /// garantit déjà, à lui seul, l'absence totale de chevauchement.
+  static const double _safetyGap = 12.0;
 
   /// Échelle de chaque empreinte (coussinet + orteils, voir
   /// `_drawFootprint`) — répercutée aussi sur l'écart entre deux empreintes
@@ -854,24 +1296,92 @@ class _FootpathPainter extends CustomPainter {
   /// empreintes devenues plus grosses mais toujours aussi rapprochées.
   static const double _footScale = 1.4;
 
+  /// Portion du segment [a, b] (en paramètre `t`, 0=a, 1=b) qui se trouve à
+  /// l'intérieur de `rect`, élargi de [_safetyGap] -- `null` si le segment ne
+  /// traverse jamais ce rectangle élargi. Découpage de segment par droite
+  /// (Liang-Barsky) : robuste quel que soit l'angle du segment, contrairement
+  /// à une marge appliquée le long du tracé.
+  (double, double)? _paramRangeInsideRect(Offset a, Offset b, Rect rect) {
+    final r = rect.inflate(_safetyGap);
+    var t0 = 0.0, t1 = 1.0;
+    final dx = b.dx - a.dx;
+    final dy = b.dy - a.dy;
+    final edges = [
+      (-dx, a.dx - r.left),
+      (dx, r.right - a.dx),
+      (-dy, a.dy - r.top),
+      (dy, r.bottom - a.dy),
+    ];
+    for (final (p, q) in edges) {
+      if (p == 0) {
+        if (q < 0) return null; // Parallèle à ce bord, entièrement à l'écart.
+        continue;
+      }
+      final t = q / p;
+      if (p < 0) {
+        if (t > t1) return null;
+        if (t > t0) t0 = t;
+      } else {
+        if (t < t0) return null;
+        if (t < t1) t1 = t;
+      }
+    }
+    return (t0, t1);
+  }
+
+  /// Rallonge volontaire de la portion visible du segment, au-delà du point
+  /// de sortie/entrée strict des rectangles des étapes -- pour qu'environ
+  /// deux empreintes de plus apparaissent de chaque côté, au plus près du
+  /// bouton qui sert d'extrémité (demande explicite : les empreintes
+  /// s'arrêtaient trop tôt, laissant un vide visuel avant chaque étape).
+  /// Exprimée en pixels le long du segment, convertie en fraction `t` selon
+  /// la longueur réelle de CE segment (voir [_clipSegmentOutsideRects]) --
+  /// une valeur fixe en `t` aurait rallongé les segments courts bien plus
+  /// que les longs.
+  static const double _extraReachPx = 2 * 22.0 * _footScale;
+
+  /// Portion visible du segment [a, b] une fois retranchée toute
+  /// intersection avec `rectA` (contenant `a`) et `rectB` (contenant `b`),
+  /// puis rallongée de [_extraReachPx] de chaque côté (voir ci-dessus) --
+  /// `null` si les deux rectangles se recouvrent le long du segment (étapes
+  /// trop rapprochées pour laisser la moindre empreinte entre elles).
+  (Offset, Offset)? _clipSegmentOutsideRects(
+    Offset a,
+    Offset b,
+    Rect rectA,
+    Rect rectB,
+  ) {
+    // `a` est au centre de `rectA` (donc à l'intérieur) : la sortie de
+    // `rectA` en direction de `b` est le second point (`t1`) de
+    // l'intersection. Symétriquement pour `rectB` côté `b`.
+    final length = (b - a).distance;
+    final deltaT = length > 0 ? _extraReachPx / length : 0.0;
+    final exitA = ((_paramRangeInsideRect(a, b, rectA)?.$2 ?? 0.0) - deltaT)
+        .clamp(0.0, 1.0);
+    final entryB = ((_paramRangeInsideRect(a, b, rectB)?.$1 ?? 1.0) + deltaT)
+        .clamp(0.0, 1.0);
+    if (exitA >= entryB) return null;
+    Offset lerp(double t) => Offset.lerp(a, b, t)!;
+    return (lerp(exitA), lerp(entryB));
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    final pts = points;
-    if (pts == null || pts.length < 2) return;
+    final r = rects;
+    if (r == null || r.length < 2) return;
 
     final path = Path();
-    for (var i = 0; i < pts.length - 1; i++) {
-      final a = pts[i];
-      final b = pts[i + 1];
-      final delta = b - a;
-      final length = delta.distance;
-      // Tronçon trop court pour la marge des deux côtés (nœuds très
-      // rapprochés) : le laisser sans empreinte plutôt que d'inverser ses
-      // deux extrémités.
-      if (length <= _segmentMargin * 2) continue;
-      final unit = delta / length;
-      final start = a + unit * _segmentMargin;
-      final end = b - unit * _segmentMargin;
+    for (var i = 0; i < r.length - 1; i++) {
+      final rectA = r[i];
+      final rectB = r[i + 1];
+      final clipped = _clipSegmentOutsideRects(
+        rectA.center,
+        rectB.center,
+        rectA,
+        rectB,
+      );
+      if (clipped == null) continue;
+      final (start, end) = clipped;
       path.moveTo(start.dx, start.dy);
       path.lineTo(end.dx, end.dy);
     }
@@ -969,8 +1479,16 @@ class _FootpathPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FootpathPainter oldDelegate) =>
-      !identical(oldDelegate.points, points);
+      !identical(oldDelegate.rects, rects);
 }
+
+/// Largeur de référence (voir `_StepRow.build`) au-delà de laquelle
+/// l'amplitude du zigzag entre deux étapes n'augmente plus -- proche de la
+/// largeur d'une tablette en portrait, un rendu déjà considéré satisfaisant ;
+/// ce plafond évite que le sentier ne s'étire au-delà sur un écran plus
+/// large (tablette en paysage, grand écran), sans jamais réduire l'amplitude
+/// des écrans plus étroits.
+const double _kZigzagRefWidth = 620;
 
 class _StepRow extends StatelessWidget {
   final StepEntry entry;
@@ -1015,7 +1533,30 @@ class _StepRow extends StatelessWidget {
       );
     }
 
-    final offset = entry.side * (width * 0.22);
+    // L'amplitude du zigzag est calée sur `width`, mais celle-ci varie
+    // énormément d'un écran à l'autre -- pas seulement entre téléphone et
+    // tablette, mais aussi entre portrait et paysage sur un MÊME appareil
+    // (ex. tablette~: ~589px de large en portrait contre jusqu'à 900px en
+    // paysage, une fois la largeur de contenu plafonnée par
+    // `kTabletBreakpoint`/`ConstrainedBox` dans `app_shell.dart`). Sans
+    // plafond, l'écart entre deux étapes consécutives passe alors de ~130px
+    // à ~200px rien qu'en tournant l'appareil, alors que la taille des
+    // icônes, elle, ne bouge pas -- d'où un sentier qui paraît nettement
+    // plus "étiré"/moins compact en paysage. On calcule donc l'amplitude à
+    // partir d'une largeur de référence plafonnée (`_kZigzagRefWidth`,
+    // proche de la largeur d'une tablette en portrait -- le rendu déjà jugé
+    // satisfaisant) plutôt que de la largeur réelle, pour un zigzag à
+    // l'amplitude visuellement stable quel que soit l'écran ou son
+    // orientation ; les écrans plus étroits qu'elle (téléphones) restent,
+    // eux, inchangés, puisque `math.min` ne fait alors rien.
+    //
+    // Deuxième garde-fou, après celle sur `width` côté `LayoutBuilder` : une
+    // valeur non finie transmise ici corromprait la matrice de transformation
+    // de toute la sous-arborescence de l'étape, et ferait échouer sa peinture
+    // (image du badge de palier comprise) sans aucune erreur visible -- voir
+    // la note détaillée sur le calcul de `width`.
+    final rawOffset = entry.side * (math.min(width, _kZigzagRefWidth) * 0.22);
+    final offset = rawOffset.isFinite ? rawOffset : 0.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 22),
@@ -1101,11 +1642,22 @@ class _PalierBanner extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  step.bannerIcon ?? LucideIcons.leaf,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: step.bannerIconAsset != null
+                    ? Padding(
+                        padding: const EdgeInsets.all(11),
+                        child: SvgPicture.asset(
+                          step.bannerIconAsset!,
+                          colorFilter: const ColorFilter.mode(
+                            Colors.white,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        step.bannerIcon ?? LucideIcons.leaf,
+                        color: Colors.white,
+                        size: 28,
+                      ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1185,11 +1737,13 @@ class _StepNode extends StatefulWidget {
   final int? number;
   final Map<String, dynamic> t;
 
-  /// Ancre posée sur l'icône seule (voir `_ParcoursScreenState._nodeKeys` /
-  /// `_measureNodes`) — jamais sur l'étiquette de titre en dessous (Cours,
-  /// Exercice, Traits...), pour que le sentier peint en arrière-plan
-  /// (`_FootpathPainter`) passe sous l'icône sans jamais chevaucher le
-  /// texte.
+  /// Ancre posée sur la colonne entière de l'étape (voir
+  /// `_ParcoursScreenState._nodeKeys` / `_measureNodes`) — icône, bulle
+  /// "Commencer" éventuelle ET étiquette de titre en dessous (Cours,
+  /// Exercice, Traits...) comprises, pour que le sentier peint en
+  /// arrière-plan (`_FootpathPainter`) connaisse le rectangle RÉEL de
+  /// l'étape et ne chevauche jamais le texte, quels que soient la langue ou
+  /// la taille de police.
   final GlobalKey? nodeKey;
 
   const _StepNode({
@@ -1276,6 +1830,7 @@ class _StepNodeState extends State<_StepNode>
             widget.step.kind == StepKind.active || widget.isCurrent;
         final double dim = bigNode ? 96 : 64;
         return Column(
+          key: widget.nodeKey,
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.isCurrent)
@@ -1285,7 +1840,6 @@ class _StepNodeState extends State<_StepNode>
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
             SizedBox(
-              key: widget.nodeKey,
               width: dim + 24,
               height: dim + 24,
               child: Stack(
@@ -1299,7 +1853,7 @@ class _StepNodeState extends State<_StepNode>
                       size: dim,
                     ),
                   if (widget.isCurrent)
-                    _CurrentSparkles(color: widget.borderColor),
+                    _CurrentSparkles(color: widget.borderColor, size: dim + 24),
                   Container(
                     width: dim,
                     height: dim,
@@ -1334,9 +1888,7 @@ class _StepNodeState extends State<_StepNode>
                                 : LucideIcons.bookOpen,
                             size: bigNode
                                 ? (widget.step.iconType == 'branche' ? 38 : 40)
-                                : (widget.step.iconType == 'branche'
-                                      ? 24
-                                      : 26),
+                                : (widget.step.iconType == 'branche' ? 24 : 26),
                             color: bigNode
                                 ? Colors.white
                                 : AmaniColors.textSecondary.withValues(
@@ -1381,6 +1933,7 @@ class _StepNodeState extends State<_StepNode>
       case StepKind.wordsearch:
         final bool bigWs = widget.isCurrent;
         return Column(
+          key: widget.nodeKey,
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.isCurrent)
@@ -1390,11 +1943,13 @@ class _StepNodeState extends State<_StepNode>
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
             Stack(
-              key: widget.nodeKey,
               clipBehavior: Clip.none,
               children: [
                 if (widget.isCurrent)
-                  _CurrentSparkles(color: widget.borderColor),
+                  _CurrentSparkles(
+                    color: widget.borderColor,
+                    size: bigWs ? 80 : 56,
+                  ),
                 Container(
                   width: bigWs ? 80 : 56,
                   height: bigWs ? 80 : 56,
@@ -1452,6 +2007,7 @@ class _StepNodeState extends State<_StepNode>
       case StepKind.puzzleFormule:
         final bool bigGame = widget.isCurrent;
         return Column(
+          key: widget.nodeKey,
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.isCurrent)
@@ -1461,11 +2017,13 @@ class _StepNodeState extends State<_StepNode>
               ),
             if (widget.isCurrent) const SizedBox(height: 10),
             Stack(
-              key: widget.nodeKey,
               clipBehavior: Clip.none,
               children: [
                 if (widget.isCurrent)
-                  _CurrentSparkles(color: widget.borderColor),
+                  _CurrentSparkles(
+                    color: widget.borderColor,
+                    size: bigGame ? 80 : 56,
+                  ),
                 Container(
                   width: bigGame ? 80 : 56,
                   height: bigGame ? 80 : 56,
@@ -1711,50 +2269,72 @@ class _NumberBadge extends StatelessWidget {
 /// effet ludique — port fidèle de `CurrentSparkles` (`_app.accueil.tsx`).
 class _CurrentSparkles extends StatelessWidget {
   final Color color;
-  const _CurrentSparkles({required this.color});
+
+  /// Côté (en px) de la zone décorée. OBLIGATOIRE : les trois étincelles
+  /// ci-dessous sont toutes `Positioned`, or un `Stack` sans le moindre
+  /// enfant non-positionné prend `constraints.biggest` (voir
+  /// `RenderStack._computeSize`). Sans cette taille explicite, ce `Stack`
+  /// héritait donc d'une hauteur INFINIE dès qu'il était placé dans une zone
+  /// défilante verticale -- ce qui est le cas pour les étapes de type jeu
+  /// (mots mêlés, calculs, figures), dont l'icône n'est pas enveloppée dans
+  /// un `SizedBox` contrairement aux étapes des paliers 1 à 4. Conséquence
+  /// observée en conditions réelles : l'étape courante devenait infiniment
+  /// haute, toutes les étapes SUIVANTES se retrouvaient à un décalage
+  /// vertical infini, et leur peinture échouait silencieusement (offset
+  /// infini -> `rect.size.height` = Infinity - Infinity = NaN dans
+  /// `paintImage`). Résultat : plus aucune étape ni bannière visible sur
+  /// l'accueil, seul le sentier d'empreintes (peint par un frère du `Stack`)
+  /// restait affiché.
+  final double size;
+
+  const _CurrentSparkles({required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          top: -12,
-          left: -20,
-          child: Transform.rotate(
-            angle: -0.21,
-            child: Icon(
-              LucideIcons.sparkle,
-              size: 14,
-              color: color.withValues(alpha: 0.7),
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: -12,
+            left: -20,
+            child: Transform.rotate(
+              angle: -0.21,
+              child: Icon(
+                LucideIcons.sparkle,
+                size: 14,
+                color: color.withValues(alpha: 0.7),
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: 8,
-          right: -24,
-          child: Transform.rotate(
-            angle: 0.31,
-            child: Icon(
-              LucideIcons.sparkle,
-              size: 10,
-              color: color.withValues(alpha: 0.5),
+          Positioned(
+            top: 8,
+            right: -24,
+            child: Transform.rotate(
+              angle: 0.31,
+              child: Icon(
+                LucideIcons.sparkle,
+                size: 10,
+                color: color.withValues(alpha: 0.5),
+              ),
             ),
           ),
-        ),
-        Positioned(
-          bottom: -4,
-          left: -24,
-          child: Transform.rotate(
-            angle: 0.1,
-            child: Icon(
-              LucideIcons.sparkle,
-              size: 8,
-              color: color.withValues(alpha: 0.4),
+          Positioned(
+            bottom: -4,
+            left: -24,
+            child: Transform.rotate(
+              angle: 0.1,
+              child: Icon(
+                LucideIcons.sparkle,
+                size: 8,
+                color: color.withValues(alpha: 0.4),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

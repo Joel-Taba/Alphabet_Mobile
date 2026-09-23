@@ -129,13 +129,16 @@ const Map<String, dynamic> fr = {
     'close': 'Fermer',
     'replay': 'Relancer',
     'instruction': 'Consigne',
+    'toolbarExpandAria': 'Voir le nom des actions',
+    'toolbarCollapseAria': 'Réduire les actions',
     'settings': 'Paramètres',
     'tryAgain': 'Essayer à nouveau',
     'pointsEarnedAria': 'points gagnés',
     'next': 'Suivant',
     'previous': 'Précédent',
-    'backToHome': "Retour à l'accueil",
+    'backToHome': 'Accueil',
     'restart': 'Recommencer',
+    'freeMode': 'Mode libre',
     'speakLetterIntro':
         'Pour écrire la lettre {char}, on procède ainsi : {consigne}',
     'speakDigitIntro':
@@ -254,7 +257,6 @@ const Map<String, dynamic> fr = {
     },
     'modelLabel': 'Modèle',
     'noModelTitle': 'Laisse libre cours à ton imagination !',
-    'noModelBody': 'Laisse ton doigt se promener librement sur la page.',
     'clear': 'Effacer',
     'colorLabel': 'Couleur',
     'canvasAria': 'Espace de dessin libre',
@@ -267,14 +269,20 @@ const Map<String, dynamic> fr = {
       'crochet': 'Le crochet',
     },
   },
+  'freeWriting': {
+    'title': 'Écriture libre',
+    'subtitle': 'Entraîne-toi encore, autant de fois que tu veux !',
+  },
   'parcours': {
     'title': 'Prêt à commencer ?',
-    'subtitle': 'Je suis tout feu, tout flamme. On y va quand tu veux !!!',
+    'subtitle': 'Je suis tout feu, tout flamme.\nOn y va quand tu veux !!!',
     'start': 'Commencer',
     'lockedAria': 'Étape verrouillée',
     'bonusAria': 'Récompense bonus verrouillée',
     'medalAria': 'Médaille de fin de palier',
     'medalDoneAria': 'Médaille de fin de palier obtenue',
+    'quickNavOpenAria': 'Aller à un palier',
+    'quickNavCloseAria': 'Fermer la navigation rapide',
     'coursStep': 'Cours',
     'exerciceStep': 'Exercice',
     'wordSearchStep': 'Mots mêlés',
@@ -429,13 +437,46 @@ const Map<String, dynamic> fr = {
     'oneVariant': 'Une seule variante',
     'variantsCount': '{count} variantes',
     'exercer': "S'entrainer",
-    'passExercices': 'Passer aux exercices ({title})',
+    'passExercices': 'Passer aux exercices',
     'titles': {
       'point': 'Le point',
       'courbe': 'Les courbes',
       'crochet': 'Les crochets',
       'trait': 'Les traits',
     },
+  },
+  // Contenu French-only (méthode Flores Gong Nota, présentation
+  // institutionnelle) -- non traduit dans les autres langues.
+  'coursSignesIntro': {
+    'title': 'Les 4 signes de base',
+    // Libellé affiché sous le nœud "Introduction" du parcours (Accueil) --
+    // distinct du titre ci-dessus (l'en-tête de la page elle-même).
+    'stepLabel': 'Introduction',
+    'signNames': {
+      'trait-vertical-full': 'Le trait vertical',
+      'crochet-top-right-full': 'Le crochet haut-droit',
+      'courbe-closed-full': 'Le cercle fermé',
+      'point-center-full': 'Le point',
+    },
+    'paragraph1':
+        "Au-delà de sa démarche et de son application qui se veulent "
+        "universelles, la méthode FLORES GONG NOTA peut être étendue dans le "
+        "cadre des programmes d'alphabétisation prônés par l'UNESCO (qui en "
+        "a d'ailleurs recommandé la large diffusion) et la Francophonie. En "
+        "effet, après une bonne maîtrise du tracé des quatre (04) signes de "
+        "base, la méthode garantit une acquisition rapide de l'écriture en "
+        "vingt-et-un (21) jours.",
+    'paragraph2':
+        "La manipulation (graphisme) et la combinaison (combinatoire) des "
+        "signes nous permettent d'obtenir en un bref délai, l'écriture bien "
+        "structurée des lettres, des chiffres et des symboles avec une "
+        "vélocité et une dextérité remarquables.",
+    'paragraph3':
+        "La phase expérimentale menée auprès des apprenant(e)s et des "
+        "enseignant(e)s d'écoles et de milieux culturels, a permis de "
+        "constater que l'apprentissage de l'écriture par la méthode FLORES "
+        "GONG NOTA est un extraordinaire outil de l'éducation inclusive "
+        "avec des résultats concrets du développement psychomoteur.",
   },
   'coursLettres': {
     'title': 'Lettres & chiffres',
@@ -509,6 +550,10 @@ const Map<String, dynamic> fr = {
     'formulaTitle': 'Formule',
     'vowelsTitle': 'Les voyelles',
     'practice': "S'entrainer sur",
+    'groupTitleLetters': 'Formation des lettres "{first}" à "{last}"',
+    'groupTitleDigits': 'Formation des chiffres "{first}" à "{last}"',
+    'groupTitleLetterSingle': 'Formation de la lettre "{char}"',
+    'groupTitleDigitSingle': 'Formation du chiffre "{char}"',
     'families': {
       'trait': 'Trait',
       'courbe': 'Courbe',
@@ -556,7 +601,7 @@ const Map<String, dynamic> fr = {
     'toleranceLabel': 'Tolérance de validation',
     'toleranceHint': 'Plus haute = plus facile pour les plus jeunes',
     'startHint':
-        'Le point vert indique le point de départ et celui en rouge indique la fin. Suis les pointillés sans lever le doigt.',
+        'Suis les pointillés du point vert au point rouge et sans lever le doigt.',
     'done': 'Terminé !',
     'rowComplete':
         'Bravo ! Tu as tracé tous les signes de cette ligne. Excellent travail !',
@@ -581,15 +626,22 @@ const Map<String, dynamic> fr = {
     'stepPrefix': 'Signe',
     'signsReady': '{done}/{total} signes prêts',
     'lettersReady': '{done}/{total} lettres tracées',
+    'lettersReadyDigit': '{done}/{total} chiffres tracés',
     'practiceStepsTitle': 'Entraîne-toi sur chaque signe',
     'practiceStepsHint':
         "Réussis chaque signe {reps} fois avant d'écrire la lettre complète.",
+    'practiceStepsHintDigit':
+        "Réussis chaque signe {reps} fois avant d'écrire le chiffre complet.",
     'finalTitle': 'Écris la lettre complète',
+    'finalTitleDigit': 'Écris le chiffre complet',
     'finalHint':
         'Trace maintenant tous les signes à la suite, comme pour écrire la vraie lettre.',
+    'finalHintDigit':
+        'Trace maintenant tous les signes à la suite, comme pour écrire le vrai chiffre.',
     'finalLocked':
         "Termine d'abord tous les signes ci-dessus pour débloquer cette étape.",
     'successAll': 'Félicitations ! Lettre complète !',
+    'successAllDigit': 'Félicitations ! Chiffre complet !',
     'successAllSub': "Tu maîtrises l'assemblage de ce caractère.",
     'formulaTitle': 'Formule de',
     'validated': 'validé(s)',
@@ -603,17 +655,25 @@ const Map<String, dynamic> fr = {
     'practiceAgain': "S'entrainer à nouveau",
     'backToNotebookLink': "Retour au cahier d'écriture",
     'speakStart': 'Entraine-toi sur la lettre {name}.',
+    'speakStartDigit': 'Entraine-toi sur le chiffre {name}.',
     'speakLetterDone': 'Bravo ! Tu as parfaitement formé la lettre {name} !',
+    'speakLetterDoneDigit':
+        'Bravo ! Tu as parfaitement formé le chiffre {name} !',
     'speakReset': 'On recommence la lettre {name}.',
+    'speakResetDigit': 'On recommence le chiffre {name}.',
   },
   'exercicePuzzle': {
     'piecesReady': '{done}/{total} lettres reconstituées',
+    'piecesReadyDigit': '{done}/{total} chiffres reconstitués',
     'introTitle': 'Assemble la formule',
     'introBody':
         "Fais glisser chaque pièce vers son emplacement — vert si elle est bien placée, jaune si elle appartient à la lettre mais pas ici, rouge si elle n'en fait pas partie.",
+    'introBodyDigit':
+        "Fais glisser chaque pièce vers son emplacement — vert si elle est bien placée, jaune si elle appartient au chiffre mais pas ici, rouge si elle n'en fait pas partie.",
     'allDoneTitle': 'Formules assemblées !',
     'allDoneBody': "Tu as choisi tous les bons signes, dans le bon ordre.",
     'speakSolved': 'Bravo ! Tu as reconstitué la lettre {name} !',
+    'speakSolvedDigit': 'Bravo ! Tu as reconstitué le chiffre {name} !',
   },
   'coursSyllabes': {
     'title': 'Les syllabes',
@@ -643,6 +703,7 @@ const Map<String, dynamic> fr = {
     'notFound': "n'est pas disponible pour le moment.",
     'backToList': "Retour à l'accueil",
     'practice': "S'entrainer",
+    'levelLabel': 'Niveau',
   },
   'exerciceCalcul': {
     'problemsReady': '{done}/{total} calculs résolus',
@@ -661,6 +722,7 @@ const Map<String, dynamic> fr = {
     'scoreLabel': '{score}/{total} bonnes réponses',
     'doneTitle': 'Partie terminée !',
     'doneBody': 'Rejoue pour t\'entrainer encore.',
+    'levelLabel': 'Niveau',
   },
   'calculCompose': {
     'title': 'Associe pour trouver le nombre !',
@@ -670,6 +732,7 @@ const Map<String, dynamic> fr = {
     'scoreLabel': '{score}/{total} nombres trouvés',
     'doneTitle': 'Partie terminée !',
     'doneBody': 'Rejoue pour t\'entrainer encore.',
+    'levelLabel': 'Niveau',
   },
   'coursMots': {
     'notFound': "n'est pas disponible pour le moment.",
@@ -681,6 +744,7 @@ const Map<String, dynamic> fr = {
         "Chaque mot est déjà écrit avec les lettres que tu connais. Touche le mot pour l'entendre, ou l'haltère pour t'entrainer dessus !",
     'practiceGroup': "S'entrainer",
     'practiceWordAria': "S'entrainer sur « {mot} »",
+    'imageAria': 'Voir l\'image de « {mot} »',
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} mots écrits',
@@ -689,6 +753,7 @@ const Map<String, dynamic> fr = {
     'allDoneTitle': 'Bravo, tous les mots sont écrits !',
     'allDoneBody': 'Tu maîtrises ce groupe de mots.',
     'nextGroup': 'Groupe suivant : {titre}',
+    'clozeInstruction': 'Glisse la bonne lettre dans la case vide.',
   },
   'coursFigure': {
     'notFound': "n'est pas disponible pour le moment.",
@@ -697,6 +762,9 @@ const Map<String, dynamic> fr = {
     'propertiesWithCorners': '{sides} côtés et {corners} coins',
     'propertiesRound':
         'Pas un seul côté droit, pas un seul coin : tout est rond !',
+    'astuceTitle': 'Astuces : périmètre et aire',
+    'perimeterLabel': 'Périmètre',
+    'areaLabel': 'Aire',
   },
   'exerciceFigure': {
     'problemsReady': '{done}/{total} tracés réussis',
@@ -783,13 +851,16 @@ const Map<String, dynamic> en = {
     'close': 'Close',
     'replay': 'Replay',
     'instruction': 'Instructions',
+    'toolbarExpandAria': 'Show action names',
+    'toolbarCollapseAria': 'Collapse actions',
     'settings': 'Settings',
     'tryAgain': 'Try again',
     'pointsEarnedAria': 'points earned',
     'next': 'Next',
     'previous': 'Previous',
-    'backToHome': 'Back to home',
+    'backToHome': 'Home',
     'restart': 'Start over',
+    'freeMode': 'Free mode',
     'speakLetterIntro': 'To write the letter {char}, here is how: {consigne}',
     'speakDigitIntro': 'To write the digit {char}, here is how: {consigne}',
     'speakSignIntro': 'To trace the sign {label}, here is how: {consigne}',
@@ -843,7 +914,8 @@ const Map<String, dynamic> en = {
   'welcome': {
     'title': 'Welcome',
     'heading': "Hi! I'm Flores Gong Nota.",
-    'subheading': 'Do you want to learn to read and write while playing with me?',
+    'subheading':
+        'Do you want to learn to read and write while playing with me?',
     'start': 'Start the adventure',
     'imBack': "It's me again! 🐿️",
   },
@@ -904,7 +976,6 @@ const Map<String, dynamic> en = {
     },
     'modelLabel': 'Model',
     'noModelTitle': 'Draw whatever you want!',
-    'noModelBody': 'Let your finger move freely across the page.',
     'clear': 'Clear',
     'colorLabel': 'Color',
     'canvasAria': 'Free drawing area',
@@ -917,6 +988,10 @@ const Map<String, dynamic> en = {
       'crochet': 'The Hook',
     },
   },
+  'freeWriting': {
+    'title': 'Free writing',
+    'subtitle': 'Keep practising, as many times as you like!',
+  },
   'parcours': {
     'title': 'The Branch Path',
     'subtitle': 'Follow the zigzag path and open the buds one step at a time.',
@@ -925,6 +1000,8 @@ const Map<String, dynamic> en = {
     'bonusAria': 'Locked bonus reward',
     'medalAria': 'End-of-tier medal',
     'medalDoneAria': 'End-of-tier medal earned',
+    'quickNavOpenAria': 'Jump to a tier',
+    'quickNavCloseAria': 'Close quick navigation',
     'coursStep': 'Lesson',
     'exerciceStep': 'Exercise',
     'wordSearchStep': 'Word search',
@@ -952,6 +1029,11 @@ const Map<String, dynamic> en = {
         'title': 'Words',
         'subtitle': 'Tier 4',
         'tagline': 'Link letters together',
+      },
+      {
+        'title': 'Math',
+        'subtitle': 'Tier 5',
+        'tagline': 'From addition to proportionality',
       },
     ],
     'figuresPalier': {
@@ -1072,7 +1154,7 @@ const Map<String, dynamic> en = {
     'oneVariant': 'One variant only',
     'variantsCount': '{count} variants',
     'exercer': 'Practice',
-    'passExercices': 'Go to Exercises ({title})',
+    'passExercices': 'Go to Exercises',
     'titles': {
       'point': 'The Dot',
       'courbe': 'The Curves',
@@ -1152,6 +1234,10 @@ const Map<String, dynamic> en = {
     'formulaTitle': 'Formula',
     'vowelsTitle': 'The Vowels',
     'practice': 'Practice',
+    'groupTitleLetters': 'Forming letters "{first}" to "{last}"',
+    'groupTitleDigits': 'Forming digits "{first}" to "{last}"',
+    'groupTitleLetterSingle': 'Forming the letter "{char}"',
+    'groupTitleDigitSingle': 'Forming the digit "{char}"',
     'families': {
       'trait': 'Line',
       'courbe': 'Curve',
@@ -1198,7 +1284,7 @@ const Map<String, dynamic> en = {
     'toleranceLabel': 'Validation tolerance',
     'toleranceHint': 'Higher = easier for younger learners',
     'startHint':
-        'The green dot shows the starting point. Follow the dotted line, lifting your finger as little as possible.',
+        'Follow the dotted line from the green dot to the red dot without lifting your finger.',
     'done': 'Done!',
     'rowComplete':
         'Well done! You traced every sign on this line. Excellent work!',
@@ -1223,14 +1309,21 @@ const Map<String, dynamic> en = {
     'stepPrefix': 'Sign',
     'signsReady': '{done}/{total} signs ready',
     'lettersReady': '{done}/{total} letters traced',
+    'lettersReadyDigit': '{done}/{total} digits traced',
     'practiceStepsTitle': 'Practice each sign',
     'practiceStepsHint':
         'Succeed at each sign {reps} times before writing the complete letter.',
+    'practiceStepsHintDigit':
+        'Succeed at each sign {reps} times before writing the complete digit.',
     'finalTitle': 'Write the complete letter',
+    'finalTitleDigit': 'Write the complete digit',
     'finalHint':
         'Now trace all the signs one after another, just like writing the real letter.',
+    'finalHintDigit':
+        'Now trace all the signs one after another, just like writing the real digit.',
     'finalLocked': 'Finish all the signs above to unlock this step.',
     'successAll': 'Congratulations! Letter complete!',
+    'successAllDigit': 'Congratulations! Digit complete!',
     'successAllSub': "You've mastered assembling this character.",
     'formulaTitle': 'Formula for',
     'validated': 'validated',
@@ -1244,17 +1337,25 @@ const Map<String, dynamic> en = {
     'practiceAgain': 'Practice again',
     'backToNotebookLink': 'Back to the writing notebook',
     'speakStart': 'Practice the letter {name}.',
+    'speakStartDigit': 'Practice the digit {name}.',
     'speakLetterDone': "Well done! You've perfectly formed the letter {name}!",
+    'speakLetterDoneDigit':
+        "Well done! You've perfectly formed the digit {name}!",
     'speakReset': "Let's start the letter {name} again.",
+    'speakResetDigit': "Let's start the digit {name} again.",
   },
   'exercicePuzzle': {
     'piecesReady': '{done}/{total} letters rebuilt',
+    'piecesReadyDigit': '{done}/{total} digits rebuilt',
     'introTitle': 'Build the formula',
     'introBody':
         "Drag each piece onto its slot — green if it's placed right, yellow if it belongs to the letter but not there, red if it doesn't belong at all.",
+    'introBodyDigit':
+        "Drag each piece onto its slot — green if it's placed right, yellow if it belongs to the digit but not there, red if it doesn't belong at all.",
     'allDoneTitle': 'Formulas rebuilt!',
     'allDoneBody': "You've chosen all the right signs, in the right order.",
     'speakSolved': "Well done! You've rebuilt the letter {name}!",
+    'speakSolvedDigit': "Well done! You've rebuilt the digit {name}!",
   },
   'coursSyllabes': {
     'title': 'Syllables',
@@ -1279,6 +1380,41 @@ const Map<String, dynamic> en = {
     'nextGroup': 'Next consonant: {consonant}',
     'exampleWordPrefix': 'as in',
   },
+  'coursCalcul': {
+    'notFound': "isn't available yet.",
+    'backToList': 'Back to home',
+    'practice': 'Practice',
+    'levelLabel': 'Level',
+  },
+  'exerciceCalcul': {
+    'problemsReady': '{done}/{total} problems solved',
+    'introTitle': 'Find the answer',
+    'introBody': 'Solve each problem, one at a time.',
+    'allDoneTitle': 'Well done, every problem is solved!',
+    'allDoneBody': "You've mastered this topic.",
+    'nextTopic': 'Next topic: {title}',
+    'mentalTimeout': "Time's up!",
+  },
+  'calculVraiFaux': {
+    'title': 'True or false?',
+    'instruction': 'Is this calculation correct? You decide!',
+    'true': 'True',
+    'false': 'False',
+    'scoreLabel': '{score}/{total} correct answers',
+    'doneTitle': 'Game over!',
+    'doneBody': 'Play again to keep practicing.',
+    'levelLabel': 'Level',
+  },
+  'calculCompose': {
+    'title': 'Match to find the number!',
+    'instruction':
+        'Tap the numbers and signs to reach the target number, in order, from left to right.',
+    'target': 'Reach {target}!',
+    'scoreLabel': '{score}/{total} numbers found',
+    'doneTitle': 'Game over!',
+    'doneBody': 'Play again to keep practicing.',
+    'levelLabel': 'Level',
+  },
   'coursMots': {
     'notFound': 'is not available yet.',
     'backToList': 'Back to home',
@@ -1289,6 +1425,7 @@ const Map<String, dynamic> en = {
         'Each word is already written with letters you know. Tap the word to hear it, or the dumbbell to practice it!',
     'practiceGroup': 'Practice',
     'practiceWordAria': 'Practice "{mot}"',
+    'imageAria': 'See the picture for "{mot}"',
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} words written',
@@ -1297,6 +1434,7 @@ const Map<String, dynamic> en = {
     'allDoneTitle': 'Well done, every word is written!',
     'allDoneBody': "You've mastered this group of words.",
     'nextGroup': 'Next group: {titre}',
+    'clozeInstruction': 'Drag the correct letter into the empty box.',
   },
   'coursFigure': {
     'notFound': 'is not available yet.',
@@ -1305,6 +1443,9 @@ const Map<String, dynamic> en = {
     'propertiesWithCorners': '{sides} sides and {corners} corners',
     'propertiesRound':
         "Not a single straight side, not a single corner: it's all round!",
+    'astuceTitle': 'Tips: perimeter and area',
+    'perimeterLabel': 'Perimeter',
+    'areaLabel': 'Area',
   },
   'exerciceFigure': {
     'problemsReady': '{done}/{total} drawings done',
@@ -1390,13 +1531,16 @@ const Map<String, dynamic> es = {
     'close': 'Cerrar',
     'replay': 'Repetir',
     'instruction': 'Instrucción',
+    'toolbarExpandAria': 'Ver el nombre de las acciones',
+    'toolbarCollapseAria': 'Reducir las acciones',
     'settings': 'Ajustes',
     'tryAgain': 'Intentar de nuevo',
     'pointsEarnedAria': 'puntos ganados',
     'next': 'Siguiente',
     'previous': 'Anterior',
-    'backToHome': 'Volver al inicio',
+    'backToHome': 'Inicio',
     'restart': 'Empezar de nuevo',
+    'freeMode': 'Modo libre',
     'speakLetterIntro':
         'Para escribir la letra {char}, así es como: {consigne}',
     'speakDigitIntro':
@@ -1475,7 +1619,8 @@ const Map<String, dynamic> es = {
     'namePlaceholder': '¿Cómo te llamas?',
     'checking': 'Comprobando...',
     'submit': 'Continuar',
-    'errorNotFound': 'Ese nombre todavía no existe. ¡Puedes comenzar la aventura!',
+    'errorNotFound':
+        'Ese nombre todavía no existe. ¡Puedes comenzar la aventura!',
     'errorNetwork': 'No se pudo conectar, inténtalo de nuevo.',
   },
   'profileLock': {
@@ -1515,7 +1660,6 @@ const Map<String, dynamic> es = {
     },
     'modelLabel': 'Modelo',
     'noModelTitle': '¡Dibuja lo que quieras!',
-    'noModelBody': 'Deja que tu dedo se mueva libremente por la página.',
     'clear': 'Borrar',
     'colorLabel': 'Color',
     'canvasAria': 'Área de dibujo libre',
@@ -1528,6 +1672,10 @@ const Map<String, dynamic> es = {
       'crochet': 'El gancho',
     },
   },
+  'freeWriting': {
+    'title': 'Escritura libre',
+    'subtitle': '¡Sigue practicando, tantas veces como quieras!',
+  },
   'parcours': {
     'title': 'Recorrido de la rama',
     'subtitle':
@@ -1537,6 +1685,8 @@ const Map<String, dynamic> es = {
     'bonusAria': 'Recompensa bonus bloqueada',
     'medalAria': 'Medalla de fin de nivel',
     'medalDoneAria': 'Medalla de fin de nivel obtenida',
+    'quickNavOpenAria': 'Ir a un nivel',
+    'quickNavCloseAria': 'Cerrar la navegación rápida',
     'coursStep': 'Lección',
     'exerciceStep': 'Ejercicio',
     'wordSearchStep': 'Sopa de letras',
@@ -1564,6 +1714,11 @@ const Map<String, dynamic> es = {
         'title': 'Las palabras',
         'subtitle': 'Nivel 4',
         'tagline': 'Une las letras entre sí',
+      },
+      {
+        'title': 'El cálculo',
+        'subtitle': 'Nivel 5',
+        'tagline': 'De la suma a la proporcionalidad',
       },
     ],
     'figuresPalier': {
@@ -1683,7 +1838,7 @@ const Map<String, dynamic> es = {
     'oneVariant': 'Una sola variante',
     'variantsCount': '{count} variantes',
     'exercer': 'Practicar',
-    'passExercices': 'Ir a los ejercicios ({title})',
+    'passExercices': 'Ir a los ejercicios',
     'titles': {
       'point': 'El punto',
       'courbe': 'Las curvas',
@@ -1767,6 +1922,10 @@ const Map<String, dynamic> es = {
     'formulaTitle': 'Fórmula',
     'vowelsTitle': 'Las vocales',
     'practice': 'Practicar',
+    'groupTitleLetters': 'Formación de las letras "{first}" a "{last}"',
+    'groupTitleDigits': 'Formación de los números "{first}" a "{last}"',
+    'groupTitleLetterSingle': 'Formación de la letra "{char}"',
+    'groupTitleDigitSingle': 'Formación del número "{char}"',
     'families': {
       'trait': 'Trazo',
       'courbe': 'Curva',
@@ -1815,7 +1974,7 @@ const Map<String, dynamic> es = {
     'toleranceLabel': 'Tolerancia de validación',
     'toleranceHint': 'Más alta = más fácil para los más pequeños',
     'startHint':
-        'El punto verde indica el punto de partida. Sigue las líneas punteadas levantando el dedo lo menos posible.',
+        'Sigue los puntos del punto verde al punto rojo sin levantar el dedo.',
     'done': '¡Terminado!',
     'rowComplete':
         '¡Bien hecho! Has trazado todos los signos de esta línea. ¡Excelente trabajo!',
@@ -1840,15 +1999,22 @@ const Map<String, dynamic> es = {
     'stepPrefix': 'Signo',
     'signsReady': '{done}/{total} signos listos',
     'lettersReady': '{done}/{total} letras trazadas',
+    'lettersReadyDigit': '{done}/{total} números trazados',
     'practiceStepsTitle': 'Practica cada signo',
     'practiceStepsHint':
         'Consigue cada signo {reps} veces antes de escribir la letra completa.',
+    'practiceStepsHintDigit':
+        'Consigue cada signo {reps} veces antes de escribir el número completo.',
     'finalTitle': 'Escribe la letra completa',
+    'finalTitleDigit': 'Escribe el número completo',
     'finalHint':
         'Ahora traza todos los signos seguidos, como para escribir la letra de verdad.',
+    'finalHintDigit':
+        'Ahora traza todos los signos seguidos, como para escribir el número de verdad.',
     'finalLocked':
         'Termina primero todos los signos de arriba para desbloquear esta etapa.',
     'successAll': '¡Felicidades! ¡Letra completa!',
+    'successAllDigit': '¡Felicidades! ¡Número completo!',
     'successAllSub': 'Dominas el ensamblaje de este carácter.',
     'formulaTitle': 'Fórmula de',
     'validated': 'validado(s)',
@@ -1862,18 +2028,27 @@ const Map<String, dynamic> es = {
     'practiceAgain': 'Practicar de nuevo',
     'backToNotebookLink': 'Volver al cuaderno de escritura',
     'speakStart': 'Practica la letra {name}.',
+    'speakStartDigit': 'Practica el número {name}.',
     'speakLetterDone':
         '¡Bien hecho! ¡Has formado perfectamente la letra {name}!',
+    'speakLetterDoneDigit':
+        '¡Bien hecho! ¡Has formado perfectamente el número {name}!',
     'speakReset': 'Empezamos de nuevo la letra {name}.',
+    'speakResetDigit': 'Empezamos de nuevo el número {name}.',
   },
   'exercicePuzzle': {
     'piecesReady': '{done}/{total} letras reconstruidas',
+    'piecesReadyDigit': '{done}/{total} números reconstruidos',
     'introTitle': 'Arma la fórmula',
     'introBody':
         'Arrastra cada pieza a su casilla: verde si está bien colocada, amarillo si pertenece a la letra pero no ahí, rojo si no pertenece en absoluto.',
+    'introBodyDigit':
+        'Arrastra cada pieza a su casilla: verde si está bien colocada, amarillo si pertenece al número pero no ahí, rojo si no pertenece en absoluto.',
     'allDoneTitle': '¡Fórmulas armadas!',
-    'allDoneBody': 'Has elegido todos los signos correctos, en el orden correcto.',
+    'allDoneBody':
+        'Has elegido todos los signos correctos, en el orden correcto.',
     'speakSolved': '¡Bien hecho! ¡Has reconstruido la letra {name}!',
+    'speakSolvedDigit': '¡Bien hecho! ¡Has reconstruido el número {name}!',
   },
   'coursSyllabes': {
     'title': 'Las sílabas',
@@ -1899,6 +2074,41 @@ const Map<String, dynamic> es = {
     'nextGroup': 'Siguiente consonante: {consonant}',
     'exampleWordPrefix': 'como en',
   },
+  'coursCalcul': {
+    'notFound': 'no está disponible por el momento.',
+    'backToList': 'Volver al inicio',
+    'practice': 'Practicar',
+    'levelLabel': 'Nivel',
+  },
+  'exerciceCalcul': {
+    'problemsReady': '{done}/{total} cálculos resueltos',
+    'introTitle': 'Encuentra el resultado',
+    'introBody': 'Resuelve cada cálculo, uno por uno.',
+    'allDoneTitle': '¡Bien hecho, todos los cálculos están resueltos!',
+    'allDoneBody': 'Dominas este tema.',
+    'nextTopic': 'Siguiente tema: {title}',
+    'mentalTimeout': '¡Se acabó el tiempo!',
+  },
+  'calculVraiFaux': {
+    'title': '¿Verdadero o falso?',
+    'instruction': '¿Es correcto este cálculo? ¡Tú decides!',
+    'true': 'Verdadero',
+    'false': 'Falso',
+    'scoreLabel': '{score}/{total} respuestas correctas',
+    'doneTitle': '¡Partida terminada!',
+    'doneBody': 'Vuelve a jugar para seguir practicando.',
+    'levelLabel': 'Nivel',
+  },
+  'calculCompose': {
+    'title': '¡Asocia para encontrar el número!',
+    'instruction':
+        'Toca los números y los signos para obtener el número pedido, en orden, de izquierda a derecha.',
+    'target': '¡Consigue {target}!',
+    'scoreLabel': '{score}/{total} números encontrados',
+    'doneTitle': '¡Partida terminada!',
+    'doneBody': 'Vuelve a jugar para seguir practicando.',
+    'levelLabel': 'Nivel',
+  },
   'coursMots': {
     'notFound': 'no está disponible por el momento.',
     'backToList': 'Volver al inicio',
@@ -1910,6 +2120,7 @@ const Map<String, dynamic> es = {
         'Cada palabra ya está escrita con letras que conoces. ¡Toca la palabra para escucharla, o la mancuerna para practicarla!',
     'practiceGroup': 'Practicar',
     'practiceWordAria': 'Practicar «{mot}»',
+    'imageAria': 'Ver la imagen de «{mot}»',
   },
   'exerciceMots': {
     'wordsReady': '{done}/{total} palabras escritas',
@@ -1918,6 +2129,7 @@ const Map<String, dynamic> es = {
     'allDoneTitle': '¡Bien hecho, todas las palabras están escritas!',
     'allDoneBody': 'Dominas este grupo de palabras.',
     'nextGroup': 'Siguiente grupo: {titre}',
+    'clozeInstruction': 'Arrastra la letra correcta al espacio vacío.',
   },
   'coursFigure': {
     'notFound': 'no está disponible por el momento.',
@@ -1926,6 +2138,9 @@ const Map<String, dynamic> es = {
     'propertiesWithCorners': '{sides} lados y {corners} esquinas',
     'propertiesRound':
         '¡Ni un solo lado recto, ni una sola esquina: todo es redondo!',
+    'astuceTitle': 'Trucos: perímetro y área',
+    'perimeterLabel': 'Perímetro',
+    'areaLabel': 'Área',
   },
   'exerciceFigure': {
     'problemsReady': '{done}/{total} trazos logrados',
@@ -2011,13 +2226,16 @@ const Map<String, dynamic> ar = {
     "close": "إغلاق",
     "replay": "إعادة",
     "instruction": "التعليمة",
+    "toolbarExpandAria": "عرض أسماء الإجراءات",
+    "toolbarCollapseAria": "طي الإجراءات",
     "settings": "الإعدادات",
     "tryAgain": "حاول مرة أخرى",
     "pointsEarnedAria": "نقاط مكتسبة",
     "next": "التالي",
     "previous": "السابق",
-    "backToHome": "العودة إلى الرئيسية",
+    "backToHome": "الرئيسية",
     "restart": "إعادة البدء",
+    "freeMode": "الوضع الحر",
     "speakLetterIntro": "لكتابة الحرف {char}، إليك الطريقة: {consigne}",
     "speakDigitIntro": "لكتابة الرقم {char}، إليك الطريقة: {consigne}",
     "speakSignIntro": "لرسم الإشارة {label}، إليك الطريقة: {consigne}",
@@ -2040,7 +2258,8 @@ const Map<String, dynamic> ar = {
     "nextSubjectTitle": "أحسنت، نجحت في الموضوع!",
     "nextSubjectBody": "الموضوع التالي: {title}",
     "resumeTitle": "استئناف هذا التقييم؟",
-    "resumeBody": "لقد توقفت في منتصفه. هل تريد المتابعة من حيث توقفت، أم البدء من جديد؟",
+    "resumeBody":
+        "لقد توقفت في منتصفه. هل تريد المتابعة من حيث توقفت، أم البدء من جديد؟",
     "resumeContinueButton": "المتابعة من حيث توقفت",
     "resumeRestartButton": "البدء من جديد",
   },
@@ -2129,7 +2348,6 @@ const Map<String, dynamic> ar = {
     },
     "modelLabel": "نموذج",
     "noModelTitle": "ارسم ما تريد!",
-    "noModelBody": "دع إصبعك يتجول بحرية على الصفحة.",
     "clear": "مسح",
     "colorLabel": "اللون",
     "canvasAria": "مساحة الرسم الحر",
@@ -2142,6 +2360,10 @@ const Map<String, dynamic> ar = {
       "crochet": "الخطاف",
     },
   },
+  "freeWriting": {
+    "title": "كتابة حرة",
+    "subtitle": "تدرّب أكثر، بقدر ما تشاء من المرات!",
+  },
   "parcours": {
     "title": "مسار الغصن",
     "subtitle": "اتبع المسار المتعرج وافتح البراعم خطوة بخطوة.",
@@ -2150,6 +2372,8 @@ const Map<String, dynamic> ar = {
     "bonusAria": "مكافأة إضافية مقفلة",
     "medalAria": "ميدالية نهاية المرحلة",
     "medalDoneAria": "تم الحصول على ميدالية نهاية المرحلة",
+    "quickNavOpenAria": "الانتقال إلى مرحلة",
+    "quickNavCloseAria": "إغلاق التنقل السريع",
     "coursStep": "درس",
     "exerciceStep": "تمرين",
     "wordSearchStep": "البحث عن الكلمات",
@@ -2178,6 +2402,11 @@ const Map<String, dynamic> ar = {
         "subtitle": "المرحلة 4",
         "tagline": "اربط الحروف ببعضها",
       },
+      {
+        "title": "الحساب",
+        "subtitle": "المرحلة 5",
+        "tagline": "من الجمع إلى التناسب",
+      },
     ],
     "figuresPalier": {
       "title": "الأشكال الهندسية",
@@ -2203,7 +2432,8 @@ const Map<String, dynamic> ar = {
     "dyslexiaFontLabel": "خط مناسب لعسر القراءة",
     "dyslexiaFontHint": "استخدم خطًا مصممًا لتسهيل القراءة.",
     "uiScaleLabel": "حجم الواجهة",
-    "uiScaleHint": "يكبّر أو يصغّر الواجهة بأكملها -- النص والأزرار ومساحات الرسم في التمارين.",
+    "uiScaleHint":
+        "يكبّر أو يصغّر الواجهة بأكملها -- النص والأزرار ومساحات الرسم في التمارين.",
     "totalPointsLabel": "نقاطي",
     "totalPointsHint": "مكتسبة من إنهاء دروسك وتمارينك",
     "statsSignes": "الإشارات المتقنة",
@@ -2293,7 +2523,7 @@ const Map<String, dynamic> ar = {
     "oneVariant": "شكل واحد فقط",
     "variantsCount": "{count} أشكال",
     "exercer": "تدرّب",
-    "passExercices": "الانتقال إلى التمارين ({title})",
+    "passExercices": "الانتقال إلى التمارين",
     "titles": {
       "point": "النقطة",
       "courbe": "المنحنيات",
@@ -2376,6 +2606,10 @@ const Map<String, dynamic> ar = {
     "formulaTitle": "التركيبة",
     "vowelsTitle": "الحروف المتحركة",
     "practice": "تدرّب على",
+    "groupTitleLetters": 'تكوين الحروف من "{first}" إلى "{last}"',
+    "groupTitleDigits": 'تكوين الأرقام من "{first}" إلى "{last}"',
+    "groupTitleLetterSingle": 'تكوين الحرف "{char}"',
+    "groupTitleDigitSingle": 'تكوين الرقم "{char}"',
     "families": {
       "trait": "خط",
       "courbe": "منحنى",
@@ -2421,7 +2655,7 @@ const Map<String, dynamic> ar = {
     "toleranceLabel": "درجة التسامح في التحقق",
     "toleranceHint": "أعلى = أسهل على الأصغر سنًا",
     "startHint":
-        "تشير النقطة الخضراء إلى نقطة البداية. اتبع الخط المنقط مع رفع إصبعك بأقل قدر ممكن.",
+        "اتبع النقاط من النقطة الخضراء إلى النقطة الحمراء دون رفع إصبعك.",
     "done": "تم!",
     "rowComplete": "أحسنت! لقد رسمت جميع إشارات هذا السطر. عمل ممتاز!",
     "listenConsigne": "استمع إلى التعليمة: {label}",
@@ -2445,13 +2679,20 @@ const Map<String, dynamic> ar = {
     "stepPrefix": "إشارة",
     "signsReady": "{done}/{total} إشارات جاهزة",
     "lettersReady": "{done}/{total} حروف مكتوبة",
+    "lettersReadyDigit": "{done}/{total} أرقام مكتوبة",
     "practiceStepsTitle": "تدرّب على كل إشارة",
     "practiceStepsHint": "أنجز كل إشارة {reps} مرات قبل كتابة الحرف كاملاً.",
+    "practiceStepsHintDigit":
+        "أنجز كل إشارة {reps} مرات قبل كتابة الرقم كاملاً.",
     "finalTitle": "اكتب الحرف كاملاً",
+    "finalTitleDigit": "اكتب الرقم كاملاً",
     "finalHint":
         "ارسم الآن جميع الإشارات تباعًا، كما لو كنت تكتب الحرف الحقيقي.",
+    "finalHintDigit":
+        "ارسم الآن جميع الإشارات تباعًا، كما لو كنت تكتب الرقم الحقيقي.",
     "finalLocked": "أنجز أولاً جميع الإشارات أعلاه لفتح هذه الخطوة.",
     "successAll": "تهانينا! الحرف كامل!",
+    "successAllDigit": "تهانينا! الرقم كامل!",
     "successAllSub": "لقد أتقنت تجميع هذا الحرف.",
     "formulaTitle": "تركيبة",
     "validated": "منجزة",
@@ -2465,17 +2706,24 @@ const Map<String, dynamic> ar = {
     "practiceAgain": "تدرّب مرة أخرى",
     "backToNotebookLink": "العودة إلى دفتر الكتابة",
     "speakStart": "تدرّب على الحرف {name}.",
+    "speakStartDigit": "تدرّب على الرقم {name}.",
     "speakLetterDone": "أحسنت! لقد كوّنت الحرف {name} بشكل مثالي!",
+    "speakLetterDoneDigit": "أحسنت! لقد كوّنت الرقم {name} بشكل مثالي!",
     "speakReset": "لنبدأ الحرف {name} من جديد.",
+    "speakResetDigit": "لنبدأ الرقم {name} من جديد.",
   },
   "exercicePuzzle": {
     "piecesReady": "{done}/{total} حروف مُعاد تركيبها",
+    "piecesReadyDigit": "{done}/{total} أرقام مُعاد تركيبها",
     "introTitle": "ركّب التركيبة",
     "introBody":
         "اسحب كل قطعة إلى مكانها — أخضر إذا وُضعت في المكان الصحيح، أصفر إذا كانت من مكونات الحرف لكن في غير مكانها، أحمر إذا لم تكن من مكوناته إطلاقًا.",
+    "introBodyDigit":
+        "اسحب كل قطعة إلى مكانها — أخضر إذا وُضعت في المكان الصحيح، أصفر إذا كانت من مكونات الرقم لكن في غير مكانها، أحمر إذا لم تكن من مكوناته إطلاقًا.",
     "allDoneTitle": "تم تركيب كل التركيبات!",
     "allDoneBody": "لقد اخترت كل الإشارات الصحيحة، بالترتيب الصحيح.",
     "speakSolved": "أحسنت! لقد أعدت تركيب الحرف {name}!",
+    "speakSolvedDigit": "أحسنت! لقد أعدت تركيب الرقم {name}!",
   },
   "coursSyllabes": {
     "title": "المقاطع",
@@ -2500,6 +2748,41 @@ const Map<String, dynamic> ar = {
     "nextGroup": "الحرف الساكن التالي: {consonant}",
     "exampleWordPrefix": "كما في",
   },
+  "coursCalcul": {
+    "notFound": "غير متوفر حاليًا.",
+    "backToList": "العودة إلى الرئيسية",
+    "practice": "تدرّب",
+    "levelLabel": "المستوى",
+  },
+  "exerciceCalcul": {
+    "problemsReady": "{done}/{total} تمارين محلولة",
+    "introTitle": "أوجد النتيجة",
+    "introBody": "حلّ كل تمرين، واحدًا تلو الآخر.",
+    "allDoneTitle": "أحسنت، جميع التمارين محلولة!",
+    "allDoneBody": "لقد أتقنت هذا الموضوع.",
+    "nextTopic": "الموضوع التالي: {title}",
+    "mentalTimeout": "انتهى الوقت!",
+  },
+  "calculVraiFaux": {
+    "title": "صح أم خطأ؟",
+    "instruction": "هل هذا الحساب صحيح؟ القرار لك!",
+    "true": "صحيح",
+    "false": "خطأ",
+    "scoreLabel": "{score}/{total} إجابات صحيحة",
+    "doneTitle": "انتهت اللعبة!",
+    "doneBody": "العب مرة أخرى للاستمرار في التدرّب.",
+    "levelLabel": "المستوى",
+  },
+  "calculCompose": {
+    "title": "كوّن العدد المطلوب!",
+    "instruction":
+        "المس الأعداد والإشارات للوصول إلى العدد المطلوب، بالترتيب، من اليسار إلى اليمين.",
+    "target": "احصل على {target}!",
+    "scoreLabel": "{score}/{total} أعداد تم إيجادها",
+    "doneTitle": "انتهت اللعبة!",
+    "doneBody": "العب مرة أخرى للاستمرار في التدرّب.",
+    "levelLabel": "المستوى",
+  },
   "coursMots": {
     "notFound": "غير متوفر حاليًا.",
     "backToList": "العودة إلى الرئيسية",
@@ -2510,6 +2793,7 @@ const Map<String, dynamic> ar = {
         "كل كلمة مكتوبة بالفعل بالحروف التي تعرفها. المس الكلمة لسماعها، أو المس الدمبل للتدرّب عليها!",
     "practiceGroup": "تدرّب",
     "practiceWordAria": "تدرّب على «{mot}»",
+    "imageAria": "مشاهدة صورة «{mot}»",
   },
   "exerciceMots": {
     "wordsReady": "{done}/{total} كلمات مكتوبة",
@@ -2518,6 +2802,7 @@ const Map<String, dynamic> ar = {
     "allDoneTitle": "أحسنت، جميع الكلمات مكتوبة!",
     "allDoneBody": "لقد أتقنت هذه المجموعة من الكلمات.",
     "nextGroup": "المجموعة التالية: {titre}",
+    "clozeInstruction": "اسحب الحرف الصحيح إلى الخانة الفارغة.",
   },
   "coursFigure": {
     "notFound": "غير متوفر حاليًا.",
@@ -2525,6 +2810,9 @@ const Map<String, dynamic> ar = {
     "practice": "تدرب",
     "propertiesWithCorners": "{sides} أضلاع و{corners} زوايا",
     "propertiesRound": "لا ضلع مستقيم ولا زاوية واحدة: كله مستدير!",
+    "astuceTitle": "حيل: المحيط والمساحة",
+    "perimeterLabel": "المحيط",
+    "areaLabel": "المساحة",
   },
   "exerciceFigure": {
     "problemsReady": "{done}/{total} رسمات صحيحة",

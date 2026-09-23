@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
@@ -12,6 +11,7 @@ import '../widgets/lettered_choice_button.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/wrong_answer_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Vrai ou Faux ?" du Palier "Figures géométriques" —
 /// affirmations simples sur les propriétés des figures, calqué directement
@@ -147,9 +147,7 @@ class _ExerciceFigureVraiFauxScreenState
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/accueil'),
+                        onTap: () => goHome(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -164,7 +162,7 @@ class _ExerciceFigureVraiFauxScreenState
                             ],
                           ),
                           child: DirectionalIcon(
-                            LucideIcons.arrowLeft,
+                            LucideIcons.house,
                             size: 20,
                           ),
                         ),

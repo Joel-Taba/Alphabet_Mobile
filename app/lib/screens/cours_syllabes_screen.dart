@@ -8,14 +8,35 @@ import '../data/syllable_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
+import '../hooks/use_animation_speed.dart';
 import '../widgets/letter_trace_cell.dart';
 import '../widgets/mini_letter_frame.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../utils/navigation_helpers.dart';
+
+/// Mot-exemple d'une syllabe dans la langue active -- l'arabe retombe sur le
+/// français (voir `syllable_catalog.dart`), même principe que
+/// `WordEntry.text('ar')`.
+String _exampleWord(Map<String, dynamic> current, String langName) {
+  final byLang = current['exampleWord'] as Map<String, dynamic>;
+  return (byLang[langName] ?? byLang['fr']) as String;
+}
+
+/// Version à prononcer -- accentuée en français quand elle diffère de
+/// l'orthographe de traçage (`frSpoken`), sinon identique à [_exampleWord].
+String _exampleWordSpoken(Map<String, dynamic> current, String langName) {
+  final byLang = current['exampleWord'] as Map<String, dynamic>;
+  if (langName == 'fr') {
+    return (byLang['frSpoken'] ?? byLang['fr']) as String;
+  }
+  return (byLang[langName] ?? byLang['fr']) as String;
+}
 
 /// Cours du Palier "Les syllabes" : apprend la formation consonne + voyelle
 /// (ex. "b + a = ba") puis montre un mot-exemple contenant la syllabe.
-/// Français uniquement — voir le filtre par langue dans parcours_screen.dart.
+/// Disponible dans les 4 langues de l'app -- voir la doc de
+/// `syllable_catalog.dart` pour comment l'arabe est géré.
 /// Port fidèle de `src/routes/cours.syllabes.$consonant.tsx`.
 class CoursSyllabesScreen extends StatefulWidget {
   final String consonant;
@@ -28,6 +49,13 @@ class CoursSyllabesScreen extends StatefulWidget {
 class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
   int _syllableIdx = 0;
 
+  /// `true` juste après l'ouverture de la page ou un changement de consonne
+  /// -- applique alors le délai avant le lancement de l'animation (voir
+  /// [kCoursAnimationDelay]). Repassé à `false` dès qu'une syllabe est
+  /// choisie explicitement dans la grille, pour que cet aperçu reste
+  /// immédiat.
+  bool _autoplayDelay = true;
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +66,10 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
   void didUpdateWidget(covariant CoursSyllabesScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.consonant != widget.consonant) {
-      setState(() => _syllableIdx = 0);
+      setState(() {
+        _syllableIdx = 0;
+        _autoplayDelay = true;
+      });
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _onSyllableActivated(),
       );
@@ -76,7 +107,10 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
   }
 
   void _selectSyllable(int i) {
-    setState(() => _syllableIdx = i);
+    setState(() {
+      _syllableIdx = i;
+      _autoplayDelay = false;
+    });
     _onSyllableActivated();
   }
 
@@ -105,7 +139,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () =>
-                      context.canPop() ? context.pop() : context.go('/accueil'),
+                      goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -141,7 +175,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
       style,
     );
     final vowelLetter = getLetterFormation(current['vowel'] as String, style);
-    final wordLetters = (current['exampleWord'] as String)
+    final wordLetters = _exampleWord(current, lang.name)
         .split('')
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
@@ -165,9 +199,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/accueil'),
+                    onTap: () => goHome(context),
                     child: Container(
                       width: 44,
                       height: 44,
@@ -178,7 +210,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                           BoxShadow(color: Color(0x1F000000), blurRadius: 6),
                         ],
                       ),
-                      child: DirectionalIcon(LucideIcons.arrowLeft, size: 20),
+                      child: DirectionalIcon(LucideIcons.house, size: 20),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -232,7 +264,9 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                           children: [
                             MiniLetterFrame(
                               letter: consonantLetter,
-                              delayMs: 0,
+                              delayMs: _autoplayDelay
+                                  ? kCoursAnimationDelay.inMilliseconds
+                                  : 0,
                             ),
                             const SizedBox(width: 10),
                             const Text(
@@ -244,7 +278,14 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            MiniLetterFrame(letter: vowelLetter, delayMs: 650),
+                            MiniLetterFrame(
+                              letter: vowelLetter,
+                              delayMs:
+                                  (_autoplayDelay
+                                      ? kCoursAnimationDelay.inMilliseconds
+                                      : 0) +
+                                  650,
+                            ),
                             const SizedBox(width: 10),
                             const Text(
                               '=',
@@ -314,7 +355,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                             const SizedBox(width: 8),
                             GestureDetector(
                               onTap: () => speech.speak(
-                                current['exampleWord'] as String,
+                                _exampleWordSpoken(current, lang.name),
                                 lang,
                               ),
                               child: Container(

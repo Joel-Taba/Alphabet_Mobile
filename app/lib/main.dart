@@ -14,12 +14,6 @@ void main() async {
   final familyService = FamilyService();
   await familyService.ready;
 
-  // Forcer l'orientation portrait (recommandé pour cette appli éducative)
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
   // Barre de statut transparente
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

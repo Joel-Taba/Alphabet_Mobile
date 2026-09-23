@@ -21,9 +21,28 @@ class WordEntry {
   final String es;
   final String theme;
 
-  const WordEntry(this.id, this.fr, this.en, this.es, this.theme);
+  /// Orthographe française correcte, accents compris (ex. "maïs", "crème"),
+  /// utilisée UNIQUEMENT pour la synthèse vocale -- jamais pour l'affichage
+  /// ni le découpage lettre par lettre (qui doivent rester sur [fr], sans
+  /// accent, pour la contrainte de traçabilité Palier 2 expliquée plus
+  /// haut). `null` quand [fr] est déjà la bonne prononciation (grande
+  /// majorité des mots). Absente d'accent, la synthèse vocale lit certains
+  /// mots de façon erronée, voire les confond avec un autre mot français
+  /// (ex. "mais" sans tréma se lit "mais" la conjonction, pas "maïs" le
+  /// légume).
+  final String? frSpoken;
 
-  /// Texte du mot dans la langue active (`Lang.name` : 'fr' | 'en' | 'es').
+  const WordEntry(
+    this.id,
+    this.fr,
+    this.en,
+    this.es,
+    this.theme, {
+    this.frSpoken,
+  });
+
+  /// Texte du mot dans la langue active (`Lang.name` : 'fr' | 'en' | 'es'),
+  /// pour l'affichage et le traçage.
   String text(String lang) {
     switch (lang) {
       case 'en':
@@ -34,6 +53,10 @@ class WordEntry {
         return fr;
     }
   }
+
+  /// Texte à donner à la synthèse vocale -- [frSpoken] en français quand
+  /// défini (orthographe accentuée correcte), sinon identique à [text].
+  String spokenText(String lang) => lang == 'fr' ? (frSpoken ?? fr) : text(lang);
 }
 
 const List<WordEntry> WORD_CATALOG = [
@@ -45,7 +68,14 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('ours', 'ours', 'bear', 'oso', 'animaux'),
   WordEntry('singe', 'singe', 'monkey', 'mono', 'animaux'),
   WordEntry('vache', 'vache', 'cow', 'vaca', 'animaux'),
-  WordEntry('zebre', 'zebre', 'zebra', 'cebra', 'animaux'),
+  WordEntry(
+    'zebre',
+    'zebre',
+    'zebra',
+    'cebra',
+    'animaux',
+    frSpoken: 'zèbre',
+  ),
   WordEntry('mouton', 'mouton', 'sheep', 'oveja', 'animaux'),
   WordEntry('cochon', 'cochon', 'pig', 'cerdo', 'animaux'),
   WordEntry('canard', 'canard', 'duck', 'pato', 'animaux'),
@@ -63,13 +93,36 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('cerise', 'cerise', 'cherry', 'cereza', 'nourriture'),
   WordEntry('raisin', 'raisin', 'grape', 'uva', 'nourriture'),
   WordEntry('tomate', 'tomate', 'tomato', 'tomate', 'nourriture'),
-  WordEntry('mais', 'mais', 'corn', 'maiz', 'nourriture'),
+  WordEntry(
+    'mais',
+    'mais',
+    'corn',
+    'maiz',
+    'nourriture',
+    // Sans tréma, "mais" se lit comme la conjonction ("but"), pas comme le
+    // légume -- voir la doc de [WordEntry.frSpoken].
+    frSpoken: 'maïs',
+  ),
   WordEntry('pain', 'pain', 'bread', 'pan', 'nourriture'),
   WordEntry('lait', 'lait', 'milk', 'leche', 'nourriture'),
   WordEntry('sucre', 'sucre', 'sugar', 'azucar', 'nourriture'),
   WordEntry('yaourt', 'yaourt', 'yogurt', 'yogur', 'nourriture'),
-  WordEntry('gateau', 'gateau', 'cake', 'pastel', 'nourriture'),
-  WordEntry('creme', 'creme', 'cream', 'crema', 'nourriture'),
+  WordEntry(
+    'gateau',
+    'gateau',
+    'cake',
+    'pastel',
+    'nourriture',
+    frSpoken: 'gâteau',
+  ),
+  WordEntry(
+    'creme',
+    'creme',
+    'cream',
+    'crema',
+    'nourriture',
+    frSpoken: 'crème',
+  ),
 
   // ─── Maison ───
   WordEntry('table', 'table', 'table', 'mesa', 'maison'),
@@ -80,13 +133,27 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('livre', 'livre', 'book', 'libro', 'maison'),
   WordEntry('papier', 'papier', 'paper', 'papel', 'maison'),
   WordEntry('crayon', 'crayon', 'pencil', 'lapiz', 'maison'),
-  WordEntry('regle', 'regle', 'ruler', 'regla', 'maison'),
+  WordEntry(
+    'regle',
+    'regle',
+    'ruler',
+    'regla',
+    'maison',
+    frSpoken: 'règle',
+  ),
   WordEntry('sac', 'sac', 'bag', 'bolsa', 'maison'),
   WordEntry('tasse', 'tasse', 'cup', 'taza', 'maison'),
   WordEntry('verre', 'verre', 'glass', 'vaso', 'maison'),
   WordEntry('bol', 'bol', 'bowl', 'bol', 'maison'),
   WordEntry('clef', 'clef', 'key', 'llave', 'maison'),
-  WordEntry('poupee', 'poupee', 'doll', 'muneca', 'maison'),
+  WordEntry(
+    'poupee',
+    'poupee',
+    'doll',
+    'muneca',
+    'maison',
+    frSpoken: 'poupée',
+  ),
 
   // ─── Vêtements ───
   WordEntry('short', 'short', 'shorts', 'short', 'vetements'),
@@ -94,7 +161,14 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('jupe', 'jupe', 'skirt', 'falda', 'vetements'),
   WordEntry('botte', 'botte', 'boot', 'bota', 'vetements'),
   WordEntry('polo', 'polo', 'polo', 'polo', 'vetements'),
-  WordEntry('beret', 'beret', 'beret', 'boina', 'vetements'),
+  WordEntry(
+    'beret',
+    'beret',
+    'beret',
+    'boina',
+    'vetements',
+    frSpoken: 'béret',
+  ),
   WordEntry('gant', 'gant', 'glove', 'guante', 'vetements'),
   WordEntry('noeud', 'noeud', 'bow', 'lazo', 'vetements'),
   WordEntry('bouton', 'bouton', 'button', 'boton', 'vetements'),
@@ -122,7 +196,14 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('fleur', 'fleur', 'flower', 'flor', 'nature'),
   WordEntry('arbre', 'arbre', 'tree', 'arbol', 'nature'),
   WordEntry('mer', 'mer', 'sea', 'mar', 'nature'),
-  WordEntry('foret', 'foret', 'forest', 'bosque', 'nature'),
+  WordEntry(
+    'foret',
+    'foret',
+    'forest',
+    'bosque',
+    'nature',
+    frSpoken: 'forêt',
+  ),
 
   // ─── Corps ───
   WordEntry('main', 'main', 'hand', 'mano', 'corps'),
@@ -215,6 +296,23 @@ final List<WordGroup> PALIER3_GROUPS = (() {
 
 final Map<String, WordGroup> PALIER3_GROUP_MAP = {
   for (final g in PALIER3_GROUPS) g.id: g,
+};
+
+/// Groupes du palier "Mots" utilisant l'exercice à trous (glisser-déposer
+/// de la lettre manquante) au lieu du tracé, hors évaluation (voir
+/// `exercice_mots_screen.dart`, qui bascule tous les groupes sur ce mode
+/// pendant l'évaluation chronométrée quel que soit leur statut ici).
+/// Répartition voulue : 2 groupes sur 3 pour les thèmes à 3 groupes, 1 sur
+/// 2 pour les thèmes à 2 groupes — le reste garde le tracé existant.
+const Set<String> kClozeGroupIds = {
+  'an1', 'an2', // animaux (3 groupes)
+  'no1', 'no2', // nourriture (3 groupes)
+  'ma1', 'ma2', // maison (3 groupes)
+  've1', // vêtements (2 groupes)
+  'ec1', // école (2 groupes)
+  'na1', // nature (2 groupes)
+  'co1', // corps (2 groupes)
+  'di1', // divers / "autour de nous" (2 groupes)
 };
 
 /// Difficulté progressive des grilles de mots mêlés du Palier 3 : de 2 à 10
