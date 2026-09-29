@@ -6,6 +6,7 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../data/word_catalog.dart';
+import '../data/evaluation_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/progress_service.dart';
@@ -60,22 +61,6 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   /// reste praticable ensuite.
   bool _freeModeOnly = false;
 
-  /// `true` après la toute première restauration de `_doneWords` depuis
-  /// `ProgressProvider` (voir `build`) -- une seule fois, sans quoi elle se
-  /// referait à chaque reconstruction et annulerait aussitôt le
-  /// "Recommencer" explicite de `ExerciseCompletePopup` (voir le
-  /// commentaire équivalent dans `exercice_liste_screen.dart`).
-  bool _restoredFromProgress = false;
-
-  /// `true` uniquement lorsque le dernier mot manquant du groupe vient
-  /// d'être réussi PENDANT cette visite (voir `onWordDone`) -- jamais lors
-  /// de la restauration ci-dessus. Sans cette distinction, rouvrir un
-  /// groupe déjà entièrement réussi lors d'une visite précédente faisait
-  /// immédiatement réapparaître la pop-up de félicitations (confettis
-  /// compris), alors qu'aucun mot n'avait encore été tracé lors de CETTE
-  /// visite.
-  bool _justCompletedThisVisit = false;
-
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
   Map<String, dynamic>? _resumeOffer;
@@ -99,7 +84,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
   Future<void> _initEvaluation() async {
     if (!mounted) return;
     final continuing = _session.ensureContext(_kEvalId);
-    _session.configureSubjects(PALIER3_GROUPS.length);
+    _session.configureSubjects(getEvalWordGroups().length);
     if (continuing) return;
     final saved = await _session.readSavedProgress(_kEvalId);
     if (!mounted) return;
@@ -126,8 +111,9 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
         ..addAll(_session.completedItems);
     });
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
-    if (savedIdx >= 0 && savedIdx < PALIER3_GROUPS.length) {
-      final savedGroup = PALIER3_GROUPS[savedIdx];
+    final evalWordGroups = getEvalWordGroups();
+    if (savedIdx >= 0 && savedIdx < evalWordGroups.length) {
+      final savedGroup = evalWordGroups[savedIdx];
       if (savedGroup.id != widget.groupId) {
         context.replace('/exercice/mots/${savedGroup.id}?amaniEval=1');
       }
@@ -162,14 +148,18 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
     final session = context.watch<EvaluationSessionController>();
 
     final group = PALIER3_GROUP_MAP[widget.groupId];
+    // Index dans la liste complète pour la navigation normale (parcours).
     final groupIdx = PALIER3_GROUPS.indexWhere((g) => g.id == widget.groupId);
     final nextGroup = groupIdx >= 0 && groupIdx < PALIER3_GROUPS.length - 1
         ? PALIER3_GROUPS[groupIdx + 1]
         : null;
-    // En évaluation, une fois le dernier groupe atteint on reboucle sur le
-    // premier — seul le chronomètre décide de la fin de la session.
-    final evaluationNextGroup = _isEvaluation && groupIdx >= 0
-        ? PALIER3_GROUPS[(groupIdx + 1) % PALIER3_GROUPS.length]
+    // En évaluation, on navigue dans la liste réduite (10 groupes clés).
+    final evalWordGroups = getEvalWordGroups();
+    final evalGroupIdx = _isEvaluation
+        ? evalWordGroups.indexWhere((g) => g.id == widget.groupId)
+        : -1;
+    final evaluationNextGroup = _isEvaluation && evalGroupIdx >= 0
+        ? evalWordGroups[(evalGroupIdx + 1) % evalWordGroups.length]
         : null;
 
     if (group == null) {
@@ -186,8 +176,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -219,35 +208,23 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
         ? group.words.where((w) => w.id == widget.onlyWordId).toList()
         : <WordEntry>[];
     final wordsToShow = filteredWords.isNotEmpty ? filteredWords : group.words;
-    if (!_restoredFromProgress && !_isEvaluation && wordsToShow.isNotEmpty) {
-      _restoredFromProgress = true;
-      final progress = context.read<ProgressProvider>();
-      for (final word in wordsToShow) {
-        if (progress.isCompleted(
-          typeEtape: 'MOT',
-          modalite: 'EXERCICE',
-          etapeCode: word.id,
-        )) {
-          _doneWords.add(word.id);
-        }
-      }
-    }
     final allDone = _doneWords.length == wordsToShow.length;
 
     void onWordDone(String wordId) {
       setState(() {
         _doneWords.add(wordId);
-        if (_doneWords.length >= wordsToShow.length) {
-          _justCompletedThisVisit = true;
-        }
       });
       if (_isEvaluation) _session.recordItemDone(wordId);
-      context.read<ProgressProvider>().awardCompletion(
-        typeEtape: 'MOT',
-        modalite: 'EXERCICE',
-        etapeCode: wordId,
-        palier: lang == Lang.fr ? 4 : 3,
-      );
+      // Une évaluation de fin de palier teste l'enfant : elle ne doit
+      // jamais cocher à sa place les étapes du parcours qu'il n'a pas faites.
+      if (!_isEvaluation) {
+        context.read<ProgressProvider>().awardCompletion(
+          typeEtape: 'MOT',
+          modalite: 'EXERCICE',
+          etapeCode: wordId,
+          palier: lang == Lang.fr ? 4 : 3,
+        );
+      }
       if (_doneWords.length >= wordsToShow.length &&
           _awaitingRepeatCompletion) {
         context.read<ProgressProvider>().awardRestartBonus();
@@ -295,10 +272,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -435,7 +409,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                                           group: group,
                                           lang: lang,
                                           onSpeak: () => speech.speak(
-                                            wordsToShow[wi].spokenText(
+                                            wordsToShow[wi].spelledSpokenText(
                                               lang.name,
                                             ),
                                             lang,
@@ -457,7 +431,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                                           word: wordsToShow[wi],
                                           lang: lang,
                                           onSpeak: () => speech.speak(
-                                            wordsToShow[wi].spokenText(
+                                            wordsToShow[wi].spelledSpokenText(
                                               lang.name,
                                             ),
                                             lang,
@@ -505,7 +479,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 ),
               ],
             ),
-            if (allDone && _justCompletedThisVisit && !_isEvaluation && !_freeModeOnly)
+            if (allDone && !_isEvaluation && !_freeModeOnly)
               ExerciseCompletePopup(
                 onBackHome: () => goHome(context),
                 onNext: nextGroup != null
@@ -514,7 +488,6 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                 onRestart: () {
                   setState(() {
                     _doneWords.clear();
-                    _justCompletedThisVisit = false;
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
                     _freeModeOnly = false;
@@ -550,7 +523,9 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                   'title': evaluationNextGroup.title[lang.name] ?? '',
                 }),
                 onContinue: () {
-                  session.advanceSubject((groupIdx + 1) % PALIER3_GROUPS.length);
+                  session.advanceSubject(
+                    (evalGroupIdx + 1) % evalWordGroups.length,
+                  );
                   context.replace(
                     '/exercice/mots/${evaluationNextGroup.id}?amaniEval=1',
                   );
@@ -652,9 +627,7 @@ class _WordTraceRowState extends State<_WordTraceRow> {
     final uiScale = context.watch<AccessibilitySettings>().uiScale;
     final effLetterCellSize = _letterCellSize * uiScale;
     final cellContentWidth =
-        effLetterCellSize * n +
-        _repSpacingApart * (n > 0 ? n - 1 : 0) +
-        24;
+        effLetterCellSize * n + _repSpacingApart * (n > 0 ? n - 1 : 0) + 24;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,7 +710,10 @@ class _WordTraceRowState extends State<_WordTraceRow> {
                   ((constraints.maxWidth + spacing) /
                           (cellContentWidth + spacing))
                       .floor()
-                      .clamp(1, widget.repetitions == 0 ? 1 : widget.repetitions);
+                      .clamp(
+                        1,
+                        widget.repetitions == 0 ? 1 : widget.repetitions,
+                      );
               final rows = (widget.repetitions / perRow).ceil();
 
               return SizedBox(
@@ -760,9 +736,7 @@ class _WordTraceRowState extends State<_WordTraceRow> {
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: _solvedByRep[rep].length == n
-                                  ? AmaniColors.secondary.withValues(
-                                      alpha: 0.6,
-                                    )
+                                  ? AmaniColors.secondary.withValues(alpha: 0.6)
                                   : rep == _activeRep
                                   ? const Color(0x40A9784F)
                                   : const Color(0x1A4A3B2A),

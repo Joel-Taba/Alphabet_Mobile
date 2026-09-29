@@ -40,7 +40,6 @@ class ExercicePuzzleFormuleScreen extends StatefulWidget {
 class _ExercicePuzzleFormuleScreenState
     extends State<ExercicePuzzleFormuleScreen> {
   final Set<String> _doneChars = {};
-  bool _restoredFromProgress = false;
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
 
@@ -49,9 +48,6 @@ class _ExercicePuzzleFormuleScreenState
   /// lettres/chiffres restent acquis, seule la feuille d'écriture libre en
   /// bas de page reste praticable ensuite.
   bool _freeModeOnly = false;
-
-  /// Voir `exercice_calcul_screen.dart::_justCompletedThisVisit`.
-  bool _justCompletedThisVisit = false;
 
   void _handleCharSolved(dynamic letter, int totalLetters) {
     final t = context.read<LanguageProvider>().t;
@@ -74,7 +70,6 @@ class _ExercicePuzzleFormuleScreenState
     );
     setState(() {
       _doneChars.add(char);
-      if (_doneChars.length >= totalLetters) _justCompletedThisVisit = true;
     });
     if (_doneChars.length >= totalLetters && _awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
@@ -142,20 +137,6 @@ class _ExercicePuzzleFormuleScreenState
         .map((c) => getLetterFormation(c, style))
         .whereType<dynamic>()
         .toList();
-    if (!_restoredFromProgress && groupLetters.isNotEmpty) {
-      _restoredFromProgress = true;
-      final progress = context.read<ProgressProvider>();
-      for (final l in groupLetters) {
-        final char = l['char'] as String;
-        if (progress.isCompleted(
-          typeEtape: 'LETTRE',
-          modalite: 'EXERCICE',
-          etapeCode: '$char-puzzle',
-        )) {
-          _doneChars.add(char);
-        }
-      }
-    }
     final allDone =
         groupLetters.isNotEmpty && _doneChars.length == groupLetters.length;
 
@@ -201,10 +182,7 @@ class _ExercicePuzzleFormuleScreenState
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -279,9 +257,9 @@ class _ExercicePuzzleFormuleScreenState
                                 allDone
                                     ? (ep['allDoneBody'] ?? '')
                                     : ((isGroupDigits
-                                            ? ep['introBodyDigit']
-                                            : ep['introBody']) ??
-                                        ''),
+                                              ? ep['introBodyDigit']
+                                              : ep['introBody']) ??
+                                          ''),
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 12,
                                   color: AmaniColors.textSecondary,
@@ -332,8 +310,9 @@ class _ExercicePuzzleFormuleScreenState
                                   if (li > 0)
                                     Divider(
                                       height: 1,
-                                      color: AmaniColors.textPrimary
-                                          .withValues(alpha: 0.1),
+                                      color: AmaniColors.textPrimary.withValues(
+                                        alpha: 0.1,
+                                      ),
                                     ),
                                   _LetterPuzzleRound(
                                     key: ValueKey(
@@ -350,8 +329,7 @@ class _ExercicePuzzleFormuleScreenState
                                     ),
                                     lang: lang,
                                     onSpeak: () => speech.speak(
-                                      groupLetters[li]['name'][lang.name] ??
-                                          '',
+                                      groupLetters[li]['name'][lang.name] ?? '',
                                       lang,
                                     ),
                                     doneLabel: el['done'] ?? 'Terminé !',
@@ -380,7 +358,7 @@ class _ExercicePuzzleFormuleScreenState
                 ),
               ],
             ),
-            if (allDone && !_freeModeOnly && _justCompletedThisVisit)
+            if (allDone && !_freeModeOnly)
               ExerciseCompletePopup(
                 onBackHome: () => goHome(context),
                 onNext: nextGroup != null
@@ -394,7 +372,6 @@ class _ExercicePuzzleFormuleScreenState
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
                     _freeModeOnly = false;
-                    _justCompletedThisVisit = false;
                   });
                 },
                 onFreeMode: () => setState(() => _freeModeOnly = true),
@@ -568,7 +545,8 @@ class _LetterPuzzleRoundState extends State<_LetterPuzzleRound> {
           id: nextId++,
           family: e['family'] as String,
           variant: e['variant'] as String,
-          label: (e['label'] as Map<String, dynamic>)[langName] as String? ?? '',
+          label:
+              (e['label'] as Map<String, dynamic>)[langName] as String? ?? '',
         ),
     ];
 
@@ -596,7 +574,10 @@ class _LetterPuzzleRoundState extends State<_LetterPuzzleRound> {
   );
 
   void _handleDrop(int slotIndex, _PieceData piece) {
-    if (widget.locked || _solved || piece.placed || _placed[slotIndex] != null) {
+    if (widget.locked ||
+        _solved ||
+        piece.placed ||
+        _placed[slotIndex] != null) {
       return;
     }
     final expected = _correctSequence[slotIndex];
@@ -854,18 +835,20 @@ class _PuzzleSlot extends StatelessWidget {
         final Color borderColor = switch (feedback) {
           _SlotFeedback.misplaced => AmaniColors.warning,
           _SlotFeedback.wrong => AmaniColors.error,
-          null => hovering
-              ? AmaniColors.primary.withValues(alpha: 0.6)
-              : AmaniColors.textPrimary.withValues(alpha: 0.15),
+          null =>
+            hovering
+                ? AmaniColors.primary.withValues(alpha: 0.6)
+                : AmaniColors.textPrimary.withValues(alpha: 0.15),
         };
         final Color fillColor = switch (feedback) {
           _SlotFeedback.misplaced => AmaniColors.warning.withValues(
             alpha: 0.18,
           ),
           _SlotFeedback.wrong => AmaniColors.error.withValues(alpha: 0.14),
-          null => hovering
-              ? AmaniColors.primary.withValues(alpha: 0.08)
-              : AmaniColors.background,
+          null =>
+            hovering
+                ? AmaniColors.primary.withValues(alpha: 0.08)
+                : AmaniColors.background,
         };
         return ClipPath(
           clipper: const PuzzlePieceClipper(),

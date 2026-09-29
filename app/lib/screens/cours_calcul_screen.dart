@@ -110,8 +110,7 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -322,52 +321,39 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                                         ),
                                   const SizedBox(height: 12),
                                 ],
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      demo.display,
-                                      style: TextStyle(
-                                        fontFamily: kBalooFontFamily,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 28,
-                                        color: AmaniColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      '=',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        color: AmaniColors.textSecondary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Row(
-                                      key: ValueKey('answer-$_replaySeed'),
-                                      children: [
-                                        Text(
-                                          demo.answer,
-                                          style: const TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 32,
-                                            color: AmaniColors.textPrimary,
-                                          ),
+                                // Réductible : les longues égalités (grands
+                                // nombres, décimaux, fractions) débordaient
+                                // de l'écran d'un téléphone (jusqu'à 135 px,
+                                // détecté par test/e2e/crawl_all_pages_test).
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        demo.display,
+                                        style: TextStyle(
+                                          fontFamily: kBalooFontFamily,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 28,
+                                          color: AmaniColors.textPrimary,
                                         ),
-                                        if (demo.answerSecondPart != null) ...[
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        '=',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w700,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Row(
+                                        key: ValueKey('answer-$_replaySeed'),
+                                        children: [
                                           Text(
-                                            demo.secondPartSeparator,
-                                            style: TextStyle(
-                                              fontFamily: kBalooFontFamily,
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 22,
-                                              color: AmaniColors.textPrimary,
-                                            ),
-                                          ),
-                                          Text(
-                                            demo.answerSecondPart!,
+                                            demo.answer,
                                             style: const TextStyle(
                                               fontFamily: 'monospace',
                                               fontWeight: FontWeight.w800,
@@ -375,10 +361,31 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                                               color: AmaniColors.textPrimary,
                                             ),
                                           ),
+                                          if (demo.answerSecondPart !=
+                                              null) ...[
+                                            Text(
+                                              demo.secondPartSeparator,
+                                              style: TextStyle(
+                                                fontFamily: kBalooFontFamily,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 22,
+                                                color: AmaniColors.textPrimary,
+                                              ),
+                                            ),
+                                            Text(
+                                              demo.answerSecondPart!,
+                                              style: const TextStyle(
+                                                fontFamily: 'monospace',
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 32,
+                                                color: AmaniColors.textPrimary,
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

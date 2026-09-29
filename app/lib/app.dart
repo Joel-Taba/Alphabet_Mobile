@@ -31,8 +31,8 @@ import 'screens/exercice_figure_screen.dart';
 import 'screens/exercice_figure_quiz_screen.dart';
 import 'screens/exercice_figure_objet_screen.dart';
 import 'screens/exercice_figure_vrai_faux_screen.dart';
-import 'screens/cours_tangram_screen.dart';
-import 'screens/exercice_tangram_screen.dart';
+import 'screens/cours_solide_screen.dart';
+import 'screens/exercice_solide_screen.dart';
 import 'services/sign_speech.dart';
 import 'services/progress_service.dart';
 import 'services/evaluation_session.dart';
@@ -214,17 +214,18 @@ final _router = GoRouter(
       builder: (context, state) => const ExerciceFigureVraiFauxScreen(),
     ),
     GoRoute(
-      path: '/cours/tangram/:puzzleId',
-      builder: (context, state) => CoursTangramScreen(
+      path: '/cours/solide/:solidId',
+      builder: (context, state) => CoursSolideScreen(
         key: ValueKey(state.uri.toString()),
-        puzzleId: state.pathParameters['puzzleId']!,
+        solidId: state.pathParameters['solidId']!,
       ),
     ),
     GoRoute(
-      path: '/exercice/tangram/:puzzleId',
-      builder: (context, state) => ExerciceTangramScreen(
+      path: '/exercice/solide/:solidId',
+      builder: (context, state) => ExerciceSolideScreen(
         key: ValueKey(state.uri.toString()),
-        puzzleId: state.pathParameters['puzzleId']!,
+        solidId: state.pathParameters['solidId']!,
+        amaniEval: state.uri.queryParameters['amaniEval'],
       ),
     ),
     StatefulShellRoute.indexedStack(

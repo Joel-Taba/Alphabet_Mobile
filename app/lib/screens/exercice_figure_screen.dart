@@ -6,22 +6,25 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/progress_service.dart';
 import '../data/shape_catalog.dart';
-import '../hooks/use_accessibility_settings.dart';
+import '../data/shape_calc_problem.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../services/evaluation_session.dart';
 import '../widgets/amani_mascot.dart';
-import '../widgets/letter_trace_cell.dart';
+import '../widgets/shape_calc_diagram.dart';
+import '../widgets/shape_answer_keypad.dart';
 import '../widgets/exercise_complete_popup.dart';
+import '../widgets/free_writing_sheet.dart';
 import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
 
-/// Exercice du Palier "Figures géométriques" : trace la figure à main levée,
-/// `ExerciseSettings.repetitions` fois de suite, en réutilisant tel quel le
-/// mécanisme de traçage des lettres (`LetterTraceCell`) — une figure n'est
-/// qu'une suite de traits/courbes, exactement comme une lettre.
+/// Exercice du Palier "Figures géométriques" : un petit problème de calcul
+/// (périmètre ou aire) par tentative, avec un schéma annoté donnant les
+/// dimensions et un clavier numérique pour saisir la réponse — même
+/// architecture "liste de problèmes séquentiels" que le Palier "Calculs"
+/// (`exercice_calcul_screen.dart`), réutilisée ici pour les figures.
 class ExerciceFigureScreen extends StatefulWidget {
   final String shapeId;
   final String? amaniEval;
@@ -42,57 +45,36 @@ const String _kEvalId = 'figures';
 class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   int _activeIdx = 0;
   final Set<int> _doneIndices = {};
-  int _count = 0;
+  List<ShapeCalcProblem> _problems = const [];
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
-
-  /// Voir `exercice_calcul_screen.dart::_justCompletedThisVisit`.
-  bool _justCompletedThisVisit = false;
 
   bool get _isEvaluation => widget.amaniEval == '1';
   bool _showFirstSubjectAnnouncement = false;
   Map<String, dynamic>? _resumeOffer;
 
-  late final ExerciseSettings _settings;
   late final EvaluationSessionController _session;
 
   @override
   void initState() {
     super.initState();
     _session = context.read<EvaluationSessionController>();
-    _settings = ExerciseSettings()..addListener(_onSettingsChanged);
-    _settings.load().then((_) => _regenerate());
+    _regenerate();
     if (_isEvaluation) _initEvaluation();
   }
 
-  void _onSettingsChanged() {
-    if (!mounted) return;
-    setState(_regenerate);
-  }
-
+  /// Un seul problème par page d'exercice (pas de réglage "Répétitions" pour
+  /// ce palier) : `_problems` reste une liste à un seul élément uniquement
+  /// pour réutiliser tel quel le reste de la logique (reprise d'évaluation,
+  /// bonus de relance...), déjà écrite pour une liste.
   void _regenerate() {
-    _count = _settings.repetitions;
+    final topic = findShapeTopic(widget.shapeId);
+    if (topic == null) return;
+    _problems = [
+      generateShapeCalcProblem(topic, topic.id.hashCode ^ _restartKey),
+    ];
     _activeIdx = 0;
     _doneIndices.clear();
-    _justCompletedThisVisit = false;
-    // Persistance permanente : voir `exercice_calcul_screen.dart::_regenerate`.
-    if (!_isEvaluation && _restartKey == 0 && mounted) {
-      final progress = context.read<ProgressProvider>();
-      for (var i = 0; i < _count; i++) {
-        if (progress.isCompleted(
-          typeEtape: 'FIGURE',
-          modalite: 'EXERCICE',
-          etapeCode: '${widget.shapeId}-$i',
-        )) {
-          _doneIndices.add(i);
-        }
-      }
-      final firstNotDone = List.generate(
-        _count,
-        (i) => i,
-      ).firstWhere((i) => !_doneIndices.contains(i), orElse: () => _count - 1);
-      _activeIdx = _count == 0 ? 0 : firstNotDone;
-    }
   }
 
   Future<void> _initEvaluation() async {
@@ -120,7 +102,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     _session.resumeFrom(saved);
     setState(() {
       _resumeOffer = null;
-      // Identifiants sauvegardés `'$shapeId-$index'` (voir `_onAttemptDone`)
+      // Identifiants sauvegardés `'$shapeId-$index'` (voir `_onProblemDone`)
       // — ne retient que ceux du sujet affiché ici, et seulement leur index.
       final prefix = '${widget.shapeId}-';
       _doneIndices.clear();
@@ -133,7 +115,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
       if (_doneIndices.isNotEmpty) {
         _activeIdx = (_doneIndices.reduce((a, b) => a > b ? a : b) + 1).clamp(
           0,
-          _count == 0 ? 0 : _count - 1,
+          _problems.isEmpty ? 0 : _problems.length - 1,
         );
       }
     });
@@ -157,28 +139,28 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   @override
   void dispose() {
     if (_isEvaluation) unawaited(_session.persistProgress());
-    _settings.removeListener(_onSettingsChanged);
-    _settings.dispose();
     super.dispose();
   }
 
-  void _onAttemptDone(int i) {
+  void _onProblemDone(int i) {
     setState(() {
       _doneIndices.add(i);
-      if (i + 1 < _count) {
+      if (i + 1 < _problems.length) {
         _activeIdx = i + 1;
-      } else {
-        _justCompletedThisVisit = true;
       }
     });
     if (_isEvaluation) _session.recordItemDone('${widget.shapeId}-$i');
-    context.read<ProgressProvider>().awardCompletion(
-      typeEtape: 'FIGURE',
-      modalite: 'EXERCICE',
-      etapeCode: '${widget.shapeId}-$i',
-      palier: 6,
-    );
-    if (_doneIndices.length >= _count && _awaitingRepeatCompletion) {
+    // Une évaluation de fin de palier teste l'enfant : elle ne doit
+    // jamais cocher à sa place les étapes du parcours qu'il n'a pas faites.
+    if (!_isEvaluation) {
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'FIGURE',
+        modalite: 'EXERCICE',
+        etapeCode: '${widget.shapeId}-$i',
+        palier: 6,
+      );
+    }
+    if (_doneIndices.length >= _problems.length && _awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
     }
@@ -192,6 +174,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     final cf = t['coursFigure'] as Map<String, dynamic>? ?? {};
     final ef = t['exerciceFigure'] as Map<String, dynamic>? ?? {};
     final ev = t['evaluation'] as Map<String, dynamic>? ?? {};
+    final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
     final session = context.watch<EvaluationSessionController>();
     final topic = findShapeTopic(widget.shapeId);
 
@@ -209,8 +192,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -245,7 +227,8 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     final evaluationNextTopic = _isEvaluation && topicIdx >= 0
         ? SHAPE_TOPICS[(topicIdx + 1) % SHAPE_TOPICS.length]
         : null;
-    final allDone = _count > 0 && _doneIndices.length == _count;
+    final allDone =
+        _problems.isNotEmpty && _doneIndices.length == _problems.length;
 
     return Scaffold(
       backgroundColor: AmaniColors.background,
@@ -287,113 +270,160 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: AmaniTheme.titleStyle.copyWith(
-                                fontSize: 20,
-                              ),
-                            ),
-                            Text(
-                              tFormat(ef['problemsReady'] ?? '', {
-                                'done': _doneIndices.length,
-                                'total': _count,
-                              }),
-                              style: AmaniTheme.bodyStyle.copyWith(
-                                fontSize: 12,
-                                color: AmaniColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          name,
+                          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    physics: tracingAwareScrollPhysics(context),
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AmaniColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AmaniColors.textPrimary.withValues(
-                              alpha: 0.1,
-                            ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AmaniColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        AmaniMascot(
+                          pose: allDone
+                              ? AmaniPose.celebration
+                              : AmaniPose.encouragement,
+                          size: AmaniSize.small,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                allDone
+                                    ? (ef['allDoneTitle'] ?? '')
+                                    : (ef['introTitle'] ?? ''),
+                                style: AmaniTheme.titleStyle.copyWith(
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                allDone
+                                    ? (ef['allDoneBody'] ?? '')
+                                    : (ef['introBody'] ?? ''),
+                                style: AmaniTheme.bodyStyle.copyWith(
+                                  fontSize: 12,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            AmaniMascot(
-                              pose: allDone
-                                  ? AmaniPose.celebration
-                                  : AmaniPose.encouragement,
-                              size: AmaniSize.small,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    allDone
-                                        ? (ef['allDoneTitle'] ?? '')
-                                        : (ef['introTitle'] ?? ''),
-                                    style: AmaniTheme.titleStyle.copyWith(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    allDone
-                                        ? (ef['allDoneBody'] ?? '')
-                                        : (ef['introBody'] ?? ''),
-                                    style: AmaniTheme.bodyStyle.copyWith(
-                                      fontSize: 12,
-                                      color: AmaniColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CustomScrollView(
+                    physics: tracingAwareScrollPhysics(context),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
+                        // Une seule feuille de cahier pour toute la page,
+                        // avec une séparation entre chaque problème — même
+                        // traitement que le Palier "Calculs"
+                        // (`exercice_calcul_screen.dart`).
+                        sliver: DecoratedSliver(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AmaniColors.textPrimary.withValues(
+                                alpha: 0.1,
                               ),
                             ),
-                          ],
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x144A3B2A),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          sliver: SliverMainAxisGroup(
+                            slivers: [
+                              SliverPadding(
+                                padding: const EdgeInsets.all(4),
+                                sliver: SliverList(
+                                  delegate: SliverChildListDelegate([
+                                    for (
+                                      var i = 0;
+                                      i < _problems.length;
+                                      i++
+                                    ) ...[
+                                      if (i > 0)
+                                        Divider(
+                                          height: 1,
+                                          color: AmaniColors.textPrimary
+                                              .withValues(alpha: 0.1),
+                                        ),
+                                      _ShapeCalcProblemRow(
+                                        key: ValueKey(
+                                          '${topic.id}-$i-r$_restartKey',
+                                        ),
+                                        problem: _problems[i],
+                                        isActive: i == _activeIdx,
+                                        isFuture: i > _activeIdx,
+                                        done: _doneIndices.contains(i),
+                                        doneLabel: el['done'] ?? 'Terminé !',
+                                        onDone: () => _onProblemDone(i),
+                                      ),
+                                    ],
+                                    // Espace libre en dessous de l'unique
+                                    // exercice de la page, comme sur les
+                                    // pages d'exercice des Paliers 1 à 4
+                                    // (`exercice_lettre_screen.dart` et
+                                    // consorts) -- jamais en évaluation
+                                    // chronométrée.
+                                    if (!_isEvaluation)
+                                      const Padding(
+                                        padding: EdgeInsets.fromLTRB(
+                                          12,
+                                          20,
+                                          12,
+                                          8,
+                                        ),
+                                        child: FreeWritingSheet(),
+                                      ),
+                                  ]),
+                                ),
+                              ),
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: CustomPaint(
+                                  painter: _TrailingFigureCahierLinesPainter(),
+                                  size: Size.infinite,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Répétitions en grille — remplit d'abord chaque
-                      // ligne horizontalement (autant qu'il en tient) puis
-                      // passe à la ligne suivante, exactement comme les
-                      // répétitions de lettres (`LetterRepetitionRow`),
-                      // plutôt qu'une carte pleine largeur par tentative.
-                      _ShapeAttemptGrid(
-                        key: ValueKey('${topic.id}-r$_restartKey'),
-                        topic: topic,
-                        count: _count,
-                        activeIdx: _activeIdx,
-                        doneIndices: _doneIndices,
-                        onAttemptDone: _onAttemptDone,
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            if (allDone && !_isEvaluation && _justCompletedThisVisit)
+            if (allDone && !_isEvaluation)
               ExerciseCompletePopup(
                 onBackHome: () => goHome(context),
                 onNext: nextTopic != null
@@ -448,120 +478,149 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   }
 }
 
-/// Grille des tentatives d'une figure — remplit chaque ligne horizontalement
-/// (autant de cases qu'il en tient) puis passe à la ligne suivante, même
-/// agencement que les répétitions de lettres (`LetterRepetitionRow`) : un
-/// unique quadrillage Seyès partagé derrière un `Wrap` de cases carrées,
-/// plutôt qu'une carte pleine largeur par tentative.
-class _ShapeAttemptGrid extends StatelessWidget {
-  final ShapeTopic topic;
-  final int count;
-  final int activeIdx;
-  final Set<int> doneIndices;
-  final ValueChanged<int> onAttemptDone;
+/// Une ligne de la liste = un problème de calcul (périmètre ou aire) : énoncé
+/// court, schéma annoté (`ShapeCalcDiagram`) et clavier de saisie
+/// (`ShapeAnswerKeypad`) pour la ligne active uniquement — même agencement
+/// que `_ProblemRow` dans `exercice_calcul_screen.dart` (Palier "Calculs").
+class _ShapeCalcProblemRow extends StatelessWidget {
+  final ShapeCalcProblem problem;
+  final bool isActive;
+  final bool isFuture;
+  final bool done;
+  final String doneLabel;
+  final VoidCallback onDone;
 
-  const _ShapeAttemptGrid({
+  const _ShapeCalcProblemRow({
     super.key,
-    required this.topic,
-    required this.count,
-    required this.activeIdx,
-    required this.doneIndices,
-    required this.onAttemptDone,
+    required this.problem,
+    required this.isActive,
+    required this.isFuture,
+    required this.done,
+    required this.doneLabel,
+    required this.onDone,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Cases agrandies selon le réglage "Taille de l'interface" (Profil >
-    // Réglages), comme `LetterRepetitionRow._effOccSize` — un peu plus
-    // grandes que pour une lettre simple (110) car une figure a plusieurs
-    // sommets/côtés à distinguer, tout en restant assez petites pour que
-    // plusieurs tiennent par ligne (l'agencement visé), pas une seule.
-    final occSize = 120 * context.watch<AccessibilitySettings>().uiScale;
+    final lang = context.watch<LanguageProvider>().lang;
+    final t = context.watch<LanguageProvider>().t;
+    final ef = t['exerciceFigure'] as Map<String, dynamic>? ?? {};
+    final statement = shapeCalcStatement(problem, lang.name);
+    final question = problem.kind == ShapeCalcKind.perimeter
+        ? (ef['calcPerimeterPrompt'] ?? '')
+        : (ef['calcAreaPrompt'] ?? '');
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x144A3B2A),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const spacing = 10.0;
-          final perRow = ((constraints.maxWidth + spacing) / (occSize + spacing))
-              .floor()
-              .clamp(1, count == 0 ? 1 : count);
-          final rows = (count / perRow).ceil();
-
-          return SizedBox(
-            width: constraints.maxWidth,
-            child: CustomPaint(
-              painter: _ShapeCahierLinesPainter(
-                rows: rows,
-                rowHeight: occSize,
-                rowSpacing: spacing,
-                lineScale: occSize / 200,
-              ),
-              child: Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: [
-                  for (var i = 0; i < count; i++)
-                    LetterTraceCell(
-                      key: ValueKey('shape-rep-$i'),
-                      letter: topic.traceData,
-                      size: occSize,
-                      isActive: i == activeIdx && !doneIndices.contains(i),
-                      transparent: true,
-                      strokeWidthScale: 0.55,
-                      onSolved: i == activeIdx && !doneIndices.contains(i)
-                          ? () => onAttemptDone(i)
-                          : null,
-                    ),
-                ],
+    return Opacity(
+      opacity: isFuture ? 0.4 : 1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                ),
               ),
             ),
-          );
-        },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (statement.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            statement,
+                            style: TextStyle(
+                              fontFamily: kBalooFontFamily,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: AmaniColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      Text(
+                        question,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AmaniColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (done)
+                  Text(
+                    '✓ $doneLabel',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AmaniColors.secondary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (problem.isApproximate && !done)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                ef['roundedHint'] ?? '',
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: AmaniColors.textSecondary,
+                ),
+              ),
+            ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: ShapeCalcDiagram(problem: problem),
+            ),
+          ),
+          if (!done)
+            Center(
+              child: ShapeAnswerKeypad(
+                correctAnswer: problem.answer,
+                isActive: isActive,
+                isFuture: isFuture,
+                solved: done,
+                onSolved: onDone,
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-/// Quadrillage Seyès décoratif derrière la grille — copie de
-/// `_LetterCahierLinesPainter` (`letter_repetition_row.dart`), même choix de
-/// duplication plutôt que de partager un widget privé entre fichiers.
-class _ShapeCahierLinesPainter extends CustomPainter {
+/// Prolonge visuellement la feuille de cahier partagée jusqu'en bas de la
+/// page quand le contenu ne suffit pas à la remplir — copie de
+/// `_TrailingCahierLinesPainter` (`exercice_calcul_screen.dart`).
+class _TrailingFigureCahierLinesPainter extends CustomPainter {
   static const List<double> _positions = [10, 70, 130, 190];
-
-  final int rows;
-  final double rowHeight;
-  final double rowSpacing;
-  final double lineScale;
-
-  _ShapeCahierLinesPainter({
-    required this.rows,
-    required this.rowHeight,
-    required this.rowSpacing,
-    required this.lineScale,
-  });
+  static const double _rowHeight = 120;
+  static const double _rowSpacing = 10;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final originDy = (rowHeight - 200 * lineScale) / 2;
-    for (int r = 0; r < rows; r++) {
-      final rowTop = r * (rowHeight + rowSpacing);
-      for (int i = 0; i < _positions.length; i++) {
-        final y = rowTop + originDy + _positions[i] * lineScale;
+    const scale = _rowHeight / 200;
+    var rowTop = 0.0;
+    while (rowTop < size.height) {
+      for (var i = 0; i < _positions.length; i++) {
+        final y = rowTop + _positions[i] * scale;
+        if (y > size.height) break;
         final isBaseline = i == 2;
         final paint = Paint()
           ..color =
@@ -570,13 +629,11 @@ class _ShapeCahierLinesPainter extends CustomPainter {
           ..strokeWidth = isBaseline ? 1.5 : 1;
         canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
       }
+      rowTop += _rowHeight + _rowSpacing;
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ShapeCahierLinesPainter oldDelegate) =>
-      oldDelegate.rows != rows ||
-      oldDelegate.rowHeight != rowHeight ||
-      oldDelegate.rowSpacing != rowSpacing ||
-      oldDelegate.lineScale != lineScale;
+  bool shouldRepaint(covariant _TrailingFigureCahierLinesPainter oldDelegate) =>
+      false;
 }

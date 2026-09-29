@@ -190,7 +190,7 @@ class CoursMotsScreen extends StatelessWidget {
                       // la carte, qui se produit pour tous les mots dès
                       // l'ouverture de la page.
                       onSpeak: () {
-                        speech.speak(word.spokenText(lang.name), lang);
+                        speech.speak(word.spelledSpokenText(lang.name), lang);
                         context.read<ProgressProvider>().markCoursItemViewed(
                           typeEtape: 'MOT',
                           groupCode: groupId,

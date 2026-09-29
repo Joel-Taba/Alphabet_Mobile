@@ -60,7 +60,7 @@ class WrongAnswerPopup extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                (wa['title'] ?? 'Pas tout à fait !').toString(),
+                (wa['title'] ?? 'Réponse incorrecte !').toString(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: kBalooFontFamily,

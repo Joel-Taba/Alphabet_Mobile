@@ -89,6 +89,16 @@ class WordSearchPlay extends StatefulWidget {
 }
 
 class _WordSearchPlayState extends State<WordSearchPlay> {
+  // Capturé tant que le contexte est valide : le relire via `context` dans
+  // `dispose()` est interdit par Flutter (élément déjà désactivé).
+  late TracingScrollLock _scrollLock;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollLock = context.read<TracingScrollLock>();
+  }
+
   final Set<String> _found = {};
   GridPos? _dragStart;
   GridPos? _dragCurrent;
@@ -105,37 +115,19 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
   bool _awaitingRepeatCompletion = false;
 
   @override
-  void initState() {
-    super.initState();
-    _restoreFromProgress();
-  }
-
-  /// Persistance permanente : une grille déjà entièrement résolue lors d'une
-  /// session précédente le reste pour toujours (voir `ProgressProvider`) --
-  /// jamais affichée à nouveau vierge. Sans effet en Mode Libre
-  /// ([puzzleId] absent, grilles régénérées à la demande).
-  void _restoreFromProgress() {
-    if (widget.puzzleId == null) return;
-    if (context.read<ProgressProvider>().isCompleted(
-      typeEtape: 'MOTS_MELES',
-      modalite: 'EXERCICE',
-      etapeCode: widget.puzzleId!,
-    )) {
-      _pointsAwarded = true;
-      _found.addAll(widget.wordSearch.placed.map((p) => p.word.id));
-    }
-  }
-
-  @override
   void didUpdateWidget(WordSearchPlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.wordSearch != widget.wordSearch) {
+      // Nouvelle grille en pleine sélection : on relâche le verrou et on
+      // oublie le doigt en cours -- sinon le verrou restait pris et
+      // `_activePointer` bloquait toute sélection suivante.
+      if (_dragStart != null) _scrollLock.stop();
+      _activePointer = null;
       _found.clear();
       _showCompletePopup = false;
       _pointsAwarded = false;
       _dragStart = null;
       _dragCurrent = null;
-      _restoreFromProgress();
     }
   }
 
@@ -144,7 +136,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
     // Filet de sécurité : si le widget disparaît en pleine sélection (par
     // ex. navigation), le verrou ne doit jamais rester bloqué.
     if (_dragStart != null) {
-      context.read<TracingScrollLock>().stop();
+      _scrollLock.stop();
     }
     super.dispose();
   }
@@ -168,7 +160,7 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
       final reversed = cells.reversed.toList();
       if (_sameCells(wordCells, cells) || _sameCells(wordCells, reversed)) {
         setState(() => _found.add(p.word.id));
-        speech.speak(p.word.spokenText('fr'), lang);
+        speech.speak(p.word.spelledSpokenText('fr'), lang);
         if (_found.length == widget.wordSearch.placed.length) {
           Future.delayed(const Duration(milliseconds: 300), () {
             if (!mounted) return;
@@ -236,285 +228,314 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
       for (final c in liveSelection ?? const <GridPos>[]) _key(c),
     };
 
-    final cellSize = widget.wordSearch.size >= 11
+    final preferredCellSize = widget.wordSearch.size >= 11
         ? 28.0
         : widget.wordSearch.size >= 9
         ? 32.0
         : 38.0;
-    final gridPixels = widget.wordSearch.size * cellSize;
     final nextWordGroup = widget.level != null
         ? nextWordGroupAfterWordPuzzle(widget.level!)
         : null;
 
-    return Stack(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Taille des cases adaptée à la place disponible (largeur moins le
+        // cadre de la grille : 12 px de marge de chaque côté + bordure) :
+        // avec une taille fixe, la grille débordait sur un petit téléphone
+        // (détecté par test/e2e/crawl_all_pages_test.dart). La même valeur
+        // sert à la détection des cases touchées, donc la sélection reste
+        // alignée.
+        final available = constraints.maxWidth.isFinite
+            ? constraints.maxWidth - 26
+            : double.infinity;
+        final cellSize = (available / widget.wordSearch.size)
+            .floorToDouble()
+            .clamp(18.0, preferredCellSize);
+        final gridPixels = widget.wordSearch.size * cellSize;
+        return Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF4A90E2), Color(0xFF2D6BBF)],
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AmaniMascot(
-                    pose: allFound
-                        ? AmaniPose.celebration
-                        : AmaniPose.curiosite,
-                    size: AmaniSize.small,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF4A90E2), Color(0xFF2D6BBF)],
+                    ),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          allFound
-                              ? (mm['doneTitle'] ?? '')
-                              : (mm['hintTitle'] ?? ''),
-                          style: AmaniTheme.titleStyle.copyWith(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          allFound
-                              ? (mm['doneBody'] ?? '')
-                              : (mm['hintBody'] ?? ''),
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AmaniMascot(
+                        pose: allFound
+                            ? AmaniPose.celebration
+                            : AmaniPose.curiosite,
+                        size: AmaniSize.small,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(999),
-                                child: LinearProgressIndicator(
-                                  value: totalWords == 0
-                                      ? 0
-                                      : _found.length / totalWords,
-                                  minHeight: 8,
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                  valueColor: const AlwaysStoppedAnimation(
-                                    Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
                             Text(
-                              '${_found.length}/$totalWords',
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 11,
+                              allFound
+                                  ? (mm['doneTitle'] ?? '')
+                                  : (mm['hintTitle'] ?? ''),
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 14,
                                 color: Colors.white,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: AmaniColors.textPrimary.withValues(alpha: 0.08),
-                ),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFFBF6EC), Color(0xFFF0E4CC)],
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Listener(
-                // `Listener` (événements pointeur bruts) plutôt qu'un
-                // `GestureDetector` à base de pan, combiné au verrouillage
-                // du défilement de la page (voir `TracingScrollLock`) :
-                // sans ça, une sélection verticale ou diagonale de mot est
-                // visuellement identique à un geste de scroll et peut lui
-                // être happée par un ascendant défilant.
-                onPointerDown: (event) {
-                  if (_dragStart != null || _activePointer != null) return;
-                  final cell = _cellFromLocal(event.localPosition, cellSize);
-                  if (cell == null) return;
-                  _activePointer = event.pointer;
-                  context.read<TracingScrollLock>().start();
-                  setState(() {
-                    _dragStart = cell;
-                    _dragCurrent = cell;
-                  });
-                },
-                onPointerMove: (event) {
-                  if (_dragStart == null || event.pointer != _activePointer) {
-                    return;
-                  }
-                  final cell = _cellFromLocal(event.localPosition, cellSize);
-                  if (cell != null) setState(() => _dragCurrent = cell);
-                },
-                onPointerUp: (event) {
-                  if (_dragStart == null || event.pointer != _activePointer) {
-                    return;
-                  }
-                  _activePointer = null;
-                  context.read<TracingScrollLock>().stop();
-                  if (_dragCurrent != null) {
-                    _finishSelection(_dragStart!, _dragCurrent!);
-                  }
-                  setState(() {
-                    _dragStart = null;
-                    _dragCurrent = null;
-                  });
-                },
-                onPointerCancel: (event) {
-                  if (_dragStart == null || event.pointer != _activePointer) {
-                    return;
-                  }
-                  _activePointer = null;
-                  context.read<TracingScrollLock>().stop();
-                  setState(() {
-                    _dragStart = null;
-                    _dragCurrent = null;
-                  });
-                },
-                child: SizedBox(
-                  width: gridPixels,
-                  height: gridPixels,
-                  child: Column(
-                    children: [
-                      for (var row = 0; row < widget.wordSearch.size; row++)
-                        Row(
-                          children: [
-                            for (
-                              var col = 0;
-                              col < widget.wordSearch.size;
-                              col++
-                            )
-                              _buildCell(
-                                row,
-                                col,
-                                cellSize,
-                                foundCellColor,
-                                liveSelectionKeys,
-                              ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            for (final p in widget.wordSearch.placed)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Builder(
-                  builder: (context) {
-                    final isFound = _found.contains(p.word.id);
-                    final color = wordColor[p.word.id]!;
-                    return GestureDetector(
-                      onTap: () => speech.speak(p.word.spokenText('fr'), lang),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isFound
-                              ? color.withValues(alpha: 0.12)
-                              : const Color(0xFFFBF6EC),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
-                            BoxShadow(color: Color(0x0D000000), blurRadius: 4),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: isFound
-                                  ? const Icon(
-                                      LucideIcons.check,
-                                      size: 16,
-                                      color: Colors.white,
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 10),
-                            Icon(
-                              LucideIcons.volume2,
-                              size: 16,
-                              color: color,
-                            ),
-                            const SizedBox(width: 8),
+                            const SizedBox(height: 2),
                             Text(
-                              capitalizeFirst(p.word.fr),
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: isFound
-                                    ? color
-                                    : const Color(0xFF4A3B2A),
-                                decoration: isFound
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
+                              allFound
+                                  ? (mm['doneBody'] ?? '')
+                                  : (mm['hintBody'] ?? ''),
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.8),
                               ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: LinearProgressIndicator(
+                                      value: totalWords == 0
+                                          ? 0
+                                          : _found.length / totalWords,
+                                      minHeight: 8,
+                                      backgroundColor: Colors.white.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                      valueColor: const AlwaysStoppedAnimation(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_found.length}/$totalWords',
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 11,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 20),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: AmaniColors.textPrimary.withValues(alpha: 0.08),
+                    ),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFFBF6EC), Color(0xFFF0E4CC)],
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Listener(
+                    // `Listener` (événements pointeur bruts) plutôt qu'un
+                    // `GestureDetector` à base de pan, combiné au verrouillage
+                    // du défilement de la page (voir `TracingScrollLock`) :
+                    // sans ça, une sélection verticale ou diagonale de mot est
+                    // visuellement identique à un geste de scroll et peut lui
+                    // être happée par un ascendant défilant.
+                    onPointerDown: (event) {
+                      if (_dragStart != null || _activePointer != null) return;
+                      final cell = _cellFromLocal(
+                        event.localPosition,
+                        cellSize,
+                      );
+                      if (cell == null) return;
+                      _activePointer = event.pointer;
+                      _scrollLock.start();
+                      setState(() {
+                        _dragStart = cell;
+                        _dragCurrent = cell;
+                      });
+                    },
+                    onPointerMove: (event) {
+                      if (_dragStart == null ||
+                          event.pointer != _activePointer) {
+                        return;
+                      }
+                      final cell = _cellFromLocal(
+                        event.localPosition,
+                        cellSize,
+                      );
+                      if (cell != null) setState(() => _dragCurrent = cell);
+                    },
+                    onPointerUp: (event) {
+                      if (_dragStart == null ||
+                          event.pointer != _activePointer) {
+                        return;
+                      }
+                      _activePointer = null;
+                      _scrollLock.stop();
+                      if (_dragCurrent != null) {
+                        _finishSelection(_dragStart!, _dragCurrent!);
+                      }
+                      setState(() {
+                        _dragStart = null;
+                        _dragCurrent = null;
+                      });
+                    },
+                    onPointerCancel: (event) {
+                      if (_dragStart == null ||
+                          event.pointer != _activePointer) {
+                        return;
+                      }
+                      _activePointer = null;
+                      _scrollLock.stop();
+                      setState(() {
+                        _dragStart = null;
+                        _dragCurrent = null;
+                      });
+                    },
+                    child: SizedBox(
+                      width: gridPixels,
+                      height: gridPixels,
+                      child: Column(
+                        children: [
+                          for (var row = 0; row < widget.wordSearch.size; row++)
+                            Row(
+                              children: [
+                                for (
+                                  var col = 0;
+                                  col < widget.wordSearch.size;
+                                  col++
+                                )
+                                  _buildCell(
+                                    row,
+                                    col,
+                                    cellSize,
+                                    foundCellColor,
+                                    liveSelectionKeys,
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                for (final p in widget.wordSearch.placed)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Builder(
+                      builder: (context) {
+                        final isFound = _found.contains(p.word.id);
+                        final color = wordColor[p.word.id]!;
+                        return GestureDetector(
+                          onTap: () =>
+                              speech.speak(p.word.spelledSpokenText('fr'), lang),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isFound
+                                  ? color.withValues(alpha: 0.12)
+                                  : const Color(0xFFFBF6EC),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0D000000),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: isFound
+                                      ? const Icon(
+                                          LucideIcons.check,
+                                          size: 16,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 10),
+                                Icon(
+                                  LucideIcons.volume2,
+                                  size: 16,
+                                  color: color,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  capitalizeFirst(p.word.fr),
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: isFound
+                                        ? color
+                                        : const Color(0xFF4A3B2A),
+                                    decoration: isFound
+                                        ? TextDecoration.lineThrough
+                                        : TextDecoration.none,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+            if (_showCompletePopup)
+              ExerciseCompletePopup(
+                onBackHome: () => goHome(context),
+                onNext: nextWordGroup != null
+                    ? () => context.replace('/cours/mots/${nextWordGroup.id}')
+                    : null,
+                onRestart: () {
+                  setState(() {
+                    _found.clear();
+                    _showCompletePopup = false;
+                    _pointsAwarded = false;
+                    _awaitingRepeatCompletion = true;
+                  });
+                },
               ),
           ],
-        ),
-        if (_showCompletePopup)
-          ExerciseCompletePopup(
-            onBackHome: () => goHome(context),
-            onNext: nextWordGroup != null
-                ? () => context.replace('/cours/mots/${nextWordGroup.id}')
-                : null,
-            onRestart: () {
-              setState(() {
-                _found.clear();
-                _showCompletePopup = false;
-                _pointsAwarded = false;
-                _awaitingRepeatCompletion = true;
-              });
-            },
-          ),
-      ],
+        );
+      },
     );
   }
 

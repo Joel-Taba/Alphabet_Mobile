@@ -96,8 +96,7 @@ class _ExerciceCalculComposeScreenState
         body: SafeArea(
           child: Center(
             child: GestureDetector(
-              onTap: () =>
-                  goHome(context),
+              onTap: () => goHome(context),
               child: Text((common['backToHome'] ?? '').toString()),
             ),
           ),
@@ -184,7 +183,10 @@ class _ExerciceCalculComposeScreenState
             ),
             Expanded(
               child: Center(
-                child: Padding(
+                // Défilant : sur un petit téléphone, le puzzle des niveaux
+                // avancés dépassait de 53 px en bas (détecté par
+                // test/e2e/crawl_all_pages_test.dart).
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: done
                       ? _DoneCard(

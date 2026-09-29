@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
-import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
 import '../hooks/use_animation_speed.dart';
 import '../data/shape_catalog.dart';
@@ -65,11 +64,6 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
     );
   }
 
-  void _speakConsigne(ShapeTopic topic, Lang lang) {
-    final text = topic.funFactBody[lang.name] ?? topic.funFactBody['fr']!;
-    context.read<SignSpeechService>().speak(text, lang);
-  }
-
   @override
   Widget build(BuildContext context) {
     final languageProvider = context.watch<LanguageProvider>();
@@ -93,8 +87,7 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -198,7 +191,7 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                     ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: TraceControlsToolbar.heightFor(3),
+                        minHeight: TraceControlsToolbar.heightFor(2),
                       ),
                       child: Stack(
                         alignment: Alignment.topCenter,
@@ -249,13 +242,6 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                                     _replaySeed++;
                                     _autoplayDelay = false;
                                   }),
-                                ),
-                                ToolbarAction(
-                                  icon: LucideIcons.volume2,
-                                  label: common['instruction'] ?? 'Consigne',
-                                  background: AmaniColors.background,
-                                  foreground: Colors.black,
-                                  onTap: () => _speakConsigne(topic, lang),
                                 ),
                                 ToolbarAction(
                                   icon: Icons.play_arrow_rounded,

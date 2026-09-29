@@ -7,6 +7,7 @@ import '../i18n/translations.dart';
 import '../services/sign_speech.dart';
 import '../services/progress_service.dart';
 import '../data/calcul_catalog.dart';
+import '../data/evaluation_catalog.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_countdown.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
@@ -50,15 +51,6 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
   final Set<int> _doneIndices = {};
   final Set<int> _timedOutIndices = {};
   int _restartKey = 0;
-
-  /// `true` uniquement lorsque le dernier problème manquant vient d'être
-  /// résolu PENDANT cette visite (voir `_onProblemDone`) -- jamais lors de
-  /// la restauration d'un exercice déjà entièrement résolu lors d'une
-  /// session précédente (voir `_regenerate`). Sans cette distinction,
-  /// rouvrir un exercice déjà terminé ferait immédiatement réapparaître la
-  /// pop-up de félicitations (confettis compris), comme dans
-  /// `exercice_lettre_screen.dart`.
-  bool _justCompletedThisVisit = false;
   bool _awaitingRepeatCompletion = false;
   List<CalculProblem> _problems = const [];
 
@@ -99,34 +91,12 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
     _activeIdx = 0;
     _doneIndices.clear();
     _timedOutIndices.clear();
-    _justCompletedThisVisit = false;
-    // Persistance permanente : un problème déjà résolu lors d'une session
-    // précédente le reste pour toujours (voir `ProgressProvider`) -- jamais
-    // en évaluation (session chronométrée à part) ni après "Recommencer"
-    // (l'enfant vient alors explicitement de choisir de tout refaire).
-    if (!_isEvaluation && _restartKey == 0 && mounted) {
-      final progress = context.read<ProgressProvider>();
-      for (var i = 0; i < _problems.length; i++) {
-        if (progress.isCompleted(
-          typeEtape: 'CALCUL',
-          modalite: 'EXERCICE',
-          etapeCode: '${widget.topicId}-$i',
-        )) {
-          _doneIndices.add(i);
-        }
-      }
-      final firstNotDone = List.generate(
-        _problems.length,
-        (i) => i,
-      ).firstWhere((i) => !_doneIndices.contains(i), orElse: () => _problems.length - 1);
-      _activeIdx = _problems.isEmpty ? 0 : firstNotDone;
-    }
   }
 
   Future<void> _initEvaluation() async {
     if (!mounted) return;
     final continuing = _session.ensureContext(_kEvalId);
-    _session.configureSubjects(CALCUL_TOPICS.length);
+    _session.configureSubjects(getEvalCalculTopics().length);
     _startMentalCountdownForActive();
     if (continuing) return;
     final saved = await _session.readSavedProgress(_kEvalId);
@@ -176,8 +146,9 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
     });
     _startMentalCountdownForActive();
     final savedIdx = saved['currentSubjectIndex'] as int? ?? 0;
-    if (savedIdx >= 0 && savedIdx < CALCUL_TOPICS.length) {
-      final savedTopic = CALCUL_TOPICS[savedIdx];
+    final evalTopics = getEvalCalculTopics();
+    if (savedIdx >= 0 && savedIdx < evalTopics.length) {
+      final savedTopic = evalTopics[savedIdx];
       if (savedTopic.id != widget.topicId) {
         context.replace('/exercice/calcul/${savedTopic.id}?amaniEval=1');
       }
@@ -239,17 +210,19 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
       _doneIndices.add(i);
       if (i + 1 < _problems.length) {
         _activeIdx = i + 1;
-      } else {
-        _justCompletedThisVisit = true;
       }
     });
     if (_isEvaluation) _session.recordItemDone('${widget.topicId}-$i');
-    context.read<ProgressProvider>().awardCompletion(
-      typeEtape: 'CALCUL',
-      modalite: 'EXERCICE',
-      etapeCode: '${widget.topicId}-$i',
-      palier: 5,
-    );
+    // Une évaluation de fin de palier teste l'enfant : elle ne doit
+    // jamais cocher à sa place les étapes du parcours qu'il n'a pas faites.
+    if (!_isEvaluation) {
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'CALCUL',
+        modalite: 'EXERCICE',
+        etapeCode: '${widget.topicId}-$i',
+        palier: 5,
+      );
+    }
     if (_doneIndices.length >= _problems.length && _awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
       setState(() => _awaitingRepeatCompletion = false);
@@ -303,8 +276,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -331,12 +303,18 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
       );
     }
 
+    // Index dans la liste complète pour la navigation normale (parcours).
     final topicIdx = CALCUL_TOPICS.indexWhere((c) => c.id == topic.id);
     final nextTopic = topicIdx >= 0 && topicIdx < CALCUL_TOPICS.length - 1
         ? CALCUL_TOPICS[topicIdx + 1]
         : null;
-    final evaluationNextTopic = _isEvaluation && topicIdx >= 0
-        ? CALCUL_TOPICS[(topicIdx + 1) % CALCUL_TOPICS.length]
+    // En évaluation, navigation dans les 10 sujets clés seulement.
+    final evalTopics = getEvalCalculTopics();
+    final evalTopicIdx = _isEvaluation
+        ? evalTopics.indexWhere((c) => c.id == topic.id)
+        : -1;
+    final evaluationNextTopic = _isEvaluation && evalTopicIdx >= 0
+        ? evalTopics[(evalTopicIdx + 1) % evalTopics.length]
         : null;
 
     final allDone =
@@ -382,10 +360,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -519,9 +494,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                                         isActive: i == _activeIdx,
                                         isFuture: i > _activeIdx,
                                         done: _doneIndices.contains(i),
-                                        timedOut: _timedOutIndices.contains(
-                                          i,
-                                        ),
+                                        timedOut: _timedOutIndices.contains(i),
                                         doneLabel: el['done'] ?? 'Terminé !',
                                         timedOutLabel:
                                             ec['mentalTimeout'] ??
@@ -551,7 +524,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 ),
               ],
             ),
-            if (allDone && !_isEvaluation && _justCompletedThisVisit)
+            if (allDone && !_isEvaluation)
               ExerciseCompletePopup(
                 onBackHome: () => goHome(context),
                 onNext: nextTopic != null
@@ -567,9 +540,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                 },
               ),
             if (_isEvaluation && session.expired)
-              EvaluationCompleteOverlay(
-                onBack: () => goHome(context),
-              ),
+              EvaluationCompleteOverlay(onBack: () => goHome(context)),
             if (_isEvaluation && _resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
                 onResume: () => _handleResume(_resumeOffer!),
@@ -598,7 +569,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                       evaluationNextTopic.title['fr']!,
                 }),
                 onContinue: () {
-                  session.advanceSubject((topicIdx + 1) % CALCUL_TOPICS.length);
+                  session.advanceSubject((evalTopicIdx + 1) % evalTopics.length);
                   context.replace(
                     '/exercice/calcul/${evaluationNextTopic.id}?amaniEval=1',
                   );
@@ -664,114 +635,114 @@ class _ProblemRowState extends State<_ProblemRow> {
               ),
             ),
             child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${widget.problem.display} = ?',
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: AmaniColors.textPrimary,
-                      ),
+              children: [
+                Expanded(
+                  child: Text(
+                    '${widget.problem.display} = ?',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AmaniColors.textPrimary,
                     ),
                   ),
-                  if (widget.timedOut)
-                    Text(
-                      '⏱ ${widget.timedOutLabel}',
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AmaniColors.warning,
-                      ),
-                    )
-                  else if (widget.done)
-                    Text(
-                      '✓ ${widget.doneLabel}',
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AmaniColors.secondary,
-                      ),
-                    )
-                  else if (widget.mentalRemaining != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: widget.mentalRemaining! <= 5
-                            ? const Color(0xFFC03E3E)
-                            : AmaniColors.textPrimary,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            LucideIcons.timer,
+                ),
+                if (widget.timedOut)
+                  Text(
+                    '⏱ ${widget.timedOutLabel}',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AmaniColors.warning,
+                    ),
+                  )
+                else if (widget.done)
+                  Text(
+                    '✓ ${widget.doneLabel}',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AmaniColors.secondary,
+                    ),
+                  )
+                else if (widget.mentalRemaining != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.mentalRemaining! <= 5
+                          ? const Color(0xFFC03E3E)
+                          : AmaniColors.textPrimary,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.timer,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.mentalRemaining}s',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
                             color: Colors.white,
-                            size: 12,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${widget.mentalRemaining}s',
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () => speech.speak(widget.problem.display, lang),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0x268B5FBF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.volume2,
-                        size: 14,
-                        color: Color(0xFF6B3F94),
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => speech.speak(widget.problem.display, lang),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0x268B5FBF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.volume2,
+                      size: 14,
+                      color: Color(0xFF6B3F94),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            if (widget.problem.keypadAnswer)
-              DigitKeypadAnswer(
-                correctAnswer: widget.problem.answer,
-                isActive: widget.isActive,
-                isFuture: widget.isFuture,
-                solved: widget.done,
-                onSolved: widget.onDone,
-              )
-            else if (widget.problem.choices != null)
-              McqAnswer(
-                choices: widget.problem.choices!,
-                correctAnswer: widget.problem.answerSecondPart != null
-                    ? '${widget.problem.answer}'
-                          '${widget.problem.secondPartSeparator}'
-                          '${widget.problem.answerSecondPart}'
-                    : widget.problem.answer,
-                isActive: widget.isActive,
-                isFuture: widget.isFuture,
-                solved: widget.done,
-                onSolved: widget.onDone,
-              ),
-          ],
-        ),
+          ),
+          if (widget.problem.keypadAnswer)
+            DigitKeypadAnswer(
+              correctAnswer: widget.problem.answer,
+              isActive: widget.isActive,
+              isFuture: widget.isFuture,
+              solved: widget.done,
+              onSolved: widget.onDone,
+            )
+          else if (widget.problem.choices != null)
+            McqAnswer(
+              choices: widget.problem.choices!,
+              correctAnswer: widget.problem.answerSecondPart != null
+                  ? '${widget.problem.answer}'
+                        '${widget.problem.secondPartSeparator}'
+                        '${widget.problem.answerSecondPart}'
+                  : widget.problem.answer,
+              isActive: widget.isActive,
+              isFuture: widget.isFuture,
+              solved: widget.done,
+              onSolved: widget.onDone,
+            ),
+        ],
+      ),
     );
   }
 }

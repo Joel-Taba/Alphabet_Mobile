@@ -23,7 +23,7 @@ import '../data/syllable_catalog.dart';
 import '../data/word_catalog.dart';
 import '../data/calcul_catalog.dart';
 import '../data/shape_catalog.dart';
-import '../data/tangram_catalog.dart';
+import '../data/solid3d_catalog.dart';
 import 'child_switcher_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -263,7 +263,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   int _repetitions = kDefaultRepetitions;
   int _tolerance = kDefaultTolerance;
   int _evaluationDuration = kDefaultEvaluationDuration;
-  VoiceGender _voiceGender = VoiceGender.femme;
   String? _photoBase64;
   String? _storedName;
 
@@ -311,7 +310,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final gender = await getStoredVoiceGender();
     final photo = await getStoredPhoto();
     final name = await getStoredName();
     if (!mounted) return;
@@ -326,7 +324,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       _evaluationDuration =
           prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
           kDefaultEvaluationDuration;
-      _voiceGender = gender;
       _photoBase64 = photo;
       _storedName = name;
     });
@@ -367,9 +364,72 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       0,
       (s, g) => s + (g['syllables'] as List).length,
     );
-    final tangramCount = tangramPuzzlesByDifficulty(
-      TangramDifficulty.simple,
-    ).length;
+    final solidCount = SOLID3D_TOPICS.length;
+
+    // Décompte fait sur le catalogue réellement affiché, avec EXACTEMENT les
+    // mêmes critères que le parcours (`parcours_screen.dart`) -- plutôt que
+    // le nombre brut d'entrées du journal par type, qui comptait aussi les
+    // puzzles-formules (journalisés en `LETTRE`), les lettres des autres
+    // langues, et chaque problème de solide résolu (une entrée par
+    // tentative) : le profil pouvait alors afficher des étapes "réalisées"
+    // qui ne l'étaient pas, voire dépasser le total.
+    bool done(String type, String modalite, String code) => progress
+        .isCompleted(typeEtape: type, modalite: modalite, etapeCode: code);
+    int count(Iterable<bool> flags) => flags.where((f) => f).length;
+
+    final signDone =
+        count(FAMILY_ORDER.map((f) => done('SIGNE', 'COURS', f))) +
+        count(
+          EXERCISE_CATALOG.map(
+            (e) => done('SIGNE', 'EXERCICE', e['id'] as String),
+          ),
+        );
+    final letterDone =
+        count(letterGroups.map((g) => done('LETTRE', 'COURS', g.id))) +
+        count(
+          letterGroups
+              .expand((g) => g.chars)
+              .map((c) => done('LETTRE', 'EXERCICE', c)),
+        );
+    final syllableDone =
+        count(
+          syllableGroups.map(
+            (g) => done('SYLLABE', 'COURS', g['consonant'] as String),
+          ),
+        ) +
+        count(
+          syllableGroups
+              .expand((g) => g['syllables'] as List)
+              .map(
+                (sy) => done(
+                  'SYLLABE',
+                  'EXERCICE',
+                  (sy as Map)['syllable'] as String,
+                ),
+              ),
+        );
+    final wordItems = PALIER3_GROUPS.fold<int>(0, (s, g) => s + g.words.length);
+    final wordDone =
+        count(PALIER3_GROUPS.map((g) => done('MOT', 'COURS', g.id))) +
+        count(
+          PALIER3_GROUPS
+              .expand((g) => g.words)
+              .map((w) => done('MOT', 'EXERCICE', w.id)),
+        );
+    final calculDone =
+        count(CALCUL_TOPICS.map((c) => done('CALCUL', 'COURS', c.id))) +
+        count(
+          CALCUL_TOPICS.map((c) => progress.isTopicExercised('CALCUL', c.id)),
+        );
+    final figureDone =
+        count(SHAPE_TOPICS.map((c) => done('FIGURE', 'COURS', c.id))) +
+        count(
+          SHAPE_TOPICS.map((c) => progress.isTopicExercised('FIGURE', c.id)),
+        ) +
+        count(SOLID3D_TOPICS.map((c) => done('SOLIDE', 'COURS', c.id))) +
+        count(
+          SOLID3D_TOPICS.map((c) => progress.isTopicExercised('SOLIDE', c.id)),
+        );
 
     return [
       (
@@ -377,7 +437,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         iconAsset: null,
         color: const Color(0xFF8FBF6F),
         name: palName(0),
-        done: progress.completedCountForType('SIGNE'),
+        done: signDone,
         total: FAMILY_ORDER.length + EXERCISE_CATALOG.length,
       ),
       (
@@ -385,7 +445,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         iconAsset: null,
         color: const Color(0xFFA9784F),
         name: palName(1),
-        done: progress.completedCountForType('LETTRE'),
+        done: letterDone,
         total: letterGroups.length + letterItems,
       ),
       if (lang == Lang.fr)
@@ -394,7 +454,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
           iconAsset: null,
           color: const Color(0xFFD07A04),
           name: palName(2),
-          done: progress.completedCountForType('SYLLABE'),
+          done: syllableDone,
           total: syllableGroups.length + syllableItems,
         ),
       (
@@ -402,8 +462,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         iconAsset: 'assets/images/abc-svgrepo-com.svg',
         color: const Color(0xFF4A90E2),
         name: palName(lang == Lang.fr ? 3 : 2),
-        done: progress.completedCountForType('MOT'),
-        total: PALIER3_GROUPS.length + WORD_CATALOG.length,
+        done: wordDone,
+        total: PALIER3_GROUPS.length + wordItems,
       ),
       if (lang == Lang.fr)
         (
@@ -411,7 +471,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
           iconAsset: null,
           color: const Color(0xFF8B5FBF),
           name: palName(4),
-          done: progress.completedTopicsForType('CALCUL'),
+          done: calculDone,
           total: CALCUL_TOPICS.length * 2,
         ),
       (
@@ -419,10 +479,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         iconAsset: null,
         color: const Color(0xFFB85454),
         name: figuresPalier?['title'] ?? '',
-        done:
-            progress.completedTopicsForType('FIGURE') +
-            progress.completedCountForType('TANGRAM'),
-        total: SHAPE_TOPICS.length * 2 + tangramCount * 2,
+        done: figureDone,
+        total: SHAPE_TOPICS.length * 2 + solidCount * 2,
       ),
     ];
   }
@@ -481,13 +539,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     await prefs.setBool('amani_setting_sound', enabled);
     setState(() => _soundEnabled = enabled);
     unawaited(backend.pushReglages(sonActif: enabled));
-  }
-
-  Future<void> _updateVoiceGender(VoiceGender gender) async {
-    // Pas d'équivalent côté back-end (aucun champ "voix" sur le profil) :
-    // réglage volontairement local uniquement.
-    await setStoredVoiceGender(gender);
-    setState(() => _voiceGender = gender);
   }
 
   Future<void> _updateVolume(double vol) async {
@@ -987,95 +1038,6 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         ),
                         label: Text(
                           hub['volumeTest'] ?? 'Tester le volume',
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w700,
-                            color: AmaniColors.primary,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AmaniColors.disabled),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const Divider(color: AmaniColors.disabled, height: 32),
-                    Text(
-                      hub['voiceGenderLabel'] ?? 'Style de voix',
-                      style: AmaniTheme.bodyStyle.copyWith(
-                        fontSize: 14,
-                        color: AmaniColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        for (final gender in VoiceGender.values) ...[
-                          if (gender != VoiceGender.values.first)
-                            const SizedBox(width: 10),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => _updateVoiceGender(gender),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _voiceGender == gender
-                                      ? AmaniColors.primary.withValues(
-                                          alpha: 0.15,
-                                        )
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: _voiceGender == gender
-                                        ? AmaniColors.primary
-                                        : AmaniColors.disabled,
-                                    width: 2,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  ((hub['voiceGenderOptions']
-                                              as List?)?[gender.index]
-                                          as Map?)?['label'] ??
-                                      (gender == VoiceGender.homme
-                                          ? 'Voix Homme'
-                                          : 'Voix Femme'),
-                                  style: TextStyle(
-                                    fontFamily: kBalooFontFamily,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
-                                    color: _voiceGender == gender
-                                        ? AmaniColors.primaryDark
-                                        : AmaniColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => speech.speak(
-                          hub['voiceGenderTestPhrase'] ?? '',
-                          langProvider.lang,
-                        ),
-                        icon: const Icon(
-                          Icons.play_arrow_rounded,
-                          size: 16,
-                          color: AmaniColors.primary,
-                        ),
-                        label: Text(
-                          hub['voiceGenderTest'] ?? 'Écouter un exemple',
                           style: TextStyle(
                             fontFamily: kBalooFontFamily,
                             fontWeight: FontWeight.w700,
@@ -1847,10 +1809,7 @@ class _PalierProgressCard extends StatelessWidget {
                         padding: const EdgeInsets.all(11),
                         child: SvgPicture.asset(
                           iconAsset!,
-                          colorFilter: ColorFilter.mode(
-                            color,
-                            BlendMode.srcIn,
-                          ),
+                          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
                         ),
                       )
                     : Icon(icon, color: color, size: 22),

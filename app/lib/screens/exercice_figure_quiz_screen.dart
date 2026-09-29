@@ -6,6 +6,7 @@ import '../i18n/translations.dart';
 import '../data/shape_catalog.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../widgets/quiz_bubble_card.dart';
+import '../widgets/quiz_kit.dart';
 import '../widgets/lettered_choice_grid.dart';
 import '../widgets/shape_glyph.dart';
 import '../widgets/amani_mascot.dart';
@@ -148,45 +149,57 @@ class _ExerciceFigureQuizScreenState extends State<ExerciceFigureQuizScreen> {
                 ],
               ),
             ),
+            QuizProgressBar(
+              accent: QuizBubbleCard.fill,
+              dots: [
+                for (var i = 0; i < _items.length; i++)
+                  _doneIndices.contains(i)
+                      ? QuizDot.correct
+                      : (i == _activeIdx ? QuizDot.current : QuizDot.pending),
+              ],
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: done
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
+                  if (!done)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AmaniColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            done
-                                ? (fq['doneBody'] ?? '').toString()
-                                : (fq['instruction'] ?? '').toString(),
-                            style: AmaniTheme.bodyStyle.copyWith(
-                              fontSize: 13,
-                              color: AmaniColors.textSecondary,
+                      ),
+                      child: Row(
+                        children: [
+                          AmaniMascot(
+                            pose: done
+                                ? AmaniPose.celebration
+                                : AmaniPose.encouragement,
+                            size: AmaniSize.small,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              done
+                                  ? (fq['doneBody'] ?? '').toString()
+                                  : (fq['instruction'] ?? '').toString(),
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 13,
+                                color: AmaniColors.textSecondary,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 14),
                   for (var i = 0; i < _items.length; i++) ...[
                     _QuizCard(
+                      index: i,
+                      total: _items.length,
                       key: ValueKey('$i-r$_restartKey'),
                       item: _items[i],
                       lang: lang,
@@ -198,34 +211,16 @@ class _ExerciceFigureQuizScreenState extends State<ExerciceFigureQuizScreen> {
                     const SizedBox(height: 12),
                   ],
                   if (done)
-                    GestureDetector(
-                      onTap: _restart,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFB85454),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              LucideIcons.rotateCcw,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              (common['replay'] ?? 'Relancer').toString(),
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
+                    Center(
+                      child: QuizDoneCard(
+                        title: (fq['doneTitle'] ?? '').toString(),
+                        body: (fq['doneBody'] ?? '').toString(),
+                        score: _doneIndices.length,
+                        total: _items.length,
+                        replayLabel: (common['replay'] ?? 'Relancer')
+                            .toString(),
+                        onReplay: _restart,
+                        accent: QuizBubbleCard.fill,
                       ),
                     ),
                 ],
@@ -241,6 +236,8 @@ class _ExerciceFigureQuizScreenState extends State<ExerciceFigureQuizScreen> {
 class _QuizCard extends StatelessWidget {
   final _Prompt item;
   final Lang lang;
+  final int index;
+  final int total;
   final bool isActive;
   final bool isFuture;
   final bool done;
@@ -248,6 +245,8 @@ class _QuizCard extends StatelessWidget {
 
   const _QuizCard({
     super.key,
+    required this.index,
+    required this.total,
     required this.item,
     required this.lang,
     required this.isActive,
@@ -277,6 +276,8 @@ class _QuizCard extends StatelessWidget {
       child: Column(
         children: [
           QuizBubbleCard(
+            badge: '${index + 1} / $total',
+            feedback: done ? true : null,
             label: (fq['title'] ?? 'Quiz').toString(),
             child: ShapeGlyph(
               shapeId: item.shapeId,

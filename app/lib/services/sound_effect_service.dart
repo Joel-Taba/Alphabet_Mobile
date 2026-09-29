@@ -14,7 +14,12 @@ import 'package:audioplayers/audioplayers.dart';
 class SoundEffectService {
   SoundEffectService._();
 
+  /// Coupe tous les effets sonores -- utilisé par les tests automatiques,
+  /// où aucun lecteur audio natif n'est disponible.
+  static bool muted = false;
+
   static void _play(String asset) {
+    if (muted) return;
     final player = AudioPlayer();
     player.onPlayerComplete.listen((_) => player.dispose());
     player.play(AssetSource(asset)).catchError((_) {

@@ -11,6 +11,7 @@ import '../data/letter_formation_catalog.dart';
 import '../data/letter_style_resolver.dart';
 import '../hooks/use_writing_style.dart';
 import '../data/palier2_groups.dart';
+import '../data/evaluation_catalog.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/repetition_row.dart';
 import '../utils/trace_validation.dart';
@@ -62,15 +63,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   final Set<String> _doneGroupLetters = {};
 
   bool _letterSuccess = false;
-
-  /// `true` uniquement lorsque `_letterSuccess` vient de passer à `true`
-  /// PENDANT cette visite (dans `_handleLetterRepetitionsDone`) -- jamais
-  /// lors de la restauration depuis une réussite déjà acquise (`initState`).
-  /// Sans cette distinction, rouvrir un exercice déjà réussi lors d'une
-  /// visite précédente faisait immédiatement réapparaître la pop-up de
-  /// félicitations (avec ses confettis), alors qu'aucun tracé n'avait
-  /// encore eu lieu lors de CETTE visite.
-  bool _justCompletedThisVisit = false;
   // Incrémenté à chaque "Recommencer" pour forcer le remontage des
   // RepetitionRow de la Phase A (elles gèrent leur propre état interne).
   int _restartKey = 0;
@@ -95,24 +87,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _speakStart());
     if (_isEvaluation) {
       _initEvaluation();
-    } else if (context.read<ProgressProvider>().isCompleted(
-      typeEtape: 'LETTRE',
-      modalite: 'EXERCICE',
-      etapeCode: widget.char,
-    )) {
-      // Cette lettre/ce chiffre a déjà été tracé(e) avec succès lors d'une
-      // précédente visite de cet écran (voir `_handleLetterRepetitionsDone`) :
-      // le retrouver acquis plutôt que redemander un tracé déjà réussi.
-      _letterSuccess = true;
-      // Aucun `etapeCode` propre à chaque étape de la Phase A (un seul
-      // `awardCompletion` global pour toute la lettre) : si la lettre entière
-      // est déjà acquise, toutes ses étapes le sont nécessairement aussi.
-      final letter = getLetterFormation(
-        widget.char,
-        context.read<WritingStyleProvider>().style.name,
-      );
-      final stepCount = (letter?['steps'] as List?)?.length ?? 0;
-      _doneSteps.addAll(List.generate(stepCount, (i) => i));
     }
   }
 
@@ -124,7 +98,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
     // individuelle a déjà son propre écran de succès (`_LetterSuccessOverlay`),
     // donc ici on ne fait qu'alimenter le compteur "X/Y groupes" du bandeau,
     // sans ajouter de pop-up supplémentaire par lettre.
-    _session.configureSubjects(getPalier2Groups(lang.name).length);
+    // En évaluation on limite à 10 groupes clés ; le parcours normal garde
+    // la liste complète (14 groupes).
+    _session.configureSubjects(
+      _isEvaluation
+          ? getEvalPalier2Groups().length
+          : getPalier2Groups(lang.name).length,
+    );
     if (continuing) return;
     final saved = await _session.readSavedProgress(_kEvalId);
     if (!mounted) return;
@@ -143,8 +123,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   }
 
   void _handleResume(Map<String, dynamic> saved) {
-    final lang = context.read<LanguageProvider>().lang;
-    final palier2Groups = getPalier2Groups(lang.name);
+    final palier2Groups = getEvalPalier2Groups();
     _session.resumeFrom(saved);
     setState(() {
       _resumeOffer = null;
@@ -199,7 +178,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   void _resetAll() {
     _doneSteps.clear();
     _letterSuccess = false;
-    _justCompletedThisVisit = false;
     _doneGroupLetters.clear();
   }
 
@@ -228,15 +206,18 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
       ),
       lang,
     );
-    context.read<ProgressProvider>().awardCompletion(
-      typeEtape: 'LETTRE',
-      modalite: 'EXERCICE',
-      etapeCode: widget.char,
-      palier: 2,
-    );
+    // Une évaluation de fin de palier teste l'enfant : elle ne doit
+    // jamais cocher à sa place les étapes du parcours qu'il n'a pas faites.
+    if (!_isEvaluation) {
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'LETTRE',
+        modalite: 'EXERCICE',
+        etapeCode: widget.char,
+        palier: 2,
+      );
+    }
     setState(() {
       _letterSuccess = true;
-      _justCompletedThisVisit = true;
     });
     if (_awaitingRepeatCompletion) {
       context.read<ProgressProvider>().awardRestartBonus();
@@ -261,12 +242,16 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
       ),
       lang,
     );
-    context.read<ProgressProvider>().awardCompletion(
-      typeEtape: 'LETTRE',
-      modalite: 'EXERCICE',
-      etapeCode: char,
-      palier: 2,
-    );
+    // Une évaluation de fin de palier teste l'enfant : elle ne doit
+    // jamais cocher à sa place les étapes du parcours qu'il n'a pas faites.
+    if (!_isEvaluation) {
+      context.read<ProgressProvider>().awardCompletion(
+        typeEtape: 'LETTRE',
+        modalite: 'EXERCICE',
+        etapeCode: char,
+        palier: 2,
+      );
+    }
     setState(() => _doneGroupLetters.add(char));
     _session.recordItemDone(char);
     if (_doneGroupLetters.length >= totalGroupLetters &&
@@ -427,10 +412,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -490,13 +472,13 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               Text(
                                 _letterSuccess
                                     ? (isDigit
-                                          ? el['successAllDigit']
-                                          : el['successAll']) ??
+                                              ? el['successAllDigit']
+                                              : el['successAll']) ??
                                           ''
                                     : allStepsDone
                                     ? (isDigit
-                                          ? el['finalTitleDigit']
-                                          : el['finalTitle']) ??
+                                              ? el['finalTitleDigit']
+                                              : el['finalTitle']) ??
                                           ''
                                     : (el['practiceStepsTitle'] ?? ''),
                                 style: AmaniTheme.titleStyle.copyWith(
@@ -509,8 +491,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                     ? (el['successAllSub'] ?? '')
                                     : allStepsDone
                                     ? (isDigit
-                                          ? el['finalHintDigit']
-                                          : el['finalHint']) ??
+                                              ? el['finalHintDigit']
+                                              : el['finalHint']) ??
                                           ''
                                     : tFormat(
                                         (isDigit
@@ -575,75 +557,76 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                         i < steps.length;
                                         i++
                                       ) ...[
-                                      RepetitionRow(
-                                        key: ValueKey(
-                                          '${letter['char']}-step-$i-r$_restartKey',
-                                        ),
-                                        locked:
-                                            i > 0 &&
-                                            !_doneSteps.contains(i - 1),
-                                        entry: TraceableEntry(
-                                          id: '${letter['char']}-step-$i',
-                                          pathD: steps[i]['pathD'] as String,
-                                          // Dérivé du tracé lui-même — voir
-                                          // `pathStartPoint` — plutôt que du
-                                          // champ startXY du catalogue.
-                                          startXY: pathStartPoint(
-                                            steps[i]['pathD'] as String,
+                                        RepetitionRow(
+                                          key: ValueKey(
+                                            '${letter['char']}-step-$i-r$_restartKey',
                                           ),
-                                          strokeColor: Color(
-                                            int.parse(
-                                              (steps[i]['strokeColor']
-                                                      as String)
-                                                  .replaceFirst('#', '0xFF'),
+                                          locked:
+                                              i > 0 &&
+                                              !_doneSteps.contains(i - 1),
+                                          entry: TraceableEntry(
+                                            id: '${letter['char']}-step-$i',
+                                            pathD: steps[i]['pathD'] as String,
+                                            // Dérivé du tracé lui-même — voir
+                                            // `pathStartPoint` — plutôt que du
+                                            // champ startXY du catalogue.
+                                            startXY: pathStartPoint(
+                                              steps[i]['pathD'] as String,
+                                            ),
+                                            strokeColor: Color(
+                                              int.parse(
+                                                (steps[i]['strokeColor']
+                                                        as String)
+                                                    .replaceFirst('#', '0xFF'),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        label:
-                                            steps[i]['description'][lang
-                                                .name] ??
-                                            '',
-                                        repetitions: _settings.repetitions,
-                                        tolerance: _settings.tolerance,
-                                        doneLabel: elL['done'] ?? 'Terminé !',
-                                        initiallyDone: _doneSteps.contains(i),
-                                        onSpeak: () => speech.speak(
-                                          steps[i]['description'][lang.name] ??
+                                          label:
+                                              steps[i]['description'][lang
+                                                  .name] ??
                                               '',
-                                          lang,
-                                        ),
-                                        onAllDone: () =>
-                                            setState(() => _doneSteps.add(i)),
-                                        badge: Container(
-                                          width: 26,
-                                          height: 26,
-                                          decoration: const BoxDecoration(
-                                            color: AmaniColors.primary,
-                                            shape: BoxShape.circle,
+                                          repetitions: _settings.repetitions,
+                                          tolerance: _settings.tolerance,
+                                          doneLabel: elL['done'] ?? 'Terminé !',
+                                          initiallyDone: _doneSteps.contains(i),
+                                          onSpeak: () => speech.speak(
+                                            steps[i]['description'][lang
+                                                    .name] ??
+                                                '',
+                                            lang,
                                           ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            '${i + 1}',
-                                            textHeightBehavior:
-                                                const TextHeightBehavior(
-                                                  applyHeightToFirstAscent:
-                                                      false,
-                                                  applyHeightToLastDescent:
-                                                      false,
-                                                ),
-                                            style: TextStyle(
-                                              fontFamily: kBalooFontFamily,
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 14,
-                                              color: Colors.white,
-                                              height: 1,
+                                          onAllDone: () =>
+                                              setState(() => _doneSteps.add(i)),
+                                          badge: Container(
+                                            width: 26,
+                                            height: 26,
+                                            decoration: const BoxDecoration(
+                                              color: AmaniColors.primary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              '${i + 1}',
+                                              textHeightBehavior:
+                                                  const TextHeightBehavior(
+                                                    applyHeightToFirstAscent:
+                                                        false,
+                                                    applyHeightToLastDescent:
+                                                        false,
+                                                  ),
+                                              style: TextStyle(
+                                                fontFamily: kBalooFontFamily,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 14,
+                                                color: Colors.white,
+                                                height: 1,
+                                              ),
                                             ),
                                           ),
+                                          showCard: false,
                                         ),
-                                        showCard: false,
-                                      ),
-                                      const SizedBox(height: 12),
-                                    ],
+                                        const SizedBox(height: 12),
+                                      ],
 
                                     // Phase B — la lettre entière, répétée
                                     // autant de fois que le nombre de
@@ -652,8 +635,9 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(24),
                                         decoration: BoxDecoration(
-                                          color: AmaniColors.surface
-                                              .withValues(alpha: 0.6),
+                                          color: AmaniColors.surface.withValues(
+                                            alpha: 0.6,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             20,
                                           ),
@@ -742,11 +726,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                                   style: TextStyle(
                                                     fontFamily:
                                                         kBalooFontFamily,
-                                                    fontWeight:
-                                                        FontWeight.w800,
+                                                    fontWeight: FontWeight.w800,
                                                     fontSize: 13,
-                                                    color: AmaniColors
-                                                        .textPrimary,
+                                                    color:
+                                                        AmaniColors.textPrimary,
                                                   ),
                                                 ),
                                                 Text(
@@ -754,8 +737,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                                   style: TextStyle(
                                                     fontFamily:
                                                         kBalooFontFamily,
-                                                    fontWeight:
-                                                        FontWeight.w800,
+                                                    fontWeight: FontWeight.w800,
                                                     fontSize: 12,
                                                     color:
                                                         AmaniColors.secondary,
@@ -778,9 +760,9 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                                   _FormulaBadge(
                                                     label:
                                                         ((steps[i]['description'][lang
-                                                                    .name] ??
-                                                                '')
-                                                            as String)
+                                                                        .name] ??
+                                                                    '')
+                                                                as String)
                                                             .split(' ')
                                                             .first,
                                                     index: i,
@@ -792,8 +774,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                                   style: TextStyle(
                                                     fontFamily:
                                                         kBalooFontFamily,
-                                                    fontWeight:
-                                                        FontWeight.w800,
+                                                    fontWeight: FontWeight.w800,
                                                     fontSize: 18,
                                                     color: AmaniColors.primary,
                                                   ),
@@ -841,7 +822,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
               ],
             ),
 
-            if (_letterSuccess && _justCompletedThisVisit && !_freeModeOnly)
+            if (_letterSuccess && !_freeModeOnly)
               ExerciseCompletePopup(
                 onBackHome: () => goHome(context),
                 onNext: nextCoursChar != null
@@ -894,14 +875,14 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
         groupLetters.isNotEmpty &&
         _doneGroupLetters.length == groupLetters.length;
 
-    final palier2Groups = getPalier2Groups(lang.name);
-    final groupIdx = palier2Groups.indexWhere(
+    final evalGroups = getEvalPalier2Groups();
+    final groupIdx = evalGroups.indexWhere(
       (g) => g.id == progressionGroup.id,
     );
     // Une fois la dernière lettre du dernier groupe atteinte, on reboucle
     // sur le premier — seul le chronomètre décide de la fin de la session.
     final evalNextGroup = groupIdx >= 0
-        ? palier2Groups[(groupIdx + 1) % palier2Groups.length]
+        ? evalGroups[(groupIdx + 1) % evalGroups.length]
         : null;
 
     return Scaffold(
@@ -944,10 +925,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1012,12 +990,12 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               Text(
                                 allGroupDone
                                     ? (isGroupDigits
-                                          ? el['successAllDigit']
-                                          : el['successAll']) ??
+                                              ? el['successAllDigit']
+                                              : el['successAll']) ??
                                           ''
                                     : (isGroupDigits
-                                          ? el['finalTitleDigit']
-                                          : el['finalTitle']) ??
+                                              ? el['finalTitleDigit']
+                                              : el['finalTitle']) ??
                                           '',
                                 style: AmaniTheme.titleStyle.copyWith(
                                   fontSize: 14,
@@ -1028,8 +1006,8 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                 allGroupDone
                                     ? (el['successAllSub'] ?? '')
                                     : (isGroupDigits
-                                          ? el['finalHintDigit']
-                                          : el['finalHint']) ??
+                                              ? el['finalHintDigit']
+                                              : el['finalHint']) ??
                                           '',
                                 style: AmaniTheme.bodyStyle.copyWith(
                                   fontSize: 12,
@@ -1112,9 +1090,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
               ],
             ),
             if (session.expired)
-              EvaluationCompleteOverlay(
-                onBack: () => goHome(context),
-              ),
+              EvaluationCompleteOverlay(onBack: () => goHome(context)),
             if (_resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
                 onResume: () => _handleResume(_resumeOffer!),
@@ -1137,9 +1113,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                   'title': evalNextGroup.title[lang.name] ?? '',
                 }),
                 onContinue: () {
-                  session.advanceSubject(
-                    (groupIdx + 1) % palier2Groups.length,
-                  );
+                  session.advanceSubject((groupIdx + 1) % evalGroups.length);
                   context.replace(
                     '/exercice/lettre/${evalNextGroup.chars.first}?pg=${evalNextGroup.id}&amaniEval=1',
                   );
@@ -1181,9 +1155,10 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
             doneLabel: elL['done'] ?? 'Terminé !',
             locked: locked,
             onSpeak: () => speech.speak(
-              tFormat((isDigit ? el['speakStartDigit'] : el['speakStart']) ?? '', {
-                'name': letter['name'][lang.name] ?? '',
-              }),
+              tFormat(
+                (isDigit ? el['speakStartDigit'] : el['speakStart']) ?? '',
+                {'name': letter['name'][lang.name] ?? ''},
+              ),
               lang,
             ),
             onAllDone: done
@@ -1264,7 +1239,6 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
   }
 }
 
-
 class _FormulaBadge extends StatelessWidget {
   final String label;
   final int index;
@@ -1344,7 +1318,6 @@ class _FormulaBadge extends StatelessWidget {
     );
   }
 }
-
 
 /// Prolonge visuellement la feuille de cahier partagée jusqu'en bas de la
 /// page quand le contenu ne suffit pas à la remplir — copie de

@@ -53,12 +53,25 @@ class WelcomeScreen extends StatelessWidget {
                   color: AmaniColors.textSecondary,
                 ),
               ),
-              const Spacer(),
-              const AmaniMascot(
-                pose: AmaniPose.accueil,
-                size: AmaniSize.heroLg,
+              // La mascotte prend la place restante, et rapetisse sur les
+              // écrans peu hauts (paysage, petite tablette) au lieu de faire
+              // déborder la page : avec une taille fixe entre deux `Spacer`,
+              // l'écran débordait de 200 px en 800×600 (détecté par
+              // `test/widget_test.dart`).
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: AmaniMascot(
+                        pose: AmaniPose.accueil,
+                        size: AmaniSize.heroLg,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              const Spacer(),
               AmaniButton(
                 label: t['welcome']['start'],
                 fullWidth: true,

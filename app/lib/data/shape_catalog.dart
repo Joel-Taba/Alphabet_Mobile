@@ -66,25 +66,24 @@ const List<ShapeTopic> SHAPE_TOPICS = [
       'ar': 'المربع',
     },
     funFactTitle: {
-      'fr': '4 côtés égaux !',
-      'en': '4 equal sides!',
-      'es': '¡4 lados iguales!',
-      'ar': '4 أضلاع متساوية!',
+      'fr': 'Qu\'est-ce qu\'un carré ?',
+      'en': 'What is a square?',
+      'es': '¿Qué es un cuadrado?',
+      'ar': 'ما هو المربع؟',
     },
     funFactBody: {
       'fr':
-          'Comme une fenêtre ou une case de damier ! Ses 4 côtés ont tous '
-          'exactement la même longueur, et ses 4 coins sont bien droits.',
+          'Un carré est une figure plate à 4 côtés. Ses 4 côtés ont exactement '
+          'la même longueur et ses 4 coins sont des angles droits (90°).',
       'en':
-          'Like a window or a checkerboard square! All 4 sides are exactly '
-          'the same length, and all 4 corners are perfectly straight.',
+          'A square is a flat shape with 4 sides. All 4 sides have exactly '
+          'the same length and all 4 corners are right angles (90°).',
       'es':
-          '¡Como una ventana o una casilla de un tablero! Sus 4 lados '
-          'tienen exactamente la misma longitud, y sus 4 esquinas son bien '
-          'rectas.',
+          'Un cuadrado es una figura plana con 4 lados. Sus 4 lados tienen '
+          'exactamente la misma longitud y sus 4 esquinas son ángulos rectos (90°).',
       'ar':
-          'مثل النافذة أو مربع رقعة الشطرنج! أضلاعه الأربعة متساوية تمامًا '
-          'في الطول، وزواياه الأربع قائمة تمامًا.',
+          'المربع شكل مسطح يحتوي على 4 أضلاع. أضلاعه الأربعة متساوية تمامًا '
+          'في الطول، وزواياه الأربع قائمة (90°).',
     },
     sides: 4,
     corners: 4,
@@ -144,26 +143,24 @@ const List<ShapeTopic> SHAPE_TOPICS = [
       'ar': 'المستطيل',
     },
     funFactTitle: {
-      'fr': '2 longs côtés, 2 courts côtés !',
-      'en': '2 long sides, 2 short sides!',
-      'es': '¡2 lados largos, 2 lados cortos!',
-      'ar': 'ضلعان طويلان وضلعان قصيران!',
+      'fr': 'Qu\'est-ce qu\'un rectangle ?',
+      'en': 'What is a rectangle?',
+      'es': '¿Qué es un rectángulo?',
+      'ar': 'ما هو المستطيل؟',
     },
     funFactBody: {
       'fr':
-          'Comme une porte ou un écran de tablette ! Il a 4 coins bien '
-          'droits, mais contrairement au carré, ses côtés ne sont pas tous '
-          'pareils.',
+          'Un rectangle est un quadrilatère (une figure plate à quatre côtés) '
+          'qui possède quatre angles droits.',
       'en':
-          'Like a door or a tablet screen! It has 4 straight corners, but '
-          'unlike the square, its sides aren\'t all the same.',
+          'A rectangle is a quadrilateral (a flat shape with four sides) '
+          'that has four right angles.',
       'es':
-          '¡Como una puerta o la pantalla de una tableta! Tiene 4 esquinas '
-          'bien rectas, pero a diferencia del cuadrado, sus lados no son '
-          'todos iguales.',
+          'Un rectángulo es un cuadrilátero (una figura plana de cuatro lados) '
+          'que tiene cuatro ángulos rectos.',
       'ar':
-          'مثل الباب أو شاشة الجهاز اللوحي! له 4 زوايا قائمة، لكن على عكس '
-          'المربع، أضلاعه ليست كلها متساوية.',
+          'المستطيل شكل رباعي (شكل مسطح بأربعة أضلاع) '
+          'يمتلك أربع زوايا قائمة.',
     },
     sides: 4,
     corners: 4,
@@ -219,24 +216,24 @@ const List<ShapeTopic> SHAPE_TOPICS = [
       'ar': 'المثلث',
     },
     funFactTitle: {
-      'fr': '3 côtés, 3 coins pointus !',
-      'en': '3 sides, 3 pointy corners!',
-      'es': '¡3 lados, 3 esquinas puntiagudas!',
-      'ar': '3 أضلاع و3 زوايا مدببة!',
+      'fr': 'Qu\'est-ce qu\'un triangle ?',
+      'en': 'What is a triangle?',
+      'es': '¿Qué es un triángulo?',
+      'ar': 'ما هو المثلث؟',
     },
     funFactBody: {
       'fr':
-          'Comme une part de pizza ou le toit d\'une maison ! C\'est la '
-          'figure avec le moins de côtés possible.',
+          'Un triangle est une figure géométrique à trois côtés, '
+          'trois sommets et trois angles.',
       'en':
-          'Like a slice of pizza or the roof of a house! It\'s the shape '
-          'with the fewest possible sides.',
+          'A triangle is a geometric shape with three sides, '
+          'three vertices and three angles.',
       'es':
-          '¡Como una porción de pizza o el techo de una casa! Es la figura '
-          'con la menor cantidad de lados posible.',
+          'Un triángulo es una figura geométrica con tres lados, '
+          'tres vértices y tres ángulos.',
       'ar':
-          'مثل قطعة البيتزا أو سقف المنزل! إنه الشكل الذي يحتوي على أقل '
-          'عدد ممكن من الأضلاع.',
+          'المثلث شكل هندسي يحتوي على ثلاثة أضلاع، '
+          'ثلاثة رؤوس وثلاث زوايا.',
     },
     sides: 3,
     corners: 3,
@@ -286,24 +283,24 @@ const List<ShapeTopic> SHAPE_TOPICS = [
       'ar': 'الدائرة',
     },
     funFactTitle: {
-      'fr': 'Pas un seul coin !',
-      'en': 'Not a single corner!',
-      'es': '¡Ni una sola esquina!',
-      'ar': 'لا زوايا على الإطلاق!',
+      'fr': 'Qu\'est-ce qu\'un cercle ?',
+      'en': 'What is a circle?',
+      'es': '¿Qué es un círculo?',
+      'ar': 'ما هي الدائرة؟',
     },
     funFactBody: {
       'fr':
-          'Comme une roue ou une pizza entière ! Il n\'a ni côté droit ni '
-          'coin : tout est rond, tout le tour.',
+          'Un cercle est une ligne courbe plane fermée dont tous les points '
+          'sont situés à égale distance d\'un point unique appelé le centre.',
       'en':
-          'Like a wheel or a whole pizza! It has no straight sides and no '
-          'corners: it\'s round all the way around.',
+          'A circle is a closed flat curved line where all points are at '
+          'an equal distance from a single point called the centre.',
       'es':
-          '¡Como una rueda o una pizza entera! No tiene lados rectos ni '
-          'esquinas: todo es redondo, en todo su contorno.',
+          'Un círculo es una línea curva plana cerrada en la que todos los '
+          'puntos están a la misma distancia de un punto único llamado centro.',
       'ar':
-          'مثل عجلة أو بيتزا كاملة! ليس له أضلاع مستقيمة ولا زوايا: كله '
-          'مستدير طوال الوقت.',
+          'الدائرة خط منحنٍ مستوٍ مغلق، جميع نقاطه تقع على مسافة '
+          'متساوية من نقطة واحدة تُسمّى المركز.',
     },
     sides: 0,
     corners: 0,
@@ -339,29 +336,27 @@ const List<ShapeTopic> SHAPE_TOPICS = [
       'ar': 'متوازي الأضلاع',
     },
     funFactTitle: {
-      'fr': 'Penché, mais bien parallèle !',
-      'en': 'Leaning, but still parallel!',
-      'es': '¡Inclinado, pero bien paralelo!',
-      'ar': 'مائل، لكن متوازي تمامًا!',
+      'fr': 'Qu\'est-ce qu\'un parallélogramme ?',
+      'en': 'What is a parallelogram?',
+      'es': '¿Qué es un paralelogramo?',
+      'ar': 'ما هو متوازي الأضلاع؟',
     },
     funFactBody: {
       'fr':
-          "Comme une porte qui penche ou l'ombre d'une fenêtre au soleil "
-          "couchant ! Ses côtés opposés sont parallèles et de la même "
-          "longueur, mais ses coins ne sont pas bien droits comme ceux du "
-          "rectangle.",
+          'Un parallélogramme est une figure plate à 4 côtés. Ses côtés '
+          'opposés sont égaux et parallèles (ils ne se touchent jamais), '
+          'mais ses coins ne sont pas des angles droits.',
       'en':
-          "Like a leaning door or a window's shadow at sunset! Its opposite "
-          "sides are parallel and the same length, but its corners aren't "
-          "straight like a rectangle's.",
+          'A parallelogram is a flat shape with 4 sides. Its opposite sides '
+          'are equal and parallel (they never meet), but its corners are '
+          'not right angles.',
       'es':
-          '¡Como una puerta inclinada o la sombra de una ventana al '
-          'atardecer! Sus lados opuestos son paralelos y de la misma '
-          'longitud, pero sus esquinas no son rectas como las del '
-          'rectángulo.',
+          'Un paralelogramo es una figura plana con 4 lados. Sus lados '
+          'opuestos son iguales y paralelos (nunca se tocan), pero sus '
+          'esquinas no son ángulos rectos.',
       'ar':
-          'مثل باب مائل أو ظل نافذة عند الغروب! أضلاعه المتقابلة متوازية '
-          'ومتساوية في الطول، لكن زواياه ليست قائمة كزوايا المستطيل.',
+          'متوازي الأضلاع شكل مسطح يحتوي على 4 أضلاع. أضلاعه المتقابلة '
+          'متساوية ومتوازية (لا تلتقي أبداً)، لكن زواياه ليست قائمة.',
     },
     sides: 4,
     corners: 4,
@@ -421,31 +416,24 @@ const List<ShapeTopic> SHAPE_TOPICS = [
       'ar': 'المعين',
     },
     funFactTitle: {
-      'fr': '4 côtés égaux, mais pointu !',
-      'en': '4 equal sides, but pointy!',
-      'es': '¡4 lados iguales, pero puntiagudo!',
-      'ar': '4 أضلاع متساوية، لكنه مدبب!',
+      'fr': 'Qu\'est-ce qu\'un losange ?',
+      'en': 'What is a rhombus?',
+      'es': '¿Qué es un rombo?',
+      'ar': 'ما هو المعين؟',
     },
     funFactBody: {
       'fr':
-          'Comme un cerf-volant ou le symbole ♦ des cartes à jouer ! Ses 4 '
-          "côtés ont tous la même longueur, mais contrairement au carré, "
-          "ses coins ne sont pas droits : deux sont pointus (en haut et en "
-          "bas) et deux sont plus larges (à gauche et à droite).",
+          'Un losange est un quadrilatère (une figure plate à quatre côtés) '
+          'dont tous les côtés ont la même longueur.',
       'en':
-          'Like a kite or the ♦ symbol on playing cards! All 4 sides are '
-          "the same length, but unlike the square, its corners aren't "
-          'straight: two are pointy (top and bottom) and two are wider '
-          '(left and right).',
+          'A rhombus is a quadrilateral (a flat shape with four sides) '
+          'where all sides have the same length.',
       'es':
-          '¡Como una cometa o el símbolo ♦ de las cartas! Sus 4 lados '
-          'tienen la misma longitud, pero a diferencia del cuadrado, sus '
-          'esquinas no son rectas: dos son puntiagudas (arriba y abajo) y '
-          'dos son más anchas (a la izquierda y a la derecha).',
+          'Un rombo es un cuadrilátero (una figura plana de cuatro lados) '
+          'en el que todos los lados tienen la misma longitud.',
       'ar':
-          'مثل الطائرة الورقية أو رمز ♦ في أوراق اللعب! أضلاعه الأربعة '
-          'متساوية في الطول، لكن على عكس المربع، زواياه ليست قائمة: زاويتان '
-          'مدببتان (فوق وتحت) وزاويتان أعرض (يسار ويمين).',
+          'المعين شكل رباعي (شكل مسطح بأربعة أضلاع) '
+          'جميع أضلاعه متساوية في الطول.',
     },
     sides: 4,
     corners: 4,

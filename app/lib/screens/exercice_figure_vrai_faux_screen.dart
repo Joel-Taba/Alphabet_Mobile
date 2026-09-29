@@ -7,7 +7,7 @@ import '../data/shape_catalog.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/quiz_bubble_card.dart';
-import '../widgets/lettered_choice_button.dart';
+import '../widgets/quiz_kit.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/wrong_answer_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -17,6 +17,8 @@ import '../utils/navigation_helpers.dart';
 /// affirmations simples sur les propriétés des figures, calqué directement
 /// sur `exercice_calcul_vrai_faux_screen.dart` (même structure d'écran, un
 /// nouveau modèle de contenu `ShapeStatement`).
+const Color _kAccent = Color(0xFFB85454);
+
 class ExerciceFigureVraiFauxScreen extends StatefulWidget {
   const ExerciceFigureVraiFauxScreen({super.key});
 
@@ -32,6 +34,7 @@ class _ExerciceFigureVraiFauxScreenState
   int _index = 0;
   int _score = 0;
   int _restartKey = 0;
+  List<bool?> _results = const [];
   bool? _lastCorrect;
   bool? _guessedTrue;
   bool _locked = false;
@@ -54,6 +57,7 @@ class _ExerciceFigureVraiFauxScreenState
     final pool = [...SHAPE_STATEMENTS]..shuffle(Random(_restartKey));
     final count = _settings.repetitions.clamp(1, pool.length);
     _items = pool.take(count).toList();
+    _results = List<bool?>.filled(_items.length, null);
     _index = 0;
     _score = 0;
     _lastCorrect = null;
@@ -75,6 +79,7 @@ class _ExerciceFigureVraiFauxScreenState
       _locked = true;
       _lastCorrect = correct;
       _guessedTrue = guessTrue;
+      _results[_index] = correct;
       if (correct) _score++;
     });
     if (correct) {
@@ -161,10 +166,7 @@ class _ExerciceFigureVraiFauxScreenState
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -190,17 +192,29 @@ class _ExerciceFigureVraiFauxScreenState
                     ],
                   ),
                 ),
+                QuizProgressBar(
+                  accent: _kAccent,
+                  dots: [
+                    for (var i = 0; i < _results.length; i++)
+                      _results[i] == null
+                          ? (i == _index ? QuizDot.current : QuizDot.pending)
+                          : (_results[i]! ? QuizDot.correct : QuizDot.wrong),
+                  ],
+                ),
                 Expanded(
                   child: Center(
-                    child: Padding(
+                    child: SingleChildScrollView(
                       padding: const EdgeInsets.all(20),
                       child: done
-                          ? _DoneCard(
+                          ? QuizDoneCard(
                               title: (vf['doneTitle'] ?? '').toString(),
                               body: (vf['doneBody'] ?? '').toString(),
+                              score: _score,
+                              total: _items.length,
                               replayLabel: (common['replay'] ?? 'Relancer')
                                   .toString(),
                               onReplay: _restart,
+                              accent: _kAccent,
                             )
                           : Column(
                               mainAxisSize: MainAxisSize.min,
@@ -216,6 +230,8 @@ class _ExerciceFigureVraiFauxScreenState
                                 QuizBubbleCard(
                                   label: (vf['title'] ?? 'Vrai ou faux ?')
                                       .toString(),
+                                  badge: '${_index + 1} / ${_items.length}',
+                                  feedback: _lastCorrect,
                                   child: Text(
                                     current == null
                                         ? ''
@@ -224,55 +240,22 @@ class _ExerciceFigureVraiFauxScreenState
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 22,
+                                      height: 1.25,
                                       color: Colors.white,
                                     ),
                                   ),
                                 ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    LetteredChoiceButton(
-                                      letter: 'A',
-                                      content: Text(
-                                        (vf['true'] ?? 'Vrai').toString(),
-                                        style: TextStyle(
-                                          fontFamily: kBalooFontFamily,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                          color: AmaniColors.textPrimary,
-                                        ),
-                                      ),
-                                      state: _guessedTrue == true
-                                          ? (_lastCorrect!
-                                                ? ChoiceVisualState.correct
-                                                : ChoiceVisualState.wrong)
-                                          : ChoiceVisualState.idle,
-                                      dimmed: false,
-                                      onTap: () => _answer(true),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    LetteredChoiceButton(
-                                      letter: 'B',
-                                      content: Text(
-                                        (vf['false'] ?? 'Faux').toString(),
-                                        style: TextStyle(
-                                          fontFamily: kBalooFontFamily,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                          color: AmaniColors.textPrimary,
-                                        ),
-                                      ),
-                                      state: _guessedTrue == false
-                                          ? (_lastCorrect!
-                                                ? ChoiceVisualState.correct
-                                                : ChoiceVisualState.wrong)
-                                          : ChoiceVisualState.idle,
-                                      dimmed: false,
-                                      onTap: () => _answer(false),
-                                    ),
-                                  ],
+                                const SizedBox(height: 6),
+                                TrueFalseChoices(
+                                  key: ValueKey('tf-$_index-$_restartKey'),
+                                  trueLabel: (vf['true'] ?? 'Vrai').toString(),
+                                  falseLabel: (vf['false'] ?? 'Faux')
+                                      .toString(),
+                                  picked: _guessedTrue,
+                                  pickedCorrect: _lastCorrect,
+                                  onAnswer: _answer,
                                 ),
                               ],
                             ),
@@ -298,73 +281,6 @@ class _ExerciceFigureVraiFauxScreenState
           ],
         ),
       ),
-    );
-  }
-}
-
-class _DoneCard extends StatelessWidget {
-  final String title;
-  final String body;
-  final String replayLabel;
-  final VoidCallback onReplay;
-
-  const _DoneCard({
-    required this.title,
-    required this.body,
-    required this.replayLabel,
-    required this.onReplay,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          title,
-          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          body,
-          style: AmaniTheme.bodyStyle.copyWith(
-            fontSize: 14,
-            color: AmaniColors.textSecondary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        GestureDetector(
-          onTap: onReplay,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFB85454),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  LucideIcons.rotateCcw,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  replayLabel,
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

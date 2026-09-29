@@ -65,26 +65,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
 
-  /// `true` après la toute première restauration de `_doneSigns` depuis
-  /// `ProgressProvider` (voir `build`) -- pour qu'un signe déjà tracé avec
-  /// succès reste visuellement acquis en quittant puis en revenant sur cet
-  /// exercice, au lieu de redemander un tracé déjà réussi. Fait une seule
-  /// fois : sans ce garde-fou, la restauration se referait à CHAQUE
-  /// reconstruction et annulerait aussitôt le "Recommencer" explicite de
-  /// `ExerciseCompletePopup` (qui vide `_doneSigns` sans jamais toucher à la
-  /// progression déjà acquise dans `ProgressProvider`, exprès, pour la
-  /// reprise bonus).
-  bool _restoredFromProgress = false;
-
-  /// `true` uniquement lorsque le dernier signe manquant de la famille vient
-  /// d'être réussi PENDANT cette visite (voir `_onEntryDone`) -- jamais lors
-  /// de la restauration ci-dessus. Sans cette distinction, rouvrir une
-  /// famille déjà entièrement réussie lors d'une visite précédente faisait
-  /// immédiatement réapparaître la pop-up de félicitations (confettis
-  /// compris), alors qu'aucun signe n'avait encore été tracé lors de CETTE
-  /// visite.
-  bool _justCompletedThisVisit = false;
-
   /// `true` après "Continuer en mode libre" (voir [ExerciseCompletePopup]) :
   /// masque la pop-up de fin (déjà déclenchée) sans jamais toucher à
   /// `_doneSigns`, pour que tous les signes restent acquis -- seule la
@@ -163,9 +143,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   void _onEntryDone(String id, int totalEntries) {
     setState(() {
       _doneSigns.add(id);
-      if (_doneSigns.length >= totalEntries) {
-        _justCompletedThisVisit = true;
-      }
     });
     if (_isEvaluation) _session.recordItemDone(id);
     if (_doneSigns.length >= totalEntries && _awaitingRepeatCompletion) {
@@ -234,8 +211,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 'titre': group.title[lang.name] ?? '',
               }),
               subtitle: subtitle,
-              onBack: () =>
-                  goHome(context),
+              onBack: () => goHome(context),
             ),
             _HintBar(
               text: el['groupHint'] ?? '',
@@ -438,20 +414,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
     final familyEntries = widget.family != null && grouped.isNotEmpty
         ? grouped.first.$3
         : const <dynamic>[];
-    if (!_restoredFromProgress && !_isEvaluation && familyEntries.isNotEmpty) {
-      _restoredFromProgress = true;
-      final progress = context.read<ProgressProvider>();
-      for (final entry in familyEntries) {
-        final id = entry['id'] as String;
-        if (progress.isCompleted(
-          typeEtape: 'SIGNE',
-          modalite: 'EXERCICE',
-          etapeCode: id,
-        )) {
-          _doneSigns.add(id);
-        }
-      }
-    }
     final allFamilyDone =
         widget.family != null &&
         familyEntries.isNotEmpty &&
@@ -486,8 +448,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 _Header(
                   title: headerTitle,
                   subtitle: el['subtitle'] ?? '',
-                  onBack: () =>
-                      goHome(context),
+                  onBack: () => goHome(context),
                 ),
                 _HintBar(
                   text: el['startHint'] ?? '',
@@ -509,10 +470,16 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                             color: AmaniColors.surface,
                             shape: BoxShape.circle,
                             boxShadow: [
-                              BoxShadow(color: Color(0x1F000000), blurRadius: 6),
+                              BoxShadow(
+                                color: Color(0x1F000000),
+                                blurRadius: 6,
+                              ),
                             ],
                           ),
-                          child: DirectionalIcon(LucideIcons.arrowLeft, size: 18),
+                          child: DirectionalIcon(
+                            LucideIcons.arrowLeft,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
@@ -586,7 +553,8 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                                             el: el,
                                             lang: lang,
                                             speech: speech,
-                                            awardsProgress: !practiceMode,
+                                            awardsProgress:
+                                                !practiceMode && !_isEvaluation,
                                             onEntryDone: practiceMode
                                                 ? (_) => _onPracticeEntryDone()
                                                 : (id) => _onEntryDone(
@@ -637,10 +605,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 ),
               ],
             ),
-            if (allFamilyDone &&
-                _justCompletedThisVisit &&
-                !_isEvaluation &&
-                !_freeModeOnly)
+            if (allFamilyDone && !_isEvaluation && !_freeModeOnly)
               ExerciseCompletePopup(
                 onBackHome: () => goHome(context),
                 onNext: nextFamily != null
@@ -649,7 +614,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 onRestart: () {
                   setState(() {
                     _doneSigns.clear();
-                    _justCompletedThisVisit = false;
                     _restartKey++;
                     _awaitingRepeatCompletion = true;
                     _freeModeOnly = false;
@@ -658,9 +622,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                 onFreeMode: () => setState(() => _freeModeOnly = true),
               ),
             if (_isEvaluation && session.expired)
-              EvaluationCompleteOverlay(
-                onBack: () => goHome(context),
-              ),
+              EvaluationCompleteOverlay(onBack: () => goHome(context)),
             if (_isEvaluation && _resumeOffer != null && !session.expired)
               EvaluationResumeOffer(
                 onResume: () => _handleResume(_resumeOffer!),

@@ -7,6 +7,8 @@ import '../hooks/use_exercise_settings.dart';
 import '../widgets/confetti_burst.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/wrong_answer_popup.dart';
+import '../widgets/quiz_bubble_card.dart';
+import '../widgets/quiz_kit.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
 
@@ -14,6 +16,8 @@ import '../utils/navigation_helpers.dart';
 /// ludique, sans points ni progression, comme les mots mêlés du Palier
 /// "Les Mots". [levelIndex] est l'index dans [VRAI_FAUX_LEVELS]
 /// (0=CP … 4=CM2).
+const Color _kAccent = Color(0xFF8B5FBF);
+
 class ExerciceCalculVraiFauxScreen extends StatefulWidget {
   final String levelIndex;
   const ExerciceCalculVraiFauxScreen({super.key, required this.levelIndex});
@@ -30,7 +34,9 @@ class _ExerciceCalculVraiFauxScreenState
   int _index = 0;
   int _score = 0;
   int _restartKey = 0;
+  List<bool?> _results = const [];
   bool? _lastCorrect;
+  bool? _guessedTrue;
   bool _locked = false;
   bool _showWrongPopup = false;
   final _confettiKey = GlobalKey<ConfettiBurstState>();
@@ -57,9 +63,11 @@ class _ExerciceCalculVraiFauxScreenState
       idx * 1000 + _restartKey,
       _settings.repetitions,
     );
+    _results = List<bool?>.filled(_items.length, null);
     _index = 0;
     _score = 0;
     _lastCorrect = null;
+    _guessedTrue = null;
     _locked = false;
     _showWrongPopup = false;
   }
@@ -77,6 +85,8 @@ class _ExerciceCalculVraiFauxScreenState
     setState(() {
       _locked = true;
       _lastCorrect = correct;
+      _guessedTrue = guessTrue;
+      _results[_index] = correct;
       if (correct) _score++;
     });
     if (correct) {
@@ -86,6 +96,7 @@ class _ExerciceCalculVraiFauxScreenState
         setState(() {
           _index++;
           _lastCorrect = null;
+          _guessedTrue = null;
           _locked = false;
         });
       });
@@ -105,6 +116,7 @@ class _ExerciceCalculVraiFauxScreenState
       _showWrongPopup = false;
       _index++;
       _lastCorrect = null;
+      _guessedTrue = null;
       _locked = false;
     });
   }
@@ -134,8 +146,7 @@ class _ExerciceCalculVraiFauxScreenState
         body: SafeArea(
           child: Center(
             child: GestureDetector(
-              onTap: () =>
-                  goHome(context),
+              onTap: () => goHome(context),
               child: Text(common['backToHome'] ?? ''),
             ),
           ),
@@ -180,10 +191,7 @@ class _ExerciceCalculVraiFauxScreenState
                               ),
                             ],
                           ),
-                          child: DirectionalIcon(
-                            LucideIcons.house,
-                            size: 20,
-                          ),
+                          child: DirectionalIcon(LucideIcons.house, size: 20),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -230,17 +238,29 @@ class _ExerciceCalculVraiFauxScreenState
                     ],
                   ),
                 ),
+                QuizProgressBar(
+                  accent: _kAccent,
+                  dots: [
+                    for (var i = 0; i < _results.length; i++)
+                      _results[i] == null
+                          ? (i == _index ? QuizDot.current : QuizDot.pending)
+                          : (_results[i]! ? QuizDot.correct : QuizDot.wrong),
+                  ],
+                ),
                 Expanded(
                   child: Center(
-                    child: Padding(
+                    child: SingleChildScrollView(
                       padding: const EdgeInsets.all(20),
                       child: done
-                          ? _DoneCard(
+                          ? QuizDoneCard(
                               title: (vf['doneTitle'] ?? '').toString(),
                               body: (vf['doneBody'] ?? '').toString(),
+                              score: _score,
+                              total: _items.length,
                               replayLabel: (common['replay'] ?? 'Relancer')
                                   .toString(),
                               onReplay: _restart,
+                              accent: _kAccent,
                             )
                           : Column(
                               mainAxisSize: MainAxisSize.min,
@@ -253,64 +273,35 @@ class _ExerciceCalculVraiFauxScreenState
                                     color: AmaniColors.textSecondary,
                                   ),
                                 ),
-                                const SizedBox(height: 24),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 28,
-                                    vertical: 28,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 260,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: _lastCorrect == null
-                                          ? AmaniColors.textPrimary.withValues(
-                                              alpha: 0.1,
-                                            )
-                                          : (_lastCorrect!
-                                                ? AmaniColors.success
-                                                : AmaniColors.error),
-                                      width: 3,
-                                    ),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Color(0x1F000000),
-                                        blurRadius: 20,
-                                        offset: Offset(0, 6),
+                                QuizBubbleCard(
+                                  label: (vf['title'] ?? 'Vrai ou faux ?')
+                                      .toString(),
+                                  badge: '${_index + 1} / ${_items.length}',
+                                  accent: _kAccent,
+                                  feedback: _lastCorrect,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      current?.display ?? '',
+                                      style: TextStyle(
+                                        fontFamily: kBalooFontFamily,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 40,
+                                        letterSpacing: 1,
+                                        color: Colors.white,
                                       ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    current?.display ?? '',
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 30,
-                                      color: AmaniColors.textPrimary,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 28),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _AnswerButton(
-                                      label: (vf['true'] ?? 'Vrai').toString(),
-                                      icon: LucideIcons.check,
-                                      color: AmaniColors.success,
-                                      onTap: () => _answer(true),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    _AnswerButton(
-                                      label: (vf['false'] ?? 'Faux').toString(),
-                                      icon: LucideIcons.x,
-                                      color: AmaniColors.error,
-                                      onTap: () => _answer(false),
-                                    ),
-                                  ],
+                                const SizedBox(height: 6),
+                                TrueFalseChoices(
+                                  key: ValueKey('tf-$_index-$_restartKey'),
+                                  trueLabel: (vf['true'] ?? 'Vrai').toString(),
+                                  falseLabel: (vf['false'] ?? 'Faux')
+                                      .toString(),
+                                  picked: _guessedTrue,
+                                  pickedCorrect: _lastCorrect,
+                                  onAnswer: _answer,
                                 ),
                               ],
                             ),
@@ -333,124 +324,6 @@ class _ExerciceCalculVraiFauxScreenState
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AnswerButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _AnswerButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white, size: 26),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DoneCard extends StatelessWidget {
-  final String title;
-  final String body;
-  final String replayLabel;
-  final VoidCallback onReplay;
-
-  const _DoneCard({
-    required this.title,
-    required this.body,
-    required this.replayLabel,
-    required this.onReplay,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          title,
-          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          body,
-          style: AmaniTheme.bodyStyle.copyWith(
-            fontSize: 14,
-            color: AmaniColors.textSecondary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        GestureDetector(
-          onTap: onReplay,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF8B5FBF),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  LucideIcons.rotateCcw,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  replayLabel,
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

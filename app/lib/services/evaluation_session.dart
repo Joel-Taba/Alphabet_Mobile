@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'family_service.dart';
 
@@ -104,7 +105,7 @@ class EvaluationSessionController extends ChangeNotifier {
   void configureSubjects(int total) {
     if (_subjectTotal != 0) return;
     _subjectTotal = total;
-    notifyListeners();
+    _notify();
   }
 
   /// Lance réellement le chrono, pour [durationSeconds] — à appeler
@@ -117,7 +118,7 @@ class EvaluationSessionController extends ChangeNotifier {
     _endTime = DateTime.now().add(Duration(seconds: durationSeconds));
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 250), (_) => _tick());
-    notifyListeners();
+    _notify();
   }
 
   void _tick() {
@@ -127,7 +128,7 @@ class EvaluationSessionController extends ChangeNotifier {
       _expired = true;
       _timer?.cancel();
     }
-    notifyListeners();
+    _notify();
   }
 
   /// Un sujet vient d'être complété — incrémente le compteur "réalisés"
@@ -136,7 +137,7 @@ class EvaluationSessionController extends ChangeNotifier {
   void advanceSubject(int newSubjectIndex) {
     if (_subjectsDone < _subjectTotal) _subjectsDone++;
     _currentSubjectIndex = newSubjectIndex;
-    notifyListeners();
+    _notify();
   }
 
   /// Un signe/lettre/syllabe/mot/calcul vient d'être réussi — à appeler
@@ -149,7 +150,7 @@ class EvaluationSessionController extends ChangeNotifier {
   /// ou `'$topicId-$index'` pour des éléments générés par position).
   void recordItemDone(String itemId) {
     if (_evalId == null || !_completedItems.add(itemId)) return;
-    notifyListeners();
+    _notify();
     unawaited(_persistSnapshot(_evalId!));
   }
 
@@ -185,7 +186,14 @@ class EvaluationSessionController extends ChangeNotifier {
   /// `SharedPreferences.getInstance()` et réécrire les champs de cette
   /// instance PARTAGÉE entre-temps (nouvel `evalId`, chrono remis à
   /// zéro...), ce qui persisterait alors un instantané erroné.
-  Future<void> _persistSnapshot(String evalId) async {
+  ///
+  /// Les écritures sont enchaînées dans l'ordre des appels (voir
+  /// [_writeChain]) : lancées en parallèle (une par élément réussi, plus
+  /// celle de la sortie de l'écran), une sauvegarde plus ANCIENNE pouvait se
+  /// terminer après une plus récente et l'écraser -- la reprise perdait
+  /// alors les dernières réponses (détecté par
+  /// `test/services/evaluation_session_test.dart`).
+  Future<void> _persistSnapshot(String evalId) {
     final key = scopeKey('$_kProgressStorageKeyPrefix$evalId');
     final snapshot = jsonEncode({
       'remainingSeconds': remainingSeconds,
@@ -194,14 +202,29 @@ class EvaluationSessionController extends ChangeNotifier {
       'currentSubjectIndex': _currentSubjectIndex,
       'completedItems': _completedItems.toList(),
     });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, snapshot);
+    return _enqueueWrite((prefs) => prefs.setString(key, snapshot));
+  }
+
+  Future<void> _writeChain = Future.value();
+
+  Future<void> _enqueueWrite(
+    Future<Object?> Function(SharedPreferences prefs) write,
+  ) {
+    final next = _writeChain.then((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      await write(prefs);
+    });
+    _writeChain = next.catchError((_) {});
+    return next;
   }
 
   /// Progression sauvegardée pour [evalId] (enfant actif), s'il y en a une
   /// — à consulter par l'écran juste après un [ensureContext] qui renvoie
   /// `false`, pour proposer une reprise plutôt que de repartir de zéro.
   Future<Map<String, dynamic>?> readSavedProgress(String evalId) async {
+    // Attend la fin des écritures déjà lancées : sinon on pourrait relire
+    // une sauvegarde périmée.
+    await _writeChain;
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(scopeKey('$_kProgressStorageKeyPrefix$evalId'));
     if (raw == null) return null;
@@ -215,9 +238,11 @@ class EvaluationSessionController extends ChangeNotifier {
   /// Efface la progression sauvegardée pour [evalId] (enfant actif) — sur
   /// choix "Recommencer", ou une fois l'évaluation menée à son terme (voir
   /// [reset]).
-  Future<void> clearSavedProgress(String evalId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(scopeKey('$_kProgressStorageKeyPrefix$evalId'));
+  Future<void> clearSavedProgress(String evalId) {
+    // Même file d'attente que les sauvegardes : un effacement ne doit
+    // jamais être suivi d'une sauvegarde plus ancienne qui le défait.
+    final key = scopeKey('$_kProgressStorageKeyPrefix$evalId');
+    return _enqueueWrite((prefs) => prefs.remove(key));
   }
 
   /// Restaure un état précédemment sauvegardé (voir [readSavedProgress]) et
@@ -235,7 +260,7 @@ class EvaluationSessionController extends ChangeNotifier {
     _endTime = DateTime.now().add(Duration(seconds: remaining));
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 250), (_) => _tick());
-    notifyListeners();
+    _notify();
   }
 
   /// À appeler quand l'enfant termine l'évaluation en cours (temps écoulé,
@@ -256,7 +281,7 @@ class EvaluationSessionController extends ChangeNotifier {
     _currentSubjectIndex = 0;
     _completedItems.clear();
     _evalId = null;
-    notifyListeners();
+    _notify();
   }
 
   /// Changement d'enfant actif (voir `FamilyService.switchTo`) : une
@@ -274,11 +299,31 @@ class EvaluationSessionController extends ChangeNotifier {
     _currentSubjectIndex = 0;
     _completedItems.clear();
     _evalId = null;
-    notifyListeners();
+    _notify();
   }
+
+  /// Plusieurs écrans configurent l'évaluation dès leur `initState` (donc
+  /// PENDANT que Flutter construit l'arbre) : prévenir les écouteurs à cet
+  /// instant déclenchait "setState() called during build" (détecté par
+  /// test/e2e/crawl_all_pages_test.dart). Dans ce cas, on les prévient juste
+  /// après la fin de l'image en cours.
+  void _notify() {
+    if (_disposed) return;
+    final binding = SchedulerBinding.instance;
+    if (binding.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      binding.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    } else {
+      notifyListeners();
+    }
+  }
+
+  bool _disposed = false;
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     super.dispose();
   }

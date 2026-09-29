@@ -8,13 +8,15 @@ import '../i18n/translations.dart';
 import '../theme/amani_theme.dart';
 import '../widgets/amani_mascot.dart';
 import '../services/progress_service.dart';
+import '../logic/progress_rules.dart';
 import '../data/palier2_groups.dart';
 import '../data/word_catalog.dart';
 import '../data/syllable_catalog.dart';
 import '../data/calcul_catalog.dart';
+import '../data/evaluation_catalog.dart';
 import '../data/shape_catalog.dart';
-import '../data/tangram_catalog.dart';
-import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER, EXERCISE_CATALOG;
+import '../data/solid3d_catalog.dart';
+import '../data/sign_exercise_catalog.dart' show FAMILY_ORDER;
 import '../utils/text_case.dart';
 import '../widgets/sign_glyph.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -345,107 +347,48 @@ class _ParcoursScreenState extends State<ParcoursScreen>
     );
   }
 
-  /// Index effectif de l'étape "courante" (première non terminée) parmi
-  /// [doneFlags] -- si tout est terminé, retombe sur la dernière plutôt que
-  /// de ne jamais désigner d'étape courante (il doit toujours en rester une,
-  /// en couleur pleine, même une fois le palier entièrement acquis).
-  int _currentGroupIndex(List<bool> doneFlags) {
-    final firstNotDone = doneFlags.indexWhere((d) => !d);
-    return firstNotDone == -1 ? doneFlags.length - 1 : firstNotDone;
-  }
+  // Règles "étape terminée" : voir `logic/progress_rules.dart` (testées
+  // unitairement, partagées avec "Mon Profil").
+  int _currentGroupIndex(List<bool> doneFlags) =>
+      ProgressRules.currentGroupIndex(doneFlags);
 
-  bool _signFamilyDone(ProgressProvider progress, String family) {
-    final items = EXERCISE_CATALOG.where((e) => e['family'] == family);
-    if (items.isEmpty) return false;
-    final coursDone = progress.isCompleted(
-      typeEtape: 'SIGNE',
-      modalite: 'COURS',
-      etapeCode: family,
-    );
-    return coursDone &&
-        items.every(
-          (e) => progress.isCompleted(
-            typeEtape: 'SIGNE',
-            modalite: 'EXERCICE',
-            etapeCode: e['id'] as String,
-          ),
-        );
-  }
+  bool _signFamilyDone(ProgressProvider progress, String family) =>
+      ProgressRules.signFamilyDone(progress, family);
 
-  bool _letterGroupDone(ProgressProvider progress, dynamic group) {
-    final coursDone = progress.isCompleted(
-      typeEtape: 'LETTRE',
-      modalite: 'COURS',
-      etapeCode: group.id as String,
-    );
-    final chars = group.chars as List;
-    return coursDone &&
-        chars.every(
-          (c) => progress.isCompleted(
-            typeEtape: 'LETTRE',
-            modalite: 'EXERCICE',
-            etapeCode: c as String,
-          ),
-        );
-  }
+  bool _letterGroupDone(ProgressProvider progress, dynamic group) =>
+      ProgressRules.groupDone(
+        progress,
+        'LETTRE',
+        group.id as String,
+        (group.chars as List).cast<String>(),
+      );
 
   bool _syllableGroupDone(
     ProgressProvider progress,
     Map<String, dynamic> group,
-  ) {
-    final consonant = group['consonant'] as String;
-    final coursDone = progress.isCompleted(
-      typeEtape: 'SYLLABE',
-      modalite: 'COURS',
-      etapeCode: consonant,
-    );
-    final syllables = group['syllables'] as List;
-    return coursDone &&
-        syllables.every(
-          (s) => progress.isCompleted(
-            typeEtape: 'SYLLABE',
-            modalite: 'EXERCICE',
-            etapeCode: (s as Map)['syllable'] as String,
-          ),
-        );
-  }
+  ) => ProgressRules.groupDone(
+    progress,
+    'SYLLABE',
+    group['consonant'] as String,
+    (group['syllables'] as List).map((s) => (s as Map)['syllable'] as String),
+  );
 
-  bool _wordGroupDone(ProgressProvider progress, dynamic group) {
-    final coursDone = progress.isCompleted(
-      typeEtape: 'MOT',
-      modalite: 'COURS',
-      etapeCode: group.id as String,
-    );
-    final words = group.words as List;
-    return coursDone &&
-        words.every(
-          (w) => progress.isCompleted(
-            typeEtape: 'MOT',
-            modalite: 'EXERCICE',
-            etapeCode: w.id as String,
-          ),
-        );
-  }
+  bool _wordGroupDone(ProgressProvider progress, dynamic group) =>
+      ProgressRules.groupDone(
+        progress,
+        'MOT',
+        group.id as String,
+        (group.words as List).map((w) => w.id as String),
+      );
 
-  bool _calculTopicDone(ProgressProvider progress, dynamic topic) {
-    final id = topic.id as String;
-    return progress.isCompleted(
-          typeEtape: 'CALCUL',
-          modalite: 'COURS',
-          etapeCode: id,
-        ) &&
-        progress.isTopicExercised('CALCUL', id);
-  }
+  bool _calculTopicDone(ProgressProvider progress, dynamic topic) =>
+      ProgressRules.topicDone(progress, 'CALCUL', topic.id as String);
 
-  bool _shapeTopicDone(ProgressProvider progress, dynamic topic) {
-    final id = topic.id as String;
-    return progress.isCompleted(
-          typeEtape: 'FIGURE',
-          modalite: 'COURS',
-          etapeCode: id,
-        ) &&
-        progress.isTopicExercised('FIGURE', id);
-  }
+  bool _shapeTopicDone(ProgressProvider progress, dynamic topic) =>
+      ProgressRules.topicDone(progress, 'FIGURE', topic.id as String);
+
+  bool _solidTopicDone(ProgressProvider progress, Solid3DTopic topic) =>
+      ProgressRules.topicDone(progress, 'SOLIDE', topic.id);
 
   List<StepEntry> _buildSteps(
     Map<String, dynamic> t,
@@ -595,7 +538,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
       StepEntry(
         const Step(kind: StepKind.medal),
         0,
-        to: '/exercice/lettre/${palier2Groups[0].chars.first}?pg=${palier2Groups[0].id}&amaniEval=1',
+        to: '/exercice/lettre/${getEvalPalier2Groups()[0].chars.first}?pg=${getEvalPalier2Groups()[0].id}&amaniEval=1',
       ),
     );
 
@@ -653,7 +596,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
       );
     }
     final firstConsonant =
-        (SYLLABLE_GROUPS.first as Map<String, dynamic>)['consonant'];
+        (getEvalSyllabeGroups().first as Map<String, dynamic>)['consonant'];
     steps.add(
       StepEntry(
         const Step(kind: StepKind.medal),
@@ -724,7 +667,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
       StepEntry(
         const Step(kind: StepKind.medal),
         0,
-        to: '/exercice/mots/${PALIER3_GROUPS[0].id}?amaniEval=1',
+        to: '/exercice/mots/${getEvalWordGroups()[0].id}?amaniEval=1',
       ),
     );
 
@@ -755,9 +698,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
     ];
     final calculCurrentIdx = _currentGroupIndex(calculDoneFlags);
     for (var idx = 0; idx < CALCUL_TOPICS.length; idx++) {
-      final kind = idx <= calculCurrentIdx
-          ? StepKind.active
-          : StepKind.locked;
+      final kind = idx <= calculCurrentIdx ? StepKind.active : StepKind.locked;
       final done = idx < calculCurrentIdx;
       final topic = CALCUL_TOPICS[idx];
       steps.add(
@@ -804,7 +745,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
       StepEntry(
         const Step(kind: StepKind.medal),
         0,
-        to: '/exercice/calcul/${CALCUL_TOPICS[0].id}?amaniEval=1',
+        to: '/exercice/calcul/${getEvalCalculTopics()[0].id}?amaniEval=1',
       ),
     );
 
@@ -856,26 +797,31 @@ class _ParcoursScreenState extends State<ParcoursScreen>
         ),
       );
     }
-    final tangramSimple = tangramPuzzlesByDifficulty(TangramDifficulty.simple);
-    for (var idx = 0; idx < tangramSimple.length; idx++) {
-      const kind = StepKind.locked;
-      final puzzle = tangramSimple[idx];
+    final solidDoneFlags = [
+      for (final topic in SOLID3D_TOPICS) _solidTopicDone(progress, topic),
+    ];
+    final solidCurrentIdx = _currentGroupIndex(solidDoneFlags);
+    for (var idx = 0; idx < SOLID3D_TOPICS.length; idx++) {
+      final kind = idx <= solidCurrentIdx ? StepKind.active : StepKind.locked;
+      final done = idx < solidCurrentIdx;
+      final topic = SOLID3D_TOPICS[idx];
       steps.add(
         StepEntry(
           Step(
             kind: kind,
             iconType: 'feuille',
-            stepTitle: puzzle.name[lang.name],
+            stepTitle: topic.name[lang.name],
+            isDone: done,
           ),
           -1,
-          to: '/cours/tangram/${puzzle.id}',
+          to: '/cours/solide/${topic.id}',
         ),
       );
       steps.add(
         StepEntry(
-          const Step(kind: kind, iconType: 'branche'),
+          Step(kind: kind, iconType: 'branche', isDone: done),
           1,
-          to: '/exercice/tangram/${puzzle.id}',
+          to: '/exercice/solide/${topic.id}',
         ),
       );
     }

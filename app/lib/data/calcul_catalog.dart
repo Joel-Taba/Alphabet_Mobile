@@ -112,7 +112,35 @@ class CalculTopic {
   /// réutilisé ici comme "nombre de problèmes par session d'exercice" (ignoré
   /// pour les tables de multiplication, qui posent toujours les 11 faits
   /// appris en entier).
-  final List<CalculProblem> Function(int seed, int count) generateProblems;
+  final List<CalculProblem> Function(int seed, int count)
+  rawGenerateProblems;
+
+  /// Problèmes de la série, tous DIFFÉRENTS : le générateur brut tirait ses
+  /// nombres au hasard indépendamment et pouvait poser deux fois le même
+  /// calcul dans une série (détecté par `test/logic/generators_test.dart`,
+  /// sur 12 sujets). On écarte donc les doublons, en re-tirant avec des
+  /// graines dérivées si besoin -- toujours déterministe pour une même
+  /// [seed] (la reprise d'une évaluation retrouve les mêmes problèmes).
+  /// Si le sujet n'a pas assez de problèmes distincts pour [count], la
+  /// série est complétée avec des répétitions plutôt que raccourcie.
+  List<CalculProblem> generateProblems(int seed, int count) {
+    final first = rawGenerateProblems(seed, count);
+    final seen = <String>{};
+    final unique = [
+      for (final p in first)
+        if (seen.add(p.display)) p,
+    ];
+    for (var round = 1; unique.length < first.length && round <= 20; round++) {
+      for (final p in rawGenerateProblems(seed + round * 7919, count)) {
+        if (unique.length >= first.length) break;
+        if (seen.add(p.display)) unique.add(p);
+      }
+    }
+    for (var i = 0; unique.length < first.length; i++) {
+      unique.add(first[i]);
+    }
+    return unique;
+  }
 
   const CalculTopic({
     required this.id,
@@ -124,7 +152,7 @@ class CalculTopic {
     this.tableNumber,
     this.posedOperation,
     this.mentalCalcSeconds,
-    required this.generateProblems,
+    required this.rawGenerateProblems,
   });
 }
 
@@ -623,7 +651,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'إشارة "+" تعني أننا نجمع مجموعتين في مجموعة واحدة، تمامًا كما '
           'تضع كل ألعابك في نفس السلة.',
     },
-    generateProblems: _generateAdditionCp,
+    rawGenerateProblems: _generateAdditionCp,
   ),
   CalculTopic(
     id: 'cp-soustraction',
@@ -661,7 +689,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'إشارة "−" تعني أننا ننقص: تمامًا كما عندما تأكل حلوى من كيس، '
           'يبقى دائمًا أقل مما كان من قبل.',
     },
-    generateProblems: _generateSoustractionCp,
+    rawGenerateProblems: _generateSoustractionCp,
   ),
   CalculTopic(
     id: 'cp-calcul-mental',
@@ -713,7 +741,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
     // tracée -- 20 s laisse malgré tout un temps de lecture confortable
     // avant que le chronomètre ne presse l'enfant.
     mentalCalcSeconds: 20,
-    generateProblems: _generateCalculMentalCp,
+    rawGenerateProblems: _generateCalculMentalCp,
   ),
   CalculTopic(
     id: 'ce1-addition-posee',
@@ -757,7 +785,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'تنتقل ولا تختفي أبدًا!',
     },
     posedOperation: 'addition',
-    generateProblems: _generateAdditionPoseeCe1,
+    rawGenerateProblems: _generateAdditionPoseeCe1,
   ),
   CalculTopic(
     id: 'ce1-soustraction-posee',
@@ -803,7 +831,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'تنسَ أن تطرحه من العمود المجاور!',
     },
     posedOperation: 'soustraction',
-    generateProblems: _generateSoustractionPoseeCe1,
+    rawGenerateProblems: _generateSoustractionPoseeCe1,
   ),
   CalculTopic(
     id: 'ce1-table-1',
@@ -841,7 +869,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'ضرب على الإطلاق.',
     },
     tableNumber: 1,
-    generateProblems: _generateTable1,
+    rawGenerateProblems: _generateTable1,
   ),
   CalculTopic(
     id: 'ce1-table-2',
@@ -879,7 +907,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'تعرف كل الأضعاف بالفعل!',
     },
     tableNumber: 2,
-    generateProblems: _generateTable2,
+    rawGenerateProblems: _generateTable2,
   ),
   CalculTopic(
     id: 'ce1-table-3',
@@ -917,7 +945,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           '12.',
     },
     tableNumber: 3,
-    generateProblems: _generateTable3,
+    rawGenerateProblems: _generateTable3,
   ),
   CalculTopic(
     id: 'ce1-table-4',
@@ -955,7 +983,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           '3 يساوي 6، ثم ضعف 6 يساوي 12.',
     },
     tableNumber: 4,
-    generateProblems: _generateTable4,
+    rawGenerateProblems: _generateTable4,
   ),
   CalculTopic(
     id: 'ce1-table-5',
@@ -993,7 +1021,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'أصابع، أي 15. تنتهي النتيجة دائمًا بـ 0 أو 5.',
     },
     tableNumber: 5,
-    generateProblems: _generateTable5,
+    rawGenerateProblems: _generateTable5,
   ),
   CalculTopic(
     id: 'ce1-table-6',
@@ -1031,7 +1059,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'ضاعفه = 24.',
     },
     tableNumber: 6,
-    generateProblems: _generateTable6,
+    rawGenerateProblems: _generateTable6,
   ),
   CalculTopic(
     id: 'ce1-table-7',
@@ -1073,7 +1101,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'بالترتيب، كأنه أغنية: 7، 14، 21، 28... حتى تحفظه عن ظهر قلب.',
     },
     tableNumber: 7,
-    generateProblems: _generateTable7,
+    rawGenerateProblems: _generateTable7,
   ),
   CalculTopic(
     id: 'ce1-table-8',
@@ -1111,7 +1139,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'ضعف 3 يساوي 6، وضعف 6 يساوي 12، وضعف 12 يساوي 24.',
     },
     tableNumber: 8,
-    generateProblems: _generateTable8,
+    rawGenerateProblems: _generateTable8,
   ),
   CalculTopic(
     id: 'ce1-table-9',
@@ -1156,7 +1184,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'اطوِ الإصبع الرابع ← 3 أصابع قبله (30) و6 أصابع بعده (6) ← 36!',
     },
     tableNumber: 9,
-    generateProblems: _generateTable9,
+    rawGenerateProblems: _generateTable9,
   ),
   CalculTopic(
     id: 'ce1-table-10',
@@ -1194,7 +1222,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'أن تكتب 0 بعد العدد.',
     },
     tableNumber: 10,
-    generateProblems: _generateTable10,
+    rawGenerateProblems: _generateTable10,
   ),
   CalculTopic(
     id: 'ce2-multiplication-posee',
@@ -1239,7 +1267,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'الجمع بالعمود.',
     },
     posedOperation: 'multiplication',
-    generateProblems: _generateMultiplicationPoseeCe2,
+    rawGenerateProblems: _generateMultiplicationPoseeCe2,
   ),
   CalculTopic(
     id: 'ce2-division',
@@ -1283,7 +1311,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'التوزيع تامًا! وأحيانًا يتبقى القليل مما لا يمكن توزيعه '
           'كاملًا — وهذا هو الباقي، وهو دائمًا أصغر من عدد الأصدقاء.',
     },
-    generateProblems: _generateDivisionCe2,
+    rawGenerateProblems: _generateDivisionCe2,
   ),
   CalculTopic(
     id: 'ce2-grands-nombres',
@@ -1327,7 +1355,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'العشرات، فالمئات، فالآلاف. لجمع أو طرح الأعداد الكبيرة، نُبقي '
           'كل طابق في مكانه.',
     },
-    generateProblems: _generateGrandsNombresCe2,
+    rawGenerateProblems: _generateGrandsNombresCe2,
   ),
   CalculTopic(
     id: 'cm1-division-posee',
@@ -1372,7 +1400,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'باقٍ صغير يواصل رحلته.',
     },
     posedOperation: 'division',
-    generateProblems: _generateDivisionPoseeCm1,
+    rawGenerateProblems: _generateDivisionPoseeCm1,
   ),
   CalculTopic(
     id: 'cm1-fractions',
@@ -1416,7 +1444,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'السفلي (المقام) هو نفسه، فإنه لا يتغيّر أبدًا: نجمع فقط '
           'الأجزاء التي لدينا، أي الرقم العلوي (البسط).',
     },
-    generateProblems: _generateFractionsCm1,
+    rawGenerateProblems: _generateFractionsCm1,
   ),
   CalculTopic(
     id: 'cm1-decimaux',
@@ -1460,7 +1488,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'في الأخرى. الفاصلة العشرية تفصل دائمًا بين هذين الجيبين — '
           'نجمع أو نطرح كل جيب مع نظيره، دون أن نخلط بينهما أبدًا.',
     },
-    generateProblems: _generateDecimauxCm1,
+    rawGenerateProblems: _generateDecimauxCm1,
   ),
   CalculTopic(
     id: 'cm2-multiplication-decimale',
@@ -1501,7 +1529,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'أن تحتوي نتيجتك على نفس عدد الأرقام بعد الفاصلة الموجودة في '
           'العددين الأصليين مجتمعين.',
     },
-    generateProblems: _generateMultiplicationDecimaleCm2,
+    rawGenerateProblems: _generateMultiplicationDecimaleCm2,
   ),
   CalculTopic(
     id: 'cm2-division-decimale',
@@ -1542,7 +1570,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'بالفاصلة العشرية إلى النتيجة في اللحظة المناسبة، ونواصل '
           'التوزيع بعدها.',
     },
-    generateProblems: _generateDivisionDecimaleCm2,
+    rawGenerateProblems: _generateDivisionDecimaleCm2,
   ),
   CalculTopic(
     id: 'cm2-proportionnalite',
@@ -1586,7 +1614,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'مربعات من أصل 100. أما قاعدة الضرب التبادلي، فتتقاطع فيها '
           'الأسهم على شكل X بين ما تعرفه وما تبحث عنه: "الضرب التبادلي"!',
     },
-    generateProblems: _generateProportionnaliteCm2,
+    rawGenerateProblems: _generateProportionnaliteCm2,
   ),
   CalculTopic(
     id: 'cm2-fractions-denominateurs-differents',
@@ -1632,7 +1660,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
           'مقام الكسر الآخر)، وبعد ذلك فقط نجمع الأجزاء.',
     },
     posedOperation: 'fraction',
-    generateProblems: _generateFractionsDenomDiffCm2,
+    rawGenerateProblems: _generateFractionsDenomDiffCm2,
   ),
 ];
 

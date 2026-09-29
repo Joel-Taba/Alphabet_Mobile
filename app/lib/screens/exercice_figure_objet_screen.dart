@@ -8,6 +8,7 @@ import '../data/shape_object_bank.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../widgets/shape_glyph.dart';
 import '../widgets/quiz_bubble_card.dart';
+import '../widgets/quiz_kit.dart';
 import '../widgets/lettered_choice_grid.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
@@ -142,45 +143,57 @@ class _ExerciceFigureObjetScreenState extends State<ExerciceFigureObjetScreen> {
                 ],
               ),
             ),
+            QuizProgressBar(
+              accent: QuizBubbleCard.fill,
+              dots: [
+                for (var i = 0; i < _items.length; i++)
+                  _doneIndices.contains(i)
+                      ? QuizDot.correct
+                      : (i == _activeIdx ? QuizDot.current : QuizDot.pending),
+              ],
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: done
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
+                  if (!done)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AmaniColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            done
-                                ? (fo['doneBody'] ?? '').toString()
-                                : (fo['instruction'] ?? '').toString(),
-                            style: AmaniTheme.bodyStyle.copyWith(
-                              fontSize: 13,
-                              color: AmaniColors.textSecondary,
+                      ),
+                      child: Row(
+                        children: [
+                          AmaniMascot(
+                            pose: done
+                                ? AmaniPose.celebration
+                                : AmaniPose.encouragement,
+                            size: AmaniSize.small,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              done
+                                  ? (fo['doneBody'] ?? '').toString()
+                                  : (fo['instruction'] ?? '').toString(),
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 13,
+                                color: AmaniColors.textSecondary,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 14),
                   for (var i = 0; i < _items.length; i++) ...[
                     _ObjetCard(
+                      index: i,
+                      total: _items.length,
                       key: ValueKey('$i-r$_restartKey'),
                       shapeId: _items[i],
                       choiceSeed: _restartKey * 1000 + i + 7919,
@@ -195,34 +208,16 @@ class _ExerciceFigureObjetScreenState extends State<ExerciceFigureObjetScreen> {
                     const SizedBox(height: 12),
                   ],
                   if (done)
-                    GestureDetector(
-                      onTap: _restart,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFB85454),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              LucideIcons.rotateCcw,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              (common['replay'] ?? 'Relancer').toString(),
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
+                    Center(
+                      child: QuizDoneCard(
+                        title: (fo['doneTitle'] ?? '').toString(),
+                        body: (fo['doneBody'] ?? '').toString(),
+                        score: _doneIndices.length,
+                        total: _items.length,
+                        replayLabel: (common['replay'] ?? 'Relancer')
+                            .toString(),
+                        onReplay: _restart,
+                        accent: QuizBubbleCard.fill,
                       ),
                     ),
                 ],
@@ -240,6 +235,8 @@ class _ObjetCard extends StatelessWidget {
   final int choiceSeed;
   final Lang lang;
   final String promptTemplate;
+  final int index;
+  final int total;
   final bool isActive;
   final bool isFuture;
   final bool done;
@@ -247,6 +244,8 @@ class _ObjetCard extends StatelessWidget {
 
   const _ObjetCard({
     super.key,
+    required this.index,
+    required this.total,
     required this.shapeId,
     required this.choiceSeed,
     required this.lang,
@@ -268,11 +267,16 @@ class _ObjetCard extends StatelessWidget {
     // différent piqué au hasard dans chacune des trois autres figures pour
     // les leurres -- jamais les 4 mêmes objets fixes d'un tour à l'autre.
     final correctChoice =
-        SHAPE_OBJECT_BANK[shapeId]![rand.nextInt(SHAPE_OBJECT_BANK[shapeId]!.length)];
+        SHAPE_OBJECT_BANK[shapeId]![rand.nextInt(
+          SHAPE_OBJECT_BANK[shapeId]!.length,
+        )];
     final choices = [
       correctChoice,
-      for (final otherId in SHAPE_TOPICS.map((t) => t.id).where((id) => id != shapeId))
-        SHAPE_OBJECT_BANK[otherId]![rand.nextInt(SHAPE_OBJECT_BANK[otherId]!.length)],
+      for (final otherId
+          in SHAPE_TOPICS.map((t) => t.id).where((id) => id != shapeId))
+        SHAPE_OBJECT_BANK[otherId]![rand.nextInt(
+          SHAPE_OBJECT_BANK[otherId]!.length,
+        )],
     ]..shuffle(rand);
 
     return Opacity(
@@ -280,6 +284,8 @@ class _ObjetCard extends StatelessWidget {
       child: Column(
         children: [
           QuizBubbleCard(
+            badge: '${index + 1} / $total',
+            feedback: done ? true : null,
             label: (fo['title'] ?? 'Objets').toString(),
             child: Column(
               mainAxisSize: MainAxisSize.min,

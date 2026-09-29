@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../logic/progress_rules.dart';
 import 'backend_sync_service.dart';
 import 'family_service.dart';
 import 'sound_effect_service.dart';
@@ -103,7 +104,9 @@ class _EtapeReussie {
 
 /// Fournit le système de points à toute l'application (voir MultiProvider
 /// dans app.dart). Persisté via SharedPreferences, rechargé au démarrage.
-class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
+class ProgressProvider extends ChangeNotifier
+    with WidgetsBindingObserver
+    implements ProgressQuery {
   final BackendSyncService _backend;
   List<_EtapeReussie> _log = [];
   int _bonusTotal = 0;
@@ -238,23 +241,39 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   bool _syncing = false;
 
-  ProgressProvider(this._backend) {
+  /// [connectivityChanges] : flux des changements de connexion, par défaut
+  /// celui du système -- remplaçable par les tests automatiques, où aucun
+  /// plugin natif de connectivité n'est disponible.
+  ProgressProvider(
+    this._backend, {
+    Stream<List<ConnectivityResult>>? connectivityChanges,
+  }) {
     _load();
     WidgetsBinding.instance.addObserver(this);
     // Rattrapage "temps réel" : dès que la connexion revient en cours de
     // session (pas seulement au lancement de l'app ou à la visite de "Mon
     // Profil"), on retente aussitôt toute progression restée locale.
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      if (results.any((r) => r != ConnectivityResult.none)) {
-        unawaited(syncPendingProgression());
-      }
-    });
+    _connectivitySub =
+        (connectivityChanges ?? Connectivity().onConnectivityChanged).listen((
+          results,
+        ) {
+          if (results.any((r) => r != ConnectivityResult.none)) {
+            unawaited(syncPendingProgression());
+          }
+        });
   }
+
+  /// Vrai une fois [dispose] appelé : un envoi au serveur encore en vol
+  /// (voir [_pushAndMarkSynced]) peut se terminer après, et ne doit alors
+  /// plus rien réécrire ni notifier -- sinon il écrasait le journal avec
+  /// une version périmée (détecté par `test/invariants/progress_monkey_test.dart`).
+  bool _disposed = false;
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _flushPendingWrites();
+    _disposed = true;
     _connectivitySub?.cancel();
     super.dispose();
   }
@@ -276,46 +295,157 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
     _pendingBonusWrite = null;
   }
 
+  /// Force l'écriture disque immédiate de tout ce qui attend encore (même
+  /// effet qu'un passage de l'app en arrière-plan) -- pour les tests.
+  @visibleForTesting
+  void flushPendingWritesForTest() => _flushPendingWrites();
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) _flushPendingWrites();
   }
 
+  /// Réussites et points bonus obtenus PENDANT un (re)chargement, avec la
+  /// clé de stockage de l'enfant pour lequel ils ont été obtenus.
+  ///
+  /// Pendant un chargement, rien n'est écrit sur le disque : le chargement
+  /// remplace `_log` par ce qu'il lit, et une écriture programmée juste
+  /// avant (avec la liste d'AVANT le chargement) écrasait ensuite toute la
+  /// progression enregistrée -- par exemple quand l'app rouvrait
+  /// directement sur une page de cours (actualisation du navigateur), ce
+  /// cours marqué "vu" pendant le chargement effaçait tout le reste.
+  /// Détecté par `test/e2e/child_journey_test.dart`. Ces gains sont donc
+  /// mis de côté ici, puis réintégrés et écrits une fois le chargement
+  /// terminé -- sous la clé du bon enfant.
+  final List<(String, _EtapeReussie)> _awardedDuringLoad = [];
+  final List<(String, int)> _bonusDuringLoad = [];
+  int _loadsInFlight = 0;
+
+  bool get _loading => !_loaded || _loadsInFlight > 0;
+
   Future<void> _load() async {
     // Toute écriture encore en attente concerne l'enfant PRÉCÉDEMMENT actif
     // (voir `rechargerPourEnfantActif`, appelé après que `FamilyService` a
     // déjà basculé son espace de nommage) : la déclencher maintenant, avant
-    // de recharger, évite qu'elle traîne inutilement -- sans risque de
-    // l'écrire sous la mauvaise clé, puisque [_writeLog]/[_writeBonus]
-    // capturent déjà la clé et le contenu au moment de la planification, pas
-    // au moment de l'écriture effective.
+    // de recharger -- sans risque de l'écrire sous la mauvaise clé, puisque
+    // [_writeLog]/[_writeBonus] capturent la clé et le contenu au moment de
+    // la planification.
     _flushPendingWrites();
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(scopeKey(_progressStorageKey));
-    if (raw != null) {
-      try {
-        final parsed = jsonDecode(raw) as List<dynamic>;
-        _log = parsed
-            .map((e) => _EtapeReussie.fromJson(e as Map<String, dynamic>))
-            .toList();
-      } catch (_) {
-        _log = [];
+    _loadsInFlight++;
+    final key = scopeKey(_progressStorageKey);
+    final bonusKey = scopeKey(_bonusStorageKey);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _log = _parseLog(prefs.getString(key));
+      final bonus = prefs.get(bonusKey);
+      _bonusTotal = bonus is int ? bonus : 0;
+      // Gains obtenus pendant le chargement, pour CET enfant : réintégrés
+      // (recalcul idempotent, même si plusieurs chargements se chevauchent).
+      for (final (entryKey, points) in _bonusDuringLoad) {
+        if (entryKey == bonusKey) _bonusTotal += points;
       }
-    } else {
-      _log = [];
+      _rebuildAggregates();
+      for (final (entryKey, e) in _awardedDuringLoad) {
+        if (entryKey != key) continue;
+        if (_dedupKeys.contains(
+          _dedupKey(e.typeEtape, e.modalite, e.etapeCode),
+        )) {
+          continue;
+        }
+        _log.add(e);
+        _applyToAggregates(e);
+      }
+    } finally {
+      _loadsInFlight--;
     }
-    _bonusTotal = prefs.getInt(scopeKey(_bonusStorageKey)) ?? 0;
-    _rebuildAggregates();
     _backendSignesMaitrises = null;
     _backendCoursTermines = null;
     _backendExercicesReussis = null;
     _backendJoursAventure = null;
     _loaded = true;
+    if (_loadsInFlight == 0) {
+      await _persistGainsMadeDuringLoad(key, bonusKey);
+    }
+    if (_disposed) return;
     notifyListeners();
     // Rattrapage au lancement de l'app : toute progression réussie hors-ligne
     // lors d'une session précédente (jamais confirmée synchronisée) est
     // ré-essayée dès qu'une connexion est à nouveau disponible.
     unawaited(syncPendingProgression());
+  }
+
+  /// Fin du dernier chargement en cours : écrit ce qui a été gagné pendant
+  /// le chargement. Pour l'enfant actif, via les écritures habituelles ; pour
+  /// un enfant qui n'est plus actif (gain juste avant un changement
+  /// d'enfant), en complétant directement ce qu'il a d'enregistré.
+  Future<void> _persistGainsMadeDuringLoad(String key, String bonusKey) async {
+    final entries = List.of(_awardedDuringLoad);
+    final bonuses = List.of(_bonusDuringLoad);
+    _awardedDuringLoad.clear();
+    _bonusDuringLoad.clear();
+    if (entries.any((e) => e.$1 == key)) _writeLog();
+    if (bonuses.any((b) => b.$1 == bonusKey)) _writeBonus();
+
+    final otherLogs = <String, List<_EtapeReussie>>{};
+    for (final (k, e) in entries) {
+      if (k != key) otherLogs.putIfAbsent(k, () => []).add(e);
+    }
+    final otherBonus = <String, int>{};
+    for (final (k, points) in bonuses) {
+      if (k != bonusKey) {
+        otherBonus.update(k, (v) => v + points, ifAbsent: () => points);
+      }
+    }
+    if (otherLogs.isEmpty && otherBonus.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    for (final entry in otherLogs.entries) {
+      final stored = _parseLog(prefs.getString(entry.key));
+      final known = {
+        for (final e in stored) _dedupKey(e.typeEtape, e.modalite, e.etapeCode),
+      };
+      for (final e in entry.value) {
+        if (known.add(_dedupKey(e.typeEtape, e.modalite, e.etapeCode))) {
+          stored.add(e);
+        }
+      }
+      await prefs.setString(
+        entry.key,
+        jsonEncode(stored.map((e) => e.toJson()).toList()),
+      );
+    }
+    for (final entry in otherBonus.entries) {
+      final current = prefs.get(entry.key);
+      await prefs.setInt(
+        entry.key,
+        (current is int ? current : 0) + entry.value,
+      );
+    }
+  }
+
+  /// Lit le journal enregistré, entrée par entrée : une entrée abîmée est
+  /// ignorée, au lieu de jeter tout le journal. Auparavant, une seule
+  /// entrée illisible vidait toute la progression -- et l'écriture suivante
+  /// l'effaçait définitivement du disque.
+  static List<_EtapeReussie> _parseLog(String? raw) {
+    if (raw == null) return [];
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(raw);
+    } catch (_) {
+      return [];
+    }
+    if (decoded is! List) return [];
+    final out = <_EtapeReussie>[];
+    for (final e in decoded) {
+      try {
+        final entry = _EtapeReussie.fromJson(e as Map<String, dynamic>);
+        DateTime.parse(entry.dateReussite);
+        out.add(entry);
+      } catch (_) {
+        // Entrée illisible : ignorée, les autres sont conservées.
+      }
+    }
+    return out;
   }
 
   /// À appeler après [FamilyService.switchTo] : recharge entièrement l'état
@@ -332,7 +462,11 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// série de problèmes de calcul résolus coup sur coup) en une seule
   /// écriture plutôt qu'une par point gagné.
   void _writeLog() {
+    if (_disposed) return;
     notifyListeners();
+    // Jamais d'écriture disque pendant un chargement : voir
+    // [_awardedDuringLoad].
+    if (_loading) return;
     final key = scopeKey(_progressStorageKey);
     // Seule la RÉFÉRENCE à `_log` est capturée ici, pas son JSON : `_load()`
     // réassigne toujours `_log` à une toute nouvelle liste au changement
@@ -363,7 +497,9 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Même principe "debounced" que [_writeLog], voir la note sur
   /// `_logWriteDebounce`.
   void _writeBonus() {
+    if (_disposed) return;
     notifyListeners();
+    if (_loading) return;
     final key = scopeKey(_bonusStorageKey);
     final total = _bonusTotal;
     _pendingBonusWrite = () async {
@@ -408,6 +544,9 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
     );
     _log.add(etape);
     _applyToAggregates(etape);
+    if (_loading) {
+      _awardedDuringLoad.add((scopeKey(_progressStorageKey), etape));
+    }
     _writeLog();
     _signalPointsAwarded(points);
     // Retour sonore d'euphorie sur chaque rangée d'exercice réussie -- pas
@@ -443,6 +582,7 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// catalogue (CALCUL, FIGURE) : consulté par `parcours_screen.dart` pour
   /// savoir si le volet "Exercice" d'un sujet donné est acquis, sans exiger
   /// d'avoir réussi CHAQUE tentative possible de ce sujet.
+  @override
   bool isTopicExercised(String typeEtape, String topicId) =>
       _exerciceTopicsByType[typeEtape]?.contains(topicId) ?? false;
 
@@ -454,6 +594,7 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// doit le retrouver tel quel, sans avoir à le retracer, tant que
   /// l'application reste installée (cette information est la même que celle
   /// qui empêche `awardCompletion` de redonner des points pour cette étape).
+  @override
   bool isCompleted({
     required String typeEtape,
     required String modalite,
@@ -521,6 +662,7 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<int> awardRestartBonus() async {
     final points = _random.nextBool() ? _restartBonusMin : _restartBonusMax;
     _bonusTotal += points;
+    if (_loading) _bonusDuringLoad.add((scopeKey(_bonusStorageKey), points));
     _writeBonus();
     _signalPointsAwarded(points);
     return points;
@@ -534,6 +676,7 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// point, comme les autres", pas un bonus variable.
   Future<void> awardSignPracticePoint() async {
     _bonusTotal += 1;
+    if (_loading) _bonusDuringLoad.add((scopeKey(_bonusStorageKey), 1));
     _writeBonus();
     _signalPointsAwarded(1);
   }
@@ -569,7 +712,35 @@ class ProgressProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// du cours que lorsque TOUS ses éléments ont été vus au moins une fois —
   /// jamais dès l'ouverture du cours, pour ne pas récompenser un enfant qui
   /// n'irait pas au bout.
+  ///
+  /// Les appels sont exécutés l'un après l'autre (voir [_viewedChain]) :
+  /// chacun lit la liste des éléments vus, l'enrichit puis la réécrit --
+  /// deux éléments consultés coup sur coup (défilement rapide d'un cours)
+  /// lisaient sinon la même liste de départ et le second écrasait le
+  /// premier, si bien que le cours pouvait ne jamais être validé.
   Future<void> markCoursItemViewed({
+    required String typeEtape,
+    required String groupCode,
+    required String itemCode,
+    required int totalItems,
+    required int palier,
+  }) {
+    final next = _viewedChain.then(
+      (_) => _markCoursItemViewedNow(
+        typeEtape: typeEtape,
+        groupCode: groupCode,
+        itemCode: itemCode,
+        totalItems: totalItems,
+        palier: palier,
+      ),
+    );
+    _viewedChain = next.catchError((_) {});
+    return next;
+  }
+
+  Future<void> _viewedChain = Future.value();
+
+  Future<void> _markCoursItemViewedNow({
     required String typeEtape,
     required String groupCode,
     required String itemCode,

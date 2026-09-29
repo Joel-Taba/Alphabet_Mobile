@@ -82,6 +82,16 @@ class LetterTraceCell extends StatefulWidget {
 }
 
 class _LetterTraceCellState extends State<LetterTraceCell> {
+  // Capturé tant que le contexte est valide : le relire via `context` dans
+  // `dispose()` est interdit par Flutter (élément déjà désactivé).
+  late TracingScrollLock _scrollLock;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollLock = context.read<TracingScrollLock>();
+  }
+
   final List<Offset> _userPoints = [];
   List<Offset> _refPoints = [];
   int _currentStepIdx = 0;
@@ -143,7 +153,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
     // au même geste -- notamment un trait vertical, visuellement identique
     // à un scroll.
     _activePointer = event.pointer;
-    context.read<TracingScrollLock>().start();
+    _scrollLock.start();
     setState(() {
       _status = _CellStatus.drawing;
       _userPoints.clear();
@@ -170,7 +180,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
       return;
     }
     _activePointer = null;
-    context.read<TracingScrollLock>().stop();
+    _scrollLock.stop();
     final result = validateTrace(
       _userPoints,
       _refPoints,
@@ -211,7 +221,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
       return;
     }
     _activePointer = null;
-    context.read<TracingScrollLock>().stop();
+    _scrollLock.stop();
     setState(() {
       _userPoints.clear();
       _status = _CellStatus.idle;
@@ -223,7 +233,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
     // Filet de sécurité : si le widget disparaît pendant un tracé (par ex.
     // navigation en plein geste), le verrou ne doit jamais rester bloqué.
     if (_status == _CellStatus.drawing) {
-      context.read<TracingScrollLock>().stop();
+      _scrollLock.stop();
     }
     super.dispose();
   }

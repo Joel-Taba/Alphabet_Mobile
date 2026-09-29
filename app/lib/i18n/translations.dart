@@ -147,7 +147,7 @@ const Map<String, dynamic> fr = {
         'Pour tracer le signe {label}, on procède ainsi : {consigne}',
   },
   'wrongAnswerPopup': {
-    'title': 'Pas tout à fait !',
+    'title': 'Réponse incorrecte !',
     'correctAnswerLabel': 'La bonne réponse',
   },
   'evaluation': {
@@ -237,9 +237,9 @@ const Map<String, dynamic> fr = {
   'freeMentalCalc': {
     'instruction':
         'Résous le calcul avant la fin du temps imparti. Tu as 2 essais !',
-    'failTitle': 'La bonne réponse était {answer} !',
+    'failTitle': 'Incorrect ! La bonne réponse était {answer}.',
     'failBody':
-        "Ce n'est pas grave, chaque erreur t'apprend quelque chose de nouveau. Flores Gong Nota croit en toi, essaie encore !",
+        "Chaque erreur t'apprend quelque chose de nouveau. Flores Gong Nota croit en toi, essaie encore !",
     'failContinue': 'Nouveau calcul',
   },
   'modeLibre': {
@@ -767,12 +767,15 @@ const Map<String, dynamic> fr = {
     'areaLabel': 'Aire',
   },
   'exerciceFigure': {
-    'problemsReady': '{done}/{total} tracés réussis',
-    'introTitle': 'Trace la figure',
-    'introBody': 'Suis le contour avec ton doigt, doucement.',
-    'allDoneTitle': 'Bravo, tu as bien tracé la figure !',
-    'allDoneBody': 'Tu la reconnais et tu sais la dessiner.',
+    'problemsReady': '{done}/{total} calculs réussis',
+    'introTitle': 'Résous le petit problème !',
+    'introBody': 'Lis bien le schéma, puis tape ta réponse.',
+    'allDoneTitle': 'Bravo, tu maîtrises cette figure !',
+    'allDoneBody': 'Tu sais calculer son périmètre et son aire.',
     'nextTopic': 'Figure suivante : {title}',
+    'calcPerimeterPrompt': 'Calcule le périmètre de cette figure.',
+    'calcAreaPrompt': "Calcule l'aire de cette figure.",
+    'roundedHint': "Arrondis ta réponse à l'entier le plus proche.",
   },
   'figureQuiz': {
     'title': 'Quelle est cette figure ?',
@@ -798,20 +801,29 @@ const Map<String, dynamic> fr = {
     'doneTitle': 'Partie terminée !',
     'doneBody': "Rejoue pour t'entrainer encore.",
   },
-  'coursTangram': {
+  'coursSolide': {
     'notFound': "n'est pas disponible pour le moment.",
-    'introTitle': 'Assemble le tangram !',
+    'backToList': "Retour à l'accueil",
+    'introTitle': 'Regarde-le se former !',
     'introBody':
-        'Glisse chaque pièce colorée dans la case qui a la même forme, '
-        "jusqu'à reconstituer le dessin.",
+        'Chaque face se replie une par une jusqu’à former le solide '
+        'entier. Fais glisser ton doigt (ou la souris) sur le dessin pour '
+        'le faire tourner et le voir sous tous les angles.',
+    'astuceTitle': 'Astuce : le volume',
+    'volumeLabel': 'Volume',
     'practice': "S'entrainer",
-    'nextTopic': 'Tangram suivant : {title}',
+    'nextTopic': 'Solide suivant : {title}',
+    'replay': 'Relancer',
   },
-  'exerciceTangram': {
+  'exerciceSolide': {
     'notFound': "n'est pas disponible pour le moment.",
-    'instruction':
-        'Glisse chaque pièce colorée dans la case qui lui correspond.',
-    'doneBody': 'Bravo, le tangram est complet !',
+    'backToList': "Retour à l'accueil",
+    'introTitle': 'Résous le petit problème !',
+    'introBody': 'Lis bien le schéma, puis tape ta réponse.',
+    'allDoneTitle': 'Bravo, tu maîtrises ce solide !',
+    'allDoneBody': 'Tu sais calculer son volume.',
+    'calcVolumePrompt': 'Calcule le volume de ce solide.',
+    'roundedHint': "Prends π ≈ 3,14 et arrondis ta réponse à l'entier le plus proche.",
   },
   'motsMeles': {
     'title': 'Mots mêlés',
@@ -866,7 +878,7 @@ const Map<String, dynamic> en = {
     'speakSignIntro': 'To trace the sign {label}, here is how: {consigne}',
   },
   'wrongAnswerPopup': {
-    'title': 'Not quite!',
+    'title': 'Incorrect!',
     'correctAnswerLabel': 'The correct answer',
   },
   'evaluation': {
@@ -955,9 +967,9 @@ const Map<String, dynamic> en = {
   },
   'freeMentalCalc': {
     'instruction': 'Solve it before time runs out. You have 2 tries!',
-    'failTitle': 'The right answer was {answer}!',
+    'failTitle': 'Incorrect! The right answer was {answer}.',
     'failBody':
-        "It's okay, every mistake teaches you something new. Flores Gong Nota believes in you — try again!",
+        "Every mistake teaches you something new. Flores Gong Nota believes in you — try again!",
     'failContinue': 'New problem',
   },
   'modeLibre': {
@@ -1005,6 +1017,8 @@ const Map<String, dynamic> en = {
     'coursStep': 'Lesson',
     'exerciceStep': 'Exercise',
     'wordSearchStep': 'Word search',
+    'vraiFauxStep': 'True or false',
+    'composeStep': 'Matching',
     'figureQuizStep': 'Shape quiz',
     'figureVraiFauxStep': 'True or false',
     'figureObjetStep': 'Objects',
@@ -1448,12 +1462,15 @@ const Map<String, dynamic> en = {
     'areaLabel': 'Area',
   },
   'exerciceFigure': {
-    'problemsReady': '{done}/{total} drawings done',
-    'introTitle': 'Trace the shape',
-    'introBody': 'Follow the outline with your finger, slowly.',
-    'allDoneTitle': 'Well done, you traced the shape!',
-    'allDoneBody': 'You can recognize it and draw it.',
+    'problemsReady': '{done}/{total} problems solved',
+    'introTitle': 'Solve the little problem!',
+    'introBody': 'Read the diagram carefully, then type your answer.',
+    'allDoneTitle': 'Well done, you mastered this shape!',
+    'allDoneBody': 'You can work out its perimeter and its area.',
     'nextTopic': 'Next shape: {title}',
+    'calcPerimeterPrompt': 'Work out the perimeter of this shape.',
+    'calcAreaPrompt': 'Work out the area of this shape.',
+    'roundedHint': 'Round your answer to the nearest whole number.',
   },
   'figureQuiz': {
     'title': 'Which shape is this?',
@@ -1479,19 +1496,29 @@ const Map<String, dynamic> en = {
     'doneTitle': 'Round complete!',
     'doneBody': 'Play again to practice more.',
   },
-  'coursTangram': {
+  'coursSolide': {
     'notFound': 'is not available yet.',
-    'introTitle': 'Build the tangram!',
+    'backToList': 'Back to home',
+    'introTitle': 'Watch it take shape!',
     'introBody':
-        'Drag each colored piece into the matching shape until the '
-        'picture is complete.',
+        'Each face folds up one by one until the whole solid is formed. '
+        'Drag your finger (or mouse) on the drawing to spin it and see it '
+        'from every angle.',
+    'astuceTitle': 'Tip: the volume',
+    'volumeLabel': 'Volume',
     'practice': 'Practice',
-    'nextTopic': 'Next tangram: {title}',
+    'nextTopic': 'Next solid: {title}',
+    'replay': 'Replay',
   },
-  'exerciceTangram': {
+  'exerciceSolide': {
     'notFound': 'is not available yet.',
-    'instruction': 'Drag each colored piece into its matching spot.',
-    'doneBody': 'Well done, the tangram is complete!',
+    'backToList': 'Back to home',
+    'introTitle': 'Solve the little problem!',
+    'introBody': 'Read the diagram carefully, then type your answer.',
+    'allDoneTitle': 'Well done, you mastered this solid!',
+    'allDoneBody': 'You can work out its volume.',
+    'calcVolumePrompt': 'Work out the volume of this solid.',
+    'roundedHint': 'Use π ≈ 3.14 and round your answer to the nearest whole number.',
   },
   'motsMeles': {
     'title': 'Word search',
@@ -1548,7 +1575,7 @@ const Map<String, dynamic> es = {
     'speakSignIntro': 'Para trazar el signo {label}, así es como: {consigne}',
   },
   'wrongAnswerPopup': {
-    'title': '¡No es así del todo!',
+    'title': '¡Respuesta incorrecta!',
     'correctAnswerLabel': 'La respuesta correcta',
   },
   'evaluation': {
@@ -1639,9 +1666,9 @@ const Map<String, dynamic> es = {
   'freeMentalCalc': {
     'instruction':
         'Resuelve el cálculo antes de que se acabe el tiempo. ¡Tienes 2 intentos!',
-    'failTitle': '¡La respuesta correcta era {answer}!',
+    'failTitle': '¡Incorrecto! La respuesta correcta era {answer}.',
     'failBody':
-        'No pasa nada, cada error te enseña algo nuevo. Flores Gong Nota cree en ti, ¡inténtalo de nuevo!',
+        'Cada error te enseña algo nuevo. Flores Gong Nota cree en ti, ¡inténtalo de nuevo!',
     'failContinue': 'Nuevo cálculo',
   },
   'modeLibre': {
@@ -1690,6 +1717,8 @@ const Map<String, dynamic> es = {
     'coursStep': 'Lección',
     'exerciceStep': 'Ejercicio',
     'wordSearchStep': 'Sopa de letras',
+    'vraiFauxStep': 'Verdadero o falso',
+    'composeStep': 'Asociación',
     'figureQuizStep': 'Adivina la figura',
     'figureVraiFauxStep': 'Verdadero o falso',
     'figureObjetStep': 'Objetos',
@@ -2143,12 +2172,15 @@ const Map<String, dynamic> es = {
     'areaLabel': 'Área',
   },
   'exerciceFigure': {
-    'problemsReady': '{done}/{total} trazos logrados',
-    'introTitle': 'Traza la figura',
-    'introBody': 'Sigue el contorno con tu dedo, despacio.',
-    'allDoneTitle': '¡Bien hecho, trazaste la figura!',
-    'allDoneBody': 'La reconoces y sabes dibujarla.',
+    'problemsReady': '{done}/{total} cálculos logrados',
+    'introTitle': '¡Resuelve el pequeño problema!',
+    'introBody': 'Lee bien el esquema y luego escribe tu respuesta.',
+    'allDoneTitle': '¡Bien hecho, dominas esta figura!',
+    'allDoneBody': 'Sabes calcular su perímetro y su área.',
     'nextTopic': 'Siguiente figura: {title}',
+    'calcPerimeterPrompt': 'Calcula el perímetro de esta figura.',
+    'calcAreaPrompt': 'Calcula el área de esta figura.',
+    'roundedHint': 'Redondea tu respuesta al número entero más cercano.',
   },
   'figureQuiz': {
     'title': '¿Qué figura es esta?',
@@ -2174,19 +2206,29 @@ const Map<String, dynamic> es = {
     'doneTitle': '¡Partida terminada!',
     'doneBody': 'Vuelve a jugar para practicar más.',
   },
-  'coursTangram': {
+  'coursSolide': {
     'notFound': 'no está disponible por el momento.',
-    'introTitle': '¡Arma el tangram!',
+    'backToList': 'Volver al inicio',
+    'introTitle': '¡Mira cómo se forma!',
     'introBody':
-        'Arrastra cada pieza de color a la casilla con la misma forma '
-        'hasta completar el dibujo.',
+        'Cada cara se pliega una por una hasta formar el sólido completo. '
+        'Desliza tu dedo (o el ratón) sobre el dibujo para girarlo y '
+        'verlo desde todos los ángulos.',
+    'astuceTitle': 'Truco: el volumen',
+    'volumeLabel': 'Volumen',
     'practice': 'Practicar',
-    'nextTopic': 'Siguiente tangram: {title}',
+    'nextTopic': 'Siguiente sólido: {title}',
+    'replay': 'Reiniciar',
   },
-  'exerciceTangram': {
+  'exerciceSolide': {
     'notFound': 'no está disponible por el momento.',
-    'instruction': 'Arrastra cada pieza de color a su lugar correspondiente.',
-    'doneBody': '¡Bien hecho, el tangram está completo!',
+    'backToList': 'Volver al inicio',
+    'introTitle': '¡Resuelve el pequeño problema!',
+    'introBody': 'Lee bien el esquema y luego escribe tu respuesta.',
+    'allDoneTitle': '¡Bien hecho, dominas este sólido!',
+    'allDoneBody': 'Sabes calcular su volumen.',
+    'calcVolumePrompt': 'Calcula el volumen de este sólido.',
+    'roundedHint': 'Usa π ≈ 3,14 y redondea tu respuesta al número entero más cercano.',
   },
   'motsMeles': {
     'title': 'Sopa de letras',
@@ -2241,7 +2283,7 @@ const Map<String, dynamic> ar = {
     "speakSignIntro": "لرسم الإشارة {label}، إليك الطريقة: {consigne}",
   },
   "wrongAnswerPopup": {
-    "title": "ليس تمامًا!",
+    "title": "إجابة خاطئة!",
     "correctAnswerLabel": "الإجابة الصحيحة",
   },
   "evaluation": {
@@ -2327,9 +2369,9 @@ const Map<String, dynamic> ar = {
   },
   "freeMentalCalc": {
     "instruction": "احسب قبل انتهاء الوقت. لديك محاولتان!",
-    "failTitle": "الإجابة الصحيحة كانت {answer}!",
+    "failTitle": "خطأ! الإجابة الصحيحة كانت {answer}.",
     "failBody":
-        "لا بأس، كل خطأ يعلّمك شيئًا جديدًا. فلوريس غونغ نوتا تؤمن بك، حاول مرة أخرى!",
+        "كل خطأ يعلّمك شيئًا جديدًا. فلوريس غونغ نوتا تؤمن بك، حاول مرة أخرى!",
     "failContinue": "حساب جديد",
   },
   "modeLibre": {
@@ -2377,6 +2419,8 @@ const Map<String, dynamic> ar = {
     "coursStep": "درس",
     "exerciceStep": "تمرين",
     "wordSearchStep": "البحث عن الكلمات",
+    "vraiFauxStep": "صحيح أم خطأ",
+    "composeStep": "مطابقة",
     "figureQuizStep": "اختبار الأشكال",
     "figureVraiFauxStep": "صح أم خطأ",
     "figureObjetStep": "أغراض",
@@ -2815,12 +2859,15 @@ const Map<String, dynamic> ar = {
     "areaLabel": "المساحة",
   },
   "exerciceFigure": {
-    "problemsReady": "{done}/{total} رسمات صحيحة",
-    "introTitle": "ارسم الشكل",
-    "introBody": "اتبع الحدود بإصبعك، ببطء.",
-    "allDoneTitle": "أحسنت، لقد رسمت الشكل!",
-    "allDoneBody": "أصبحت تتعرف عليه وتعرف كيف ترسمه.",
+    "problemsReady": "{done}/{total} حسابات صحيحة",
+    "introTitle": "حل المسألة الصغيرة!",
+    "introBody": "اقرأ الرسم جيدًا، ثم اكتب إجابتك.",
+    "allDoneTitle": "أحسنت، أتقنت هذا الشكل!",
+    "allDoneBody": "أصبحت تعرف حساب محيطه ومساحته.",
     "nextTopic": "الشكل التالي: {title}",
+    "calcPerimeterPrompt": "احسب محيط هذا الشكل.",
+    "calcAreaPrompt": "احسب مساحة هذا الشكل.",
+    "roundedHint": "قرّب إجابتك إلى أقرب عدد صحيح.",
   },
   "figureQuiz": {
     "title": "ما هذا الشكل؟",
@@ -2846,18 +2893,27 @@ const Map<String, dynamic> ar = {
     "doneTitle": "انتهت الجولة!",
     "doneBody": "العب مرة أخرى للتدرب أكثر.",
   },
-  "coursTangram": {
+  "coursSolide": {
     "notFound": "غير متاح حاليًا.",
-    "introTitle": "كوّن التانغرام!",
+    "backToList": "العودة إلى الرئيسية",
+    "introTitle": "شاهده يتشكّل!",
     "introBody":
-        "اسحب كل قطعة ملونة إلى الخانة التي لها نفس الشكل حتى تكتمل الصورة.",
+        "يُطوى كل وجه واحدًا تلو الآخر حتى يتشكّل المجسم كاملاً. مرّر إصبعك (أو الفأرة) على الرسم لتدويره ورؤيته من كل الزوايا.",
+    "astuceTitle": "حيلة: الحجم",
+    "volumeLabel": "الحجم",
     "practice": "تدرب",
-    "nextTopic": "التانغرام التالي: {title}",
+    "nextTopic": "المجسم التالي: {title}",
+    "replay": "أعد المحاولة",
   },
-  "exerciceTangram": {
+  "exerciceSolide": {
     "notFound": "غير متاح حاليًا.",
-    "instruction": "اسحب كل قطعة ملونة إلى مكانها المناسب.",
-    "doneBody": "أحسنت، التانغرام مكتمل!",
+    "backToList": "العودة إلى الرئيسية",
+    "introTitle": "حل المسألة الصغيرة!",
+    "introBody": "اقرأ الرسم جيدًا، ثم اكتب إجابتك.",
+    "allDoneTitle": "أحسنت، أتقنت هذا المجسم!",
+    "allDoneBody": "أصبحت تعرف حساب حجمه.",
+    "calcVolumePrompt": "احسب حجم هذا المجسم.",
+    "roundedHint": "استعمل π ≈ 3,14 وقرّب إجابتك إلى أقرب عدد صحيح.",
   },
   "motsMeles": {
     "title": "البحث عن الكلمات",

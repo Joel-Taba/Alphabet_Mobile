@@ -57,6 +57,29 @@ class WordEntry {
   /// Texte à donner à la synthèse vocale -- [frSpoken] en français quand
   /// défini (orthographe accentuée correcte), sinon identique à [text].
   String spokenText(String lang) => lang == 'fr' ? (frSpoken ?? fr) : text(lang);
+
+  /// Texte pour la synthèse vocale qui épelle d'abord le mot lettre par lettre,
+  /// puis le prononce en entier. Utilisé sur le Palier des mots pour que
+  /// l'enfant entende chaque lettre avant le mot complet.
+  ///
+  /// L'épellation utilise la forme *affichée* [text(lang)] — celle que l'enfant
+  /// voit à l'écran et trace — tandis que la prononciation utilise
+  /// [spokenText(lang)] (avec les accents corrects en français quand
+  /// [frSpoken] est défini, pour une prononciation fidèle).
+  ///
+  /// Exemples :
+  ///   WordEntry(fr:'chat')               → "c h a t. chat"
+  ///   WordEntry(fr:'mais', frSpoken:'maïs') → "m a i s. maïs"
+  String spelledSpokenText(String lang) {
+    final written = text(lang); // forme affichée (sans accents pour fr)
+    final spoken = spokenText(lang); // forme prononcée (avec accents si défini)
+    if (written.isEmpty) return spoken;
+    // Sépare chaque lettre par un espace pour que le moteur TTS lise
+    // chaque caractère individuellement, puis ajoute une pause (le point)
+    // avant de prononcer le mot complet.
+    final spelling = written.split('').join(' ');
+    return '$spelling. $spoken';
+  }
 }
 
 const List<WordEntry> WORD_CATALOG = [
