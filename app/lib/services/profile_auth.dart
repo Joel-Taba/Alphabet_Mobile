@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'family_service.dart';
+import '../utils/safe_prefs.dart';
 
 const _nameKey = 'amani_profile_name';
 const _passwordKey = 'amani_profile_password';
@@ -8,7 +11,7 @@ const _photoKey = 'amani_profile_photo';
 /// Vérifie si un mot de passe de profil est défini.
 Future<bool> isProfileProtected() async {
   final prefs = await SharedPreferences.getInstance();
-  final pwd = prefs.getString(scopeKey(_passwordKey));
+  final pwd = prefs.readString(scopeKey(_passwordKey));
   return pwd != null && pwd.isNotEmpty;
 }
 
@@ -28,7 +31,7 @@ void lockProfile() {
 /// Récupère le mot de passe stocké (de l'enfant actif — voir [scopeKey]).
 Future<String?> getStoredPassword() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(scopeKey(_passwordKey));
+  return prefs.readString(scopeKey(_passwordKey));
 }
 
 /// Enregistre le mot de passe (de l'enfant actif).
@@ -40,7 +43,7 @@ Future<void> setStoredPassword(String password) async {
 /// Récupère le nom stocké (de l'enfant actif).
 Future<String?> getStoredName() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(scopeKey(_nameKey));
+  return prefs.readString(scopeKey(_nameKey));
 }
 
 /// Enregistre le nom (de l'enfant actif).
@@ -54,7 +57,20 @@ Future<void> setStoredName(String name) async {
 /// enfant, comme le reste de cette classe.
 Future<String?> getStoredPhoto() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(scopeKey(_photoKey));
+  return _validPhoto(prefs.readString(scopeKey(_photoKey)));
+}
+
+/// Une photo illisible est traitée comme absente : les écrans la décodent
+/// sans protection (`base64Decode`), ce qui plantait l'écran Profil à
+/// chaque ouverture.
+String? _validPhoto(String? base64) {
+  if (base64 == null || base64.isEmpty) return null;
+  try {
+    base64Decode(base64);
+    return base64;
+  } on FormatException {
+    return null;
+  }
 }
 
 Future<void> setStoredPhoto(String base64) async {
@@ -74,5 +90,5 @@ Future<void> removeStoredPhoto() async {
 /// initiales.
 Future<String?> getStoredPhotoFor(String childId) async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('${_photoKey}__$childId');
+  return _validPhoto(prefs.readString('${_photoKey}__$childId'));
 }

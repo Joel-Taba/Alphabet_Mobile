@@ -200,32 +200,45 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${cc['levelLabel'] ?? 'Niveau'}: '
-                          '${calculNiveauLabel(topic.niveau, lang.name)}',
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                            letterSpacing: 1.2,
-                            color: const Color(0xFF6B3F94),
-                          ),
+                    // Plafonné (défilement interne au-delà) : titre et
+                    // sous-titre longs en très grand texte dépassaient
+                    // la hauteur d'un téléphone.
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * 0.35,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${cc['levelLabel'] ?? 'Niveau'}: '
+                              '${calculNiveauLabel(topic.niveau, lang.name)}',
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                                letterSpacing: 1.2,
+                                color: const Color(0xFF6B3F94),
+                              ),
+                            ),
+                            Text(
+                              topic.title[lang.name] ?? topic.title['fr']!,
+                              style: AmaniTheme.titleStyle.copyWith(
+                                fontSize: 20,
+                              ),
+                            ),
+                            Text(
+                              topic.subtitle[lang.name] ??
+                                  topic.subtitle['fr']!,
+                              style: AmaniTheme.bodyStyle.copyWith(
+                                fontSize: 12,
+                                color: AmaniColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          topic.title[lang.name] ?? topic.title['fr']!,
-                          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
-                        ),
-                        Text(
-                          topic.subtitle[lang.name] ?? topic.subtitle['fr']!,
-                          style: AmaniTheme.bodyStyle.copyWith(
-                            fontSize: 12,
-                            color: AmaniColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],

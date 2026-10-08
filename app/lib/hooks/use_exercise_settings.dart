@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/family_service.dart';
+import '../utils/safe_prefs.dart';
 
 const String kRepetitionsStorageKey = 'amani_setting_repetitions';
 const String kToleranceStorageKey = 'amani_setting_tolerance';
@@ -32,12 +33,18 @@ class ExerciseSettings extends ChangeNotifier {
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
+    // Bornés : une valeur hors plage (stockage abîmé) donnerait sinon un
+    // exercice vide (0 répétition) ou des milliers de cases.
     repetitions =
-        prefs.getInt(scopeKey(kRepetitionsStorageKey)) ?? kDefaultRepetitions;
-    tolerance = prefs.getInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance;
+        (prefs.readInt(scopeKey(kRepetitionsStorageKey)) ?? kDefaultRepetitions)
+            .clamp(kMinRepetitions, kMaxRepetitions);
+    tolerance =
+        (prefs.readInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance)
+            .clamp(kMinTolerance, kMaxTolerance);
     evaluationDuration =
-        prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
-        kDefaultEvaluationDuration;
+        (prefs.readInt(scopeKey(kEvaluationDurationStorageKey)) ??
+                kDefaultEvaluationDuration)
+            .clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
     notifyListeners();
   }
 
@@ -62,7 +69,10 @@ class ExerciseSettings extends ChangeNotifier {
     );
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(scopeKey(kEvaluationDurationStorageKey), evaluationDuration);
+    await prefs.setInt(
+      scopeKey(kEvaluationDurationStorageKey),
+      evaluationDuration,
+    );
   }
 }
 
@@ -72,7 +82,7 @@ class ExerciseSettings extends ChangeNotifier {
 Future<int> readEvaluationDurationMinutes() async {
   final prefs = await SharedPreferences.getInstance();
   final v =
-      prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
+      prefs.readInt(scopeKey(kEvaluationDurationStorageKey)) ??
       kDefaultEvaluationDuration;
   return v.clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
 }

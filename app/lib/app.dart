@@ -334,7 +334,13 @@ class AmaniApp extends StatelessWidget {
       // sans redémarrage.
       child: Consumer3<WritingStyleProvider, LanguageProvider, AccessibilitySettings>(
         builder: (context, _, languageProvider, accessibility, _) {
-          setDyslexiaFontOverride(accessibility.dyslexiaFont);
+          // OpenDyslexic n'a aucun glyphe arabe : en arabe, le texte
+          // retombait sur une police de secours avec les interlignes géants
+          // d'OpenDyslexic (en-têtes plus hauts que l'écran), sans aucun
+          // bénéfice de lisibilité.
+          setDyslexiaFontOverride(
+            accessibility.dyslexiaFont && languageProvider.lang != Lang.ar,
+          );
           return MaterialApp.router(
             title: 'Gentle Paths Academy',
             theme: AmaniTheme.light,

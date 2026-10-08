@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/safe_prefs.dart';
 
 /// Réglage partagé de la vitesse de l'animation de démonstration des signes
 /// (Profil > Réglages > "Exercices d'écriture"), lu par les écrans qui
@@ -40,7 +41,7 @@ class AnimationSpeedProvider extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_storageKey);
+    final saved = prefs.readString(_storageKey);
     for (final s in AnimationSpeed.values) {
       if (s.name == saved) {
         _speed = s;

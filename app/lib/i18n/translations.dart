@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/safe_prefs.dart';
 
 /// Langues supportées
 enum Lang { fr, en, es, ar }
@@ -41,7 +42,7 @@ class LanguageProvider extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_storageKey);
+    final saved = prefs.readString(_storageKey);
     if (saved == 'en') {
       _lang = Lang.en;
       notifyListeners();
@@ -581,6 +582,12 @@ const Map<String, dynamic> fr = {
     'tryAgain': 'Essayer à nouveau',
   },
   'exerciceListe': {
+    'traitTitles': {
+      'vertical': "Le trait vertical se trace sur 2 ou 1 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'horizontal': "Le trait horizontal se trace entre une interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'oblique-droit': "Le trait oblique à gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'oblique-gauche': "Le trait oblique à droite se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+    },
     'titleGroup': 'Cahier : {titre}',
     'subtitleGroupLettres': 'Entraine-toi à tracer ces lettres',
     'subtitleGroupDigits': 'Entraine-toi à tracer ces chiffres',
@@ -1278,6 +1285,12 @@ const Map<String, dynamic> en = {
     'tryAgain': 'Try again',
   },
   'exerciceListe': {
+    'traitTitles': {
+      'vertical': "The vertical line is traced over 2 or 1 line spaces, going from the green start point to the red end point.",
+      'horizontal': "The horizontal line is traced within one line space, going from the green start point to the red end point.",
+      'oblique-droit': "The left-slanting line is traced over 2 line spaces, going from the green start point to the red end point.",
+      'oblique-gauche': "The right-slanting line is traced over 2 line spaces, going from the green start point to the red end point.",
+    },
     'titleGroup': 'Notebook: {titre}',
     'subtitleGroupLettres': 'Practice tracing these letters',
     'subtitleGroupDigits': 'Practice tracing these digits',
@@ -1982,6 +1995,12 @@ const Map<String, dynamic> es = {
     'tryAgain': 'Intentar de nuevo',
   },
   'exerciceListe': {
+    'traitTitles': {
+      'vertical': "El trazo vertical se traza sobre 2 o 1 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'horizontal': "El trazo horizontal se traza dentro de una interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'oblique-droit': "El trazo oblicuo a la izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'oblique-gauche': "El trazo oblicuo a la derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+    },
     'titleGroup': 'Cuaderno: {titre}',
     'subtitleGroupLettres': 'Practica trazando estas letras',
     'subtitleGroupDigits': 'Practica trazando estos números',
@@ -2680,6 +2699,12 @@ const Map<String, dynamic> ar = {
     "tryAgain": "حاول مرة أخرى",
   },
   "exerciceListe": {
+    'traitTitles': {
+      'vertical': "يُرسم الخط العمودي على سطرين أو سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'horizontal': "يُرسم الخط الأفقي داخل سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'oblique-droit': "يُرسم الخط المائل إلى اليسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'oblique-gauche': "يُرسم الخط المائل إلى اليمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+    },
     "titleGroup": "الدفتر: {titre}",
     "subtitleGroupLettres": "تدرّب على رسم هذه الحروف",
     "subtitleGroupDigits": "تدرّب على رسم هذه الأرقام",

@@ -123,12 +123,19 @@ class _AmaniButtonState extends State<AmaniButton> {
                   Icon(widget.icon, color: fg, size: iconSize),
                   const SizedBox(width: 8),
                 ],
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w700,
+                // Libellé réduit plutôt que débordant (longue traduction,
+                // police dyslexie) : le bouton a une hauteur fixe.
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(
+                        color: fg,
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ],

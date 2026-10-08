@@ -4,12 +4,10 @@ import '../theme/amani_theme.dart';
 import '../data/solid_calc_problem.dart';
 import '../data/solid3d_catalog.dart';
 
-/// Schéma statique (pas d'animation ici, voir `SolidFoldAnimation` pour le
-/// cours) illustrant le problème de volume actif -- projection isométrique
-/// classique ("faux cube en 2D" : un rectangle de face + deux
-/// parallélogrammes pour donner l'illusion de la profondeur), même principe
-/// de sobriété que `ShapeCalcDiagram` : uniquement les cotations utiles au
-/// calcul en cours.
+/// Illustration joyeuse du problème de volume actif :
+/// - cube → bloc de pierre Minecraft
+/// - pavé droit → aquarium avec poissons
+/// - pyramide / cylindre → schéma isométrique coloré
 class SolidCalcDiagram extends StatelessWidget {
   final SolidCalcProblem problem;
   final double width;
@@ -24,10 +22,13 @@ class SolidCalcDiagram extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: CustomPaint(painter: _SolidCalcPainter(problem)),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: CustomPaint(painter: _SolidCalcPainter(problem)),
+      ),
     );
   }
 }
@@ -65,68 +66,18 @@ class _SolidCalcPainter extends CustomPainter {
 
     switch (problem.shapeId) {
       case 'cube':
-        _box(
-          canvas,
-          size,
-          outline,
-          '${d['side']} $unit',
-          '${d['side']} $unit',
-          '${d['side']} $unit',
-        );
+        _cubeMC(canvas, size, d['side']!, unit);
         break;
       case 'pave':
-        _box(
-          canvas,
-          size,
-          outline,
-          '${d['length']} $unit',
-          '${d['width']} $unit',
-          '${d['height']} $unit',
-        );
+        _aquarium(canvas, size, d['length']!, d['width']!, d['height']!, unit);
         break;
       case 'pyramide':
-        _pyramide(
-          canvas,
-          size,
-          outline,
-          dashed,
-          '${d['side']} $unit',
-          '${d['height']} $unit',
-        );
-        break;
-      case 'prisme':
-        _prisme(
-          canvas,
-          size,
-          outline,
-          dashed,
-          '${d['base']} $unit',
-          '${d['height']} $unit',
-          '${d['length']} $unit',
-        );
+        _pyramide(canvas, size, outline, dashed,
+            '${d['side']} $unit', '${d['height']} $unit');
         break;
       case 'cylindre':
-        _cylindre(
-          canvas,
-          size,
-          outline,
-          dashed,
-          '${d['radius']} $unit',
-          '${d['height']} $unit',
-        );
-        break;
-      case 'cone':
-        _cone(
-          canvas,
-          size,
-          outline,
-          dashed,
-          '${d['radius']} $unit',
-          '${d['height']} $unit',
-        );
-        break;
-      case 'sphere':
-        _sphere(canvas, size, outline, dashed, '${d['radius']} $unit');
+        _cylindre(canvas, size, outline, dashed,
+            '${d['radius']} $unit', '${d['height']} $unit');
         break;
     }
   }
@@ -169,59 +120,208 @@ class _SolidCalcPainter extends CustomPainter {
     }
   }
 
-  /// Boîte isométrique (cube ou pavé) : face avant + dessus + côté droit,
-  /// via un décalage fixe (skew) donnant l'illusion de profondeur.
-  void _box(
-    Canvas c,
-    Size s,
-    Paint outline,
-    String frontLabel,
-    String depthLabel,
-    String heightLabel,
-  ) {
+  // ────────────────────────────────── Cube — bloc de pierre Minecraft
+
+  void _cubeMC(Canvas c, Size s, int side, String unit) {
+    // Fond : arrière-plan style pixel-art
+    c.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFF7DB08A), // herbe minecraft
+    );
+    // Sol (deux rangées de tuiles)
+    final dirtPaint = Paint()..color = const Color(0xFF8B5E3C);
+    c.drawRect(Rect.fromLTWH(0, s.height * 0.78, s.width, s.height * 0.22), dirtPaint);
+    // Grille sol
+    final gridPaint = Paint()
+      ..color = const Color(0xFF6B4426)
+      ..strokeWidth = 0.8;
+    for (double x = 0; x < s.width; x += s.width / 5) {
+      c.drawLine(Offset(x, s.height * 0.78), Offset(x, s.height), gridPaint);
+    }
+    for (double y = s.height * 0.78; y < s.height; y += s.height * 0.11) {
+      c.drawLine(Offset(0, y), Offset(s.width, y), gridPaint);
+    }
+
+    // Isometric cube
     final skew = Offset(s.width * 0.17, -s.height * 0.14);
-    final fw = s.width * 0.5;
-    final fh = s.height * 0.55;
+    final fw = s.width * 0.48;
+    final fh = s.height * 0.50;
     final origin = Offset(s.width * 0.16, s.height * 0.78);
     final fTL = origin + Offset(0, -fh);
     final fTR = origin + Offset(fw, -fh);
     final fBR = origin + Offset(fw, 0);
     final fBL = origin;
+    final stroke = const Color(0xFF3E2723);
+    final outlinePaint = Paint()
+      ..color = stroke
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeJoin = StrokeJoin.round;
 
+    // Face avant (pierre grise avec texture fissures)
     final front = Path()
       ..moveTo(fBL.dx, fBL.dy)
       ..lineTo(fBR.dx, fBR.dy)
       ..lineTo(fTR.dx, fTR.dy)
       ..lineTo(fTL.dx, fTL.dy)
       ..close();
-    c.drawPath(front, Paint()..color = _front);
-    c.drawPath(front, outline);
+    c.drawPath(front, Paint()..color = const Color(0xFF9E9E9E));
+    // Grille pixel sur face avant
+    _pixelGrid(c, fTL, fTR, fBR, fBL, const Color(0xFF757575), 4);
+    c.drawPath(front, outlinePaint);
 
+    // Dessus (plus claire)
     final top = Path()
       ..moveTo(fTL.dx, fTL.dy)
       ..lineTo(fTR.dx, fTR.dy)
       ..lineTo(fTR.dx + skew.dx, fTR.dy + skew.dy)
       ..lineTo(fTL.dx + skew.dx, fTL.dy + skew.dy)
       ..close();
-    c.drawPath(top, Paint()..color = _top);
-    c.drawPath(top, outline);
+    c.drawPath(top, Paint()..color = const Color(0xFFBDBDBD));
+    _pixelGrid(c, fTL + skew, fTR + skew, fTR, fTL, const Color(0xFF9E9E9E), 4);
+    c.drawPath(top, outlinePaint);
 
-    final side = Path()
+    // Côté droit (plus sombre)
+    final right = Path()
       ..moveTo(fTR.dx, fTR.dy)
       ..lineTo(fBR.dx, fBR.dy)
       ..lineTo(fBR.dx + skew.dx, fBR.dy + skew.dy)
       ..lineTo(fTR.dx + skew.dx, fTR.dy + skew.dy)
       ..close();
-    c.drawPath(side, Paint()..color = _side);
-    c.drawPath(side, outline);
+    c.drawPath(right, Paint()..color = const Color(0xFF757575));
+    _pixelGrid(c, fTR + skew, fTR, fBR, fBR + skew, const Color(0xFF616161), 4);
+    c.drawPath(right, outlinePaint);
 
-    _label(c, frontLabel, Offset((fBL.dx + fBR.dx) / 2, fBL.dy + 16));
-    _label(c, heightLabel, Offset(fBL.dx - 20, (fTL.dy + fBL.dy) / 2));
-    _label(
-      c,
-      depthLabel,
-      Offset(fTR.dx + skew.dx / 2 + 6, fTR.dy + skew.dy / 2 - 6),
+    // Labels
+    _label(c, '$side $unit', Offset((fBL.dx + fBR.dx) / 2, fBL.dy + 16));
+    _label(c, '$side $unit', Offset(fBL.dx - 22, (fTL.dy + fBL.dy) / 2));
+    _label(c, '$side $unit',
+        Offset(fTR.dx + skew.dx / 2 + 8, fTR.dy + skew.dy / 2 - 8));
+
+    // Icône pixel-art
+    _emoji(c, '⛏️', Offset(fTR.dx + skew.dx - 2, fTR.dy + skew.dy - 20), size: 14);
+  }
+
+  void _pixelGrid(
+    Canvas c,
+    Offset tl, Offset tr, Offset br, Offset bl,
+    Color color, int divisions,
+  ) {
+    final p = Paint()..color = color..strokeWidth = 0.7;
+    for (int i = 1; i < divisions; i++) {
+      final t = i / divisions;
+      c.drawLine(
+        Offset.lerp(tl, tr, t)!,
+        Offset.lerp(bl, br, t)!,
+        p,
+      );
+      c.drawLine(
+        Offset.lerp(tl, bl, t)!,
+        Offset.lerp(tr, br, t)!,
+        p,
+      );
+    }
+  }
+
+  // ────────────────────────────────── Pavé droit — aquarium
+
+  void _aquarium(Canvas c, Size s, int length, int width, int height, String unit) {
+    // Fond clair (pièce/bureau)
+    c.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFFF5F5F5),
     );
+
+    final skew = Offset(s.width * 0.16, -s.height * 0.12);
+    final fw = s.width * 0.52;
+    final fh = s.height * 0.52;
+    final origin = Offset(s.width * 0.14, s.height * 0.80);
+    final fTL = origin + Offset(0, -fh);
+    final fTR = origin + Offset(fw, -fh);
+    final fBR = origin + Offset(fw, 0);
+    final fBL = origin;
+
+    // Eau (face avant, bleu semi-transparent)
+    final frontWater = Path()
+      ..moveTo(fBL.dx, fBL.dy)
+      ..lineTo(fBR.dx, fBR.dy)
+      ..lineTo(fTR.dx, fTR.dy)
+      ..lineTo(fTL.dx, fTL.dy)
+      ..close();
+    c.drawPath(frontWater, Paint()..color = const Color(0xFF90CAF9).withValues(alpha: 0.7));
+
+    // Petites vagues
+    final wavePaint = Paint()
+      ..color = const Color(0xFF42A5F5).withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    for (int i = 0; i < 3; i++) {
+      final t = 0.2 + i * 0.22;
+      final y = fTL.dy + (fBL.dy - fTL.dy) * t;
+      final path = Path();
+      final steps = 5;
+      for (int j = 0; j <= steps; j++) {
+        final xFrac = j / steps;
+        final x = fTL.dx + (fTR.dx - fTL.dx) * xFrac;
+        final wave = (j % 2 == 0) ? 0.0 : -3.0;
+        if (j == 0) { path.moveTo(x, y + wave); }
+        else { path.lineTo(x, y + wave); }
+      }
+      c.drawPath(path, wavePaint);
+    }
+
+    // Dessus (eau + verre transparent)
+    final top = Path()
+      ..moveTo(fTL.dx, fTL.dy)
+      ..lineTo(fTR.dx, fTR.dy)
+      ..lineTo(fTR.dx + skew.dx, fTR.dy + skew.dy)
+      ..lineTo(fTL.dx + skew.dx, fTL.dy + skew.dy)
+      ..close();
+    c.drawPath(top, Paint()..color = const Color(0xFFB3E5FC).withValues(alpha: 0.5));
+
+    // Côté droit
+    final right = Path()
+      ..moveTo(fTR.dx, fTR.dy)
+      ..lineTo(fBR.dx, fBR.dy)
+      ..lineTo(fBR.dx + skew.dx, fBR.dy + skew.dy)
+      ..lineTo(fTR.dx + skew.dx, fTR.dy + skew.dy)
+      ..close();
+    c.drawPath(right, Paint()..color = const Color(0xFF4FC3F7).withValues(alpha: 0.5));
+
+    // Contours verre
+    final glassPaint = Paint()
+      ..color = const Color(0xFF0277BD)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeJoin = StrokeJoin.round;
+    c.drawPath(frontWater, glassPaint);
+    c.drawPath(top, glassPaint);
+    c.drawPath(right, glassPaint);
+
+    // Fond de l'aquarium (sable)
+    final sandRect = Rect.fromLTWH(
+      fBL.dx + 3, fBL.dy - 10, fBR.dx - fBL.dx - 6, 10);
+    c.drawRect(sandRect, Paint()..color = const Color(0xFFFFF176).withValues(alpha: 0.6));
+
+    // Poissons et plantes (emojis)
+    _emoji(c, '🐟', Offset(fBL.dx + fw * 0.2, fBL.dy - fh * 0.42), size: 18);
+    _emoji(c, '🐠', Offset(fBL.dx + fw * 0.55, fBL.dy - fh * 0.65), size: 15);
+    _emoji(c, '🌿', Offset(fBL.dx + fw * 0.1, fBL.dy - fh * 0.16), size: 12);
+    _emoji(c, '🌿', Offset(fBL.dx + fw * 0.72, fBL.dy - fh * 0.14), size: 11);
+
+    // Labels
+    _label(c, '$length $unit', Offset((fBL.dx + fBR.dx) / 2, fBL.dy + 16));
+    _label(c, '$height $unit', Offset(fBL.dx - 22, (fTL.dy + fBL.dy) / 2));
+    _label(c, '$width $unit',
+        Offset(fTR.dx + skew.dx / 2 + 8, fTR.dy + skew.dy / 2 - 8));
+  }
+
+  void _emoji(Canvas c, String emoji, Offset topLeft, {double size = 14}) {
+    final tp = TextPainter(
+      text: TextSpan(text: emoji, style: TextStyle(fontSize: size)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(c, topLeft);
   }
 
   void _pyramide(
@@ -272,83 +372,6 @@ class _SolidCalcPainter extends CustomPainter {
       c,
       sideLabel,
       Offset((bl.dx + bf.dx) / 2 - 6, (bl.dy + bf.dy) / 2 + 12),
-    );
-  }
-
-  void _prisme(
-    Canvas c,
-    Size s,
-    Paint outline,
-    Paint dashed,
-    String baseLabel,
-    String heightLabel,
-    String lengthLabel,
-  ) {
-    final depth = Offset(s.width * 0.24, -s.height * 0.13);
-    final frontBL = Offset(s.width * 0.16, s.height * 0.82);
-    final frontBR = Offset(s.width * 0.56, s.height * 0.82);
-    final frontApex = Offset(s.width * 0.36, s.height * 0.32);
-
-    final backBL = frontBL + depth;
-    final backBR = frontBR + depth;
-    final backApex = frontApex + depth;
-
-    final roofLeft = Path()
-      ..moveTo(frontApex.dx, frontApex.dy)
-      ..lineTo(frontBL.dx, frontBL.dy)
-      ..lineTo(backBL.dx, backBL.dy)
-      ..lineTo(backApex.dx, backApex.dy)
-      ..close();
-    c.drawPath(roofLeft, Paint()..color = _top);
-    c.drawPath(roofLeft, outline);
-
-    final roofRight = Path()
-      ..moveTo(frontApex.dx, frontApex.dy)
-      ..lineTo(backApex.dx, backApex.dy)
-      ..lineTo(backBR.dx, backBR.dy)
-      ..lineTo(frontBR.dx, frontBR.dy)
-      ..close();
-    c.drawPath(roofRight, Paint()..color = _side);
-    c.drawPath(roofRight, outline);
-
-    final front = Path()
-      ..moveTo(frontApex.dx, frontApex.dy)
-      ..lineTo(frontBL.dx, frontBL.dy)
-      ..lineTo(frontBR.dx, frontBR.dy)
-      ..close();
-    c.drawPath(front, Paint()..color = _front);
-    c.drawPath(front, outline);
-
-    _dashedLine(
-      c,
-      frontApex,
-      Offset((frontBL.dx + frontBR.dx) / 2, frontApex.dy),
-      dashed,
-    );
-    _dashedLine(
-      c,
-      Offset((frontBL.dx + frontBR.dx) / 2, frontApex.dy),
-      Offset((frontBL.dx + frontBR.dx) / 2, frontBL.dy),
-      dashed,
-    );
-
-    _label(
-      c,
-      baseLabel,
-      Offset((frontBL.dx + frontBR.dx) / 2, frontBL.dy + 16),
-    );
-    _label(
-      c,
-      heightLabel,
-      Offset(frontApex.dx - 30, (frontApex.dy + frontBL.dy) / 2),
-    );
-    _label(
-      c,
-      lengthLabel,
-      Offset(
-        (frontBR.dx + backBR.dx) / 2 + 10,
-        (frontBR.dy + backBR.dy) / 2 - 4,
-      ),
     );
   }
 
@@ -416,83 +439,6 @@ class _SolidCalcPainter extends CustomPainter {
     final hx = cx + rx + 18;
     _dashedLine(c, Offset(hx, topY), Offset(hx, bottomY), dashed);
     _label(c, heightLabel, Offset(hx + 22, (topY + bottomY) / 2));
-  }
-
-  void _cone(
-    Canvas c,
-    Size s,
-    Paint outline,
-    Paint dashed,
-    String radiusLabel,
-    String heightLabel,
-  ) {
-    final cx = s.width * 0.44;
-    final rx = s.width * 0.25;
-    final ry = rx * 0.3;
-    final apex = Offset(cx, s.height * 0.1);
-    final baseY = s.height * 0.8;
-    final baseOval = Rect.fromCenter(
-      center: Offset(cx, baseY),
-      width: rx * 2,
-      height: ry * 2,
-    );
-
-    final body = Path()
-      ..moveTo(apex.dx, apex.dy)
-      ..lineTo(cx - rx, baseY)
-      ..arcTo(baseOval, math.pi, -math.pi, false)
-      ..close();
-    c.drawPath(body, _curvedFill(body.getBounds()));
-    c.drawPath(body, outline);
-    _dashedBackArc(c, baseOval, dashed);
-
-    // Hauteur : de la pointe au centre de la base.
-    final center = Offset(cx, baseY);
-    _dashedLine(c, apex, center, dashed);
-    c.drawCircle(center, 2.4, Paint()..color = _stroke);
-    _label(c, heightLabel, Offset(cx - 26, (apex.dy + baseY) / 2 + 10));
-
-    // Rayon : du centre de la base jusqu'à son bord.
-    c.drawLine(center, Offset(cx + rx, baseY), outline);
-    _label(c, radiusLabel, Offset(cx + rx / 2, baseY + ry + 12));
-  }
-
-  void _sphere(
-    Canvas c,
-    Size s,
-    Paint outline,
-    Paint dashed,
-    String radiusLabel,
-  ) {
-    final center = Offset(s.width * 0.44, s.height * 0.5);
-    final r = s.height * 0.4;
-    final circle = Rect.fromCircle(center: center, radius: r);
-    c.drawCircle(
-      center,
-      r,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(-0.4, -0.45),
-          radius: 0.95,
-          colors: [_top, _front, _side],
-          stops: const [0.0, 0.5, 1.0],
-        ).createShader(circle),
-    );
-    c.drawCircle(center, r, outline);
-
-    // Équateur : moitié avant en trait plein, moitié arrière en pointillés.
-    final equator = Rect.fromCenter(
-      center: center,
-      width: r * 2,
-      height: r * 0.5,
-    );
-    c.drawArc(equator, 0, math.pi, false, outline);
-    _dashedBackArc(c, equator, dashed);
-
-    // Rayon : du centre jusqu'au bord.
-    c.drawCircle(center, 2.6, Paint()..color = _stroke);
-    c.drawLine(center, Offset(center.dx + r, center.dy), outline);
-    _label(c, radiusLabel, Offset(center.dx + r / 2, center.dy - r * 0.42));
   }
 
   @override

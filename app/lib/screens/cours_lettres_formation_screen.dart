@@ -341,25 +341,118 @@ class _CoursLettresFormationScreenState
                   const SizedBox(height: 24),
 
                   // Animation
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x1F000000),
-                          blurRadius: 20,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: TraceControlsToolbar.heightFor(3),
+                  Builder(builder: (context) {
+                    final headerColor = steps.isNotEmpty
+                        ? Color(int.parse(
+                            (steps.first['strokeColor'] as String)
+                                .replaceFirst('#', '0xFF'),
+                          ))
+                        : AmaniColors.primary;
+                    return Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1F000000),
+                            blurRadius: 20,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      child: Stack(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 11,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  headerColor,
+                                  Color.lerp(headerColor, Colors.black, 0.18)!,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.22),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    widget.char,
+                                    style: TextStyle(
+                                      fontFamily: kBalooFontFamily,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 27,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        letter['name'][lang.name] as String? ??
+                                            '',
+                                        style: TextStyle(
+                                          fontFamily: kBalooFontFamily,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      if (steps.length > 1)
+                                        Text(
+                                          tFormat(
+                                            cf['signeCount'] as String? ?? '',
+                                            {'count': steps.length},
+                                          ),
+                                          style: TextStyle(
+                                            fontFamily: kBalooFontFamily,
+                                            fontSize: 11,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.82,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFFFBF6EC),
+                                  Color(0xFFF0E4CC),
+                                ],
+                              ),
+                            ),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: TraceControlsToolbar.heightFor(3),
+                              ),
+                              child: Stack(
+                                children: [
                           Center(
                             child: SizedBox(
                               width: 260,
@@ -453,10 +546,14 @@ class _CoursLettresFormationScreenState
                               ],
                             ),
                           ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
+                    );
+                  }),
 
                   const SizedBox(height: 24),
 

@@ -131,7 +131,9 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
       case SignFamily.point:
         return POINTS;
       case SignFamily.crochet:
-        return CROCHETS;
+        return CROCHETS
+            .where((s) => !(s['id'] as String).endsWith('-reduced'))
+            .toList();
     }
   }
 

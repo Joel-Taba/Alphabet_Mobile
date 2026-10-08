@@ -76,15 +76,16 @@ ValidationResult validateTrace(
     return const ValidationResult(false, 0, 'too_few_points');
   }
 
+  // Distances mesurées à la LIGNE (segments entre points consécutifs), pas
+  // aux seuls points échantillonnés : sinon un doigt parfaitement sur le
+  // modèle, entre deux échantillons, paraissait "hors tracé", et un geste
+  // rapide (peu d'événements de mouvement) laissait des trous de
+  // couverture — à tolérance faible, même un tracé parfait était refusé.
+
   // ── Critère 1 : COUVERTURE ──
   var coveredCount = 0;
   for (final rp in refPts) {
-    for (final up in userPts) {
-      if ((up - rp).distance <= tolerancePx) {
-        coveredCount++;
-        break;
-      }
-    }
+    if (_distToPolyline(rp, userPts) <= tolerancePx) coveredCount++;
   }
   final coverage = coveredCount / refPts.length;
   if (coverage < _coverageMin) {
@@ -98,12 +99,9 @@ ValidationResult validateTrace(
   // ── Critère 2 : PROXIMITÉ AU CHEMIN ──
   var offPath = 0;
   for (final up in userPts) {
-    var minDist = double.infinity;
-    for (final rp in refPts) {
-      final d = (up - rp).distance;
-      if (d < minDist) minDist = d;
+    if (_distToPolyline(up, refPts) > tolerancePx * _offPathMultiplier) {
+      offPath++;
     }
-    if (minDist > tolerancePx * _offPathMultiplier) offPath++;
   }
   final offRatio = offPath / userPts.length;
   if (offRatio > _offPathMaxRatio) {
@@ -115,26 +113,37 @@ ValidationResult validateTrace(
   }
 
   // ── Critère 3 : ORDRE DE TRACÉ ──
-  final refIndices = userPts.map((up) {
-    var minD = double.infinity;
-    var best = 0;
-    for (var i = 0; i < refPts.length; i++) {
+  // Le doigt doit PROGRESSER le long du modèle, du début vers la fin : chaque
+  // point est apparié au modèle dans une fenêtre qui ne peut qu'avancer (à un
+  // léger tremblement près). Un tracé fait à l'envers, même parfaitement
+  // superposé (boucle du "o", "c", "a"...), ne peut alors plus être apparié.
+  // L'ancien critère (comparaison du point du modèle le plus proche d'un
+  // point à l'autre) ne repérait que les sauts brusques en arrière, pas un
+  // parcours entièrement inversé.
+  final window = math.max(4, (refPts.length / 4).ceil());
+  var cursor = 0;
+  var inOrder = 0;
+  for (final up in userPts) {
+    final from = math.max(0, cursor - _orderBackwardTolerance);
+    final to = math.min(refPts.length - 1, cursor + window);
+    var best = cursor;
+    var bestD = double.infinity;
+    for (var i = from; i <= to; i++) {
       final d = (up - refPts[i]).distance;
-      if (d < minD) {
-        minD = d;
+      if (d < bestD) {
+        bestD = d;
         best = i;
       }
     }
-    return best;
-  }).toList();
-  var backwardSteps = 0;
-  for (var i = 1; i < refIndices.length; i++) {
-    if (refIndices[i] < refIndices[i - 1] - _orderBackwardTolerance) {
-      backwardSteps++;
+    final segD = _distToPolyline(up, refPts.sublist(from, to + 1));
+    if (segD <= tolerancePx * _offPathMultiplier) {
+      inOrder++;
+      if (best > cursor) cursor = best;
     }
   }
-  final orderScore = 1 - backwardSteps / math.max(1, refIndices.length - 1);
-  if (orderScore < _orderScoreMin) {
+  final orderScore = inOrder / userPts.length;
+  final progressed = cursor >= (refPts.length - 1) * 0.75;
+  if (orderScore < _orderScoreMin || !progressed) {
     return ValidationResult(
       false,
       coverage,
@@ -167,4 +176,23 @@ ValidationResult validateTrace(
   if (!nearEnd) return ValidationResult(false, coverage, 'wrong_end');
 
   return ValidationResult(true, coverage);
+}
+
+double _distToPolyline(Offset p, List<Offset> line) {
+  if (line.length == 1) return (p - line.first).distance;
+  var best = double.infinity;
+  for (var i = 1; i < line.length; i++) {
+    final d = _distToSegment(p, line[i - 1], line[i]);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
+double _distToSegment(Offset p, Offset a, Offset b) {
+  final ab = b - a;
+  final len2 = ab.dx * ab.dx + ab.dy * ab.dy;
+  if (len2 == 0) return (p - a).distance;
+  final ap = p - a;
+  final t = ((ap.dx * ab.dx + ap.dy * ab.dy) / len2).clamp(0.0, 1.0);
+  return (p - (a + ab * t)).distance;
 }

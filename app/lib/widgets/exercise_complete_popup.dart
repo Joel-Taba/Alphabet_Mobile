@@ -75,103 +75,107 @@ class _ExerciseCompletePopupState extends State<ExerciseCompletePopup> {
               color: const Color(0x73000000),
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 320),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 24,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const AmaniMascot(
-                      pose: AmaniPose.celebration,
-                      size: AmaniSize.medium,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      complete['title'] ?? 'Exercice terminé !',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                        color: AmaniColors.textPrimary,
+              child: SingleChildScrollView(
+                child: Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 8),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      complete['body'] ?? '',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontSize: 14,
-                        color: AmaniColors.textSecondary,
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const AmaniMascot(
+                        pose: AmaniPose.celebration,
+                        size: AmaniSize.medium,
                       ),
-                    ),
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 16),
+                      Text(
+                        complete['title'] ?? 'Exercice terminé !',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                          color: AmaniColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        complete['body'] ?? '',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontSize: 14,
+                          color: AmaniColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: _PopupButton(
-                        icon: LucideIcons.rotateCcw,
-                        label: common['restart'] ?? 'Recommencer',
-                        bg: const Color(0x26D9A84A),
-                        fg: const Color(0xFF8A6800),
-                        border: const Color(0x66D9A84A),
-                        onTap: widget.onRestart,
+                      SizedBox(
+                        width: double.infinity,
+                        child: _PopupButton(
+                          icon: LucideIcons.rotateCcw,
+                          label: common['restart'] ?? 'Recommencer',
+                          bg: const Color(0x26D9A84A),
+                          fg: const Color(0xFF8A6800),
+                          border: const Color(0x66D9A84A),
+                          onTap: widget.onRestart,
+                        ),
                       ),
-                    ),
-                    if (widget.onNext != null) ...[
+                      if (widget.onNext != null) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _PopupButton(
+                            icon: LucideIcons.chevronRight,
+                            iconTrailing: true,
+                            label: common['next'] ?? 'Suivant',
+                            bg: AmaniColors.secondary,
+                            fg: Colors.white,
+                            filled: true,
+                            onTap: widget.onNext!,
+                          ),
+                        ),
+                      ],
+                      if (widget.onFreeMode != null) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _PopupButton(
+                            icon: LucideIcons.pencil,
+                            label: common['freeMode'] ?? 'Mode libre',
+                            bg: const Color(0x264A90E2),
+                            fg: const Color(0xFF2D6BBF),
+                            border: const Color(0x664A90E2),
+                            onTap: widget.onFreeMode!,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
                         child: _PopupButton(
-                          icon: LucideIcons.chevronRight,
-                          iconTrailing: true,
-                          label: common['next'] ?? 'Suivant',
-                          bg: AmaniColors.secondary,
-                          fg: Colors.white,
-                          filled: true,
-                          onTap: widget.onNext!,
+                          label: common['backToHome'] ?? 'Accueil',
+                          bg: Colors.white,
+                          fg: AmaniColors.textPrimary,
+                          border: AmaniColors.textPrimary.withValues(
+                            alpha: 0.15,
+                          ),
+                          onTap: widget.onBackHome,
                         ),
                       ),
                     ],
-                    if (widget.onFreeMode != null) ...[
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: _PopupButton(
-                          icon: LucideIcons.pencil,
-                          label: common['freeMode'] ?? 'Mode libre',
-                          bg: const Color(0x264A90E2),
-                          fg: const Color(0xFF2D6BBF),
-                          border: const Color(0x664A90E2),
-                          onTap: widget.onFreeMode!,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _PopupButton(
-                        label: common['backToHome'] ?? 'Accueil',
-                        bg: Colors.white,
-                        fg: AmaniColors.textPrimary,
-                        border: AmaniColors.textPrimary.withValues(alpha: 0.15),
-                        onTap: widget.onBackHome,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

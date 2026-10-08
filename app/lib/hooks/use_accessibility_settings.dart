@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/safe_prefs.dart';
 
 /// Réglages d'accessibilité (Profil > Réglages) — volontairement au niveau
 /// de l'appareil, pas par enfant (contrairement à `WritingStyleProvider`
@@ -38,11 +39,11 @@ class AccessibilitySettings extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    _dyslexiaFont = prefs.getBool(_dyslexiaFontKey) ?? false;
+    _dyslexiaFont = prefs.readBool(_dyslexiaFontKey) ?? false;
     // `.clamp(...)` : une valeur enregistrée avant un ajustement de
     // `kMaxUiScale` (ex. réduit après coup) pourrait sinon dépasser les
     // bornes actuelles et casser l'assertion `value <= max` du slider.
-    _uiScale = (prefs.getDouble(_uiScaleKey) ?? kDefaultUiScale).clamp(
+    _uiScale = (prefs.readDouble(_uiScaleKey) ?? kDefaultUiScale).clamp(
       kMinUiScale,
       kMaxUiScale,
     );

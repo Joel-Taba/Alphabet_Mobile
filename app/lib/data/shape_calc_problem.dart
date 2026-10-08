@@ -278,3 +278,184 @@ ShapeCalcProblem _generateOne(String shapeId, ShapeCalcKind kind, Random rng) {
       );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Problème combiné (périmètre ET aire simultanément)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const Map<String, Map<String, String>> _COMBINED_TEMPLATES = {
+  'carre': {
+    'fr': 'Un terrain carré mesure {side} m de côté.',
+    'en': 'A square plot of land measures {side} m on each side.',
+    'es': 'Un terreno cuadrado mide {side} m de lado.',
+    'ar': 'أرضٌ مربعة الشكل طول ضلعها {side} م.',
+  },
+  'rectangle': {
+    'fr': 'Un champ rectangulaire mesure {length} m de long et {width} m de large.',
+    'en': 'A rectangular field is {length} m long and {width} m wide.',
+    'es': 'Un campo rectangular mide {length} m de largo y {width} m de ancho.',
+    'ar': 'حقلٌ مستطيل الشكل طوله {length} م وعرضه {width} م.',
+  },
+  'triangle': {
+    'fr': 'Un triangle isocèle a une base de {base} m et une hauteur de {height} m. Ses côtés égaux mesurent {a} m.',
+    'en': 'An isosceles triangle has a base of {base} m and a height of {height} m. Its equal sides measure {a} m.',
+    'es': 'Un triángulo isósceles tiene una base de {base} m y una altura de {height} m. Sus lados iguales miden {a} m.',
+    'ar': 'مثلثٌ متساوي الساقين قاعدته {base} م وارتفاعه {height} م وساقاه {a} م.',
+  },
+  'cercle': {
+    'fr': 'Un bassin rond a un rayon de {radius} m.',
+    'en': 'A round pond has a radius of {radius} m.',
+    'es': 'Un estanque redondo tiene un radio de {radius} m.',
+    'ar': 'بركةٌ دائرية نصف قطرها {radius} م.',
+  },
+  'parallelogramme': {
+    'fr': 'Un parallélogramme a une base de {base} m, une hauteur de {height} m et des côtés obliques de {sideB} m.',
+    'en': 'A parallelogram has a base of {base} m, a height of {height} m, and oblique sides of {sideB} m.',
+    'es': 'Un paralelogramo tiene una base de {base} m, una altura de {height} m y lados oblicuos de {sideB} m.',
+    'ar': 'متوازي أضلاع قاعدته {base} م وارتفاعه {height} م وأضلاعه المائلة {sideB} م.',
+  },
+  'losange': {
+    'fr': 'Un losange a des diagonales de {bigDiagonal} m et {smallDiagonal} m. Ses côtés mesurent {side} m.',
+    'en': 'A rhombus has diagonals of {bigDiagonal} m and {smallDiagonal} m. Its sides measure {side} m.',
+    'es': 'Un rombo tiene diagonales de {bigDiagonal} m y {smallDiagonal} m. Sus lados miden {side} m.',
+    'ar': 'معينٌ قطراه {bigDiagonal} م و{smallDiagonal} م وأضلاعه {side} م.',
+  },
+};
+
+/// Énoncé unique décrivant les dimensions permettant de calculer à la fois le
+/// périmètre et l'aire -- affiché en tête du nouveau double exercice.
+String shapeCombinedStatement(ShapeCombinedProblem problem, String lang) {
+  final template = _COMBINED_TEMPLATES[problem.shapeId];
+  if (template == null) return '';
+  final text = template[lang] ?? template['fr'] ?? '';
+  return tFormat(text, problem.dimensions);
+}
+
+/// Problème double : l'enfant doit calculer à la fois le périmètre et l'aire
+/// de la figure, avec un seul énoncé et un seul schéma montrant toutes les
+/// dimensions nécessaires.
+class ShapeCombinedProblem {
+  final String shapeId;
+
+  /// Toutes les dimensions nécessaires aux deux calculs à la fois.
+  final Map<String, int> dimensions;
+
+  final int perimeterAnswer;
+  final int areaAnswer;
+
+  /// `true` pour le cercle : les deux réponses sont des arrondis (π ≈ 3,14).
+  final bool isApproximate;
+
+  const ShapeCombinedProblem({
+    required this.shapeId,
+    required this.dimensions,
+    required this.perimeterAnswer,
+    required this.areaAnswer,
+    this.isApproximate = false,
+  });
+}
+
+ShapeCombinedProblem generateShapeCombinedProblem(ShapeTopic topic, int seed) {
+  final rng = Random(seed);
+  return _generateCombined(topic.id, rng);
+}
+
+ShapeCombinedProblem _generateCombined(String shapeId, Random rng) {
+  switch (shapeId) {
+    case 'carre':
+      final side = 4 + rng.nextInt(12);
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {'side': side},
+        perimeterAnswer: side * 4,
+        areaAnswer: side * side,
+      );
+
+    case 'rectangle':
+      final length = 6 + rng.nextInt(15);
+      var width = 3 + rng.nextInt(12);
+      if (width >= length) width = length - 2;
+      if (width < 3) width = 3;
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {'length': length, 'width': width},
+        perimeterAnswer: (length + width) * 2,
+        areaAnswer: length * width,
+      );
+
+    case 'triangle':
+      // Isocèle via triple pythagoricienne 3-4-5 × k :
+      // demi-base = 4k, hauteur = 3k → côté = 5k (côté² = 16k² + 9k²)
+      final k = 1 + rng.nextInt(3);
+      final base = 8 * k;
+      final height = 3 * k;
+      final side = 5 * k;
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {
+          'a': side, 'b': base, 'c': side,
+          'base': base, 'height': height,
+        },
+        perimeterAnswer: 2 * side + base,
+        areaAnswer: (base * height) ~/ 2,
+      );
+
+    case 'cercle':
+      int hundredthsP(int r) => 2 * 314 * r;
+      int hundredthsA(int r) => 314 * r * r;
+      var radius = 2 + rng.nextInt(9);
+      while (
+        hundredthsP(radius) % 100 == 50 ||
+        hundredthsA(radius) % 100 == 50
+      ) {
+        radius = 2 + rng.nextInt(9);
+      }
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {'radius': radius},
+        perimeterAnswer: (hundredthsP(radius) / 100).round(),
+        areaAnswer: (hundredthsA(radius) / 100).round(),
+        isApproximate: true,
+      );
+
+    case 'parallelogramme':
+      final base = 5 + rng.nextInt(12);
+      final height = 3 + rng.nextInt(10);
+      var sideB = 3 + rng.nextInt(10);
+      if (sideB >= base) sideB = base - 2;
+      if (sideB < 3) sideB = 3;
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {
+          'base': base, 'height': height, 'sideB': sideB,
+          'a': base, 'b': sideB,
+        },
+        perimeterAnswer: (base + sideB) * 2,
+        areaAnswer: base * height,
+      );
+
+    case 'losange':
+      // Triple pythagoricienne 3-4-5 × k :
+      // demi-big = 4k, demi-small = 3k → côté = 5k
+      final k = 1 + rng.nextInt(3);
+      final big = 8 * k;
+      final small = 6 * k;
+      final side = 5 * k;
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {
+          'bigDiagonal': big, 'smallDiagonal': small, 'side': side,
+        },
+        perimeterAnswer: side * 4,
+        areaAnswer: (big * small) ~/ 2,
+      );
+
+    default:
+      return ShapeCombinedProblem(
+        shapeId: shapeId,
+        dimensions: {'side': 4},
+        perimeterAnswer: 16,
+        areaAnswer: 16,
+      );
+  }
+}

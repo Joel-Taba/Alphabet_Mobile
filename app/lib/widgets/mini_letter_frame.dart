@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'cahier_frame.dart';
 
+// ignore_for_file: deprecated_member_use
+
 /// Petit cadre "cahier" montrant une lettre ou un chiffre en train de se
 /// former — chaque geste s'anime l'un après l'autre puis reste tracé, sans
 /// pointillé guide ni rejeu manuel. Port fidèle de
@@ -133,17 +135,28 @@ class _MiniLetterPainter extends CustomPainter {
           (steps[i]['strokeColor'] as String).replaceFirst('#', '0xFF'),
         ),
       );
+      final sw = (steps[i]['strokeWidth'] as num?)?.toDouble() ?? 10.0;
+      final isDashed = steps[i]['dashed'] == true;
       final paint = Paint()
         ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 10
+        ..strokeWidth = sw
         ..strokeCap = StrokeCap.round;
+
       if (stepProgress >= 1.0) {
-        canvas.drawPath(path, paint);
+        canvas.drawPath(
+          isDashed
+              ? dashPath(path, dashArray: CircularIntervalList<double>([6, 4]))
+              : path,
+          paint,
+        );
       } else {
         for (final metric in path.computeMetrics()) {
+          final partial = metric.extractPath(0, metric.length * stepProgress);
           canvas.drawPath(
-            metric.extractPath(0, metric.length * stepProgress),
+            isDashed
+                ? dashPath(partial, dashArray: CircularIntervalList<double>([6, 4]))
+                : partial,
             paint,
           );
         }

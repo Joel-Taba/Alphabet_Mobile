@@ -515,6 +515,37 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "badgeText": "#2D6BBF"
   },
   {
+    "id": "crochet-top-right-reduced",
+    "label": {
+      "fr": "Petit crochet haut-droite",
+      "en": "Small top-right hook",
+      "es": "Gancho pequeño arriba-derecha",
+      "ar": "خطاف صغير أعلى اليمين"
+    },
+    "consigne": {
+      "fr": "Trace le petit crochet haut droite, dans une seule interligne : pars de l'extrémité haute puis descends la tige vers le bas.",
+      "en": "Trace the small top-right hook, within a single line space: start at the top end, then go down the stem.",
+      "es": "Traza el gancho pequeño arriba-derecha, dentro de una sola interlínea: parte del extremo de arriba y baja por el tallo.",
+      "ar": "ارسم الخطاف الصغير أعلى اليمين، داخل سطر واحد: ابدأ من الطرف العلوي ثم انزل على الساق نحو الأسفل."
+    },
+    "family": "crochet",
+    "variant": "top-right",
+    "scale": "reduced",
+    "pathD": "M 113 86.5 A 13 13 0 0 0 87 86.5 L 87 126.5",
+    "startXY": [
+      113,
+      86.5
+    ],
+    "endXY": [
+      87,
+      130
+    ],
+    "zone": "corps",
+    "strokeColor": "#4A90E2",
+    "badgeBg": "#EAF1FB",
+    "badgeText": "#2D6BBF"
+  },
+  {
     "id": "crochet-top-left-full",
     "label": {
       "fr": "Crochet haut-gauche",
@@ -546,6 +577,37 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "badgeText": "#2D6BBF"
   },
   {
+    "id": "crochet-top-left-reduced",
+    "label": {
+      "fr": "Petit crochet haut-gauche",
+      "en": "Small top-left hook",
+      "es": "Gancho pequeño arriba-izquierda",
+      "ar": "خطاف صغير أعلى اليسار"
+    },
+    "consigne": {
+      "fr": "Trace le petit crochet haut gauche, dans une seule interligne : pars de l'extrémité haute puis descends la tige vers le bas.",
+      "en": "Trace the small top-left hook, within a single line space: start at the top end, then go down the stem.",
+      "es": "Traza el gancho pequeño arriba-izquierda, dentro de una sola interlínea: parte del extremo de arriba y baja por el tallo.",
+      "ar": "ارسم الخطاف الصغير أعلى اليسار، داخل سطر واحد: ابدأ من الطرف العلوي ثم انزل على الساق نحو الأسفل."
+    },
+    "family": "crochet",
+    "variant": "top-left",
+    "scale": "reduced",
+    "pathD": "M 87 86.5 A 13 13 0 0 1 113 86.5 L 113 126.5",
+    "startXY": [
+      87,
+      86.5
+    ],
+    "endXY": [
+      113,
+      130
+    ],
+    "zone": "corps",
+    "strokeColor": "#4A90E2",
+    "badgeBg": "#EAF1FB",
+    "badgeText": "#2D6BBF"
+  },
+  {
     "id": "crochet-bottom-right-full",
     "label": {
       "fr": "Crochet bas-droite",
@@ -572,6 +634,37 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
       104.23
     ],
     "zone": "hampe",
+    "strokeColor": "#4A90E2",
+    "badgeBg": "#EAF1FB",
+    "badgeText": "#2D6BBF"
+  },
+  {
+    "id": "crochet-bottom-right-reduced",
+    "label": {
+      "fr": "Petit crochet bas-droite",
+      "en": "Small bottom-right hook",
+      "es": "Gancho pequeño abajo-derecha",
+      "ar": "خطاف صغير أسفل اليمين"
+    },
+    "consigne": {
+      "fr": "Trace le petit crochet bas droite, dans une seule interligne : descends la tige puis courbe vers la droite en bas.",
+      "en": "Trace the small bottom-right hook, within a single line space: go down the stem, then curve to the right at the bottom.",
+      "es": "Traza el gancho pequeño abajo-derecha, dentro de una sola interlínea: baja por el tallo y luego curva hacia la derecha abajo.",
+      "ar": "ارسم الخطاف الصغير أسفل اليمين، داخل سطر واحد: انزل على الساق ثم انحنِ نحو اليمين في الأسفل."
+    },
+    "family": "crochet",
+    "variant": "bottom-right",
+    "scale": "reduced",
+    "pathD": "M 87 73.5 L 87 113.5 A 13 13 0 0 0 113 113.5",
+    "startXY": [
+      87,
+      70
+    ],
+    "endXY": [
+      113,
+      113.5
+    ],
+    "zone": "corps",
     "strokeColor": "#4A90E2",
     "badgeBg": "#EAF1FB",
     "badgeText": "#2D6BBF"
@@ -696,6 +789,37 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
       104.23
     ],
     "zone": "hampe",
+    "strokeColor": "#4A90E2",
+    "badgeBg": "#EAF1FB",
+    "badgeText": "#2D6BBF"
+  },
+  {
+    "id": "crochet-double-gauche-droit-reduced",
+    "label": {
+      "fr": "Petit double-crochet gauche-droit",
+      "en": "Small left-right double hook",
+      "es": "Bucle pequeño izquierda-derecha",
+      "ar": "حلقة مزدوجة صغيرة يسار-يمين"
+    },
+    "consigne": {
+      "fr": "Trace le petit double-crochet gauche et droit en forme de S, dans une seule interligne.",
+      "en": "Trace the small left-right double hook, shaped like an S, within a single line space.",
+      "es": "Traza el bucle pequeño izquierda-derecha en forma de S, dentro de una sola interlínea.",
+      "ar": "ارسم الحلقة المزدوجة الصغيرة يسار-يمين على شكل S، داخل سطر واحد."
+    },
+    "family": "crochet",
+    "variant": "double-crochet-gauche-droit",
+    "scale": "reduced",
+    "pathD": "M 78 84.5 A 11 11 0 0 1 100 84.5 L 100 115.5 A 11 11 0 0 0 122 115.5",
+    "startXY": [
+      78,
+      84.5
+    ],
+    "endXY": [
+      122,
+      115.5
+    ],
+    "zone": "corps",
     "strokeColor": "#4A90E2",
     "badgeBg": "#EAF1FB",
     "badgeText": "#2D6BBF"

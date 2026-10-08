@@ -138,8 +138,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -259,53 +258,59 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                     ),
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            MiniLetterFrame(
-                              letter: consonantLetter,
-                              delayMs: _autoplayDelay
-                                  ? kCoursAnimationDelay.inMilliseconds
-                                  : 0,
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              '+',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AmaniColors.textSecondary,
+                        // Réduit l'ensemble (sans jamais l'agrandir) quand
+                        // les lettres cursives/l'agrandissement d'interface
+                        // dépassent la largeur d'un petit téléphone.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              MiniLetterFrame(
+                                letter: consonantLetter,
+                                delayMs: _autoplayDelay
+                                    ? kCoursAnimationDelay.inMilliseconds
+                                    : 0,
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            MiniLetterFrame(
-                              letter: vowelLetter,
-                              delayMs:
-                                  (_autoplayDelay
-                                      ? kCoursAnimationDelay.inMilliseconds
-                                      : 0) +
-                                  650,
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              '=',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AmaniColors.textSecondary,
+                              const SizedBox(width: 10),
+                              const Text(
+                                '+',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: AmaniColors.textSecondary,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              current['syllable'] as String,
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 34,
-                                color: AmaniColors.primary,
+                              const SizedBox(width: 10),
+                              MiniLetterFrame(
+                                letter: vowelLetter,
+                                delayMs:
+                                    (_autoplayDelay
+                                        ? kCoursAnimationDelay.inMilliseconds
+                                        : 0) +
+                                    650,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+                              const Text(
+                                '=',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: AmaniColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                current['syllable'] as String,
+                                style: TextStyle(
+                                  fontFamily: kBalooFontFamily,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 34,
+                                  color: AmaniColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 18),
                         Divider(

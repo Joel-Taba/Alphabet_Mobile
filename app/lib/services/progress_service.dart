@@ -8,6 +8,7 @@ import '../logic/progress_rules.dart';
 import 'backend_sync_service.dart';
 import 'family_service.dart';
 import 'sound_effect_service.dart';
+import '../utils/safe_prefs.dart';
 
 /// Système de points local — port fidèle de `src/lib/progress.ts`. Les noms
 /// et la forme des données (typeEtape, modalite, palier, etapeCode) sont
@@ -336,7 +337,7 @@ class ProgressProvider extends ChangeNotifier
     final bonusKey = scopeKey(_bonusStorageKey);
     try {
       final prefs = await SharedPreferences.getInstance();
-      _log = _parseLog(prefs.getString(key));
+      _log = _parseLog(prefs.readString(key));
       final bonus = prefs.get(bonusKey);
       _bonusTotal = bonus is int ? bonus : 0;
       // Gains obtenus pendant le chargement, pour CET enfant : réintégrés
@@ -399,7 +400,7 @@ class ProgressProvider extends ChangeNotifier
     if (otherLogs.isEmpty && otherBonus.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
     for (final entry in otherLogs.entries) {
-      final stored = _parseLog(prefs.getString(entry.key));
+      final stored = _parseLog(prefs.readString(entry.key));
       final known = {
         for (final e in stored) _dedupKey(e.typeEtape, e.modalite, e.etapeCode),
       };
@@ -686,7 +687,7 @@ class ProgressProvider extends ChangeNotifier
 
   Future<Set<String>> _readViewed(String typeEtape, String groupCode) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_viewedKey(typeEtape, groupCode));
+    final raw = prefs.readString(_viewedKey(typeEtape, groupCode));
     if (raw == null) return {};
     try {
       final parsed = jsonDecode(raw) as List<dynamic>;

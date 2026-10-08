@@ -122,24 +122,29 @@ class _ExerciceFigureObjetScreenState extends State<ExerciceFigureObjetScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      (fo['title'] ?? '').toString(),
-                      style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (fo['title'] ?? '').toString(),
+                          style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
+                        ),
+                        if (_items.isNotEmpty)
+                          Text(
+                            (fo['scoreLabel'] ?? '{score}/{total}')
+                                .toString()
+                                .replaceAll('{score}', '${_doneIndices.length}')
+                                .replaceAll('{total}', '${_items.length}'),
+                            style: TextStyle(
+                              fontFamily: kBalooFontFamily,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: AmaniColors.textSecondary,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  if (_items.isNotEmpty)
-                    Text(
-                      (fo['scoreLabel'] ?? '{score}/{total}')
-                          .toString()
-                          .replaceAll('{score}', '${_doneIndices.length}')
-                          .replaceAll('{total}', '${_items.length}'),
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AmaniColors.textSecondary,
-                      ),
-                    ),
                 ],
               ),
             ),

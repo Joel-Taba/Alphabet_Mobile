@@ -19,6 +19,7 @@ import '../widgets/free_writing_sheet.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/keep_alive_list.dart';
 
 /// Jeu "Formule en puzzle" du Palier 2 : pour chaque lettre/chiffre du
 /// groupe, l'enfant choisit — dans le bon ordre — les pièces portant les
@@ -220,61 +221,68 @@ class _ExercicePuzzleFormuleScreenState
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: allDone
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                allDone
-                                    ? (ep['allDoneTitle'] ?? '')
-                                    : (ep['introTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                allDone
-                                    ? (ep['allDoneBody'] ?? '')
-                                    : ((isGroupDigits
-                                              ? ep['introBodyDigit']
-                                              : ep['introBody']) ??
-                                          ''),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
+                      // Défile avec le contenu : en "Taille de l'interface" maximale,
+                      // en-tête + carte fixes dépassaient la hauteur d'un téléphone.
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AmaniColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AmaniColors.textPrimary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                AmaniMascot(
+                                  pose: allDone
+                                      ? AmaniPose.celebration
+                                      : AmaniPose.encouragement,
+                                  size: AmaniSize.small,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        allDone
+                                            ? (ep['allDoneTitle'] ?? '')
+                                            : (ep['introTitle'] ?? ''),
+                                        style: AmaniTheme.titleStyle.copyWith(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        allDone
+                                            ? (ep['allDoneBody'] ?? '')
+                                            : ((isGroupDigits
+                                                      ? ep['introBodyDigit']
+                                                      : ep['introBody']) ??
+                                                  ''),
+                                        style: AmaniTheme.bodyStyle.copyWith(
+                                          fontSize: 12,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
                         // Une seule feuille pour toute la page, comme les
@@ -301,7 +309,7 @@ class _ExercicePuzzleFormuleScreenState
                           sliver: SliverPadding(
                             padding: const EdgeInsets.all(4),
                             sliver: SliverList(
-                              delegate: SliverChildListDelegate([
+                              delegate: keepAliveListDelegate([
                                 for (
                                   int li = 0;
                                   li < groupLetters.length;

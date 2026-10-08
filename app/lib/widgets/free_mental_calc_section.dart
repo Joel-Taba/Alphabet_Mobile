@@ -236,75 +236,77 @@ class _FreeMentalCalcSectionState extends State<FreeMentalCalcSection> {
               color: const Color(0x73000000),
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 320),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 24,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const AmaniMascot(
-                      pose: AmaniPose.reconfort,
-                      size: AmaniSize.medium,
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      tFormat(fc['failTitle'] ?? '', {
-                        'answer': '${_problem.answer}',
-                      }),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                        color: AmaniColors.textPrimary,
+              child: SingleChildScrollView(
+                child: Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 8),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      fc['failBody'] ?? '',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontSize: 14,
-                        height: 1.4,
-                        color: AmaniColors.textSecondary,
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const AmaniMascot(
+                        pose: AmaniPose.reconfort,
+                        size: AmaniSize.medium,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: _newProblem,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: AmaniColors.primary,
-                          borderRadius: BorderRadius.circular(18),
+                      const SizedBox(height: 14),
+                      Text(
+                        tFormat(fc['failTitle'] ?? '', {
+                          'answer': '${_problem.answer}',
+                        }),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: AmaniColors.textPrimary,
                         ),
-                        child: Text(
-                          fc['failContinue'] ?? '',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: kBalooFontFamily,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            color: Colors.white,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        fc['failBody'] ?? '',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontSize: 14,
+                          height: 1.4,
+                          color: AmaniColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      GestureDetector(
+                        onTap: _newProblem,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: AmaniColors.primary,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Text(
+                            fc['failContinue'] ?? '',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: kBalooFontFamily,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
-import '../services/sign_speech.dart';
 import '../hooks/use_exercise_settings.dart';
 import '../hooks/use_tracing_scroll_lock.dart';
 import '../data/sign_exercise_catalog.dart';
@@ -23,6 +22,7 @@ import '../utils/text_case.dart';
 import '../utils/trace_validation.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/keep_alive_list.dart';
 
 /// "Cahier d'Écriture" : exerce chaque signe d'une famille (répétitions sur
 /// grille Seyès), ou liste les caractères d'un groupe de progression (Palier
@@ -167,7 +167,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   Widget build(BuildContext context) {
     final t = context.watch<LanguageProvider>().t;
     final lang = context.watch<LanguageProvider>().lang;
-    final speech = context.read<SignSpeechService>();
     final el = t['exerciceListe'] as Map<String, dynamic>? ?? {};
 
     final progressionGroup = widget.group != null
@@ -175,16 +174,15 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
         : null;
 
     if (progressionGroup != null) {
-      return _buildGroupMode(context, t, lang, speech, el, progressionGroup);
+      return _buildGroupMode(context, t, lang, el, progressionGroup);
     }
-    return _buildFamilyMode(context, t, lang, speech, el);
+    return _buildFamilyMode(context, t, lang, el);
   }
 
   Widget _buildGroupMode(
     BuildContext context,
     Map<String, dynamic> t,
     Lang lang,
-    SignSpeechService speech,
     Map<String, dynamic> el,
     ProgressionGroup group,
   ) {
@@ -359,7 +357,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
     BuildContext context,
     Map<String, dynamic> t,
     Lang lang,
-    SignSpeechService speech,
     Map<String, dynamic> el,
   ) {
     final session = context.watch<EvaluationSessionController>();
@@ -519,7 +516,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                               SliverPadding(
                                 padding: const EdgeInsets.all(4),
                                 sliver: SliverList(
-                                  delegate: SliverChildListDelegate([
+                                  delegate: keepAliveListDelegate([
                                     for (final (_, titre, entries)
                                         in displayedGroups)
                                       if (entries.isNotEmpty) ...[
@@ -543,6 +540,12 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                                               '${entry['id']}-r$_restartKey',
                                             ),
                                             entry: entry,
+                                            title: practiceMode
+                                                ? null
+                                                : _traitTitle(entry, el),
+                                            showHeader:
+                                                practiceMode ||
+                                                !_sharesPreviousTitle(entry),
                                             done: _doneSigns.contains(
                                               entry['id'] as String,
                                             ),
@@ -552,7 +555,6 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                                                 widget.family != null,
                                             el: el,
                                             lang: lang,
-                                            speech: speech,
                                             awardsProgress:
                                                 !practiceMode && !_isEvaluation,
                                             onEntryDone: practiceMode
@@ -739,14 +741,37 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   }
 }
 
+/// Titre explicatif d'un trait "plein" sur la page d'exercice (remplace son
+/// simple nom) ; `null` pour tout autre signe.
+String? _traitTitle(dynamic entry, Map<String, dynamic> el) {
+  if (entry['family'] != 'trait' || entry['scale'] != 'full') return null;
+  final titles = el['traitTitles'] as Map<String, dynamic>? ?? {};
+  return titles[entry['variant']] as String?;
+}
+
+/// Une variante réduite placée juste après sa version grandeur nature
+/// (même tracé, dans une seule interligne) partage son titre : elle
+/// s'affiche sans en-tête propre, comme un seul et même exercice. Ne
+/// concerne que la page d'exercice générale — jamais l'entraînement sur un
+/// signe précis (voir `practiceMode`).
+bool _sharesPreviousTitle(dynamic entry) {
+  if (entry['scale'] != 'reduced') return false;
+  if (entry['family'] == 'crochet') return true;
+  return entry['family'] == 'trait' &&
+      (entry['variant'] == 'vertical' || entry['variant'] == 'horizontal');
+}
+
 class _SignExerciseRow extends StatelessWidget {
   final dynamic entry;
+
+  /// Remplace le nom du signe dans l'en-tête (voir [_traitTitle]).
+  final String? title;
+  final bool showHeader;
   final int repetitions;
   final num tolerance;
   final bool hideFamilyBadge;
   final Map<String, dynamic> el;
   final Lang lang;
-  final SignSpeechService speech;
   final ValueChanged<String>? onEntryDone;
 
   /// `false` en pratique rapide depuis le cours (voir [ExerciceListeScreen.sign])
@@ -763,13 +788,14 @@ class _SignExerciseRow extends StatelessWidget {
 
   const _SignExerciseRow({
     super.key,
+    this.title,
+    this.showHeader = true,
     required this.entry,
     required this.repetitions,
     required this.tolerance,
     required this.hideFamilyBadge,
     required this.el,
     required this.lang,
-    required this.speech,
     this.onEntryDone,
     this.awardsProgress = true,
     this.done = false,
@@ -803,21 +829,13 @@ class _SignExerciseRow extends StatelessWidget {
         ),
         family: entry['family'] as String? ?? '',
       ),
-      label: entry['label'][lang.name] ?? '',
+      label: title ?? entry['label'][lang.name] ?? '',
+      showHeader: showHeader,
       repetitions: repetitions,
       tolerance: tolerance,
       doneLabel: el['done'] ?? 'Terminé !',
       initiallyDone: done,
-      onSpeak: () => speech.speak(
-        spokenSignInstruction(
-          lang,
-          entry['label'][lang.name] ?? '',
-          entry['consigne'][lang.name] ?? '',
-        ),
-        lang,
-      ),
       onAllDone: () {
-        speech.speak(el['rowComplete'] ?? '', lang);
         if (awardsProgress) {
           context.read<ProgressProvider>().awardCompletion(
             typeEtape: 'SIGNE',

@@ -162,22 +162,22 @@ class _ExerciceCalculComposeScreenState
                               .toString(),
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),
+                        if (_puzzles.isNotEmpty)
+                          Text(
+                            (cc['scoreLabel'] ?? '{score}/{total}')
+                                .toString()
+                                .replaceAll('{score}', '$_score')
+                                .replaceAll('{total}', '${_puzzles.length}'),
+                            style: TextStyle(
+                              fontFamily: kBalooFontFamily,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: AmaniColors.textSecondary,
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                  if (_puzzles.isNotEmpty)
-                    Text(
-                      (cc['scoreLabel'] ?? '{score}/{total}')
-                          .toString()
-                          .replaceAll('{score}', '$_score')
-                          .replaceAll('{total}', '${_puzzles.length}'),
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AmaniColors.textSecondary,
-                      ),
-                    ),
                 ],
               ),
             ),

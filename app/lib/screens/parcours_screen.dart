@@ -21,6 +21,7 @@ import '../utils/text_case.dart';
 import '../widgets/sign_glyph.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/safe_prefs.dart';
 
 /// Famille de signe (voir `SignGlyph`) associée à une étape "Cours" du
 /// Palier 1 — `null` pour toute autre étape "Cours" (livre générique).
@@ -310,7 +311,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
 
   Future<void> _loadActiveStep() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getInt('accueil_current_step_idx');
+    final saved = prefs.readInt('accueil_current_step_idx');
     if (saved != null && mounted) {
       setState(() => _activeStepIdx = saved);
     }

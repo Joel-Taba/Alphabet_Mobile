@@ -201,16 +201,10 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                               MiniLetterFrame(
                                 key: ValueKey('shape-$_replaySeed'),
                                 letter: topic.traceData,
-                                size: 140,
+                                size: 200,
                                 delayMs: _autoplayDelay
                                     ? kCoursAnimationDelay.inMilliseconds
                                     : 0,
-                                // Chaque côté doit se tracer entièrement avant
-                                // que le suivant ne commence (pas de
-                                // chevauchement), pour bien distinguer la
-                                // formation figure par figure — contrairement
-                                // aux lettres, où un léger chevauchement reste
-                                // acceptable.
                                 stepGapMs: 700,
                                 stepDrawMs: 700,
                               ),

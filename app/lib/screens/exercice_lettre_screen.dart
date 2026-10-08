@@ -24,6 +24,7 @@ import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/keep_alive_list.dart';
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
 /// exercé séparément) puis Phase B (la lettre entière, répétée autant de
@@ -443,80 +444,88 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                 ),
                 // Bandeau d'état — hors de la feuille de cahier, comme le
                 // `_HintBar` du Palier 1 (`exercice_liste_screen.dart`).
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: _letterSuccess
-                              ? AmaniPose.celebration
-                              : allStepsDone
-                              ? AmaniPose.demonstration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _letterSuccess
-                                    ? (isDigit
-                                              ? el['successAllDigit']
-                                              : el['successAll']) ??
-                                          ''
-                                    : allStepsDone
-                                    ? (isDigit
-                                              ? el['finalTitleDigit']
-                                              : el['finalTitle']) ??
-                                          ''
-                                    : (el['practiceStepsTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _letterSuccess
-                                    ? (el['successAllSub'] ?? '')
-                                    : allStepsDone
-                                    ? (isDigit
-                                              ? el['finalHintDigit']
-                                              : el['finalHint']) ??
-                                          ''
-                                    : tFormat(
-                                        (isDigit
-                                                ? el['practiceStepsHintDigit']
-                                                : el['practiceStepsHint']) ??
-                                            '',
-                                        {'reps': _settings.repetitions},
-                                      ),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: CustomScrollView(
                     physics: tracingAwareScrollPhysics(context),
                     slivers: [
+                      // Carte d'intro défilante : avec un grand texte (réglage
+                      // "Taille de l'interface", police dyslexie), en-tête + carte
+                      // fixes ne laissaient plus aucune place à l'exercice.
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AmaniColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AmaniColors.textPrimary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                AmaniMascot(
+                                  pose: _letterSuccess
+                                      ? AmaniPose.celebration
+                                      : allStepsDone
+                                      ? AmaniPose.demonstration
+                                      : AmaniPose.encouragement,
+                                  size: AmaniSize.small,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _letterSuccess
+                                            ? (isDigit
+                                                      ? el['successAllDigit']
+                                                      : el['successAll']) ??
+                                                  ''
+                                            : allStepsDone
+                                            ? (isDigit
+                                                      ? el['finalTitleDigit']
+                                                      : el['finalTitle']) ??
+                                                  ''
+                                            : (el['practiceStepsTitle'] ?? ''),
+                                        style: AmaniTheme.titleStyle.copyWith(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _letterSuccess
+                                            ? (el['successAllSub'] ?? '')
+                                            : allStepsDone
+                                            ? (isDigit
+                                                      ? el['finalHintDigit']
+                                                      : el['finalHint']) ??
+                                                  ''
+                                            : tFormat(
+                                                (isDigit
+                                                        ? el['practiceStepsHintDigit']
+                                                        : el['practiceStepsHint']) ??
+                                                    '',
+                                                {'reps': _settings.repetitions},
+                                              ),
+                                        style: AmaniTheme.bodyStyle.copyWith(
+                                          fontSize: 12,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
                         // Une seule feuille de cahier pour toute la page,
@@ -544,7 +553,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               SliverPadding(
                                 padding: const EdgeInsets.all(4),
                                 sliver: SliverList(
-                                  delegate: SliverChildListDelegate([
+                                  delegate: keepAliveListDelegate([
                                     // Phase A — un signe débloque le suivant
                                     // une fois réussi. Absente en évaluation,
                                     // et absente aussi pour une lettre/chiffre
@@ -876,9 +885,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
         _doneGroupLetters.length == groupLetters.length;
 
     final evalGroups = getEvalPalier2Groups();
-    final groupIdx = evalGroups.indexWhere(
-      (g) => g.id == progressionGroup.id,
-    );
+    final groupIdx = evalGroups.indexWhere((g) => g.id == progressionGroup.id);
     // Une fois la dernière lettre du dernier groupe atteinte, on reboucle
     // sur le premier — seul le chronomètre décide de la fin de la session.
     final evalNextGroup = groupIdx >= 0
@@ -1049,7 +1056,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                               SliverPadding(
                                 padding: const EdgeInsets.all(4),
                                 sliver: SliverList(
-                                  delegate: SliverChildListDelegate([
+                                  delegate: keepAliveListDelegate([
                                     for (
                                       var li = 0;
                                       li < groupLetters.length;

@@ -20,6 +20,7 @@ import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/keep_alive_list.dart';
 
 /// Exercice du Palier "Les Calculs" : trace la réponse de chaque problème,
 /// chiffre par chiffre, en réutilisant le même mécanisme de traçage que les
@@ -390,59 +391,67 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: allDone
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                allDone
-                                    ? (ec['allDoneTitle'] ?? '')
-                                    : (ec['introTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                allDone
-                                    ? (ec['allDoneBody'] ?? '')
-                                    : (ec['introBody'] ?? ''),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: CustomScrollView(
                     physics: tracingAwareScrollPhysics(context),
                     slivers: [
+                      // Carte d'intro défilante : avec un grand texte (réglage
+                      // "Taille de l'interface", police dyslexie), en-tête + carte
+                      // fixes ne laissaient plus aucune place à l'exercice.
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AmaniColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AmaniColors.textPrimary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                AmaniMascot(
+                                  pose: allDone
+                                      ? AmaniPose.celebration
+                                      : AmaniPose.encouragement,
+                                  size: AmaniSize.small,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        allDone
+                                            ? (ec['allDoneTitle'] ?? '')
+                                            : (ec['introTitle'] ?? ''),
+                                        style: AmaniTheme.titleStyle.copyWith(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        allDone
+                                            ? (ec['allDoneBody'] ?? '')
+                                            : (ec['introBody'] ?? ''),
+                                        style: AmaniTheme.bodyStyle.copyWith(
+                                          fontSize: 12,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
                         // Une seule feuille de cahier pour toute la page,
@@ -474,7 +483,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                               SliverPadding(
                                 padding: const EdgeInsets.all(4),
                                 sliver: SliverList(
-                                  delegate: SliverChildListDelegate([
+                                  delegate: keepAliveListDelegate([
                                     for (
                                       var i = 0;
                                       i < _problems.length;
@@ -569,7 +578,9 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                       evaluationNextTopic.title['fr']!,
                 }),
                 onContinue: () {
-                  session.advanceSubject((evalTopicIdx + 1) % evalTopics.length);
+                  session.advanceSubject(
+                    (evalTopicIdx + 1) % evalTopics.length,
+                  );
                   context.replace(
                     '/exercice/calcul/${evaluationNextTopic.id}?amaniEval=1',
                   );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/safe_prefs.dart';
 
 /// Un enfant au sein du compte (fratrie). Volontairement minimal : le reste
 /// des données (mot de passe, photo, progression, réglages pédagogiques)
@@ -94,7 +95,7 @@ class FamilyService extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_childrenKey);
+    final raw = prefs.readString(_childrenKey);
     if (raw != null) {
       try {
         final parsed = jsonDecode(raw) as List<dynamic>;
@@ -105,7 +106,7 @@ class FamilyService extends ChangeNotifier {
         _children = [];
       }
     }
-    _idEnfantActif = prefs.getString(_activeChildKey);
+    _idEnfantActif = prefs.readString(_activeChildKey);
 
     if (_children.isEmpty) {
       await _migrerDepuisProfilUnique(prefs);
@@ -121,12 +122,12 @@ class FamilyService extends ChangeNotifier {
   /// premier enfant — ses données sont copiées sous sa clé namespacée,
   /// jamais supprimées de l'ancien emplacement.
   Future<void> _migrerDepuisProfilUnique(SharedPreferences prefs) async {
-    final nomExistant = prefs.getString('amani_profile_name');
+    final nomExistant = prefs.readString('amani_profile_name');
     if (nomExistant == null || nomExistant.isEmpty) return;
 
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     for (final cle in _clesLegacyAMigrer) {
-      final valeur = prefs.getString(cle);
+      final valeur = prefs.readString(cle);
       if (valeur != null) {
         await prefs.setString('${cle}__$id', valeur);
       }
@@ -135,7 +136,7 @@ class FamilyService extends ChangeNotifier {
     // (typeEtape_groupCode) : on les retrouve par balayage des clés.
     for (final cle in prefs.getKeys()) {
       if (cle.startsWith(_prefixeLegacyCoursVus)) {
-        final valeur = prefs.getString(cle);
+        final valeur = prefs.readString(cle);
         if (valeur != null) {
           await prefs.setString('${cle}__$id', valeur);
         }

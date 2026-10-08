@@ -337,92 +337,6 @@ List<NetFace> _cylindreFaces() {
   return _unfold(polys: polys, parents: parents, steps: steps, smooth: smooth);
 }
 
-// ─── Cône (rayon R, hauteur H) ─────────────────────────────────────────
-// Patron classique : un disque et un "éventail" (portion de disque) qui
-// s'enroule autour de lui jusqu'à se refermer en pointe.
-List<NetFace> _coneFaces() {
-  const n = 32;
-  const r = 65.0;
-  const h = 130.0;
-  final base = [
-    for (var k = 0; k < n; k++)
-      Vector3(
-        r * math.cos(2 * math.pi * k / n + math.pi / 2),
-        r * math.sin(2 * math.pi * k / n + math.pi / 2),
-        0,
-      ),
-  ];
-  final apex = Vector3(0, 0, -h);
-  final polys = <List<Vector3>>[base];
-  final parents = <int>[-1];
-  final steps = <int>[0];
-  final smooth = <bool>[false];
-  final triIndex = <int, int>{};
-  void addTri(int k, int parent) {
-    triIndex[k] = polys.length;
-    polys.add([base[k], base[(k + 1) % n], apex]);
-    parents.add(parent);
-    steps.add(0);
-    smooth.add(true);
-  }
-
-  addTri(0, 0);
-  for (var k = 1; k <= n ~/ 2; k++) {
-    addTri(k, triIndex[k - 1]!);
-  }
-  for (var k = n - 1; k > n ~/ 2; k--) {
-    addTri(k, triIndex[(k + 1) % n]!);
-  }
-  return _unfold(polys: polys, parents: parents, steps: steps, smooth: smooth);
-}
-
-// ─── Sphère (rayon R) ──────────────────────────────────────────────────
-// Une sphère n'a pas de vrai patron plat : on la découpe comme la peau
-// d'une orange en "quartiers" (fuseaux) rattachés à une petite calotte du
-// bas. À plat, cela forme une fleur ; les pétales se relèvent tous
-// ensemble et se rejoignent en boule, puis la petite calotte du haut vient
-// la refermer.
-List<NetFace> _sphereFaces() {
-  const n = 20; // quartiers
-  const m = 8; // bandes de latitude par quartier
-  const r = 80.0;
-  const capLat = 76 * math.pi / 180;
-  final lats = [for (var j = 0; j <= m; j++) -capLat + j * 2 * capLat / m];
-  final baseZ = r * math.sin(capLat);
-  List<Vector3> ring(double lat) => [
-    for (var k = 0; k < n; k++)
-      Vector3(
-        r * math.cos(lat) * math.cos(2 * math.pi * k / n),
-        r * math.cos(lat) * math.sin(2 * math.pi * k / n),
-        -(r * math.sin(lat) + baseZ),
-      ),
-  ];
-  final rings = [for (final lat in lats) ring(lat)];
-  final polys = <List<Vector3>>[rings[0]];
-  final parents = <int>[-1];
-  final steps = <int>[0];
-  final smooth = <bool>[true];
-  var topAnchor = 0;
-  for (var k = 0; k < n; k++) {
-    final k1 = (k + 1) % n;
-    var parent = 0;
-    for (var j = 0; j < m; j++) {
-      final idx = polys.length;
-      polys.add([rings[j][k], rings[j][k1], rings[j + 1][k1], rings[j + 1][k]]);
-      parents.add(parent);
-      steps.add(0);
-      smooth.add(true);
-      parent = idx;
-    }
-    if (k == 0) topAnchor = parent;
-  }
-  polys.add(rings[m]);
-  parents.add(topAnchor);
-  steps.add(1);
-  smooth.add(true);
-  return _unfold(polys: polys, parents: parents, steps: steps, smooth: smooth);
-}
-
 double _slant(double halfBase, double height) =>
     math.sqrt(halfBase * halfBase + height * height);
 
@@ -660,94 +574,32 @@ List<SolidFace> _pyramideFaces() {
   ];
 }
 
-// ─── Prisme droit à base triangulaire (base B, hauteur du triangle Ht,
-// longueur L) ────────────────────────────────────────────────────────────
-List<SolidFace> _prismeFaces() {
-  const base = 100.0;
-  const triHeight = 85.0;
-  const length = 140.0;
-  final slant = _slant(base / 2, triHeight);
-  final theta = _foldAngleDeg(triHeight, base / 2);
-  return [
-    const SolidFace(
-      shape: SolidFaceShape.rectangle,
-      width: length,
-      height: base,
-      flatOffset: Offset(0, 0),
-      hinge: Alignment(0, 0),
-      axis: Axis.horizontal,
-      sign: 0,
-      targetAngleDeg: 0,
-      parentIndex: -1,
-    ),
-    const SolidFace(
-      shape: SolidFaceShape.triangle,
-      width: triHeight,
-      height: base,
-      flatOffset: Offset(-triHeight, 0),
-      hinge: Alignment(1, 0),
-      axis: Axis.vertical,
-      sign: -1,
-      targetAngleDeg: 90,
-      parentIndex: 0,
-    ),
-    const SolidFace(
-      shape: SolidFaceShape.triangle,
-      width: triHeight,
-      height: base,
-      flatOffset: Offset(length, 0),
-      hinge: Alignment(-1, 0),
-      axis: Axis.vertical,
-      sign: 1,
-      targetAngleDeg: 90,
-      parentIndex: 0,
-    ),
-    SolidFace(
-      shape: SolidFaceShape.rectangle,
-      width: length,
-      height: slant,
-      flatOffset: Offset(0, -slant),
-      hinge: const Alignment(0, 1),
-      axis: Axis.horizontal,
-      sign: 1,
-      targetAngleDeg: theta,
-      parentIndex: 0,
-    ),
-    SolidFace(
-      shape: SolidFaceShape.rectangle,
-      width: length,
-      height: slant,
-      flatOffset: Offset(0, base),
-      hinge: const Alignment(0, -1),
-      axis: Axis.horizontal,
-      sign: -1,
-      targetAngleDeg: theta,
-      parentIndex: 0,
-    ),
-  ];
-}
-
 final List<Solid3DTopic> SOLID3D_TOPICS = [
   Solid3DTopic(
     id: 'cube',
     name: {'fr': 'Le cube', 'en': 'The cube', 'es': 'El cubo', 'ar': 'المكعب'},
     funFactTitle: {
-      'fr': '6 carrés identiques !',
-      'en': '6 identical squares!',
-      'es': '¡6 cuadrados idénticos!',
-      'ar': '6 مربعات متطابقة!',
+      'fr': 'Qu\'est-ce qu\'un cube ?',
+      'en': 'What is a cube?',
+      'es': '¿Qué es un cubo?',
+      'ar': 'ما هو المكعب؟',
     },
     funFactBody: {
       'fr':
-          'Comme un dé à jouer ou un cube de sucre ! Ses 6 faces sont des '
-          'carrés parfaitement identiques.',
+          'Le cube est une boîte magique dont toutes les faces sont des '
+          'carrés parfaitement identiques. Qu\'on le tourne dans un sens '
+          'ou dans un autre, il a exactement la même forme partout !',
       'en':
-          'Like a dice or a sugar cube! Its 6 faces are perfectly '
-          'identical squares.',
+          'The cube is a magic box where all faces are perfectly identical '
+          'squares. No matter which way you turn it, it looks exactly the '
+          'same from every angle!',
       'es':
-          '¡Como un dado o un terrón de azúcar! Sus 6 caras son cuadrados '
-          'perfectamente idénticos.',
-      'ar': 'مثل حجر النرد أو مكعب السكر! أوجهه الستة مربعات متطابقة تمامًا.',
+          '¡El cubo es una caja mágica cuyas caras son cuadrados '
+          'perfectamente idénticos. ¡Lo gires como lo gires, tiene '
+          'exactamente la misma forma por todos lados!',
+      'ar':
+          'المكعب صندوق سحري جميع أوجهه مربعات متطابقة تمامًا. '
+          'مهما قلبته في أي اتجاه، يبدو بنفس الشكل من كل جانب!',
     },
     volumeFormula: {
       'fr': 'Volume = côté × côté × côté',
@@ -766,26 +618,24 @@ final List<Solid3DTopic> SOLID3D_TOPICS = [
       'ar': 'متوازي المستطيلات',
     },
     funFactTitle: {
-      'fr': '6 rectangles, pas tous pareils !',
-      'en': '6 rectangles, not all the same!',
-      'es': '¡6 rectángulos, no todos iguales!',
-      'ar': '6 مستطيلات، ليست كلها متشابهة!',
+      'fr': 'Qu\'est-ce qu\'un pavé droit ?',
+      'en': 'What is a rectangular box?',
+      'es': '¿Qué es un prisma rectangular?',
+      'ar': 'ما هو متوازي المستطيلات؟',
     },
     funFactBody: {
       'fr':
-          "Comme une boîte à chaussures ou un carton de lait ! Contrairement "
-          "au cube, ses faces opposées sont identiques deux à deux, mais "
-          "pas toutes les six.",
+          'Le pavé droit ressemble au cube, mais il est plus étiré. '
+          'Ses faces sont des rectangles (et parfois des carrés sur les côtés).',
       'en':
-          "Like a shoebox or a milk carton! Unlike the cube, its opposite "
-          "faces match in pairs, but not all six are the same.",
+          'The rectangular box looks like a cube, but it is more stretched. '
+          'Its faces are rectangles (and sometimes squares on the sides).',
       'es':
-          '¡Como una caja de zapatos o un cartón de leche! A diferencia '
-          'del cubo, sus caras opuestas son iguales de dos en dos, pero '
-          'no las seis.',
+          'El prisma rectangular se parece al cubo, pero es más alargado. '
+          'Sus caras son rectángulos (y a veces cuadrados en los lados).',
       'ar':
-          'مثل علبة حذاء أو علبة حليب! على عكس المكعب، أوجهه المتقابلة '
-          'متطابقة اثنين اثنين، لكن ليست كلها الستة متشابهة.',
+          'متوازي المستطيلات يشبه المكعب، لكنه أكثر امتداداً. '
+          'أوجهه مستطيلات (وأحياناً مربعات على الجوانب).',
     },
     volumeFormula: {
       'fr': 'Volume = longueur × largeur × hauteur',
@@ -804,24 +654,27 @@ final List<Solid3DTopic> SOLID3D_TOPICS = [
       'ar': 'الهرم',
     },
     funFactTitle: {
-      'fr': 'Un carré et 4 triangles !',
-      'en': 'A square and 4 triangles!',
-      'es': '¡Un cuadrado y 4 triángulos!',
-      'ar': 'مربع و4 مثلثات!',
+      'fr': 'Qu\'est-ce qu\'une pyramide ?',
+      'en': 'What is a pyramid?',
+      'es': '¿Qué es una pirámide?',
+      'ar': 'ما هو الهرم؟',
     },
     funFactBody: {
       'fr':
-          "Comme les pyramides d'Égypte ! Sa base est un carré, et 4 "
-          "triangles se rejoignent tous en un seul point tout en haut.",
+          'La pyramide a une grande base posée au sol (souvent un carré ou '
+          'un triangle) et des côtés en forme de triangles qui montent '
+          'tous pour se rejoindre en un seul point tout en haut.',
       'en':
-          "Like the pyramids of Egypt! Its base is a square, and 4 "
-          "triangles all meet at a single point at the top.",
+          'The pyramid has a large base on the ground (often a square or '
+          'a triangle) and triangular sides that all rise to meet '
+          'at a single point at the very top.',
       'es':
-          '¡Como las pirámides de Egipto! Su base es un cuadrado, y 4 '
-          'triángulos se juntan todos en un solo punto arriba.',
+          'La pirámide tiene una gran base en el suelo (a menudo un cuadrado '
+          'o un triángulo) y lados en forma de triángulos que suben todos '
+          'para unirse en un solo punto en lo más alto.',
       'ar':
-          'مثل أهرامات مصر! قاعدته مربعة، وتلتقي 4 مثلثات كلها في نقطة '
-          'واحدة في الأعلى.',
+          'للهرم قاعدة كبيرة على الأرض (غالباً مربع أو مثلث) وأضلاع '
+          'مثلثية الشكل ترتفع جميعها لتلتقي في نقطة واحدة في القمة.',
     },
     volumeFormula: {
       'fr': 'Volume = (aire de la base × hauteur) ÷ 3',
@@ -832,42 +685,6 @@ final List<Solid3DTopic> SOLID3D_TOPICS = [
     faces: _fromLegacy(_pyramideFaces()),
   ),
   Solid3DTopic(
-    id: 'prisme',
-    name: {
-      'fr': 'Le prisme',
-      'en': 'The prism',
-      'es': 'El prisma',
-      'ar': 'المنشور',
-    },
-    funFactTitle: {
-      'fr': 'Comme une tente !',
-      'en': 'Like a tent!',
-      'es': '¡Como una tienda de campaña!',
-      'ar': 'مثل الخيمة!',
-    },
-    funFactBody: {
-      'fr':
-          "Comme une tente de camping ou le toit d'une grange ! Deux "
-          "triangles aux extrémités, et trois rectangles tout autour.",
-      'en':
-          "Like a camping tent or a barn roof! Two triangles at the ends, "
-          "and three rectangles all around.",
-      'es':
-          '¡Como una tienda de campaña o el techo de un granero! Dos '
-          'triángulos en los extremos, y tres rectángulos alrededor.',
-      'ar':
-          'مثل خيمة تخييم أو سقف حظيرة! مثلثان عند الطرفين، وثلاثة '
-          'مستطيلات في الجوانب.',
-    },
-    volumeFormula: {
-      'fr': 'Volume = aire de la base × longueur',
-      'en': 'Volume = base area × length',
-      'es': 'Volumen = área de la base × longitud',
-      'ar': 'الحجم = مساحة القاعدة × الطول',
-    },
-    faces: _fromLegacy(_prismeFaces()),
-  ),
-  Solid3DTopic(
     id: 'cylindre',
     name: {
       'fr': 'Le cylindre',
@@ -876,25 +693,27 @@ final List<Solid3DTopic> SOLID3D_TOPICS = [
       'ar': 'الأسطوانة',
     },
     funFactTitle: {
-      'fr': '2 disques et un rectangle enroulé !',
-      'en': '2 discs and a rolled-up rectangle!',
-      'es': '¡2 discos y un rectángulo enrollado!',
-      'ar': 'قرصان ومستطيل ملفوف!',
+      'fr': 'Qu\'est-ce qu\'un cylindre ?',
+      'en': 'What is a cylinder?',
+      'es': '¿Qué es un cilindro?',
+      'ar': 'ما هي الأسطوانة؟',
     },
     funFactBody: {
       'fr':
-          "Comme une boîte de conserve ou un tambour ! Un grand rectangle "
-          "s'enroule pour faire le tour, et deux disques identiques ferment "
-          "le haut et le bas.",
+          'Le cylindre a deux faces toutes plates et rondes (une en haut '
+          'et une en bas). Entre les deux, son corps est tout rond ! '
+          'Si tu le poses à plat, il peut rouler comme un rouleau.',
       'en':
-          "Like a tin can or a drum! A big rectangle rolls up to go all the "
-          "way round, and two identical discs close the top and the bottom.",
+          'The cylinder has two flat round faces (one on top and one on '
+          'the bottom). Between them, its body is completely round! '
+          'If you lay it on its side, it can roll like a roller.',
       'es':
-          '¡Como una lata de conservas o un tambor! Un gran rectángulo se '
-          'enrolla alrededor, y dos discos idénticos cierran arriba y abajo.',
+          'El cilindro tiene dos caras planas y redondas (una arriba y '
+          'una abajo). Entre ellas, su cuerpo es completamente redondo. '
+          '¡Si lo tumbas, puede rodar como un rodillo!',
       'ar':
-          'مثل علبة المصبرات أو الطبل! مستطيل كبير يلتف حولها، وقرصان '
-          'متطابقان يغلقان الأعلى والأسفل.',
+          'للأسطوانة وجهان مسطحان ومستديران (واحد في الأعلى وواحد في الأسفل). '
+          'بينهما، جسمها مستدير تمامًا! إذا وضعتها على جانبها يمكنها الدحرجة.',
     },
     volumeFormula: {
       'fr': 'Volume = π × rayon × rayon × hauteur   (π ≈ 3,14)',
@@ -903,79 +722,6 @@ final List<Solid3DTopic> SOLID3D_TOPICS = [
       'ar': 'الحجم = π × نصف القطر × نصف القطر × الارتفاع   (π ≈ 3,14)',
     },
     faces: _cylindreFaces(),
-  ),
-  Solid3DTopic(
-    id: 'cone',
-    name: {'fr': 'Le cône', 'en': 'The cone', 'es': 'El cono', 'ar': 'المخروط'},
-    funFactTitle: {
-      'fr': 'Un disque et un éventail !',
-      'en': 'A disc and a fan!',
-      'es': '¡Un disco y un abanico!',
-      'ar': 'قرص ومروحة!',
-    },
-    funFactBody: {
-      'fr':
-          "Comme un cornet de glace ou un chapeau de fête ! Un morceau de "
-          "disque en forme d'éventail s'enroule jusqu'à former une pointe, "
-          "posé sur un disque.",
-      'en':
-          "Like an ice-cream cone or a party hat! A fan-shaped piece of disc "
-          "rolls up into a point, sitting on a disc.",
-      'es':
-          '¡Como un cucurucho de helado o un gorro de fiesta! Un trozo de '
-          'disco en forma de abanico se enrolla hasta formar una punta, '
-          'sobre un disco.',
-      'ar':
-          'مثل قرن المثلجات أو قبعة الحفلة! قطعة من قرص على شكل مروحة تلتف '
-          'حتى تصنع رأسًا مدببًا، فوق قرص.',
-    },
-    volumeFormula: {
-      'fr': 'Volume = (π × rayon × rayon × hauteur) ÷ 3   (π ≈ 3,14)',
-      'en': 'Volume = (π × radius × radius × height) ÷ 3   (π ≈ 3.14)',
-      'es': 'Volumen = (π × radio × radio × altura) ÷ 3   (π ≈ 3,14)',
-      'ar': 'الحجم = (π × نصف القطر × نصف القطر × الارتفاع) ÷ 3   (π ≈ 3,14)',
-    },
-    faces: _coneFaces(),
-  ),
-  Solid3DTopic(
-    id: 'sphere',
-    name: {
-      'fr': 'La sphère',
-      'en': 'The sphere',
-      'es': 'La esfera',
-      'ar': 'الكرة',
-    },
-    funFactTitle: {
-      'fr': 'Toute ronde, sans aucun bord !',
-      'en': 'Perfectly round, with no edges!',
-      'es': '¡Toda redonda, sin ningún borde!',
-      'ar': 'مستديرة تمامًا، بلا أي حافة!',
-    },
-    funFactBody: {
-      'fr':
-          "Comme un ballon ou une orange ! Tous ses points sont à la même "
-          "distance du centre. On ne peut pas l'aplatir sans la découper : "
-          "comme la peau d'une orange, ses quartiers se referment en boule.",
-      'en':
-          "Like a ball or an orange! Every point is the same distance from "
-          "the centre. You can't flatten it without cutting it: like orange "
-          "peel, its segments close up into a ball.",
-      'es':
-          '¡Como un balón o una naranja! Todos sus puntos están a la misma '
-          'distancia del centro. No se puede aplanar sin cortarla: como la '
-          'piel de una naranja, sus gajos se cierran en una bola.',
-      'ar':
-          'مثل الكرة أو البرتقالة! كل نقاطها على المسافة نفسها من المركز. لا '
-          'يمكن تسطيحها دون قصّها: مثل قشرة البرتقال، تنغلق فصوصها لتصنع كرة.',
-    },
-    volumeFormula: {
-      'fr': 'Volume = (4 × π × rayon × rayon × rayon) ÷ 3   (π ≈ 3,14)',
-      'en': 'Volume = (4 × π × radius × radius × radius) ÷ 3   (π ≈ 3.14)',
-      'es': 'Volumen = (4 × π × radio × radio × radio) ÷ 3   (π ≈ 3,14)',
-      'ar':
-          'الحجم = (4 × π × نصف القطر × نصف القطر × نصف القطر) ÷ 3   (π ≈ 3,14)',
-    },
-    faces: _sphereFaces(),
   ),
 ];
 

@@ -292,6 +292,100 @@ void main() {
     }
   });
 
+  group('Figures planes (combiné) : périmètre ET aire', () {
+    ({int perim, int aire}) expectedCombined(ShapeCombinedProblem p) {
+      final d = p.dimensions;
+      switch (p.shapeId) {
+        case 'carre':
+          return (perim: d['side']! * 4, aire: d['side']! * d['side']!);
+        case 'rectangle':
+          return (
+            perim: (d['length']! + d['width']!) * 2,
+            aire: d['length']! * d['width']!,
+          );
+        case 'triangle':
+          return (
+            perim: d['a']! + d['b']! + d['c']!,
+            aire: (d['base']! * d['height']!) ~/ 2,
+          );
+        case 'cercle':
+          final r = d['radius']!;
+          return (
+            perim: (2 * 314 * r / 100).round(),
+            aire: (314 * r * r / 100).round(),
+          );
+        case 'parallelogramme':
+          return (
+            perim: (d['base']! + d['sideB']!) * 2,
+            aire: d['base']! * d['height']!,
+          );
+        case 'losange':
+          return (
+            perim: d['side']! * 4,
+            aire: (d['bigDiagonal']! * d['smallDiagonal']!) ~/ 2,
+          );
+      }
+      fail('figure inconnue ${p.shapeId}');
+    }
+
+    for (final topic in SHAPE_TOPICS) {
+      test(
+        '${topic.id} : périmètre+aire justes, clavier 4 chiffres, énoncé ok',
+        () {
+          for (var seed = 0; seed < kSeeds; seed++) {
+            final p = generateShapeCombinedProblem(topic, seed);
+            expect(p.shapeId, topic.id);
+            expect(p.dimensions.values.every((v) => v > 0), isTrue);
+            final exp = expectedCombined(p);
+            expect(p.perimeterAnswer, exp.perim, reason: '${p.dimensions}');
+            expect(p.areaAnswer, exp.aire, reason: '${p.dimensions}');
+            expect(p.perimeterAnswer, inInclusiveRange(1, 9999));
+            expect(p.areaAnswer, inInclusiveRange(1, 9999));
+            if (p.isApproximate) {
+              final r = p.dimensions['radius']!;
+              expect(
+                (2 * 314 * r) % 100,
+                isNot(50),
+                reason: 'P cercle r=$r arrondi ambigu',
+              );
+              expect(
+                (314 * r * r) % 100,
+                isNot(50),
+                reason: 'A cercle r=$r arrondi ambigu',
+              );
+            } else {
+              if (p.shapeId == 'triangle') {
+                expect(
+                  (p.dimensions['base']! * p.dimensions['height']!).isEven,
+                  isTrue,
+                  reason: 'aire triangle non entière ${p.dimensions}',
+                );
+              }
+              if (p.shapeId == 'losange') {
+                expect(
+                  (p.dimensions['bigDiagonal']! *
+                          p.dimensions['smallDiagonal']!)
+                      .isEven,
+                  isTrue,
+                  reason: 'aire losange non entière ${p.dimensions}',
+                );
+              }
+            }
+            for (final lang in kLangs) {
+              final text = shapeCombinedStatement(p, lang);
+              expect(text.trim(), isNotEmpty, reason: '${topic.id} $lang');
+              expect(
+                text.contains('{'),
+                isFalse,
+                reason: 'mesure non remplacée ($lang) : $text',
+              );
+            }
+          }
+        },
+      );
+    }
+  });
+
   group('Solides 3D : volume', () {
     int expectedTimes300(SolidCalcProblem p) {
       final d = p.dimensions;

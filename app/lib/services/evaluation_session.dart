@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'family_service.dart';
+import '../utils/safe_prefs.dart';
 
 const String _kProgressStorageKeyPrefix = 'amani_eval_progress_';
 
@@ -226,7 +227,7 @@ class EvaluationSessionController extends ChangeNotifier {
     // une sauvegarde périmée.
     await _writeChain;
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(scopeKey('$_kProgressStorageKeyPrefix$evalId'));
+    final raw = prefs.readString(scopeKey('$_kProgressStorageKeyPrefix$evalId'));
     if (raw == null) return null;
     try {
       return jsonDecode(raw) as Map<String, dynamic>;

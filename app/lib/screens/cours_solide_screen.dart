@@ -5,19 +5,10 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import '../services/progress_service.dart';
 import '../data/solid3d_catalog.dart';
-import '../widgets/solid_fold_animation.dart';
-import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
-import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
 
-/// Cours "Solides 3D" du Palier "Figures géométriques" : anime le patron à
-/// plat du solide qui se replie panneau par panneau (`SolidFoldAnimation`),
-/// explique le principe puis affiche la formule de volume ("Astuces") --
-/// remplace le *rôle* de l'ancien `cours_tangram_screen.dart` (étapes
-/// jamais réellement déblocables dans le parcours, voir
-/// `parcours_screen.dart`).
 class CoursSolideScreen extends StatefulWidget {
   final String solidId;
   const CoursSolideScreen({super.key, required this.solidId});
@@ -27,8 +18,6 @@ class CoursSolideScreen extends StatefulWidget {
 }
 
 class _CoursSolideScreenState extends State<CoursSolideScreen> {
-  int _replaySeed = 0;
-
   @override
   void initState() {
     super.initState();
@@ -52,7 +41,6 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
     final t = languageProvider.t;
     final lang = languageProvider.lang;
     final cs = t['coursSolide'] as Map<String, dynamic>? ?? {};
-    final common = t['common'] as Map<String, dynamic>? ?? {};
     final topic = findSolid3DTopic(widget.solidId);
 
     if (topic == null) {
@@ -123,98 +111,7 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Même logique que les autres cours (voir
-                  // `cours_figure_screen.dart`) : toutes les actions sont
-                  // regroupées dans le menu déroulant à droite.
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: TraceControlsToolbar.heightFor(2),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: SolidFoldAnimation(
-                            key: ValueKey(topic.id),
-                            faces: topic.faces,
-                            color: solidColor(topic.id),
-                            replaySeed: _replaySeed,
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: TraceControlsToolbar(
-                            expandAria: common['toolbarExpandAria'] ?? '',
-                            collapseAria: common['toolbarCollapseAria'] ?? '',
-                            actions: [
-                              ToolbarAction(
-                                icon: LucideIcons.rotateCcw,
-                                label: common['replay'] ?? 'Relancer',
-                                background: const Color(0x1FB85454),
-                                foreground: const Color(0xFF7A2E2E),
-                                onTap: () => setState(() => _replaySeed++),
-                              ),
-                              ToolbarAction(
-                                icon: Icons.play_arrow_rounded,
-                                label: cs['practice'] ?? "S'entrainer",
-                                background: const Color(0xFFB85454),
-                                foreground: Colors.white,
-                                onTap: () => context.push(
-                                  '/exercice/solide/${topic.id}',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const AmaniMascot(
-                          pose: AmaniPose.demonstration,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                cs['introTitle'] ?? '',
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                cs['introBody'] ?? '',
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Carte mnémotechnique "Le sais-tu ?"
+                  // Carte "Définition"
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -310,6 +207,30 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => context.push(
+                        '/exercice/solide/${topic.id}',
+                      ),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text(cs['practice'] ?? "S'entrainer"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB85454),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        textStyle: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ],

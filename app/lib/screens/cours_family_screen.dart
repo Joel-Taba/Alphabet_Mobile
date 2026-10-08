@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
@@ -386,13 +387,21 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                     // pour la coche + le cercle du signe (inchangé, voir
                     // `size:` plus bas) + l'étiquette de nom, quelle que
                     // soit la largeur réellement obtenue.
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 150,
-                          mainAxisExtent: 160,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                        ),
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 150,
+                      // 160 suffit tout juste à l'échelle par défaut
+                      // (×1.4) ; l'étiquette (2 lignes) grandit avec le
+                      // réglage "Taille de l'interface".
+                      mainAxisExtent: math.max(
+                        160,
+                        128 +
+                            2 *
+                                1.1 *
+                                MediaQuery.textScalerOf(context).scale(10.5),
+                      ),
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                    ),
                     itemCount: _entries.length,
                     itemBuilder: (context, i) {
                       final item = _entries[i];
@@ -511,9 +520,8 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
 
                   const SizedBox(height: 24),
                   GestureDetector(
-                    onTap: () => context.push(
-                      '/exercice-liste?family=${widget.family}',
-                    ),
+                    onTap: () =>
+                        context.push('/exercice-liste?family=${widget.family}'),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),

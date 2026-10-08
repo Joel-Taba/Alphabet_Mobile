@@ -20,15 +20,27 @@ ProgressProvider progressOf(WidgetTester tester) =>
       listen: false,
     );
 
-/// Tape [answer] sur le clavier de la calculette puis valide.
-Future<void> typeAnswer(WidgetTester tester, int answer) async {
+/// Ouvre le champ [fieldLabel] (si son clavier n'est pas déjà visible) et
+/// tape [answer] sur le clavier numérique de ce champ.
+///
+/// La détection "déjà ouvert" : si un [ShapeAnswerKeypad] est visible, on
+/// assume qu'il appartient au bon champ (un seul peut être ouvert à la fois)
+/// et on ne retape pas le bouton d'ouverture, ce qui éviterait de le fermer
+/// accidentellement juste après une mauvaise réponse.
+Future<void> typeFieldAnswer(
+  WidgetTester tester,
+  String fieldLabel,
+  int answer,
+) async {
+  if (tester.widgetList(find.byType(ShapeAnswerKeypad)).isEmpty) {
+    await tester.tap(find.text(fieldLabel).last);
+    await advance(tester, frames: 3);
+  }
   final keypad = find.byType(ShapeAnswerKeypad);
   await tester.ensureVisible(keypad);
   await advance(tester, frames: 2);
   for (final digit in '$answer'.split('')) {
     await tester.tap(
-      // La touche (et non l'écran de la calculette, qui affiche aussi des
-      // chiffres) : les touches viennent après l'écran.
       find.descendant(of: keypad, matching: find.text(digit)).last,
     );
     await tester.pump(const Duration(milliseconds: 120));
@@ -39,11 +51,12 @@ Future<void> typeAnswer(WidgetTester tester, int answer) async {
   await advance(tester, frames: 10);
 }
 
-/// Réponse du problème généré à l'ouverture de l'exercice de la figure
-/// [shapeId] (même graine que l'écran).
-int expectedAnswer(String shapeId) {
+/// Réponses (périmètre, aire) générées à l'ouverture de l'exercice de la
+/// figure [shapeId] (même graine que l'écran, _restartKey == 0).
+(int perim, int aire) expectedAnswers(String shapeId) {
   final topic = findShapeTopic(shapeId)!;
-  return generateShapeCalcProblem(topic, topic.id.hashCode ^ 0).answer;
+  final p = generateShapeCombinedProblem(topic, topic.id.hashCode ^ 0);
+  return (p.perimeterAnswer, p.areaAnswer);
 }
 
 void main() {
@@ -97,12 +110,23 @@ void main() {
     );
 
     await goTo(tester, '/exercice/figure/carre', push: true);
-    // Une mauvaise réponse ne valide rien.
-    await typeAnswer(tester, expectedAnswer('carre') + 1);
+    final (perim, aire) = expectedAnswers('carre');
+
+    // Une mauvaise réponse périmètre ne valide rien.
+    await typeFieldAnswer(tester, 'Périmètre', perim + 1);
     expect(progress.isTopicExercised('FIGURE', 'carre'), isFalse);
-    await advance(tester, frames: 12);
-    // La bonne réponse valide l'exercice.
-    await typeAnswer(tester, expectedAnswer('carre'));
+    await advance(tester, frames: 2);
+
+    // Bonne réponse périmètre : périmètre résolu mais exercice pas encore fini.
+    await typeFieldAnswer(tester, 'Périmètre', perim);
+    expect(
+      progress.isTopicExercised('FIGURE', 'carre'),
+      isFalse,
+      reason: 'l\'aire n\'est pas encore saisie',
+    );
+
+    // Bonne réponse aire : les deux champs résolus → exercice terminé.
+    await typeFieldAnswer(tester, 'Aire', aire);
     expect(progress.isTopicExercised('FIGURE', 'carre'), isTrue);
     expect(find.byType(ExerciseCompletePopup), findsOneWidget);
 
@@ -131,7 +155,9 @@ void main() {
     // Annonce du premier sujet de l'évaluation.
     await tester.tap(find.text('Commencer').last);
     await advance(tester);
-    await typeAnswer(tester, expectedAnswer('carre'));
+    final (perim, aire) = expectedAnswers('carre');
+    await typeFieldAnswer(tester, 'Périmètre', perim);
+    await typeFieldAnswer(tester, 'Aire', aire);
     expect(progress.isTopicExercised('FIGURE', 'carre'), isFalse);
     expect(progress.stats.totalPoints, 0);
   }, variant: mobile);
@@ -145,7 +171,9 @@ void main() {
     await tester.runAsync(progress.rechargerPourEnfantActif);
     await goTo(tester, '/cours/figure/carre');
     await goTo(tester, '/exercice/figure/carre', push: true);
-    await typeAnswer(tester, expectedAnswer('carre'));
+    final (perim, aire) = expectedAnswers('carre');
+    await typeFieldAnswer(tester, 'Périmètre', perim);
+    await typeFieldAnswer(tester, 'Aire', aire);
     final points = progress.stats.totalPoints;
     expect(points, greaterThan(0));
     // L'app passe en arrière-plan puis est fermée.

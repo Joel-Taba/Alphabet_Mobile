@@ -151,7 +151,8 @@ class _ShapeAnswerKeypadState extends State<ShapeAnswerKeypad>
             AnimatedBuilder(
               animation: _shake,
               builder: (context, child) {
-                final dx = math.sin(_shake.value * math.pi * 6) *
+                final dx =
+                    math.sin(_shake.value * math.pi * 6) *
                     10 *
                     (1 - _shake.value);
                 return Transform.translate(offset: Offset(dx, 0), child: child);
@@ -300,24 +301,31 @@ class _Screen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  entry.isEmpty ? '0' : entry,
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 38,
-                    height: 1.0,
-                    letterSpacing: 2,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    color: entry.isEmpty
-                        ? _kScreenDigits.withValues(alpha: 0.28)
-                        : _kScreenDigits,
-                    shadows: [
-                      Shadow(
-                        color: _kScreenDigits.withValues(alpha: 0.35),
-                        blurRadius: 8,
+                // Réduit (comme une calculatrice) plutôt que de déborder de
+                // l'afficheur en très grand texte.
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      entry.isEmpty ? '0' : entry,
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 38,
+                        height: 1.0,
+                        letterSpacing: 2,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        color: entry.isEmpty
+                            ? _kScreenDigits.withValues(alpha: 0.28)
+                            : _kScreenDigits,
+                        shadows: [
+                          Shadow(
+                            color: _kScreenDigits.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 if (showCaret)
@@ -374,23 +382,23 @@ class _RoundKeyState extends State<_RoundKey> {
   Widget build(BuildContext context) {
     final (top, bottom, fg, rim) = switch (widget.style) {
       _KeyStyle.digit => (
-          Colors.white,
-          const Color(0xFFF2E7D5),
-          AmaniColors.textPrimary,
-          const Color(0xFFE3D3B8),
-        ),
+        Colors.white,
+        const Color(0xFFF2E7D5),
+        AmaniColors.textPrimary,
+        const Color(0xFFE3D3B8),
+      ),
       _KeyStyle.action => (
-          const Color(0xFFF6DDC8),
-          const Color(0xFFE8BF9E),
-          AmaniColors.primaryDark,
-          const Color(0xFFD6A67F),
-        ),
+        const Color(0xFFF6DDC8),
+        const Color(0xFFE8BF9E),
+        AmaniColors.primaryDark,
+        const Color(0xFFD6A67F),
+      ),
       _KeyStyle.validate => (
-          const Color(0xFFA8D48A),
-          AmaniColors.secondaryDark,
-          Colors.white,
-          const Color(0xFF5E8E3E),
-        ),
+        const Color(0xFFA8D48A),
+        AmaniColors.secondaryDark,
+        Colors.white,
+        const Color(0xFF5E8E3E),
+      ),
     };
 
     return GestureDetector(

@@ -27,6 +27,7 @@ import '../data/solid3d_catalog.dart';
 import 'child_switcher_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/safe_prefs.dart';
 
 class ProfilHubScreen extends StatefulWidget {
   const ProfilHubScreen({super.key});
@@ -48,7 +49,7 @@ class _ProfilHubScreenState extends State<ProfilHubScreen> {
   Future<void> _checkLockStatus() async {
     final hasPassword = await isProfileProtected();
     final unlockedThisSession = isProfileUnlockedThisSession();
-
+    if (!mounted) return;
     setState(() {
       _isUnlocked = !hasPassword || unlockedThisSession;
       _isLoading = false;
@@ -105,6 +106,7 @@ class _LockScreenState extends State<_LockScreen> {
       markProfileUnlocked();
       widget.onUnlock();
     } else {
+      if (!mounted) return;
       setState(() {
         _hasError = true;
       });
@@ -271,6 +273,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   final _confirmPasswordCtrl = TextEditingController();
   bool _showNewPassword = false;
   _PasswordFeedback? _passwordFeedback;
+  bool _savingPassword = false;
 
   bool _editingName = false;
   final _nameEditCtrl = TextEditingController();
@@ -315,15 +318,24 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     if (!mounted) return;
     setState(() {
       _lastLoadedChildId = context.read<FamilyService>().activeChildId;
-      _soundEnabled = prefs.getBool('amani_setting_sound') ?? true;
-      _volume = prefs.getDouble('amani_setting_volume') ?? 0.85;
+      _soundEnabled = prefs.readBool('amani_setting_sound') ?? true;
+      // Bornés : ces valeurs alimentent des curseurs, qui exigent une
+      // valeur dans leur plage.
+      _volume = (prefs.readDouble('amani_setting_volume') ?? 0.85).clamp(
+        0.0,
+        1.0,
+      );
       _repetitions =
-          prefs.getInt(scopeKey(kRepetitionsStorageKey)) ?? kDefaultRepetitions;
+          (prefs.readInt(scopeKey(kRepetitionsStorageKey)) ??
+                  kDefaultRepetitions)
+              .clamp(kMinRepetitions, kMaxRepetitions);
       _tolerance =
-          prefs.getInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance;
+          (prefs.readInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance)
+              .clamp(kMinTolerance, kMaxTolerance);
       _evaluationDuration =
-          prefs.getInt(scopeKey(kEvaluationDurationStorageKey)) ??
-          kDefaultEvaluationDuration;
+          (prefs.readInt(scopeKey(kEvaluationDurationStorageKey)) ??
+                  kDefaultEvaluationDuration)
+              .clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
       _photoBase64 = photo;
       _storedName = name;
     });
@@ -530,14 +542,14 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
   Future<void> _removePhoto() async {
     await removeStoredPhoto();
-    setState(() => _photoBase64 = null);
+    if (mounted) setState(() => _photoBase64 = null);
   }
 
   Future<void> _updateSound(bool enabled) async {
     final backend = context.read<BackendSyncService>();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('amani_setting_sound', enabled);
-    setState(() => _soundEnabled = enabled);
+    if (mounted) setState(() => _soundEnabled = enabled);
     unawaited(backend.pushReglages(sonActif: enabled));
   }
 
@@ -545,7 +557,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final backend = context.read<BackendSyncService>();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('amani_setting_volume', vol);
-    setState(() => _volume = vol);
+    if (mounted) setState(() => _volume = vol);
     unawaited(backend.pushReglages(volume: vol));
   }
 
@@ -554,7 +566,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final clamped = value.clamp(kMinRepetitions, kMaxRepetitions);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(scopeKey(kRepetitionsStorageKey), clamped);
-    setState(() => _repetitions = clamped);
+    if (mounted) setState(() => _repetitions = clamped);
     unawaited(backend.pushReglages(repetitions: clamped));
   }
 
@@ -562,7 +574,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final clamped = value.clamp(kMinEvaluationDuration, kMaxEvaluationDuration);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(scopeKey(kEvaluationDurationStorageKey), clamped);
-    setState(() => _evaluationDuration = clamped);
+    if (mounted) setState(() => _evaluationDuration = clamped);
   }
 
   Future<void> _updateTolerance(int value) async {
@@ -570,7 +582,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final clamped = value.clamp(kMinTolerance, kMaxTolerance);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(scopeKey(kToleranceStorageKey), clamped);
-    setState(() => _tolerance = clamped);
+    if (mounted) setState(() => _tolerance = clamped);
     // Le back-end attend une fraction (0.05-0.30), pas un pourcentage brut.
     unawaited(backend.pushReglages(tolerance: clamped / 100.0));
   }
@@ -578,6 +590,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
   Future<void> _handleSavePassword() async {
     final backend = context.read<BackendSyncService>();
     final ancien = await getStoredPassword();
+    if (!mounted) return;
     if (_oldPasswordCtrl.text != ancien) {
       setState(() => _passwordFeedback = _PasswordFeedback.wrongOld);
       return;
@@ -591,16 +604,22 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
       return;
     }
     final nouveau = _newPasswordCtrl.text;
+    setState(() => _savingPassword = true);
     // S'assure d'un jeton valide AVANT d'écraser l'ancien mot de passe local
     // (ensureLinked() se connecte avec le mot de passe encore en storage) —
     // sinon toute tentative de reconnexion ultérieure utiliserait le nouveau
     // mot de passe alors que le serveur ne connaît encore que l'ancien.
-    await backend.ensureLinked();
-    await setStoredPassword(nouveau);
+    try {
+      await backend.ensureLinked();
+      await setStoredPassword(nouveau);
+    } finally {
+      if (mounted) setState(() => _savingPassword = false);
+    }
     markProfileUnlocked();
     if (ancien != null) {
       unawaited(backend.pushMotDePasse(ancien: ancien, nouveau: nouveau));
     }
+    if (!mounted) return;
     _oldPasswordCtrl.clear();
     _newPasswordCtrl.clear();
     _confirmPasswordCtrl.clear();
@@ -1355,7 +1374,8 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed:
-                          (_oldPasswordCtrl.text.isNotEmpty &&
+                          (!_savingPassword &&
+                              _oldPasswordCtrl.text.isNotEmpty &&
                               _newPasswordCtrl.text.isNotEmpty &&
                               _confirmPasswordCtrl.text.isNotEmpty)
                           ? _handleSavePassword
@@ -1368,14 +1388,24 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(
-                        hub['savePassword'] ?? 'Enregistrer le mot de passe',
-                        style: TextStyle(
-                          fontFamily: kBalooFontFamily,
-                          fontWeight: FontWeight.w800,
-                          color: AmaniColors.surface,
-                        ),
-                      ),
+                      child: _savingPassword
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: AmaniColors.textPrimary,
+                              ),
+                            )
+                          : Text(
+                              hub['savePassword'] ??
+                                  'Enregistrer le mot de passe',
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                color: AmaniColors.surface,
+                              ),
+                            ),
                     ),
                   ),
                 ],

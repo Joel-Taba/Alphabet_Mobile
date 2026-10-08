@@ -173,104 +173,106 @@ class EvaluationResumeOffer extends StatelessWidget {
         color: const Color(0x73000000),
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 320),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AmaniMascot(
-                pose: AmaniPose.reflexion,
-                size: AmaniSize.medium,
-              ),
-              const SizedBox(height: 12),
-              const Icon(
-                LucideIcons.history,
-                color: Color(0xFFA9784F),
-                size: 26,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                ev['resumeTitle'] ?? '',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: AmaniColors.textPrimary,
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 320),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                ev['resumeBody'] ?? '',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontSize: 14,
-                  color: AmaniColors.textSecondary,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AmaniMascot(
+                  pose: AmaniPose.reflexion,
+                  size: AmaniSize.medium,
                 ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onResume,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AmaniColors.secondary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    ev['resumeContinueButton'] ?? '',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      color: Colors.white,
-                    ),
+                const SizedBox(height: 12),
+                const Icon(
+                  LucideIcons.history,
+                  color: Color(0xFFA9784F),
+                  size: 26,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  ev['resumeTitle'] ?? '',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    color: AmaniColors.textPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: onRestart,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AmaniColors.textPrimary,
-                    side: const BorderSide(color: AmaniColors.disabled),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                const SizedBox(height: 6),
+                Text(
+                  ev['resumeBody'] ?? '',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontSize: 14,
+                    color: AmaniColors.textSecondary,
                   ),
-                  child: Text(
-                    ev['resumeRestartButton'] ?? '',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: AmaniColors.textPrimary,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onResume,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AmaniColors.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      ev['resumeContinueButton'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: onRestart,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AmaniColors.textPrimary,
+                      side: const BorderSide(color: AmaniColors.disabled),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      ev['resumeRestartButton'] ?? '',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AmaniColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -311,80 +313,82 @@ class EvaluationSubjectAnnouncement extends StatelessWidget {
         color: const Color(0x73000000),
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 320),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AmaniMascot(
-                pose: AmaniPose.encouragement,
-                size: AmaniSize.medium,
-              ),
-              const SizedBox(height: 12),
-              const Icon(
-                LucideIcons.flagTriangleRight,
-                color: Color(0xFFA9784F),
-                size: 26,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: AmaniColors.textPrimary,
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 320),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: kBalooFontFamily,
-                  fontSize: 14,
-                  color: AmaniColors.textSecondary,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AmaniMascot(
+                  pose: AmaniPose.encouragement,
+                  size: AmaniSize.medium,
                 ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onContinue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AmaniColors.secondary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    continueLabel ?? ev['continueSubject'] ?? 'Continuer',
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      color: Colors.white,
-                    ),
+                const SizedBox(height: 12),
+                const Icon(
+                  LucideIcons.flagTriangleRight,
+                  color: Color(0xFFA9784F),
+                  size: 26,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    color: AmaniColors.textPrimary,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: kBalooFontFamily,
+                    fontSize: 14,
+                    color: AmaniColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AmaniColors.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      continueLabel ?? ev['continueSubject'] ?? 'Continuer',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -448,80 +452,82 @@ class _EvaluationCompleteOverlayState extends State<EvaluationCompleteOverlay> {
             color: const Color(0x73000000),
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(maxWidth: 320),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x33000000),
-                    blurRadius: 24,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const AmaniMascot(
-                    pose: AmaniPose.celebration,
-                    size: AmaniSize.medium,
-                  ),
-                  const SizedBox(height: 12),
-                  const Icon(
-                    LucideIcons.gift,
-                    color: Color(0xFFA9784F),
-                    size: 26,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    ev['finishedTitle'] ?? '',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22,
-                      color: AmaniColors.textPrimary,
+            child: SingleChildScrollView(
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 320),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 24,
+                      offset: Offset(0, 8),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    ev['finishedMessage'] ?? '',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: kBalooFontFamily,
-                      fontSize: 14,
-                      color: AmaniColors.textSecondary,
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const AmaniMascot(
+                      pose: AmaniPose.celebration,
+                      size: AmaniSize.medium,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _handleBack,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AmaniColors.secondary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        ev['backToPath'] ?? '',
-                        style: TextStyle(
-                          fontFamily: kBalooFontFamily,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          color: Colors.white,
-                        ),
+                    const SizedBox(height: 12),
+                    const Icon(
+                      LucideIcons.gift,
+                      color: Color(0xFFA9784F),
+                      size: 26,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      ev['finishedTitle'] ?? '',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                        color: AmaniColors.textPrimary,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    Text(
+                      ev['finishedMessage'] ?? '',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontSize: 14,
+                        color: AmaniColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _handleBack,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AmaniColors.secondary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          ev['backToPath'] ?? '',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -46,7 +46,9 @@ class OccurrenceState {
 class RepetitionRow extends StatefulWidget {
   final TraceableEntry entry;
   final String label;
-  final VoidCallback onSpeak;
+
+  /// `null` : pas de bouton haut-parleur sur cette ligne.
+  final VoidCallback? onSpeak;
   final Widget? badge;
   final int repetitions;
   final num tolerance;
@@ -71,11 +73,15 @@ class RepetitionRow extends StatefulWidget {
   /// sans jamais redéclencher [onAllDone] (déjà comptabilisé alors).
   final bool initiallyDone;
 
+  /// `false` : pas d'en-tête (titre, badge) — la rangée se présente comme la
+  /// suite de la rangée précédente, dont elle partage le titre.
+  final bool showHeader;
+
   const RepetitionRow({
     super.key,
     required this.entry,
     required this.label,
-    required this.onSpeak,
+    this.onSpeak,
     this.badge,
     required this.repetitions,
     required this.tolerance,
@@ -84,6 +90,7 @@ class RepetitionRow extends StatefulWidget {
     this.locked = false,
     this.showCard = true,
     this.initiallyDone = false,
+    this.showHeader = true,
   });
 
   @override
@@ -184,78 +191,91 @@ class _RepetitionRowState extends State<RepetitionRow> {
             // En-tête — bandeau de carte à part entière (fond + filet en
             // pied) en mode autonome, simple filet de séparation en mode
             // intégré à une feuille de cahier partagée (voir [showCard]).
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: widget.showCard ? AmaniColors.surface : null,
-                border: Border(
-                  bottom: BorderSide(
-                    color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+            if (widget.showHeader)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.showCard ? AmaniColors.surface : null,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                    ),
                   ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  if (widget.badge != null) ...[
-                    widget.badge!,
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Text(
-                      widget.label,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: AmaniColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (_allDone)
-                    Text(
-                      '✓ ${widget.doneLabel}',
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AmaniColors.secondary,
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  if (widget.locked)
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.lock,
-                        size: 15,
-                        color: AmaniColors.textSecondary,
-                      ),
-                    )
-                  else
-                    GestureDetector(
-                      onTap: widget.onSpeak,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AmaniColors.primary.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          LucideIcons.volume2,
-                          size: 16,
+                child: Row(
+                  children: [
+                    if (widget.badge != null) ...[
+                      widget.badge!,
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                           color: AmaniColors.textPrimary,
                         ),
                       ),
                     ),
-                ],
+                    if (_allDone)
+                      Text(
+                        '✓ ${widget.doneLabel}',
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AmaniColors.secondary,
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    if (widget.locked)
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AmaniColors.textPrimary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          LucideIcons.lock,
+                          size: 15,
+                          color: AmaniColors.textSecondary,
+                        ),
+                      )
+                    else if (widget.onSpeak != null)
+                      GestureDetector(
+                        onTap: widget.onSpeak,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AmaniColors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.volume2,
+                            size: 16,
+                            color: AmaniColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
+
+            // Pastilles de progression (1 par répétition) — masquées si
+            // une seule répétition ou si l'entrée est verrouillée.
+            if (widget.repetitions > 1 && !widget.locked)
+              _RepProgressDots(
+                total: widget.repetitions,
+                activeIndex: _activeIndex,
+                allDone: _allDone,
+              ),
 
             // Zone du cahier, lignes réglées façon Seyès — les répétitions
             // remplissent chaque ligne horizontalement (autant qu'il en
@@ -542,7 +562,9 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
         _showSuccessMascot = true;
       });
       _scheduleSuccessMascotHide();
-      Future.delayed(const Duration(milliseconds: 600), widget.onSuccess);
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) widget.onSuccess();
+      });
     } else {
       setState(() => _localStatus = OccurrenceStatus.retry);
       Future.delayed(const Duration(milliseconds: 2400), () {
@@ -795,4 +817,107 @@ class _OccurrencePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _OccurrencePainter oldDelegate) => true;
+}
+
+// ---------------------------------------------------------------------------
+// Pastilles de progression dans l'en-tête de RepetitionRow
+// ---------------------------------------------------------------------------
+
+class _RepProgressDots extends StatelessWidget {
+  final int total;
+  final int activeIndex;
+  final bool allDone;
+
+  const _RepProgressDots({
+    required this.total,
+    required this.activeIndex,
+    required this.allDone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final doneCount = allDone ? total : activeIndex;
+    final dotSize = total > 8
+        ? 10.0
+        : total > 5
+        ? 13.0
+        : 16.0;
+    final currentSize = dotSize + 4.0;
+
+    return Container(
+      color: AmaniColors.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+      child: Row(
+        children: [
+          for (int i = 0; i < total; i++) ...[
+            if (i > 0)
+              Expanded(
+                child: Container(
+                  height: 2,
+                  color: i <= doneCount
+                      ? AmaniColors.secondary.withValues(alpha: 0.55)
+                      : AmaniColors.textPrimary.withValues(alpha: 0.12),
+                ),
+              ),
+            _ProgressDot(
+              isDone: i < doneCount,
+              isCurrent: i == activeIndex && !allDone,
+              dotSize: dotSize,
+              currentSize: currentSize,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressDot extends StatelessWidget {
+  final bool isDone;
+  final bool isCurrent;
+  final double dotSize;
+  final double currentSize;
+
+  const _ProgressDot({
+    required this.isDone,
+    required this.isCurrent,
+    required this.dotSize,
+    required this.currentSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = isCurrent ? currentSize : dotSize;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDone
+            ? AmaniColors.secondary
+            : isCurrent
+            ? AmaniColors.primary
+            : AmaniColors.textPrimary.withValues(alpha: 0.15),
+        boxShadow: isCurrent
+            ? [
+                BoxShadow(
+                  color: AmaniColors.primary.withValues(alpha: 0.32),
+                  blurRadius: 6,
+                ),
+              ]
+            : isDone
+            ? [
+                BoxShadow(
+                  color: AmaniColors.secondary.withValues(alpha: 0.25),
+                  blurRadius: 4,
+                ),
+              ]
+            : null,
+      ),
+      child: isDone
+          ? Icon(Icons.check_rounded, size: size * 0.65, color: Colors.white)
+          : null,
+    );
+  }
 }

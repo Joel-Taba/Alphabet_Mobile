@@ -122,13 +122,22 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
   @override
   void didUpdateWidget(LetterTraceCell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.letter['char'] != widget.letter['char']) {
+    // Compare aussi la FORME (tracés des signes), pas seulement le
+    // caractère : en changeant de style d'écriture page ouverte, la case
+    // redessinait la lettre en cursive mais validait encore contre le
+    // modèle script — tout tracé exact de la lettre affichée échouait.
+    if (oldWidget.letter['char'] != widget.letter['char'] ||
+        _shapeOf(oldWidget.letter) != _shapeOf(widget.letter)) {
       _currentStepIdx = 0;
       _completedSteps.clear();
       _status = _CellStatus.idle;
       _sampleRef();
     }
   }
+
+  static String _shapeOf(dynamic letter) => [
+    for (final s in (letter['steps'] as List? ?? const [])) s['pathD'],
+  ].join('|');
 
   void _sampleRef() {
     final step = _activeStep;
@@ -245,24 +254,50 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
         : _solved
         ? AmaniColors.secondary
         : widget.isActive
-        ? AmaniColors.primary.withValues(alpha: 0.5)
+        ? AmaniColors.primary.withValues(alpha: 0.6)
         : AmaniColors.textPrimary.withValues(alpha: 0.12);
     final bg = widget.transparent
         ? Colors.transparent
         : widget.given
         ? AmaniColors.surface
+        : _solved
+        ? AmaniColors.secondary.withValues(alpha: 0.07)
         : Colors.white;
+    // Glow bleu sur la case active, halo vert sur la case réussie.
+    final shadows = widget.isActive && !_solved
+        ? [
+            BoxShadow(
+              color: AmaniColors.primary.withValues(alpha: 0.28),
+              blurRadius: 14,
+              spreadRadius: 1,
+            ),
+          ]
+        : _solved
+        ? [
+            BoxShadow(
+              color: AmaniColors.secondary.withValues(alpha: 0.22),
+              blurRadius: 10,
+            ),
+          ]
+        : const <BoxShadow>[];
 
-    return Container(
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 250),
+      opacity: (widget.given || _solved || widget.isActive) ? 1.0 : 0.42,
+      child: Container(
       width: widget.size,
       height: widget.size,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(18),
         border: widget.showBorder
-            ? Border.all(color: borderColor, width: 2)
+            ? Border.all(
+                color: borderColor,
+                width: widget.isActive && !_solved ? 2.0 : 1.5,
+              )
             : null,
         color: bg,
+        boxShadow: shadows,
       ),
       child: widget.given
           ? Center(
@@ -321,6 +356,7 @@ class _LetterTraceCellState extends State<LetterTraceCell> {
                 ),
               ],
             ),
+      ),
     );
   }
 }

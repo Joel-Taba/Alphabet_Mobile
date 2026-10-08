@@ -274,13 +274,20 @@ class _NavIcon extends StatelessWidget {
         children: [
           Icon(icon, color: AmaniColors.disabled, size: 22),
           const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: kBalooFontFamily,
-              fontWeight: FontWeight.w700,
-              fontSize: 9,
-              color: AmaniColors.disabled,
+          // La barre a une hauteur fixe : l'étiquette se réduit plutôt que
+          // de déborder quand le texte est agrandi (Taille de l'interface).
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 9,
+                  color: AmaniColors.disabled,
+                ),
+              ),
             ),
           ),
         ],

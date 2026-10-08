@@ -4,6 +4,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../hooks/use_animation_speed.dart';
 import '../i18n/translations.dart';
+import '../utils/safe_prefs.dart';
 
 const String _volumeStorageKey = 'amani_setting_volume';
 const String _soundStorageKey = 'amani_setting_sound';
@@ -13,7 +14,7 @@ enum VoiceGender { homme, femme }
 
 Future<VoiceGender> getStoredVoiceGender() async {
   final prefs = await SharedPreferences.getInstance();
-  final raw = prefs.getString(_voiceGenderStorageKey);
+  final raw = prefs.readString(_voiceGenderStorageKey);
   return raw == 'homme' ? VoiceGender.homme : VoiceGender.femme;
 }
 
@@ -192,14 +193,14 @@ class SignSpeechService extends ChangeNotifier {
 
   Future<double> _getStoredVolume() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getDouble(_volumeStorageKey);
+    final raw = prefs.readDouble(_volumeStorageKey);
     if (raw == null) return 0.85;
     return raw.clamp(0.0, 1.0);
   }
 
   Future<bool> _isSoundEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getBool(_soundStorageKey);
+    final raw = prefs.readBool(_soundStorageKey);
     return raw ?? true;
   }
 

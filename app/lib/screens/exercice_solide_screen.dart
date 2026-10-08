@@ -19,6 +19,7 @@ import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/keep_alive_list.dart';
 
 /// Exercice "Solides 3D" du Palier "Figures géométriques" : un seul problème
 /// de calcul de volume par page (pas de réglage "Répétitions"), avec un
@@ -284,59 +285,67 @@ class _ExerciceSolideScreenState extends State<ExerciceSolideScreen> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: allDone
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                allDone
-                                    ? (es['allDoneTitle'] ?? '')
-                                    : (es['introTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                allDone
-                                    ? (es['allDoneBody'] ?? '')
-                                    : (es['introBody'] ?? ''),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: CustomScrollView(
                     physics: tracingAwareScrollPhysics(context),
                     slivers: [
+                      // Carte d'intro défilante : avec un grand texte (réglage
+                      // "Taille de l'interface", police dyslexie), en-tête + carte
+                      // fixes ne laissaient plus aucune place à l'exercice.
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AmaniColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AmaniColors.textPrimary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                AmaniMascot(
+                                  pose: allDone
+                                      ? AmaniPose.celebration
+                                      : AmaniPose.encouragement,
+                                  size: AmaniSize.small,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        allDone
+                                            ? (es['allDoneTitle'] ?? '')
+                                            : (es['introTitle'] ?? ''),
+                                        style: AmaniTheme.titleStyle.copyWith(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        allDone
+                                            ? (es['allDoneBody'] ?? '')
+                                            : (es['introBody'] ?? ''),
+                                        style: AmaniTheme.bodyStyle.copyWith(
+                                          fontSize: 12,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
                         sliver: DecoratedSliver(
@@ -361,7 +370,7 @@ class _ExerciceSolideScreenState extends State<ExerciceSolideScreen> {
                               SliverPadding(
                                 padding: const EdgeInsets.all(4),
                                 sliver: SliverList(
-                                  delegate: SliverChildListDelegate([
+                                  delegate: keepAliveListDelegate([
                                     for (
                                       var i = 0;
                                       i < _problems.length;

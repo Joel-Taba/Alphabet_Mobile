@@ -4,6 +4,7 @@ import 'api_client.dart';
 import 'profile_auth.dart';
 import 'family_service.dart';
 import '../i18n/translations.dart' show Lang;
+import '../utils/safe_prefs.dart';
 
 const _tokenKey = 'amani_backend_token';
 const _langStorageKey = 'amani_setting_lang';
@@ -41,7 +42,7 @@ class BackendSyncService extends ChangeNotifier {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString(scopeKey(_tokenKey));
+    _token = prefs.readString(scopeKey(_tokenKey));
     _loaded = true;
     notifyListeners();
   }
@@ -97,7 +98,7 @@ class BackendSyncService extends ChangeNotifier {
   Future<bool> _trySignup(String nom, String motDePasse) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final langue = prefs.getString(_langStorageKey) == 'en' ? 'EN' : 'FR';
+      final langue = prefs.readString(_langStorageKey) == 'en' ? 'EN' : 'FR';
       await _api.post(
         '/api/v1/profils',
         body: {'nom': nom, 'motDePasse': motDePasse, 'langue': langue},

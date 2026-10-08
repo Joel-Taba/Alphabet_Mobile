@@ -19,6 +19,7 @@ import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/keep_alive_list.dart';
 
 /// Exercice du Palier "Figures géométriques" : un petit problème de calcul
 /// (périmètre ou aire) par tentative, avec un schéma annoté donnant les
@@ -45,7 +46,7 @@ const String _kEvalId = 'figures';
 class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   int _activeIdx = 0;
   final Set<int> _doneIndices = {};
-  List<ShapeCalcProblem> _problems = const [];
+  List<ShapeCombinedProblem> _problems = const [];
   int _restartKey = 0;
   bool _awaitingRepeatCompletion = false;
 
@@ -71,7 +72,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
     final topic = findShapeTopic(widget.shapeId);
     if (topic == null) return;
     _problems = [
-      generateShapeCalcProblem(topic, topic.id.hashCode ^ _restartKey),
+      generateShapeCombinedProblem(topic, topic.id.hashCode ^ _restartKey),
     ];
     _activeIdx = 0;
     _doneIndices.clear();
@@ -283,59 +284,67 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AmaniColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AmaniColors.textPrimary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AmaniMascot(
-                          pose: allDone
-                              ? AmaniPose.celebration
-                              : AmaniPose.encouragement,
-                          size: AmaniSize.small,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                allDone
-                                    ? (ef['allDoneTitle'] ?? '')
-                                    : (ef['introTitle'] ?? ''),
-                                style: AmaniTheme.titleStyle.copyWith(
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                allDone
-                                    ? (ef['allDoneBody'] ?? '')
-                                    : (ef['introBody'] ?? ''),
-                                style: AmaniTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AmaniColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: CustomScrollView(
                     physics: tracingAwareScrollPhysics(context),
                     slivers: [
+                      // Carte d'intro défilante : avec un grand texte (réglage
+                      // "Taille de l'interface", police dyslexie), en-tête + carte
+                      // fixes ne laissaient plus aucune place à l'exercice.
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AmaniColors.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AmaniColors.textPrimary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                AmaniMascot(
+                                  pose: allDone
+                                      ? AmaniPose.celebration
+                                      : AmaniPose.encouragement,
+                                  size: AmaniSize.small,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        allDone
+                                            ? (ef['allDoneTitle'] ?? '')
+                                            : (ef['introTitle'] ?? ''),
+                                        style: AmaniTheme.titleStyle.copyWith(
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        allDone
+                                            ? (ef['allDoneBody'] ?? '')
+                                            : (ef['introBody'] ?? ''),
+                                        style: AmaniTheme.bodyStyle.copyWith(
+                                          fontSize: 12,
+                                          color: AmaniColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(12, 16, 12, 48),
                         // Une seule feuille de cahier pour toute la page,
@@ -364,7 +373,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                               SliverPadding(
                                 padding: const EdgeInsets.all(4),
                                 sliver: SliverList(
-                                  delegate: SliverChildListDelegate([
+                                  delegate: keepAliveListDelegate([
                                     for (
                                       var i = 0;
                                       i < _problems.length;
@@ -376,7 +385,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                                           color: AmaniColors.textPrimary
                                               .withValues(alpha: 0.1),
                                         ),
-                                      _ShapeCalcProblemRow(
+                                      _CombinedProblemRow(
                                         key: ValueKey(
                                           '${topic.id}-$i-r$_restartKey',
                                         ),
@@ -478,19 +487,18 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
   }
 }
 
-/// Une ligne de la liste = un problème de calcul (périmètre ou aire) : énoncé
-/// court, schéma annoté (`ShapeCalcDiagram`) et clavier de saisie
-/// (`ShapeAnswerKeypad`) pour la ligne active uniquement — même agencement
-/// que `_ProblemRow` dans `exercice_calcul_screen.dart` (Palier "Calculs").
-class _ShapeCalcProblemRow extends StatelessWidget {
-  final ShapeCalcProblem problem;
+/// Ligne d'exercice combiné : l'enfant calcule à la fois le périmètre ET l'aire
+/// de la figure. Chaque champ de réponse possède une icône calculette qui
+/// déploie le clavier numérique à la demande.
+class _CombinedProblemRow extends StatefulWidget {
+  final ShapeCombinedProblem problem;
   final bool isActive;
   final bool isFuture;
   final bool done;
   final String doneLabel;
   final VoidCallback onDone;
 
-  const _ShapeCalcProblemRow({
+  const _CombinedProblemRow({
     super.key,
     required this.problem,
     required this.isActive,
@@ -501,20 +509,58 @@ class _ShapeCalcProblemRow extends StatelessWidget {
   });
 
   @override
+  State<_CombinedProblemRow> createState() => _CombinedProblemRowState();
+}
+
+class _CombinedProblemRowState extends State<_CombinedProblemRow> {
+  bool _perimeterSolved = false;
+  bool _areaSolved = false;
+  // 'p' = keypad périmètre ouvert, 'a' = keypad aire ouvert, null = fermé
+  String? _openField;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.done) {
+      _perimeterSolved = true;
+      _areaSolved = true;
+    }
+  }
+
+  void _onPerimeterSolved() {
+    setState(() {
+      _perimeterSolved = true;
+      _openField = null;
+    });
+    if (_areaSolved) widget.onDone();
+  }
+
+  void _onAreaSolved() {
+    setState(() {
+      _areaSolved = true;
+      _openField = null;
+    });
+    if (_perimeterSolved) widget.onDone();
+  }
+
+  void _toggle(String fieldId) {
+    setState(() => _openField = _openField == fieldId ? null : fieldId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>().lang;
     final t = context.watch<LanguageProvider>().t;
     final ef = t['exerciceFigure'] as Map<String, dynamic>? ?? {};
-    final statement = shapeCalcStatement(problem, lang.name);
-    final question = problem.kind == ShapeCalcKind.perimeter
-        ? (ef['calcPerimeterPrompt'] ?? '')
-        : (ef['calcAreaPrompt'] ?? '');
+    final cf = t['coursFigure'] as Map<String, dynamic>? ?? {};
+    final statement = shapeCombinedStatement(widget.problem, lang.name);
 
     return Opacity(
-      opacity: isFuture ? 0.4 : 1,
+      opacity: widget.isFuture ? 0.4 : 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // En-tête : énoncé
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
@@ -528,48 +574,43 @@ class _ShapeCalcProblemRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (statement.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            statement,
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                              color: AmaniColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      Text(
-                        question,
-                        style: TextStyle(
-                          fontFamily: kBalooFontFamily,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: AmaniColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (done)
-                  Text(
-                    '✓ $doneLabel',
+                  child: Text(
+                    statement,
                     style: TextStyle(
                       fontFamily: kBalooFontFamily,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AmaniColors.secondary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: AmaniColors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (widget.done)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      '✓ ${widget.doneLabel}',
+                      style: TextStyle(
+                        fontFamily: kBalooFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AmaniColors.secondary,
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-          if (problem.isApproximate && !done)
+
+          // Schéma combiné (toutes dimensions)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: ShapeCombinedDiagram(problem: widget.problem),
+            ),
+          ),
+
+          // Indication d'arrondi pour le cercle
+          if (widget.problem.isApproximate && !widget.done)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
@@ -583,24 +624,181 @@ class _ShapeCalcProblemRow extends StatelessWidget {
                 ),
               ),
             ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: ShapeCalcDiagram(problem: problem),
-            ),
+
+          const SizedBox(height: 10),
+
+          // Champ périmètre
+          _buildFieldCard(
+            fieldId: 'p',
+            labelSymbol: 'P',
+            label: (cf['perimeterLabel'] ?? 'Périmètre').toString(),
+            answer: widget.problem.perimeterAnswer,
+            solved: _perimeterSolved,
+            accentColor: const Color(0xFF1565C0),
+            accentLight: const Color(0xFFE3F2FD),
+            onSolved: _onPerimeterSolved,
           ),
-          if (!done)
-            Center(
-              child: ShapeAnswerKeypad(
-                correctAnswer: problem.answer,
-                isActive: isActive,
-                isFuture: isFuture,
-                solved: done,
-                onSolved: onDone,
-              ),
-            ),
+
+          const SizedBox(height: 6),
+
+          // Champ aire
+          _buildFieldCard(
+            fieldId: 'a',
+            labelSymbol: 'A',
+            label: (cf['areaLabel'] ?? 'Aire').toString(),
+            answer: widget.problem.areaAnswer,
+            solved: _areaSolved,
+            accentColor: const Color(0xFF2E7D32),
+            accentLight: const Color(0xFFE8F5E9),
+            onSolved: _onAreaSolved,
+          ),
+
+          const SizedBox(height: 12),
         ],
       ),
+    );
+  }
+
+  Widget _buildFieldCard({
+    required String fieldId,
+    required String labelSymbol,
+    required String label,
+    required int answer,
+    required bool solved,
+    required Color accentColor,
+    required Color accentLight,
+    required VoidCallback onSolved,
+  }) {
+    final isOpen = _openField == fieldId && !solved;
+
+    return Column(
+      children: [
+        // Carte principale
+        GestureDetector(
+          onTap: solved ? null : () => _toggle(fieldId),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: solved
+                  ? accentLight
+                  : isOpen
+                  ? accentColor.withValues(alpha: 0.08)
+                  : const Color(0xFFF8F8F8),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: solved
+                    ? accentColor.withValues(alpha: 0.5)
+                    : isOpen
+                    ? accentColor.withValues(alpha: 0.4)
+                    : const Color(0xFFE0E0E0),
+                width: isOpen ? 2 : 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                // Badge symbole
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: solved
+                        ? accentColor
+                        : accentColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: solved
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          )
+                        : Text(
+                            labelSymbol,
+                            style: TextStyle(
+                              fontFamily: kBalooFontFamily,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              color: accentColor,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Label + valeur
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AmaniColors.textSecondary,
+                        ),
+                      ),
+                      if (solved)
+                        Text(
+                          '= $answer m',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            color: accentColor,
+                          ),
+                        )
+                      else
+                        Text(
+                          '= ?',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: AmaniColors.textPrimary.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // Bouton calculatrice (uniquement si non résolu)
+                if (!solved)
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isOpen
+                          ? accentColor
+                          : accentColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      LucideIcons.calculator,
+                      size: 20,
+                      color: isOpen ? Colors.white : accentColor,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        // Clavier déployé sous la carte
+        if (isOpen)
+          Center(
+            child: ShapeAnswerKeypad(
+              key: ValueKey('kp-$fieldId-${widget.problem.shapeId}'),
+              correctAnswer: answer,
+              isActive: widget.isActive,
+              isFuture: false,
+              solved: false,
+              onSolved: onSolved,
+            ),
+          ),
+      ],
     );
   }
 }

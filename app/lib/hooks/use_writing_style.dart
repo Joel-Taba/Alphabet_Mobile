@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/amani_theme.dart';
 import '../services/family_service.dart';
+import '../utils/safe_prefs.dart';
 
 /// Réglage partagé du style d'écriture (Profil > Réglages > "Format
 /// d'écriture"). Même clé SharedPreferences que l'ancien état local de
@@ -22,7 +23,7 @@ class WritingStyleProvider extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(scopeKey(_storageKey));
+    final saved = prefs.readString(scopeKey(_storageKey));
     _style = WritingStyle.script;
     for (final s in WritingStyle.values) {
       if (s.name == saved) {
