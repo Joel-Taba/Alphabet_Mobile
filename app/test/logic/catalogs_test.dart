@@ -31,6 +31,23 @@ void main() {
     }
   });
 
+  test('signes : chaque variante réduite suit directement sa version '
+      'grandeur nature (elles sont fusionnées sur la page d\'exercice)', () {
+    for (var i = 0; i < EXERCISE_CATALOG.length; i++) {
+      final e = EXERCISE_CATALOG[i];
+      if (e['scale'] != 'reduced') continue;
+      expect(i, greaterThan(0));
+      final prev = EXERCISE_CATALOG[i - 1];
+      expect(
+        prev['scale'] == 'full' &&
+            prev['family'] == e['family'] &&
+            prev['variant'] == e['variant'],
+        isTrue,
+        reason: '${e['id']} doit suivre sa version grandeur nature',
+      );
+    }
+  });
+
   test('lettres : groupes uniques, aucune lettre dans deux groupes', () {
     for (final lang in ['fr', 'en', 'es', 'ar']) {
       final groups = getPalier2Groups(lang);

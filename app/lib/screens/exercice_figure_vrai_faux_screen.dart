@@ -11,6 +11,7 @@ import '../widgets/quiz_kit.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/wrong_answer_popup.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Vrai ou Faux ?" du Palier "Figures géométriques" —
@@ -174,7 +175,7 @@ class _ExerciceFigureVraiFauxScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               (vf['title'] ?? '').toString(),
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,

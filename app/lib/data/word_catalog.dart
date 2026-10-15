@@ -56,7 +56,8 @@ class WordEntry {
 
   /// Texte à donner à la synthèse vocale -- [frSpoken] en français quand
   /// défini (orthographe accentuée correcte), sinon identique à [text].
-  String spokenText(String lang) => lang == 'fr' ? (frSpoken ?? fr) : text(lang);
+  String spokenText(String lang) =>
+      lang == 'fr' ? (frSpoken ?? fr) : text(lang);
 
   /// Texte pour la synthèse vocale qui épelle d'abord le mot lettre par lettre,
   /// puis le prononce en entier. Utilisé sur le Palier des mots pour que
@@ -91,14 +92,7 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('ours', 'ours', 'bear', 'oso', 'animaux'),
   WordEntry('singe', 'singe', 'monkey', 'mono', 'animaux'),
   WordEntry('vache', 'vache', 'cow', 'vaca', 'animaux'),
-  WordEntry(
-    'zebre',
-    'zebre',
-    'zebra',
-    'cebra',
-    'animaux',
-    frSpoken: 'zèbre',
-  ),
+  WordEntry('zebre', 'zebre', 'zebra', 'cebra', 'animaux', frSpoken: 'zèbre'),
   WordEntry('mouton', 'mouton', 'sheep', 'oveja', 'animaux'),
   WordEntry('cochon', 'cochon', 'pig', 'cerdo', 'animaux'),
   WordEntry('canard', 'canard', 'duck', 'pato', 'animaux'),
@@ -156,27 +150,13 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('livre', 'livre', 'book', 'libro', 'maison'),
   WordEntry('papier', 'papier', 'paper', 'papel', 'maison'),
   WordEntry('crayon', 'crayon', 'pencil', 'lapiz', 'maison'),
-  WordEntry(
-    'regle',
-    'regle',
-    'ruler',
-    'regla',
-    'maison',
-    frSpoken: 'règle',
-  ),
+  WordEntry('regle', 'regle', 'ruler', 'regla', 'maison', frSpoken: 'règle'),
   WordEntry('sac', 'sac', 'bag', 'bolsa', 'maison'),
   WordEntry('tasse', 'tasse', 'cup', 'taza', 'maison'),
   WordEntry('verre', 'verre', 'glass', 'vaso', 'maison'),
   WordEntry('bol', 'bol', 'bowl', 'bol', 'maison'),
   WordEntry('clef', 'clef', 'key', 'llave', 'maison'),
-  WordEntry(
-    'poupee',
-    'poupee',
-    'doll',
-    'muneca',
-    'maison',
-    frSpoken: 'poupée',
-  ),
+  WordEntry('poupee', 'poupee', 'doll', 'muneca', 'maison', frSpoken: 'poupée'),
 
   // ─── Vêtements ───
   WordEntry('short', 'short', 'shorts', 'short', 'vetements'),
@@ -184,14 +164,7 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('jupe', 'jupe', 'skirt', 'falda', 'vetements'),
   WordEntry('botte', 'botte', 'boot', 'bota', 'vetements'),
   WordEntry('polo', 'polo', 'polo', 'polo', 'vetements'),
-  WordEntry(
-    'beret',
-    'beret',
-    'beret',
-    'boina',
-    'vetements',
-    frSpoken: 'béret',
-  ),
+  WordEntry('beret', 'beret', 'beret', 'boina', 'vetements', frSpoken: 'béret'),
   WordEntry('gant', 'gant', 'glove', 'guante', 'vetements'),
   WordEntry('noeud', 'noeud', 'bow', 'lazo', 'vetements'),
   WordEntry('bouton', 'bouton', 'button', 'boton', 'vetements'),
@@ -219,14 +192,7 @@ const List<WordEntry> WORD_CATALOG = [
   WordEntry('fleur', 'fleur', 'flower', 'flor', 'nature'),
   WordEntry('arbre', 'arbre', 'tree', 'arbol', 'nature'),
   WordEntry('mer', 'mer', 'sea', 'mar', 'nature'),
-  WordEntry(
-    'foret',
-    'foret',
-    'forest',
-    'bosque',
-    'nature',
-    frSpoken: 'forêt',
-  ),
+  WordEntry('foret', 'foret', 'forest', 'bosque', 'nature', frSpoken: 'forêt'),
 
   // ─── Corps ───
   WordEntry('main', 'main', 'hand', 'mano', 'corps'),
@@ -256,12 +222,32 @@ const List<WordEntry> WORD_CATALOG = [
 final Map<String, WordEntry> WORD_MAP = {for (final w in WORD_CATALOG) w.id: w};
 
 const Map<String, Map<String, String>> THEME_TITLES = {
-  'animaux': {'fr': 'Animaux', 'en': 'Animals', 'es': 'Animales', 'ar': 'حيوانات'},
-  'nourriture': {'fr': 'Nourriture', 'en': 'Food', 'es': 'Comida', 'ar': 'طعام'},
+  'animaux': {
+    'fr': 'Animaux',
+    'en': 'Animals',
+    'es': 'Animales',
+    'ar': 'حيوانات',
+  },
+  'nourriture': {
+    'fr': 'Nourriture',
+    'en': 'Food',
+    'es': 'Comida',
+    'ar': 'طعام',
+  },
   'maison': {'fr': 'Maison', 'en': 'House', 'es': 'Casa', 'ar': 'المنزل'},
-  'vetements': {'fr': 'Vêtements', 'en': 'Clothes', 'es': 'Ropa', 'ar': 'ملابس'},
+  'vetements': {
+    'fr': 'Vêtements',
+    'en': 'Clothes',
+    'es': 'Ropa',
+    'ar': 'ملابس',
+  },
   'ecole': {'fr': 'École', 'en': 'School', 'es': 'Escuela', 'ar': 'المدرسة'},
-  'nature': {'fr': 'Nature', 'en': 'Nature', 'es': 'Naturaleza', 'ar': 'الطبيعة'},
+  'nature': {
+    'fr': 'Nature',
+    'en': 'Nature',
+    'es': 'Naturaleza',
+    'ar': 'الطبيعة',
+  },
   'corps': {'fr': 'Corps', 'en': 'Body', 'es': 'Cuerpo', 'ar': 'الجسم'},
   'divers': {
     'fr': 'Autour de nous',

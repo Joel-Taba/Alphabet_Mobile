@@ -98,9 +98,7 @@ class _WordClozeAttemptState extends State<WordClozeAttempt> {
                 _BlankSlot(
                   size: widget.cellSize,
                   wrong: _wrongFeedback,
-                  filled: _solved
-                      ? _formationFor(spec.correctLetter)
-                      : null,
+                  filled: _solved ? _formationFor(spec.correctLetter) : null,
                   onAccept: _handleDrop,
                 )
               else
@@ -172,7 +170,12 @@ class _BlankSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (filled != null) {
-      return LetterTraceCell(letter: filled, size: size, isActive: false, given: true);
+      return LetterTraceCell(
+        letter: filled,
+        size: size,
+        isActive: false,
+        given: true,
+      );
     }
     return DragTarget<_DragPayload>(
       onWillAcceptWithDetails: (_) => true,
@@ -201,6 +204,7 @@ class _BlankSlot extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             '?',
+            textScaler: TextScaler.noScaling,
             style: TextStyle(
               fontFamily: kBalooFontFamily,
               fontWeight: FontWeight.w800,

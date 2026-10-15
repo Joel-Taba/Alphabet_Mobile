@@ -8,6 +8,7 @@ import '../services/evaluation_session.dart';
 import '../services/sound_effect_service.dart';
 import 'amani_mascot.dart';
 import 'confetti_burst.dart';
+import 'unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Délai avant le retour automatique au parcours — assez long pour lire le
@@ -203,7 +204,7 @@ class EvaluationResumeOffer extends StatelessWidget {
                   size: 26,
                 ),
                 const SizedBox(height: 8),
-                Text(
+                UnbrokenText(
                   ev['resumeTitle'] ?? '',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -343,7 +344,7 @@ class EvaluationSubjectAnnouncement extends StatelessWidget {
                   size: 26,
                 ),
                 const SizedBox(height: 8),
-                Text(
+                UnbrokenText(
                   title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -482,7 +483,7 @@ class _EvaluationCompleteOverlayState extends State<EvaluationCompleteOverlay> {
                       size: 26,
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    UnbrokenText(
                       ev['finishedTitle'] ?? '',
                       textAlign: TextAlign.center,
                       style: TextStyle(

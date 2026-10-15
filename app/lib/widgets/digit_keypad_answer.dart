@@ -81,7 +81,9 @@ class _DigitKeypadAnswerState extends State<DigitKeypadAnswer> {
     if (!_slots.contains(null)) {
       final guess = _slots.join();
       final correct = guess == widget.correctAnswer;
-      setState(() => _slotStatuses = _digitStatuses(guess, widget.correctAnswer));
+      setState(
+        () => _slotStatuses = _digitStatuses(guess, widget.correctAnswer),
+      );
       if (correct) {
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) widget.onSolved();
@@ -148,18 +150,24 @@ class _DigitKeypadAnswerState extends State<DigitKeypadAnswer> {
                     height: 56,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: _fillColorFor(i) ??
-                          (_slots[i] == null ? AmaniColors.surface : Colors.white),
+                      color:
+                          _fillColorFor(i) ??
+                          (_slots[i] == null
+                              ? AmaniColors.surface
+                              : Colors.white),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: _borderColorFor(i), width: 2.5),
                     ),
-                    child: Text(
-                      _slots[i] ?? '',
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 24,
-                        color: AmaniColors.textPrimary,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _slots[i] ?? '',
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 24,
+                          color: AmaniColors.textPrimary,
+                        ),
                       ),
                     ),
                   ),
@@ -188,13 +196,16 @@ class _DigitKeypadAnswerState extends State<DigitKeypadAnswer> {
                           width: 2,
                         ),
                       ),
-                      child: Text(
-                        '$d',
-                        style: TextStyle(
-                          fontFamily: kBalooFontFamily,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 17,
-                          color: const Color(0xFF6B3F94),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '$d',
+                          style: TextStyle(
+                            fontFamily: kBalooFontFamily,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            color: const Color(0xFF6B3F94),
+                          ),
                         ),
                       ),
                     ),

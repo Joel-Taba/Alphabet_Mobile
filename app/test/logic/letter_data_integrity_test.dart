@@ -57,17 +57,23 @@ void _checkFormation(String where, Map<String, dynamic> l) {
 }
 
 void main() {
-  test('chaque formation script est complète (4 langues, couleurs, tracés)', () {
-    for (final l in LETTER_CATALOG) {
-      _checkFormation('script "${l['char']}"', l as Map<String, dynamic>);
-    }
-  });
+  test(
+    'chaque formation script est complète (4 langues, couleurs, tracés)',
+    () {
+      for (final l in LETTER_CATALOG) {
+        _checkFormation('script "${l['char']}"', l as Map<String, dynamic>);
+      }
+    },
+  );
 
-  test('chaque formation cursive est complète (4 langues, couleurs, tracés)', () {
-    for (final l in CURSIVE_LETTERS) {
-      _checkFormation('cursive "${l['char']}"', l as Map<String, dynamic>);
-    }
-  });
+  test(
+    'chaque formation cursive est complète (4 langues, couleurs, tracés)',
+    () {
+      for (final l in CURSIVE_LETTERS) {
+        _checkFormation('cursive "${l['char']}"', l as Map<String, dynamic>);
+      }
+    },
+  );
 
   test('Palier 2 : chaque caractère des groupes existe dans les 2 styles', () {
     for (final lang in _langs) {
@@ -88,23 +94,25 @@ void main() {
     }
   });
 
-  test('Palier 3 : chaque lettre de chaque mot est traçable (toutes langues)',
-      () {
-    final missing = <String>{};
-    for (final w in WORD_CATALOG) {
-      for (final lang in ['fr', 'en', 'es']) {
-        final text = w.text(lang);
-        for (final c in text.split('')) {
-          for (final st in _styles) {
-            if (getLetterFormation(c, st) == null) {
-              missing.add('${w.id} ($lang/$st) "$text" → "$c"');
+  test(
+    'Palier 3 : chaque lettre de chaque mot est traçable (toutes langues)',
+    () {
+      final missing = <String>{};
+      for (final w in WORD_CATALOG) {
+        for (final lang in ['fr', 'en', 'es']) {
+          final text = w.text(lang);
+          for (final c in text.split('')) {
+            for (final st in _styles) {
+              if (getLetterFormation(c, st) == null) {
+                missing.add('${w.id} ($lang/$st) "$text" → "$c"');
+              }
             }
           }
         }
       }
-    }
-    expect(missing, isEmpty, reason: missing.join('\n'));
-  });
+      expect(missing, isEmpty, reason: missing.join('\n'));
+    },
+  );
 
   test('syllabes : consonne, voyelle et syllabe entièrement traçables', () {
     final missing = <String>{};

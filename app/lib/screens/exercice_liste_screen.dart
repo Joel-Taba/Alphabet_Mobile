@@ -22,6 +22,7 @@ import '../utils/text_case.dart';
 import '../utils/trace_validation.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// "Cahier d'Écriture" : exerce chaque signe d'une famille (répétitions sur
@@ -257,13 +258,16 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                               ),
                             ),
                             alignment: Alignment.center,
-                            child: Text(
-                              letter['char'],
-                              style: TextStyle(
-                                fontFamily: kBalooFontFamily,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 26,
-                                color: AmaniColors.primary,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                letter['char'],
+                                style: TextStyle(
+                                  fontFamily: kBalooFontFamily,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 26,
+                                  color: AmaniColors.primary,
+                                ),
                               ),
                             ),
                           ),
@@ -444,11 +448,19 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                   ),
                 _Header(
                   title: headerTitle,
-                  subtitle: el['subtitle'] ?? '',
+                  subtitle:
+                      (widget.family == 'point'
+                          ? el['subtitlePoint']
+                          : el['subtitle']) ??
+                      '',
                   onBack: () => goHome(context),
                 ),
                 _HintBar(
-                  text: el['startHint'] ?? '',
+                  text:
+                      (widget.family == 'point'
+                          ? el['startHintPoint']
+                          : el['startHint']) ??
+                      '',
                   bg: const Color(0xCCEAF1FB),
                   fg: const Color(0xFF2D5E8A),
                   tip: true,
@@ -542,15 +554,13 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                                             entry: entry,
                                             title: practiceMode
                                                 ? null
-                                                : _traitTitle(entry, el),
-                                            showHeader:
-                                                practiceMode ||
-                                                !_sharesPreviousTitle(entry),
+                                                : _signTitle(entry, el),
+                                            showHeader: true,
                                             done: _doneSigns.contains(
                                               entry['id'] as String,
                                             ),
                                             repetitions: _settings.repetitions,
-                                            tolerance: _settings.tolerance,
+                                            tolerance: _settings.tolerancePct,
                                             hideFamilyBadge:
                                                 widget.family != null,
                                             el: el,
@@ -686,7 +696,7 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
                           size: AmaniSize.medium,
                         ),
                         const SizedBox(height: 12),
-                        Text(
+                        UnbrokenText(
                           el['practiceSuccessTitle'] ?? 'Bravo !',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -741,30 +751,19 @@ class _ExerciceListeScreenState extends State<ExerciceListeScreen> {
   }
 }
 
-/// Titre explicatif d'un trait "plein" sur la page d'exercice (remplace son
-/// simple nom) ; `null` pour tout autre signe.
-String? _traitTitle(dynamic entry, Map<String, dynamic> el) {
-  if (entry['family'] != 'trait' || entry['scale'] != 'full') return null;
-  final titles = el['traitTitles'] as Map<String, dynamic>? ?? {};
-  return titles[entry['variant']] as String?;
-}
-
-/// Une variante réduite placée juste après sa version grandeur nature
-/// (même tracé, dans une seule interligne) partage son titre : elle
-/// s'affiche sans en-tête propre, comme un seul et même exercice. Ne
-/// concerne que la page d'exercice générale — jamais l'entraînement sur un
-/// signe précis (voir `practiceMode`).
-bool _sharesPreviousTitle(dynamic entry) {
-  if (entry['scale'] != 'reduced') return false;
-  if (entry['family'] == 'crochet') return true;
-  return entry['family'] == 'trait' &&
-      (entry['variant'] == 'vertical' || entry['variant'] == 'horizontal');
+/// Titre-consigne d'un signe sur la page d'exercice générale (remplace son
+/// simple nom) : comment il se trace et sur combien d'interlignes. Défini
+/// pour chaque signe, version longue comme petite version, et lu tel quel
+/// par la synthèse vocale du cours (voir `cours_family_screen.dart`).
+String? _signTitle(dynamic entry, Map<String, dynamic> el) {
+  final titles = el['signTitles'] as Map<String, dynamic>? ?? {};
+  return titles[entry['id']] as String?;
 }
 
 class _SignExerciseRow extends StatelessWidget {
   final dynamic entry;
 
-  /// Remplace le nom du signe dans l'en-tête (voir [_traitTitle]).
+  /// Remplace le nom du signe dans l'en-tête (voir [_signTitle]).
   final String? title;
   final bool showHeader;
   final int repetitions;
@@ -804,7 +803,11 @@ class _SignExerciseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final familyNames = el['familyNames'] as Map<String, dynamic>? ?? {};
-    final showBadge = !hideFamilyBadge || entry['scale'] == 'reduced';
+    // Le titre-consigne nomme déjà la petite version (« Le petit … ») : le
+    // badge « réduit » ne sert plus qu'en entraînement, où seul le nom
+    // s'affiche.
+    final showBadge =
+        !hideFamilyBadge || (entry['scale'] == 'reduced' && title == null);
     final badgeBg = Color(
       int.parse((entry['badgeBg'] as String).replaceFirst('#', '0xFF')),
     );
@@ -828,6 +831,8 @@ class _SignExerciseRow extends StatelessWidget {
           int.parse((entry['strokeColor'] as String).replaceFirst('#', '0xFF')),
         ),
         family: entry['family'] as String? ?? '',
+        // Le point ne se trace pas : il se fait d'un simple toucher.
+        tapOnly: entry['family'] == 'point',
       ),
       label: title ?? entry['label'][lang.name] ?? '',
       showHeader: showHeader,
@@ -926,7 +931,7 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                UnbrokenText(
                   title,
                   style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                   maxLines: 1,

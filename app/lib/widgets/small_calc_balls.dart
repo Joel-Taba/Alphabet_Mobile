@@ -173,7 +173,8 @@ class _SoustractionBallsDemoState extends State<SoustractionBallsDemo>
   @override
   void didUpdateWidget(covariant SoustractionBallsDemo old) {
     super.didUpdateWidget(old);
-    if (old.countA != widget.countA || old.countRemoved != widget.countRemoved) {
+    if (old.countA != widget.countA ||
+        old.countRemoved != widget.countRemoved) {
       _play();
     }
   }
@@ -207,7 +208,9 @@ class _SoustractionBallsDemoState extends State<SoustractionBallsDemo>
           final crackGap = crackT * 7;
           // Étape 3 (40-100%) : le vent emporte les deux moitiés au loin,
           // en rotation, jusqu'à disparaître.
-          final sweepT = Curves.easeIn.transform(((t - 0.4) / 0.6).clamp(0.0, 1.0));
+          final sweepT = Curves.easeIn.transform(
+            ((t - 0.4) / 0.6).clamp(0.0, 1.0),
+          );
           final windDrift = sweepT * windDistance;
           final rotation = sweepT * 0.9;
           final opacity = 1 - sweepT;

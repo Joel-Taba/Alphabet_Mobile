@@ -4,6 +4,7 @@ import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
 import 'scribble_canvas.dart';
 import 'scroll_handle.dart';
+import 'unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Feuille d'écriture libre, en bas de chaque page d'exercice des Paliers
@@ -48,7 +49,7 @@ class _FreeWritingSheetState extends State<FreeWritingSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        UnbrokenText(
           freeWriting['title'] ?? 'Écriture libre',
           style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
         ),

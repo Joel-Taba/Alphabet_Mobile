@@ -50,7 +50,16 @@ List<ProgressionGroup> getEvalPalier2Groups() {
 // ─────────────────────────────────────────────────────────────
 
 const List<String> kEvalSyllabeConsonants = [
-  'b', 'c', 'd', 'l', 'm', 'n', 'p', 'r', 's', 't',
+  'b',
+  'c',
+  'd',
+  'l',
+  'm',
+  'n',
+  'p',
+  'r',
+  's',
+  't',
 ];
 
 /// Retourne la liste réduite des groupes de syllabes pour l'évaluation,
@@ -87,11 +96,10 @@ const List<String> kEvalWordGroupIds = [
   'di1', // Autour de nous 1
 ];
 
-List<WordGroup> getEvalWordGroups() =>
-    kEvalWordGroupIds
-        .map((id) => PALIER3_GROUP_MAP[id])
-        .whereType<WordGroup>()
-        .toList();
+List<WordGroup> getEvalWordGroups() => kEvalWordGroupIds
+    .map((id) => PALIER3_GROUP_MAP[id])
+    .whereType<WordGroup>()
+    .toList();
 
 // ─────────────────────────────────────────────────────────────
 // PALIER 5 — Calcul (25 topics → 10)
@@ -103,22 +111,23 @@ List<WordGroup> getEvalWordGroups() =>
 // ─────────────────────────────────────────────────────────────
 
 const List<String> kEvalCalculTopicIds = [
-  'cp-addition',          // Addition simple (CP)
-  'cp-soustraction',      // Soustraction simple (CP)
-  'ce1-addition-posee',   // Addition posée (CE1)
+  'cp-addition', // Addition simple (CP)
+  'cp-soustraction', // Soustraction simple (CP)
+  'ce1-addition-posee', // Addition posée (CE1)
   'ce1-soustraction-posee', // Soustraction posée (CE1)
-  'ce1-table-2',          // Table de multiplication × 2 (CE1)
-  'ce1-table-5',          // Table de multiplication × 5 (CE1)
-  'ce1-table-10',         // Table de multiplication × 10 (CE1)
+  'ce1-table-2', // Table de multiplication × 2 (CE1)
+  'ce1-table-5', // Table de multiplication × 5 (CE1)
+  'ce1-table-10', // Table de multiplication × 10 (CE1)
   'ce2-multiplication-posee', // Multiplication posée (CE2)
-  'ce2-division',         // Division (CE2)
-  'cm1-fractions',        // Fractions (CM1)
+  'ce2-division', // Division (CE2)
+  'cm1-fractions', // Fractions (CM1)
 ];
 
-List<CalculTopic> getEvalCalculTopics() =>
-    kEvalCalculTopicIds
-        .map((id) => CALCUL_TOPICS.firstWhere(
-              (t) => t.id == id,
-              orElse: () => CALCUL_TOPICS.first,
-            ))
-        .toList();
+List<CalculTopic> getEvalCalculTopics() => kEvalCalculTopicIds
+    .map(
+      (id) => CALCUL_TOPICS.firstWhere(
+        (t) => t.id == id,
+        orElse: () => CALCUL_TOPICS.first,
+      ),
+    )
+    .toList();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/amani_theme.dart';
 import '../i18n/translations.dart';
+import 'unbroken_text.dart';
 import 'amani_mascot.dart';
 
 /// Pop-up de correction affiché dans les mini-jeux "Vrai ou Faux ?" lorsque
@@ -59,7 +60,7 @@ class WrongAnswerPopup extends StatelessWidget {
                 size: AmaniSize.medium,
               ),
               const SizedBox(height: 16),
-              Text(
+              UnbrokenText(
                 (wa['title'] ?? 'Réponse incorrecte !').toString(),
                 textAlign: TextAlign.center,
                 style: TextStyle(

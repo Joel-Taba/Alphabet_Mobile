@@ -11,6 +11,7 @@ import '../hooks/use_writing_style.dart';
 import '../theme/amani_theme.dart';
 import '../widgets/amani_button.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 enum _CheckError { notFound, network }
@@ -122,7 +123,7 @@ class _ReturningUserScreenState extends State<ReturningUserScreen> {
                         size: 44,
                       ),
                       const SizedBox(height: 12),
-                      Text(
+                      UnbrokenText(
                         ru['title'] ?? "C'est encore moi !",
                         textAlign: TextAlign.center,
                         style: AmaniTheme.titleStyle.copyWith(fontSize: 26),
@@ -204,9 +205,8 @@ class _ReturningUserScreenState extends State<ReturningUserScreen> {
                                         ),
                                         border: InputBorder.none,
                                       ),
-                                      onChanged: (_) => setState(
-                                        () => _error = null,
-                                      ),
+                                      onChanged: (_) =>
+                                          setState(() => _error = null),
                                     ),
                                   ),
                                 ],

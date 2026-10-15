@@ -2351,10 +2351,10 @@ final List<dynamic> CURSIVE_LETTERS = jsonDecode(r'''[
       {
         "family": "trait",
         "variant": "oblique-droit",
-        "pathD": "M 92.68 99.23 L 101.32 78.86",
+        "pathD": "M 87.5 111.45 L 101.32 78.86",
         "startXY": [
-          92.68,
-          99.23
+          87.5,
+          111.45
         ],
         "strokeColor": "#4A3B2A",
         "zIndex": 3,

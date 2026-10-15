@@ -227,7 +227,9 @@ class EvaluationSessionController extends ChangeNotifier {
     // une sauvegarde périmée.
     await _writeChain;
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.readString(scopeKey('$_kProgressStorageKeyPrefix$evalId'));
+    final raw = prefs.readString(
+      scopeKey('$_kProgressStorageKeyPrefix$evalId'),
+    );
     if (raw == null) return null;
     try {
       return jsonDecode(raw) as Map<String, dynamic>;

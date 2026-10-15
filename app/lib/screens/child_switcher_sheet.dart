@@ -9,6 +9,7 @@ import '../services/profile_auth.dart';
 import '../services/progress_service.dart';
 import '../services/backend_sync_service.dart';
 import '../hooks/use_writing_style.dart';
+import '../widgets/unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Ouvre la feuille de gestion de la fratrie (basculer d'enfant, en
@@ -112,7 +113,7 @@ class _ChildSwitcherSheetState extends State<_ChildSwitcherSheet> {
                 ),
               ),
             ),
-            Text(
+            UnbrokenText(
               hub['familyTitle'] ?? 'Nos profils',
               style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
             ),

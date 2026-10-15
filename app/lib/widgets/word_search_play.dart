@@ -451,8 +451,10 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                         final isFound = _found.contains(p.word.id);
                         final color = wordColor[p.word.id]!;
                         return GestureDetector(
-                          onTap: () =>
-                              speech.speak(p.word.spelledSpokenText('fr'), lang),
+                          onTap: () => speech.speak(
+                            p.word.spelledSpokenText('fr'),
+                            lang,
+                          ),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -577,13 +579,16 @@ class _WordSearchPlayState extends State<WordSearchPlay> {
                 ),
               ),
             ),
-          Text(
-            letter,
-            style: TextStyle(
-              fontFamily: kBalooFontFamily,
-              fontWeight: FontWeight.w800,
-              fontSize: cellSize * 0.42,
-              color: const Color(0xFF4A3B2A),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              letter,
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w800,
+                fontSize: cellSize * 0.42,
+                color: const Color(0xFF4A3B2A),
+              ),
             ),
           ),
         ],

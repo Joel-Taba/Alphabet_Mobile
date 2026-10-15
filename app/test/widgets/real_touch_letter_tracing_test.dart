@@ -47,8 +47,12 @@ void main() {
   setUp(resetTestEnv);
 
   final configs = <(String, Lang, double, WritingStyle)>[
-    ('français, script, taille par défaut', Lang.fr, kDefaultUiScale,
-        WritingStyle.script),
+    (
+      'français, script, taille par défaut',
+      Lang.fr,
+      kDefaultUiScale,
+      WritingStyle.script,
+    ),
     ('arabe, cursive, taille max', Lang.ar, kMaxUiScale, WritingStyle.cursive),
     ('anglais, script, taille min', Lang.en, kMinUiScale, WritingStyle.script),
   ];
@@ -117,7 +121,10 @@ void main() {
     final traced = [
       for (var i = 0; i < 2; i++) await _traceActiveLetter(tester),
     ];
-    expect(traced, ['b', 'a'], reason: 'le "b" cursif tracé n\'a pas été validé');
+    expect(traced, [
+      'b',
+      'a',
+    ], reason: 'le "b" cursif tracé n\'a pas été validé');
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpWidget(const SizedBox());
     await advance(tester, frames: 5);

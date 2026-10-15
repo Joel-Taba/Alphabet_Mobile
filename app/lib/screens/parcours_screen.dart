@@ -21,6 +21,7 @@ import '../utils/text_case.dart';
 import '../widgets/sign_glyph.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/safe_prefs.dart';
 
 /// Famille de signe (voir `SignGlyph`) associée à une étape "Cours" du
@@ -200,6 +201,10 @@ class _ParcoursScreenState extends State<ParcoursScreen>
   /// de ce fichier).
   List<Rect>? _nodeRects;
 
+  /// Rectangle du titre de chaque étape, mesuré en même temps que
+  /// [_nodeRects] (même ordre) — `Rect.zero` pour une étape sans titre.
+  List<Rect>? _labelRects;
+
   @override
   void initState() {
     super.initState();
@@ -254,6 +259,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
         _pathAreaKey.currentContext?.findRenderObject() as RenderBox?;
     if (areaBox == null || !areaBox.hasSize) return;
     final rects = <Rect>[];
+    final labelRects = <Rect>[];
     for (final key in _nodeKeys) {
       final box = key.currentContext?.findRenderObject() as RenderBox?;
       // Un nœud pas encore monté (ex. clé réservée pour une étape qui
@@ -263,11 +269,25 @@ class _ParcoursScreenState extends State<ParcoursScreen>
       if (box == null || !box.hasSize) return;
       final topLeft = box.localToGlobal(Offset.zero, ancestor: areaBox);
       rects.add(topLeft & box.size);
+      final labelBox =
+          _stepLabelKeys[key]?.currentContext?.findRenderObject() as RenderBox?;
+      labelRects.add(
+        labelBox == null || !labelBox.hasSize
+            ? Rect.zero
+            : labelBox.localToGlobal(Offset.zero, ancestor: areaBox) &
+                  labelBox.size,
+      );
     }
-    if (_nodeRects != null && _rectsMatch(_nodeRects!, rects)) {
+    if (_nodeRects != null &&
+        _labelRects != null &&
+        _rectsMatch(_nodeRects!, rects) &&
+        _rectsMatch(_labelRects!, labelRects)) {
       return;
     }
-    setState(() => _nodeRects = rects);
+    setState(() {
+      _nodeRects = rects;
+      _labelRects = labelRects;
+    });
   }
 
   bool _rectsMatch(List<Rect> a, List<Rect> b) {
@@ -949,7 +969,7 @@ class _ParcoursScreenState extends State<ParcoursScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          UnbrokenText(
                             t['parcours']?['title'] ?? '',
                             style: AmaniTheme.titleStyle.copyWith(
                               fontSize: 24,
@@ -1015,7 +1035,10 @@ class _ParcoursScreenState extends State<ParcoursScreen>
                       children: [
                         Positioned.fill(
                           child: CustomPaint(
-                            painter: _FootpathPainter(rects: _nodeRects),
+                            painter: _FootpathPainter(
+                              rects: _nodeRects,
+                              labelRects: _labelRects,
+                            ),
                           ),
                         ),
                         Column(
@@ -1225,10 +1248,22 @@ class _QuickNavButton extends StatelessWidget {
 /// explicitement, et de façon visuellement saccadée, d'un bouton d'étape à
 /// l'autre — un groupe d'empreintes bien distinct par tronçon, jamais collé
 /// aux icônes ni aux étiquettes, ni raccordé au groupe voisin.
+/// Clé du TITRE d'une étape, associée à la clé de son nœud : permet de
+/// mesurer à part le rectangle du texte écrit sous le bouton, pour que le
+/// sentier d'empreintes l'enjambe sans marcher dessus (voir
+/// `_FootpathPainter.labelRects`).
+final Expando<GlobalKey> _stepLabelKeys = Expando<GlobalKey>();
+GlobalKey _labelKeyFor(GlobalKey nodeKey) =>
+    _stepLabelKeys[nodeKey] ??= GlobalKey();
+
 class _FootpathPainter extends CustomPainter {
   final List<Rect>? rects;
 
-  _FootpathPainter({required this.rects});
+  /// Rectangle du titre de chaque étape (même ordre que [rects]) —
+  /// `Rect.zero` pour une étape sans titre.
+  final List<Rect>? labelRects;
+
+  _FootpathPainter({required this.rects, this.labelRects});
 
   /// Marge additionnelle, au-delà du rectangle mesuré lui-même, avant d'y
   /// semer des empreintes -- purement esthétique (un vide net et visible
@@ -1317,7 +1352,21 @@ class _FootpathPainter extends CustomPainter {
     final r = rects;
     if (r == null || r.length < 2) return;
 
-    final path = Path();
+    final footColor = const Color(0xFF000000).withValues(alpha: 0.32);
+    // Écart entre deux empreintes le long du sentier, et décalage latéral
+    // gauche/droite (démarche) — mis à l'échelle avec `_footScale`.
+    const stepDistance = 22.0 * _footScale;
+    const strideOffset = 4.5 * _footScale;
+    // Demi-encombrement d'une empreinte (coussinet + orteils + décalage de
+    // démarche) : une empreinte dont le centre est à moins de cette distance
+    // d'un titre le toucherait.
+    // Marge entre une empreinte et un titre : demi-encombrement réel d'une
+    // empreinte (coussinet + orteils ≈ 10, décalage de démarche 4,5), plus
+    // un léger vide pour qu'elle ne paraisse pas coller au texte.
+    const footReach = 18.0 * _footScale;
+    final labels = labelRects;
+
+    var stepIndex = 0;
     for (var i = 0; i < r.length - 1; i++) {
       final rectA = r[i];
       final rectB = r[i + 1];
@@ -1329,34 +1378,24 @@ class _FootpathPainter extends CustomPainter {
       );
       if (clipped == null) continue;
       final (start, end) = clipped;
-      path.moveTo(start.dx, start.dy);
-      path.lineTo(end.dx, end.dy);
-    }
-
-    final footColor = const Color(0xFF000000).withValues(alpha: 0.32);
-    // Écart entre deux empreintes le long du sentier, et décalage latéral
-    // gauche/droite (démarche) — mis à l'échelle avec `_footScale`.
-    const stepDistance = 22.0 * _footScale;
-    const strideOffset = 4.5 * _footScale;
-
-    var stepIndex = 0;
-    for (final metric in path.computeMetrics()) {
-      var distance = 6.0;
-      while (distance < metric.length) {
-        final tangent = metric.getTangentForOffset(distance);
-        if (tangent != null) {
-          final angle = tangent.vector.direction;
-          _drawFootprint(
-            canvas,
-            tangent.position,
-            angle,
-            stepIndex.isEven,
-            footColor,
-            strideOffset,
-          );
-          stepIndex++;
-        }
-        distance += stepDistance;
+      final length = (end - start).distance;
+      if (length <= 0) continue;
+      final dir = (end - start) / length;
+      final angle = dir.direction;
+      // Le sentier va jusqu'aux boutons des deux étapes, mais ENJAMBE leur
+      // titre : une empreinte qui tomberait sur le texte n'est pas dessinée.
+      final avoid = <Rect>[
+        if (labels != null && labels.length == r.length) ...[
+          if (!labels[i].isEmpty) labels[i].inflate(footReach),
+          if (!labels[i + 1].isEmpty) labels[i + 1].inflate(footReach),
+        ],
+      ];
+      for (var d = 6.0; d < length; d += stepDistance) {
+        final pos = start + dir * d;
+        final isLeft = stepIndex.isEven;
+        stepIndex++;
+        if (avoid.any((rect) => rect.contains(pos))) continue;
+        _drawFootprint(canvas, pos, angle, isLeft, footColor, strideOffset);
       }
     }
   }
@@ -1426,7 +1465,8 @@ class _FootpathPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FootpathPainter oldDelegate) =>
-      !identical(oldDelegate.rects, rects);
+      !identical(oldDelegate.rects, rects) ||
+      !identical(oldDelegate.labelRects, labelRects);
 }
 
 /// Largeur de référence (voir `_StepRow.build`) au-delà de laquelle
@@ -1621,7 +1661,7 @@ class _PalierBanner extends StatelessWidget {
                         color: Colors.white70,
                       ),
                     ),
-                    Text(
+                    UnbrokenText(
                       step.title ?? '',
                       style: TextStyle(
                         fontFamily: kBalooFontFamily,
@@ -1636,8 +1676,6 @@ class _PalierBanner extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           step.tagline!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: kBalooFontFamily,
                             fontWeight: FontWeight.w600,
@@ -1658,13 +1696,16 @@ class _PalierBanner extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  '${step.palierNum ?? ''}',
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 17,
-                    color: Colors.white,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${step.palierNum ?? ''}',
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 17,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -1724,6 +1765,31 @@ class _StepNodeState extends State<_StepNode>
   void dispose() {
     _pingController.dispose();
     super.dispose();
+  }
+
+  /// Onde de l'étape courante autour d'un nœud simple (bonus, médaille).
+  /// Le `Stack` garde la taille du nœud : l'onde déborde sans rien décaler.
+  Widget _withPing({
+    required double size,
+    required Widget child,
+    double? cornerRadius,
+  }) {
+    return Stack(
+      key: widget.nodeKey,
+      clipBehavior: Clip.none,
+      children: [
+        if (widget.isCurrent)
+          Positioned.fill(
+            child: _PingRing(
+              controller: _pingController,
+              color: widget.color,
+              size: size,
+              cornerRadius: cornerRadius,
+            ),
+          ),
+        child,
+      ],
+    );
   }
 
   String get _stepLabel {
@@ -1862,16 +1928,22 @@ class _StepNodeState extends State<_StepNode>
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              capitalizeFirst(_stepLabel),
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                letterSpacing: 0.6,
-                color: bigNode
-                    ? Colors.black
-                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
+            _StepTitle(
+              key: widget.nodeKey == null
+                  ? null
+                  : _labelKeyFor(widget.nodeKey!),
+              child: Text(
+                capitalizeFirst(_stepLabel),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  letterSpacing: 0.6,
+                  color: bigNode
+                      ? Colors.black
+                      : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                ),
               ),
             ),
           ],
@@ -1892,6 +1964,15 @@ class _StepNodeState extends State<_StepNode>
             Stack(
               clipBehavior: Clip.none,
               children: [
+                if (widget.isCurrent)
+                  Positioned.fill(
+                    child: _PingRing(
+                      controller: _pingController,
+                      color: widget.color,
+                      size: bigWs ? 80 : 56,
+                      cornerRadius: 20,
+                    ),
+                  ),
                 if (widget.isCurrent)
                   _CurrentSparkles(
                     color: widget.borderColor,
@@ -1931,16 +2012,21 @@ class _StepNodeState extends State<_StepNode>
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              capitalizeFirst(_stepLabel),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                color: bigWs
-                    ? widget.borderColor
-                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
+            _StepTitle(
+              key: widget.nodeKey == null
+                  ? null
+                  : _labelKeyFor(widget.nodeKey!),
+              child: Text(
+                capitalizeFirst(_stepLabel),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  color: bigWs
+                      ? widget.borderColor
+                      : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                ),
               ),
             ),
           ],
@@ -1966,6 +2052,15 @@ class _StepNodeState extends State<_StepNode>
             Stack(
               clipBehavior: Clip.none,
               children: [
+                if (widget.isCurrent)
+                  Positioned.fill(
+                    child: _PingRing(
+                      controller: _pingController,
+                      color: widget.color,
+                      size: bigGame ? 80 : 56,
+                      cornerRadius: 20,
+                    ),
+                  ),
                 if (widget.isCurrent)
                   _CurrentSparkles(
                     color: widget.borderColor,
@@ -2013,60 +2108,111 @@ class _StepNodeState extends State<_StepNode>
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              capitalizeFirst(_stepLabel),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                color: bigGame
-                    ? widget.borderColor
-                    : AmaniColors.textSecondary.withValues(alpha: 0.7),
+            _StepTitle(
+              key: widget.nodeKey == null
+                  ? null
+                  : _labelKeyFor(widget.nodeKey!),
+              child: Text(
+                capitalizeFirst(_stepLabel),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  color: bigGame
+                      ? widget.borderColor
+                      : AmaniColors.textSecondary.withValues(alpha: 0.7),
+                ),
               ),
             ),
           ],
         );
 
       case StepKind.bonus:
-        return Container(
-          key: widget.nodeKey,
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: AmaniColors.disabled,
-            border: Border.all(color: AmaniColors.disabled, width: 4),
-            boxShadow: AmaniShadows.card,
-          ),
-          alignment: Alignment.center,
-          child: _SvgIcon(
-            svg: '$_bonusRibbonSvg $_bonusArcSvg',
-            viewBox: const Size(40, 40),
-            size: 30,
-            color: AmaniColors.textSecondary,
-            fill: false,
+        return _withPing(
+          size: 64,
+          cornerRadius: 20,
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: AmaniColors.disabled,
+              border: Border.all(color: AmaniColors.disabled, width: 4),
+              boxShadow: AmaniShadows.card,
+            ),
+            alignment: Alignment.center,
+            child: _SvgIcon(
+              svg: '$_bonusRibbonSvg $_bonusArcSvg',
+              viewBox: const Size(40, 40),
+              size: 30,
+              color: AmaniColors.textSecondary,
+              fill: false,
+            ),
           ),
         );
 
       case StepKind.medal:
-        return Container(
-          key: widget.nodeKey,
-          width: 80,
-          height: 80,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AmaniColors.disabled,
-            border: Border.all(color: AmaniColors.disabled, width: 4),
-            boxShadow: AmaniShadows.card,
-          ),
-          child: Image.asset(
-            'assets/images/amani-victoire-palier-badge.png',
-            fit: BoxFit.cover,
+        return _withPing(
+          size: 80,
+          child: Container(
+            width: 80,
+            height: 80,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AmaniColors.disabled,
+              border: Border.all(color: AmaniColors.disabled, width: 4),
+              boxShadow: AmaniShadows.card,
+            ),
+            child: Image.asset(
+              'assets/images/amani-victoire-palier-badge.png',
+              fit: BoxFit.cover,
+            ),
           ),
         );
     }
+  }
+}
+
+/// Titre d'une étape, sous son bouton : largeur plafonnée pour qu'un titre
+/// long passe sur plusieurs lignes au lieu de s'étaler sous le sentier.
+class _StepTitle extends StatelessWidget {
+  final Widget child;
+
+  const _StepTitle({super.key, required this.child});
+
+  /// Largeur maximale à la taille de texte par défaut (×1,4).
+  static const double _baseMaxWidth = 132;
+
+  @override
+  Widget build(BuildContext context) {
+    // La largeur suit la taille du texte (réglage "Taille de l'interface") :
+    // fixe, elle coupait les mots en plein milieu une fois le texte agrandi
+    // (« Introducti-on »).
+    final scaler = MediaQuery.textScalerOf(context);
+    final scale = scaler.scale(1) / 1.4;
+    var maxWidth = _baseMaxWidth * scale.clamp(0.6, 2.0);
+    // Jamais plus étroit que le mot le plus long : un titre ne doit passer à
+    // la ligne qu'entre deux mots (police dyslexie, très large, comprise).
+    final text = child is Text ? child as Text : null;
+    if (text?.data != null) {
+      final style = DefaultTextStyle.of(context).style.merge(text!.style);
+      for (final word in text.data!.split(RegExp(r'\s+'))) {
+        final tp = TextPainter(
+          text: TextSpan(text: word, style: style),
+          textDirection: Directionality.of(context),
+          textScaler: scaler,
+          maxLines: 1,
+        )..layout();
+        if (tp.width + 2 > maxWidth) maxWidth = tp.width + 2;
+        tp.dispose();
+      }
+    }
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: child,
+    );
   }
 }
 
@@ -2127,10 +2273,15 @@ class _PingRing extends StatelessWidget {
   final Color color;
   final double size;
 
+  /// Rayon des coins pour une étape carrée arrondie (mini-jeux) ; `null`
+  /// pour une étape ronde.
+  final double? cornerRadius;
+
   const _PingRing({
     required this.controller,
     required this.color,
     required this.size,
+    this.cornerRadius,
   });
 
   @override
@@ -2147,7 +2298,12 @@ class _PingRing extends StatelessWidget {
               width: size,
               height: size,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                shape: cornerRadius == null
+                    ? BoxShape.circle
+                    : BoxShape.rectangle,
+                borderRadius: cornerRadius == null
+                    ? null
+                    : BorderRadius.circular(cornerRadius!),
                 color: color.withValues(alpha: 0.3),
               ),
             ),

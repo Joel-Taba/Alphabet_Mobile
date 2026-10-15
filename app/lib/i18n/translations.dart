@@ -98,18 +98,27 @@ String spokenLetterInstruction(Lang lang, String char, String consigne) {
 
 String spokenDigitInstruction(Lang lang, String char, String consigne) {
   final common = _dictFor(lang)['common'] as Map<String, dynamic>? ?? {};
-  return tFormat(common['speakDigitIntro'] ?? '{consigne}', {
-    'char': char,
-    'consigne': consigne,
-  });
+  // Une consigne déjà rédigée en phrase complète ("Pour écrire le 9, je
+  // fais...") est lue telle quelle, sans lui ajouter une seconde amorce.
+  final template = (common['speakDigitIntro'] ?? '{consigne}').toString();
+  final lead = template.split('{char}').first.trim().toLowerCase();
+  if (lead.isNotEmpty && consigne.trim().toLowerCase().startsWith(lead)) {
+    return consigne;
+  }
+  return tFormat(template, {'char': char, 'consigne': consigne});
 }
 
 String spokenSignInstruction(Lang lang, String label, String consigne) {
   final common = _dictFor(lang)['common'] as Map<String, dynamic>? ?? {};
-  return tFormat(common['speakSignIntro'] ?? '{consigne}', {
-    'label': label,
-    'consigne': consigne,
-  });
+  // Une consigne déjà rédigée en phrase complète ("Pour tracer la courbe
+  // fermée...") est lue telle quelle, sans lui ajouter une seconde amorce.
+  final template = (common['speakSignIntro'] ?? '{consigne}').toString();
+  final lead = template.split(' ').take(2).join(' ').toLowerCase();
+  if (template.contains('{label}') &&
+      consigne.trim().toLowerCase().startsWith(lead)) {
+    return consigne;
+  }
+  return tFormat(template, {'label': label, 'consigne': consigne});
 }
 
 // ─── DICTIONNAIRES ──────────────────────────────────────────────────────────
@@ -130,8 +139,8 @@ const Map<String, dynamic> fr = {
     'close': 'Fermer',
     'replay': 'Relancer',
     'instruction': 'Consigne',
-    'toolbarExpandAria': 'Voir le nom des actions',
-    'toolbarCollapseAria': 'Réduire les actions',
+    'muteVoice': 'Couper la voix',
+    'unmuteVoice': 'Réactiver la voix',
     'settings': 'Paramètres',
     'tryAgain': 'Essayer à nouveau',
     'pointsEarnedAria': 'points gagnés',
@@ -142,8 +151,7 @@ const Map<String, dynamic> fr = {
     'freeMode': 'Mode libre',
     'speakLetterIntro':
         'Pour écrire la lettre {char}, on procède ainsi : {consigne}',
-    'speakDigitIntro':
-        'Pour écrire le chiffre {char}, on procède ainsi : {consigne}',
+    'speakDigitIntro': 'Pour écrire le {char}, on procède ainsi : {consigne}',
     'speakSignIntro':
         'Pour tracer le signe {label}, on procède ainsi : {consigne}',
   },
@@ -295,35 +303,39 @@ const Map<String, dynamic> fr = {
     'puzzleFormuleStep': 'Puzzle',
     'paliers': [
       {
-        'title': 'Les signes de base',
-        'subtitle': 'Palier 1',
-        'tagline': 'Points, courbes, crochets et traits',
+        'title': "Les signes de base (traits, crochets, courbes, point)",
+        'subtitle': 'Palier 1 : Cours + Exercices',
+        'tagline':
+            "Permet de maîtriser le tracé des signes pour obtenir les lettres et les chiffres",
       },
       {
-        'title': 'La combinatoire : lettres et chiffres',
-        'subtitle': 'Palier 2',
-        'tagline': 'Assembler les signes',
+        'title': "La combinatoire : lettres et chiffres",
+        'subtitle': 'Palier 2 : Cours + Exercices',
+        'tagline':
+            "Assembler les signes pour obtenir les lettres et les chiffres",
       },
       {
-        'title': 'Les syllabes',
-        'subtitle': 'Palier 3',
-        'tagline': 'Assemble consonnes et voyelles pour lire',
+        'title': "Les syllabes",
+        'subtitle': 'Palier 3 : Cours + Exercices',
+        'tagline': "Permet d'assembler les graphies pour obtenir le son",
       },
       {
-        'title': 'Les mots',
-        'subtitle': 'Palier 4',
-        'tagline': 'Relie les lettres entre elles',
+        'title': "Les mots",
+        'subtitle': 'Palier 4 : Cours + Exercices',
+        'tagline': "Relie les syllabes pour donner du sens",
       },
       {
-        'title': 'Les calculs',
-        'subtitle': 'Palier 5',
-        'tagline': "De l'addition CP à la proportionnalité CM2",
+        'title': "Les calculs",
+        'subtitle': 'Palier 5 : Cours + Exercices',
+        'tagline':
+            "Permet de maîtriser le tracé des chiffres et des symboles (du CP au CM)",
       },
     ],
     'figuresPalier': {
-      'title': 'Les figures géométriques',
-      'subtitle': 'Palier 6',
-      'tagline': 'Carré, rectangle, triangle, cercle',
+      'title': "Les figures (carré, triangle, rectangle, cercle…)",
+      'subtitle': 'Palier 6 : Cours + Exercices',
+      'tagline':
+          "Permet d'utiliser les signes de base pour obtenir différentes figures géométriques",
     },
     'comingSoon': 'Cette étape arrive bientôt !',
   },
@@ -456,7 +468,7 @@ const Map<String, dynamic> fr = {
     'signNames': {
       'trait-vertical-full': 'Le trait vertical',
       'crochet-top-right-full': 'Le crochet haut-droit',
-      'courbe-closed-full': 'Le cercle fermé',
+      'courbe-closed-full': 'La courbe fermée ou le rond',
       'point-center-full': 'Le point',
     },
     'paragraph1':
@@ -528,6 +540,7 @@ const Map<String, dynamic> fr = {
       'closed': 'Fermé (rond complet)',
       'top-right': 'Haut droite',
       'top-left': 'Haut gauche',
+      'top-left-incline': 'Haut gauche incliné',
       'bottom-right': 'Bas droite',
       'bottom-left': 'Bas gauche',
       'center': 'Central',
@@ -582,11 +595,63 @@ const Map<String, dynamic> fr = {
     'tryAgain': 'Essayer à nouveau',
   },
   'exerciceListe': {
-    'traitTitles': {
-      'vertical': "Le trait vertical se trace sur 2 ou 1 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
-      'horizontal': "Le trait horizontal se trace entre une interligne, on part du point de départ vert vers le point d'arrivée rouge.",
-      'oblique-droit': "Le trait oblique à gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
-      'oblique-gauche': "Le trait oblique à droite se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+    'subtitlePoint': "Touche le point vert",
+    'startHintPoint': "Touche une seule fois le point vert avec ton doigt.",
+    'signTitles': {
+      'trait-vertical-full':
+          "Le long trait vertical se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-vertical-reduced':
+          "Le petit trait vertical se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-horizontal-full':
+          "Le long trait horizontal se trace dans une interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-horizontal-reduced':
+          "Le petit trait horizontal se trace dans une interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-oblique-gauche-full':
+          "Le long trait oblique à droite se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-oblique-gauche-reduced':
+          "Le petit trait oblique à droite se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-oblique-droit-full':
+          "Le long trait oblique à gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'trait-oblique-droit-reduced':
+          "Le petit trait oblique à gauche se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'courbe-open-right-full':
+          "La longue courbe ouverte à droite se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'courbe-open-right-reduced':
+          "La petite courbe ouverte à droite se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'courbe-open-left-full':
+          "La longue courbe ouverte à gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'courbe-open-left-reduced':
+          "La petite courbe ouverte à gauche se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'courbe-closed-full':
+          "La courbe fermée ou le rond se trace dans une interligne, on part du point de départ vert, qui est aussi le point d'arrivée.",
+      'point-center-full':
+          "Le point se fait d'un simple toucher, une seule fois, sur le point vert.",
+      'crochet-top-right-full':
+          "Le long crochet haut-droite se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-top-right-reduced':
+          "Le petit crochet haut-droite se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-top-left-full':
+          "Le long crochet haut-gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-top-left-reduced':
+          "Le petit crochet haut-gauche se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-top-left-incline-full':
+          "Le crochet haut-gauche incliné se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-bottom-right-full':
+          "Le long crochet bas-droite se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-bottom-right-reduced':
+          "Le petit crochet bas-droite se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-bottom-left-full':
+          "Le crochet bas-gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-double-gauche-full':
+          "Le double-crochet gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-double-droit-full':
+          "Le double-crochet droit se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-double-gauche-droit-full':
+          "Le long double-crochet gauche-droit se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-double-gauche-droit-reduced':
+          "Le petit double-crochet gauche-droit se trace sur 1 interligne, on part du point de départ vert vers le point d'arrivée rouge.",
+      'crochet-double-droit-gauche-full':
+          "Le double-crochet droit-gauche se trace sur 2 interlignes, on part du point de départ vert vers le point d'arrivée rouge.",
     },
     'titleGroup': 'Cahier : {titre}',
     'subtitleGroupLettres': 'Entraine-toi à tracer ces lettres',
@@ -605,8 +670,9 @@ const Map<String, dynamic> fr = {
         "Bienvenue dans le cahier d'écriture ! Repasse sur les pointillés en suivant la pastille verte pour apprendre à tracer chaque signe correctement.",
     'repetitionsLabel': 'Nombre de répétitions ',
     'repetitionsHint': 'Nombre de fois à tracer chaque signe sur la ligne',
-    'toleranceLabel': 'Tolérance de validation',
-    'toleranceHint': 'Plus haute = plus facile pour les plus jeunes',
+    'toleranceLabel': 'Souplesse du tracé',
+    'toleranceHint':
+        'De 1 (précis) à 10 (très souple) : plus le chiffre est haut, plus le doigt peut s\'écarter du modèle. Le sens, le départ et l\'arrivée restent toujours vérifiés.',
     'startHint':
         'Suis les pointillés du point vert au point rouge et sans lever le doigt.',
     'done': 'Terminé !',
@@ -830,7 +896,8 @@ const Map<String, dynamic> fr = {
     'allDoneTitle': 'Bravo, tu maîtrises ce solide !',
     'allDoneBody': 'Tu sais calculer son volume.',
     'calcVolumePrompt': 'Calcule le volume de ce solide.',
-    'roundedHint': "Prends π ≈ 3,14 et arrondis ta réponse à l'entier le plus proche.",
+    'roundedHint':
+        "Prends π ≈ 3,14 et arrondis ta réponse à l'entier le plus proche.",
   },
   'motsMeles': {
     'title': 'Mots mêlés',
@@ -870,8 +937,8 @@ const Map<String, dynamic> en = {
     'close': 'Close',
     'replay': 'Replay',
     'instruction': 'Instructions',
-    'toolbarExpandAria': 'Show action names',
-    'toolbarCollapseAria': 'Collapse actions',
+    'muteVoice': 'Mute the voice',
+    'unmuteVoice': 'Turn the voice back on',
     'settings': 'Settings',
     'tryAgain': 'Try again',
     'pointsEarnedAria': 'points earned',
@@ -1032,35 +1099,35 @@ const Map<String, dynamic> en = {
     'puzzleFormuleStep': 'Puzzle',
     'paliers': [
       {
-        'title': 'The Basic Signs',
-        'subtitle': 'Tier 1',
-        'tagline': 'Dots, curves, hooks and lines',
+        'title': "The Basic Signs (lines, hooks, curves, dot)",
+        'subtitle': 'Tier 1: Lessons + Exercises',
+        'tagline': "Master tracing the signs to form letters and numbers",
       },
       {
-        'title': 'Combinatorics: letters and numbers',
-        'subtitle': 'Tier 2',
-        'tagline': 'Combine signs to write',
+        'title': "Combinatorics: letters and numbers",
+        'subtitle': 'Tier 2: Lessons + Exercises',
+        'tagline': "Combine the signs to form letters and numbers",
       },
       {
-        'title': 'Syllables',
-        'subtitle': 'Tier 3',
-        'tagline': 'Blend consonants and vowels to read',
+        'title': "Syllables",
+        'subtitle': 'Tier 3: Lessons + Exercises',
+        'tagline': "Put written letters together to make sounds",
       },
       {
-        'title': 'Words',
-        'subtitle': 'Tier 4',
-        'tagline': 'Link letters together',
+        'title': "Words",
+        'subtitle': 'Tier 4: Lessons + Exercises',
+        'tagline': "Link syllables together to make meaning",
       },
       {
-        'title': 'Math',
-        'subtitle': 'Tier 5',
-        'tagline': 'From addition to proportionality',
+        'title': "Math",
+        'subtitle': 'Tier 5: Lessons + Exercises',
+        'tagline': "Master tracing numbers and symbols (from 1st to 5th grade)",
       },
     ],
     'figuresPalier': {
-      'title': 'Geometric Shapes',
-      'subtitle': 'Tier 6',
-      'tagline': 'Square, rectangle, triangle, circle',
+      'title': "Shapes (square, triangle, rectangle, circle…)",
+      'subtitle': 'Tier 6: Lessons + Exercises',
+      'tagline': "Use the basic signs to form different geometric shapes",
     },
     'comingSoon': 'This step is coming soon!',
   },
@@ -1232,6 +1299,7 @@ const Map<String, dynamic> en = {
       'closed': 'Closed (full circle)',
       'top-right': 'Top right',
       'top-left': 'Top left',
+      'top-left-incline': 'Top left, slanted',
       'bottom-right': 'Bottom right',
       'bottom-left': 'Bottom left',
       'center': 'Centered',
@@ -1285,11 +1353,63 @@ const Map<String, dynamic> en = {
     'tryAgain': 'Try again',
   },
   'exerciceListe': {
-    'traitTitles': {
-      'vertical': "The vertical line is traced over 2 or 1 line spaces, going from the green start point to the red end point.",
-      'horizontal': "The horizontal line is traced within one line space, going from the green start point to the red end point.",
-      'oblique-droit': "The left-slanting line is traced over 2 line spaces, going from the green start point to the red end point.",
-      'oblique-gauche': "The right-slanting line is traced over 2 line spaces, going from the green start point to the red end point.",
+    'subtitlePoint': "Touch the green dot",
+    'startHintPoint': "Touch the green dot once with your finger.",
+    'signTitles': {
+      'trait-vertical-full':
+          "The long vertical line is traced over 2 line spaces, going from the green start point to the red end point.",
+      'trait-vertical-reduced':
+          "The small vertical line is traced over 1 line space, going from the green start point to the red end point.",
+      'trait-horizontal-full':
+          "The long horizontal line is traced within one line space, going from the green start point to the red end point.",
+      'trait-horizontal-reduced':
+          "The small horizontal line is traced within one line space, going from the green start point to the red end point.",
+      'trait-oblique-gauche-full':
+          "The long diagonal line to the left is traced over 2 line spaces, going from the green start point to the red end point.",
+      'trait-oblique-gauche-reduced':
+          "The small diagonal line to the left is traced over 1 line space, going from the green start point to the red end point.",
+      'trait-oblique-droit-full':
+          "The long diagonal line to the right is traced over 2 line spaces, going from the green start point to the red end point.",
+      'trait-oblique-droit-reduced':
+          "The small diagonal line to the right is traced over 1 line space, going from the green start point to the red end point.",
+      'courbe-open-right-full':
+          "The long curve open to the right is traced over 2 line spaces, going from the green start point to the red end point.",
+      'courbe-open-right-reduced':
+          "The small curve open to the right is traced over 1 line space, going from the green start point to the red end point.",
+      'courbe-open-left-full':
+          "The long curve open to the left is traced over 2 line spaces, going from the green start point to the red end point.",
+      'courbe-open-left-reduced':
+          "The small curve open to the left is traced over 1 line space, going from the green start point to the red end point.",
+      'courbe-closed-full':
+          "The closed curve or round is traced within one line space, starting from the green start point, which is also the end point.",
+      'point-center-full':
+          "The dot is made with a single touch, once, on the green dot.",
+      'crochet-top-right-full':
+          "The long top-right hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-top-right-reduced':
+          "The small top-right hook is traced over 1 line space, going from the green start point to the red end point.",
+      'crochet-top-left-full':
+          "The long top-left hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-top-left-reduced':
+          "The small top-left hook is traced over 1 line space, going from the green start point to the red end point.",
+      'crochet-top-left-incline-full':
+          "The slanted top-left hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-bottom-right-full':
+          "The long bottom-right hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-bottom-right-reduced':
+          "The small bottom-right hook is traced over 1 line space, going from the green start point to the red end point.",
+      'crochet-bottom-left-full':
+          "The bottom-left hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-double-gauche-full':
+          "The left double hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-double-droit-full':
+          "The right double hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-double-gauche-droit-full':
+          "The long left-right double hook is traced over 2 line spaces, going from the green start point to the red end point.",
+      'crochet-double-gauche-droit-reduced':
+          "The small left-right double hook is traced over 1 line space, going from the green start point to the red end point.",
+      'crochet-double-droit-gauche-full':
+          "The right-left double hook is traced over 2 line spaces, going from the green start point to the red end point.",
     },
     'titleGroup': 'Notebook: {titre}',
     'subtitleGroupLettres': 'Practice tracing these letters',
@@ -1308,8 +1428,9 @@ const Map<String, dynamic> en = {
         'Welcome to the writing notebook! Trace over the dotted line following the green dot to learn how to draw each sign correctly.',
     'repetitionsLabel': 'Repetitions per sign',
     'repetitionsHint': 'Number of times to trace each sign on the line',
-    'toleranceLabel': 'Validation tolerance',
-    'toleranceHint': 'Higher = easier for younger learners',
+    'toleranceLabel': 'Tracing flexibility',
+    'toleranceHint':
+        'From 1 (precise) to 10 (very flexible): the higher the number, the further the finger may stray from the model. Direction, start and end are always checked.',
     'startHint':
         'Follow the dotted line from the green dot to the red dot without lifting your finger.',
     'done': 'Done!',
@@ -1531,7 +1652,8 @@ const Map<String, dynamic> en = {
     'allDoneTitle': 'Well done, you mastered this solid!',
     'allDoneBody': 'You can work out its volume.',
     'calcVolumePrompt': 'Work out the volume of this solid.',
-    'roundedHint': 'Use π ≈ 3.14 and round your answer to the nearest whole number.',
+    'roundedHint':
+        'Use π ≈ 3.14 and round your answer to the nearest whole number.',
   },
   'motsMeles': {
     'title': 'Word search',
@@ -1571,8 +1693,8 @@ const Map<String, dynamic> es = {
     'close': 'Cerrar',
     'replay': 'Repetir',
     'instruction': 'Instrucción',
-    'toolbarExpandAria': 'Ver el nombre de las acciones',
-    'toolbarCollapseAria': 'Reducir las acciones',
+    'muteVoice': 'Silenciar la voz',
+    'unmuteVoice': 'Reactivar la voz',
     'settings': 'Ajustes',
     'tryAgain': 'Intentar de nuevo',
     'pointsEarnedAria': 'puntos ganados',
@@ -1738,35 +1860,38 @@ const Map<String, dynamic> es = {
     'puzzleFormuleStep': 'Rompecabezas',
     'paliers': [
       {
-        'title': 'Los signos básicos',
-        'subtitle': 'Nivel 1',
-        'tagline': 'Puntos, curvas, ganchos y trazos',
+        'title': "Los signos básicos (trazos, ganchos, curvas, punto)",
+        'subtitle': 'Nivel 1: Lecciones + Ejercicios',
+        'tagline':
+            "Permite dominar el trazo de los signos para formar las letras y los números",
       },
       {
-        'title': 'La combinatoria: letras y números',
-        'subtitle': 'Nivel 2',
-        'tagline': 'Combina los signos para escribir',
+        'title': "La combinatoria: letras y números",
+        'subtitle': 'Nivel 2: Lecciones + Ejercicios',
+        'tagline': "Combinar los signos para formar las letras y los números",
       },
       {
-        'title': 'Las sílabas',
-        'subtitle': 'Nivel 3',
-        'tagline': 'Combina consonantes y vocales para leer',
+        'title': "Las sílabas",
+        'subtitle': 'Nivel 3: Lecciones + Ejercicios',
+        'tagline': "Permite unir las grafías para obtener el sonido",
       },
       {
-        'title': 'Las palabras',
-        'subtitle': 'Nivel 4',
-        'tagline': 'Une las letras entre sí',
+        'title': "Las palabras",
+        'subtitle': 'Nivel 4: Lecciones + Ejercicios',
+        'tagline': "Une las sílabas para dar sentido",
       },
       {
-        'title': 'El cálculo',
-        'subtitle': 'Nivel 5',
-        'tagline': 'De la suma a la proporcionalidad',
+        'title': "El cálculo",
+        'subtitle': 'Nivel 5: Lecciones + Ejercicios',
+        'tagline':
+            "Permite dominar el trazo de los números y los símbolos (de 1.º a 5.º de primaria)",
       },
     ],
     'figuresPalier': {
-      'title': 'Las figuras geométricas',
-      'subtitle': 'Nivel 6',
-      'tagline': 'Cuadrado, rectángulo, triángulo, círculo',
+      'title': "Las figuras (cuadrado, triángulo, rectángulo, círculo…)",
+      'subtitle': 'Nivel 6: Lecciones + Ejercicios',
+      'tagline':
+          "Permite usar los signos básicos para formar distintas figuras geométricas",
     },
     'comingSoon': '¡Esta etapa llega pronto!',
   },
@@ -1937,6 +2062,7 @@ const Map<String, dynamic> es = {
       'closed': 'Cerrado (círculo completo)',
       'top-right': 'Arriba derecha',
       'top-left': 'Arriba izquierda',
+      'top-left-incline': 'Arriba izquierda, inclinado',
       'bottom-right': 'Abajo derecha',
       'bottom-left': 'Abajo izquierda',
       'center': 'Central',
@@ -1995,11 +2121,63 @@ const Map<String, dynamic> es = {
     'tryAgain': 'Intentar de nuevo',
   },
   'exerciceListe': {
-    'traitTitles': {
-      'vertical': "El trazo vertical se traza sobre 2 o 1 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
-      'horizontal': "El trazo horizontal se traza dentro de una interlínea, se va del punto de salida verde al punto de llegada rojo.",
-      'oblique-droit': "El trazo oblicuo a la izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
-      'oblique-gauche': "El trazo oblicuo a la derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+    'subtitlePoint': "Toca el punto verde",
+    'startHintPoint': "Toca una sola vez el punto verde con tu dedo.",
+    'signTitles': {
+      'trait-vertical-full':
+          "El trazo vertical largo se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-vertical-reduced':
+          "El trazo vertical pequeño se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-horizontal-full':
+          "El trazo horizontal largo se traza dentro de una interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-horizontal-reduced':
+          "El trazo horizontal pequeño se traza dentro de una interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-oblique-gauche-full':
+          "El trazo oblicuo largo a la izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-oblique-gauche-reduced':
+          "El trazo oblicuo pequeño a la izquierda se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-oblique-droit-full':
+          "El trazo oblicuo largo a la derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'trait-oblique-droit-reduced':
+          "El trazo oblicuo pequeño a la derecha se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'courbe-open-right-full':
+          "La curva larga abierta a la derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'courbe-open-right-reduced':
+          "La curva pequeña abierta a la derecha se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'courbe-open-left-full':
+          "La curva larga abierta a la izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'courbe-open-left-reduced':
+          "La curva pequeña abierta a la izquierda se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'courbe-closed-full':
+          "La curva cerrada o el redondo se traza dentro de una interlínea, se parte del punto de salida verde, que es también el punto de llegada.",
+      'point-center-full':
+          "El punto se hace con un simple toque, una sola vez, sobre el punto verde.",
+      'crochet-top-right-full':
+          "El gancho largo arriba-derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-top-right-reduced':
+          "El gancho pequeño arriba-derecha se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-top-left-full':
+          "El gancho largo arriba-izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-top-left-reduced':
+          "El gancho pequeño arriba-izquierda se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-top-left-incline-full':
+          "El gancho arriba-izquierda inclinado se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-bottom-right-full':
+          "El gancho largo abajo-derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-bottom-right-reduced':
+          "El gancho pequeño abajo-derecha se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-bottom-left-full':
+          "El gancho abajo-izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-double-gauche-full':
+          "El bucle izquierdo se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-double-droit-full':
+          "El bucle derecho se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-double-gauche-droit-full':
+          "El bucle largo izquierda-derecha se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-double-gauche-droit-reduced':
+          "El bucle pequeño izquierda-derecha se traza sobre 1 interlínea, se va del punto de salida verde al punto de llegada rojo.",
+      'crochet-double-droit-gauche-full':
+          "El bucle derecha-izquierda se traza sobre 2 interlíneas, se va del punto de salida verde al punto de llegada rojo.",
     },
     'titleGroup': 'Cuaderno: {titre}',
     'subtitleGroupLettres': 'Practica trazando estas letras',
@@ -2019,8 +2197,9 @@ const Map<String, dynamic> es = {
     'repetitionsLabel': 'Repeticiones por signo',
     'repetitionsHint':
         'Número de veces que hay que trazar cada signo en la línea',
-    'toleranceLabel': 'Tolerancia de validación',
-    'toleranceHint': 'Más alta = más fácil para los más pequeños',
+    'toleranceLabel': 'Flexibilidad del trazo',
+    'toleranceHint':
+        'De 1 (preciso) a 10 (muy flexible): cuanto más alto el número, más puede alejarse el dedo del modelo. El sentido, el inicio y el final siempre se comprueban.',
     'startHint':
         'Sigue los puntos del punto verde al punto rojo sin levantar el dedo.',
     'done': '¡Terminado!',
@@ -2247,7 +2426,8 @@ const Map<String, dynamic> es = {
     'allDoneTitle': '¡Bien hecho, dominas este sólido!',
     'allDoneBody': 'Sabes calcular su volumen.',
     'calcVolumePrompt': 'Calcula el volumen de este sólido.',
-    'roundedHint': 'Usa π ≈ 3,14 y redondea tu respuesta al número entero más cercano.',
+    'roundedHint':
+        'Usa π ≈ 3,14 y redondea tu respuesta al número entero más cercano.',
   },
   'motsMeles': {
     'title': 'Sopa de letras',
@@ -2287,8 +2467,8 @@ const Map<String, dynamic> ar = {
     "close": "إغلاق",
     "replay": "إعادة",
     "instruction": "التعليمة",
-    "toolbarExpandAria": "عرض أسماء الإجراءات",
-    "toolbarCollapseAria": "طي الإجراءات",
+    "muteVoice": "كتم الصوت",
+    "unmuteVoice": "إعادة تشغيل الصوت",
     "settings": "الإعدادات",
     "tryAgain": "حاول مرة أخرى",
     "pointsEarnedAria": "نقاط مكتسبة",
@@ -2446,35 +2626,36 @@ const Map<String, dynamic> ar = {
     "puzzleFormuleStep": "أحجية",
     "paliers": [
       {
-        "title": "الإشارات الأساسية",
-        "subtitle": "المرحلة 1",
-        "tagline": "نقاط، منحنيات، خطاطيف وخطوط",
+        "title": "الإشارات الأساسية (خطوط، خطاطيف، منحنيات، نقطة)",
+        "subtitle": "المرحلة 1: دروس + تمارين",
+        "tagline": "يتيح إتقان رسم الإشارات للحصول على الحروف والأرقام",
       },
       {
         "title": "التركيب: الحروف والأرقام",
-        "subtitle": "المرحلة 2",
-        "tagline": "اجمع الإشارات للكتابة",
+        "subtitle": "المرحلة 2: دروس + تمارين",
+        "tagline": "تجميع الإشارات للحصول على الحروف والأرقام",
       },
       {
         "title": "المقاطع",
-        "subtitle": "المرحلة 3",
-        "tagline": "اجمع الحروف الساكنة والمتحركة للقراءة",
+        "subtitle": "المرحلة 3: دروس + تمارين",
+        "tagline": "يتيح تجميع الحروف المكتوبة للحصول على الصوت",
       },
       {
         "title": "الكلمات",
-        "subtitle": "المرحلة 4",
-        "tagline": "اربط الحروف ببعضها",
+        "subtitle": "المرحلة 4: دروس + تمارين",
+        "tagline": "يربط المقاطع لإعطاء المعنى",
       },
       {
         "title": "الحساب",
-        "subtitle": "المرحلة 5",
-        "tagline": "من الجمع إلى التناسب",
+        "subtitle": "المرحلة 5: دروس + تمارين",
+        "tagline": "يتيح إتقان رسم الأرقام والرموز (من الصف الأول إلى الخامس)",
       },
     ],
     "figuresPalier": {
-      "title": "الأشكال الهندسية",
-      "subtitle": "المرحلة 6",
-      "tagline": "مربع، مستطيل، مثلث، دائرة",
+      "title": "الأشكال (مربع، مثلث، مستطيل، دائرة…)",
+      "subtitle": "المرحلة 6: دروس + تمارين",
+      "tagline":
+          "يتيح استخدام الإشارات الأساسية للحصول على أشكال هندسية مختلفة",
     },
     "comingSoon": "هذه الخطوة قادمة قريبًا!",
   },
@@ -2642,6 +2823,7 @@ const Map<String, dynamic> ar = {
       "closed": "مغلق (دائرة كاملة)",
       "top-right": "أعلى اليمين",
       "top-left": "أعلى اليسار",
+      "top-left-incline": "أعلى اليسار، مائل",
       "bottom-right": "أسفل اليمين",
       "bottom-left": "أسفل اليسار",
       "center": "وسط",
@@ -2699,11 +2881,62 @@ const Map<String, dynamic> ar = {
     "tryAgain": "حاول مرة أخرى",
   },
   "exerciceListe": {
-    'traitTitles': {
-      'vertical': "يُرسم الخط العمودي على سطرين أو سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
-      'horizontal': "يُرسم الخط الأفقي داخل سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
-      'oblique-droit': "يُرسم الخط المائل إلى اليسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
-      'oblique-gauche': "يُرسم الخط المائل إلى اليمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+    'subtitlePoint': "المس النقطة الخضراء",
+    'startHintPoint': "المس النقطة الخضراء مرة واحدة بإصبعك.",
+    'signTitles': {
+      'trait-vertical-full':
+          "يُرسم خط عمودي طويل على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-vertical-reduced':
+          "يُرسم خط عمودي صغير على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-horizontal-full':
+          "يُرسم خط أفقي طويل داخل سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-horizontal-reduced':
+          "يُرسم خط أفقي صغير داخل سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-oblique-gauche-full':
+          "يُرسم خط مائل طويل إلى اليسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-oblique-gauche-reduced':
+          "يُرسم خط مائل صغير إلى اليسار على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-oblique-droit-full':
+          "يُرسم خط مائل طويل إلى اليمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'trait-oblique-droit-reduced':
+          "يُرسم خط مائل صغير إلى اليمين على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'courbe-open-right-full':
+          "يُرسم منحنى طويل مفتوح من اليمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'courbe-open-right-reduced':
+          "يُرسم منحنى صغير مفتوح من اليمين على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'courbe-open-left-full':
+          "يُرسم منحنى طويل مفتوح من اليسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'courbe-open-left-reduced':
+          "يُرسم منحنى صغير مفتوح من اليسار على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'courbe-closed-full':
+          "يُرسم المنحنى المغلق أو الدائرة داخل سطر واحد، ننطلق من نقطة البداية الخضراء، وهي أيضًا نقطة النهاية.",
+      'point-center-full': "تُصنع النقطة بلمسة واحدة فقط على النقطة الخضراء.",
+      'crochet-top-right-full':
+          "يُرسم خطاف طويل أعلى اليمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-top-right-reduced':
+          "يُرسم خطاف صغير أعلى اليمين على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-top-left-full':
+          "يُرسم خطاف طويل أعلى اليسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-top-left-reduced':
+          "يُرسم خطاف صغير أعلى اليسار على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-top-left-incline-full':
+          "يُرسم خطاف أعلى اليسار مائل على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-bottom-right-full':
+          "يُرسم خطاف طويل أسفل اليمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-bottom-right-reduced':
+          "يُرسم خطاف صغير أسفل اليمين على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-bottom-left-full':
+          "يُرسم خطاف أسفل اليسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-double-gauche-full':
+          "تُرسم حلقة مزدوجة يسرى على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-double-droit-full':
+          "تُرسم حلقة مزدوجة يمنى على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-double-gauche-droit-full':
+          "تُرسم حلقة مزدوجة طويلة يسار-يمين على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-double-gauche-droit-reduced':
+          "تُرسم حلقة مزدوجة صغيرة يسار-يمين على سطر واحد، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
+      'crochet-double-droit-gauche-full':
+          "تُرسم حلقة مزدوجة يمين-يسار على سطرين، ننطلق من نقطة البداية الخضراء نحو نقطة النهاية الحمراء.",
     },
     "titleGroup": "الدفتر: {titre}",
     "subtitleGroupLettres": "تدرّب على رسم هذه الحروف",
@@ -2721,8 +2954,9 @@ const Map<String, dynamic> ar = {
         "مرحبًا بك في دفتر الكتابة! أعد رسم الخط المنقط متبعًا النقطة الخضراء لتتعلم رسم كل إشارة بشكل صحيح.",
     "repetitionsLabel": "التكرارات لكل إشارة",
     "repetitionsHint": "عدد مرات رسم كل إشارة على السطر",
-    "toleranceLabel": "درجة التسامح في التحقق",
-    "toleranceHint": "أعلى = أسهل على الأصغر سنًا",
+    "toleranceLabel": "مرونة الرسم",
+    "toleranceHint":
+        "من 1 (دقيق) إلى 10 (مرن جدًا): كلما ارتفع الرقم، أمكن للإصبع أن يبتعد أكثر عن النموذج. يتم دائمًا التحقق من الاتجاه والبداية والنهاية.",
     "startHint":
         "اتبع النقاط من النقطة الخضراء إلى النقطة الحمراء دون رفع إصبعك.",
     "done": "تم!",

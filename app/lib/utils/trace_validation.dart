@@ -58,20 +58,27 @@ List<Offset> sampleSvgPath(String pathD, [int numPoints = 40]) {
   }
 }
 
-const double _coverageMin = 0.88;
+const double _coverageMin = 0.85;
 const double _offPathMultiplier = 1.3;
-const double _offPathMaxRatio = 0.12;
+const double _offPathMaxRatio = 0.15;
 const int _orderBackwardTolerance = 2;
 const double _orderScoreMin = 0.8;
 const double _startEndMultiplier = 1.6;
 const int _minUserPoints = 6;
 
 /// Validation rigoureuse du tracé en 5 critères, tous requis pour valider.
+///
+/// [tolerancePx] fixe la largeur du couloir (souplesse). [anchorTolerancePx]
+/// fixe le rayon autour du départ et de l'arrivée (rigueur) : le fournir
+/// permet d'élargir le couloir sans accepter un tracé commencé ou fini au
+/// mauvais endroit. Par défaut, il vaut [tolerancePx].
 ValidationResult validateTrace(
   List<Offset> userPts,
   List<Offset> refPts,
-  double tolerancePx,
-) {
+  double tolerancePx, {
+  double? anchorTolerancePx,
+}) {
+  final anchorPx = anchorTolerancePx ?? tolerancePx;
   if (userPts.length < _minUserPoints || refPts.length < 2) {
     return const ValidationResult(false, 0, 'too_few_points');
   }
@@ -83,9 +90,12 @@ ValidationResult validateTrace(
   // couverture — à tolérance faible, même un tracé parfait était refusé.
 
   // ── Critère 1 : COUVERTURE ──
+  // Le couloir élargi tolère un doigt qui tremble, pas un morceau du modèle
+  // sauté : la couverture garde la portée du départ/arrivée au plus.
+  final coverPx = math.min(tolerancePx, anchorPx * _startEndMultiplier);
   var coveredCount = 0;
   for (final rp in refPts) {
-    if (_distToPolyline(rp, userPts) <= tolerancePx) coveredCount++;
+    if (_distToPolyline(rp, userPts) <= coverPx) coveredCount++;
   }
   final coverage = coveredCount / refPts.length;
   if (coverage < _coverageMin) {
@@ -156,7 +166,7 @@ ValidationResult validateTrace(
   final quarterIdx = (refPts.length / 4).floor();
   var nearStart = false;
   for (var i = 0; i <= quarterIdx; i++) {
-    if ((firstUser - refPts[i]).distance <= tolerancePx * _startEndMultiplier) {
+    if ((firstUser - refPts[i]).distance <= anchorPx * _startEndMultiplier) {
       nearStart = true;
       break;
     }
@@ -168,7 +178,7 @@ ValidationResult validateTrace(
   final threeQuarterIdx = (refPts.length * 3 / 4).floor();
   var nearEnd = false;
   for (var i = threeQuarterIdx; i < refPts.length; i++) {
-    if ((lastUser - refPts[i]).distance <= tolerancePx * _startEndMultiplier) {
+    if ((lastUser - refPts[i]).distance <= anchorPx * _startEndMultiplier) {
       nearEnd = true;
       break;
     }

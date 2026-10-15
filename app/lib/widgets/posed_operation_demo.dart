@@ -43,12 +43,15 @@ class _ColumnCell extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color, width: 2),
       ),
-      child: Text(
-        value != null ? '$value' : '',
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: size * 0.45,
-          color: Colors.black,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          value != null ? '$value' : '',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: size * 0.45,
+            color: Colors.black,
+          ),
         ),
       ),
     );
@@ -117,12 +120,15 @@ class _CarryBadge extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: color, width: 1.5),
             ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                color: color,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  color: color,
+                ),
               ),
             ),
           ),
@@ -162,13 +168,16 @@ class _OpSignCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.black, width: 3),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: kBalooFontFamily,
-              fontWeight: FontWeight.w900,
-              fontSize: 32,
-              color: Colors.black,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w900,
+                fontSize: 32,
+                color: Colors.black,
+              ),
             ),
           ),
         ),
@@ -909,13 +918,16 @@ class _DivisionPoseeDemoState extends State<DivisionPoseeDemo>
                             ),
                             SizedBox(
                               height: 30,
-                              child: Text(
-                                quotient,
-                                style: TextStyle(
-                                  fontFamily: kBalooFontFamily,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 22,
-                                  color: const Color(0xFF8B5FBF),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  quotient,
+                                  style: TextStyle(
+                                    fontFamily: kBalooFontFamily,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 22,
+                                    color: const Color(0xFF8B5FBF),
+                                  ),
                                 ),
                               ),
                             ),

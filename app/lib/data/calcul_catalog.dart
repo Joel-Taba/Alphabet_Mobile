@@ -112,8 +112,7 @@ class CalculTopic {
   /// réutilisé ici comme "nombre de problèmes par session d'exercice" (ignoré
   /// pour les tables de multiplication, qui posent toujours les 11 faits
   /// appris en entier).
-  final List<CalculProblem> Function(int seed, int count)
-  rawGenerateProblems;
+  final List<CalculProblem> Function(int seed, int count) rawGenerateProblems;
 
   /// Problèmes de la série, tous DIFFÉRENTS : le générateur brut tirait ses
   /// nombres au hasard indépendamment et pouvait poser deux fois le même
@@ -1077,8 +1076,7 @@ const List<CalculTopic> CALCUL_TOPICS = [
       'ar': 'تعلّم واحفظ جدول الضرب في 7',
     },
     mnemonicTitle: {
-      'fr':
-          'Pas d\'astuce magique : on la récite comme une comptine !',
+      'fr': 'Pas d\'astuce magique : on la récite comme une comptine !',
       'en': 'No magic trick here: recite it like a song!',
       'es': '¡Sin truco mágico: recítala como una canción!',
       'ar': 'لا حيلة سحرية: احفظه كأنه أغنية!',
@@ -1763,9 +1761,11 @@ List<String> _mcqChoicesCombined(
   String separator, {
   int min = 0,
 }) {
-  return _mcqChoices(rand, correctFirst, min: min)
-      .map((first) => '$first$separator$fixedSecondPart')
-      .toList();
+  return _mcqChoices(
+    rand,
+    correctFirst,
+    min: min,
+  ).map((first) => '$first$separator$fixedSecondPart').toList();
 }
 
 List<TrueFalseEquation> _generateVraiFauxCp(int seed, int count) {

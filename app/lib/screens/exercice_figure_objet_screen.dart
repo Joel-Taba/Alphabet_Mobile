@@ -13,6 +13,7 @@ import '../widgets/lettered_choice_grid.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Quel objet a cette forme ?" — associe une figure à un
@@ -125,7 +126,7 @@ class _ExerciceFigureObjetScreenState extends State<ExerciceFigureObjetScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        UnbrokenText(
                           (fo['title'] ?? '').toString(),
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),

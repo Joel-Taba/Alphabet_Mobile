@@ -13,6 +13,7 @@ import '../widgets/letter_trace_cell.dart';
 import '../widgets/mini_letter_frame.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Mot-exemple d'une syllabe dans la langue active -- l'arabe retombe sur le
@@ -217,7 +218,7 @@ class _CoursSyllabesScreenState extends State<CoursSyllabesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        UnbrokenText(
                           tFormat(cs['consonantTitle'] ?? '', {
                             'consonant': '"${group['consonant']}"',
                           }),

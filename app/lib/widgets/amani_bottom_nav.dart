@@ -236,14 +236,21 @@ class _SideNavIcon extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w700,
-                fontSize: 10,
-                color: active ? AmaniColors.primary : AmaniColors.disabled,
+            // Un mot par ligne, réduit si besoin pour tenir dans la barre :
+            // jamais coupé en plein milieu (« Accu-eil ») quand le texte est
+            // agrandi ou affiché en police dyslexie.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label.trim().replaceAll(RegExp(r'\s+'), '\n'),
+                textAlign: TextAlign.center,
+                softWrap: false,
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                  color: active ? AmaniColors.primary : AmaniColors.disabled,
+                ),
               ),
             ),
           ],

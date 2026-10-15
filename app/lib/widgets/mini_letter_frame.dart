@@ -127,7 +127,10 @@ class _MiniLetterPainter extends CustomPainter {
     canvas.scale(scale, scale);
     for (int i = 0; i < steps.length; i++) {
       final stepStart = i * stepGapMs;
-      final stepProgress = ((elapsedMs - stepStart) / stepDrawMs).clamp(0.0, 1.0);
+      final stepProgress = ((elapsedMs - stepStart) / stepDrawMs).clamp(
+        0.0,
+        1.0,
+      );
       if (stepProgress <= 0) continue;
       final path = parseSvgPathData(steps[i]['pathD'] as String);
       final color = Color(
@@ -155,7 +158,10 @@ class _MiniLetterPainter extends CustomPainter {
           final partial = metric.extractPath(0, metric.length * stepProgress);
           canvas.drawPath(
             isDashed
-                ? dashPath(partial, dashArray: CircularIntervalList<double>([6, 4]))
+                ? dashPath(
+                    partial,
+                    dashArray: CircularIntervalList<double>([6, 4]),
+                  )
                 : partial,
             paint,
           );

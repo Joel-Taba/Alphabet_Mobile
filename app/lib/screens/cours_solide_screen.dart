@@ -6,7 +6,10 @@ import '../i18n/translations.dart';
 import '../services/progress_service.dart';
 import '../data/solid3d_catalog.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/solid_fold_animation.dart';
+import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 class CoursSolideScreen extends StatefulWidget {
@@ -18,6 +21,9 @@ class CoursSolideScreen extends StatefulWidget {
 }
 
 class _CoursSolideScreenState extends State<CoursSolideScreen> {
+  /// Incrémenté par « Relancer » : rejoue l'animation depuis le patron à plat.
+  int _replaySeed = 0;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +47,7 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
     final t = languageProvider.t;
     final lang = languageProvider.lang;
     final cs = t['coursSolide'] as Map<String, dynamic>? ?? {};
+    final common = t['common'] as Map<String, dynamic>? ?? {};
     final topic = findSolid3DTopic(widget.solidId);
 
     if (topic == null) {
@@ -99,7 +106,7 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: UnbrokenText(
                       name,
                       style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                     ),
@@ -111,6 +118,57 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  // Le solide en 3D : ses faces posées à plat, qui se
+                  // replient une à une pour former la figure (rétabli le
+                  // 2026-10-15 à la demande de l'utilisateur).
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: TraceControlsToolbar.heightFor(2),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: SolidFoldAnimation(
+                            key: ValueKey(topic.id),
+                            faces: topic.faces,
+                            color: solidColor(topic.id),
+                            replaySeed: _replaySeed,
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: TraceControlsToolbar(
+                            muteLabel: common['muteVoice'] ?? '',
+                            unmuteLabel: common['unmuteVoice'] ?? '',
+                            // Ce cours ne lit aucune consigne.
+                            showMute: false,
+                            actions: [
+                              ToolbarAction(
+                                icon: LucideIcons.rotateCcw,
+                                label: common['replay'] ?? 'Relancer',
+                                background: const Color(0x1FB85454),
+                                foreground: const Color(0xFF7A2E2E),
+                                onTap: () => setState(() => _replaySeed++),
+                              ),
+                              ToolbarAction(
+                                icon: Icons.play_arrow_rounded,
+                                label: cs['practice'] ?? "S'entrainer",
+                                background: const Color(0xFFB85454),
+                                foreground: Colors.white,
+                                onTap: () => context.push(
+                                  '/exercice/solide/${topic.id}',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   // Carte "Définition"
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -213,9 +271,8 @@ class _CoursSolideScreenState extends State<CoursSolideScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push(
-                        '/exercice/solide/${topic.id}',
-                      ),
+                      onPressed: () =>
+                          context.push('/exercice/solide/${topic.id}'),
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: Text(cs['practice'] ?? "S'entrainer"),
                       style: ElevatedButton.styleFrom(

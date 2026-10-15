@@ -127,6 +127,8 @@ bool _nameHasAny(String name, List<String> hints) {
   );
 }
 
+const _mutedStorageKey = 'amani_setting_speech_muted';
+
 class SignSpeechService extends ChangeNotifier {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isSpeaking = false;
@@ -141,12 +143,37 @@ class SignSpeechService extends ChangeNotifier {
 
   bool get isSpeaking => _isSpeaking;
 
+  /// Voix coupée par le bouton "muet" des cours : plus aucune consigne n'est
+  /// lue, jusqu'à ce que l'utilisateur la réactive lui-même (choix conservé
+  /// d'une page à l'autre et après fermeture de l'app).
+  bool _muted = false;
+  bool get muted => _muted;
+
+  Future<void> setMuted(bool value) async {
+    if (_muted == value) return;
+    _muted = value;
+    notifyListeners();
+    if (value) await stop();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_mutedStorageKey, value);
+  }
+
+  Future<void> _loadMuted() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.readBool(_mutedStorageKey) ?? false;
+    if (stored != _muted) {
+      _muted = stored;
+      notifyListeners();
+    }
+  }
+
   void updateAnimationSpeed(AnimationSpeed speed) {
     _animationSpeed = speed;
   }
 
   SignSpeechService() {
     _initTts();
+    unawaited(_loadMuted());
     // Précharge la liste des voix dès le démarrage : sur mobile, le moteur
     // TTS natif s'initialise de façon asynchrone, et un premier appel à
     // `speak()` trop précoce (juste après le lancement de l'app) pouvait
@@ -282,6 +309,7 @@ class SignSpeechService extends ChangeNotifier {
     double? pitch,
   }) async {
     await stop();
+    if (_muted) return;
 
     final soundEnabled = await _isSoundEnabled();
     if (!soundEnabled) return;

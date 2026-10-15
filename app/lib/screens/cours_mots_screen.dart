@@ -12,6 +12,7 @@ import '../widgets/amani_mascot.dart';
 import '../widgets/letter_trace_cell.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Cours de mots du Palier 3 : chaque mot est déjà écrit avec des lettres
@@ -44,8 +45,7 @@ class CoursMotsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -111,7 +111,7 @@ class CoursMotsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        UnbrokenText(
                           groupTitle,
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 22),
                         ),
@@ -182,7 +182,8 @@ class CoursMotsScreen extends StatelessWidget {
                       lang: lang,
                       practiceWordAria: cm['practiceWordAria'] ?? '',
                       imageAria: cm['imageAria'] ?? '',
-                      closeLabel: (t['common'] as Map<String, dynamic>? ??
+                      closeLabel:
+                          (t['common'] as Map<String, dynamic>? ??
                               {})['close'] ??
                           '',
                       // Le mot n'est considéré "consulté" que lorsque l'enfant

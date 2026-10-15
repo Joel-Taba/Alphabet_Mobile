@@ -797,7 +797,8 @@ const List<ShapeStatement> SHAPE_STATEMENTS = [
     },
     isTrue: true,
     explanation: {
-      'fr': "C'est vrai ! Les 4 côtés du losange ont toujours la même longueur.",
+      'fr':
+          "C'est vrai ! Les 4 côtés du losange ont toujours la même longueur.",
       'en': "That's true! A rhombus's 4 sides are always the same length.",
       'es':
           '¡Es verdad! Los 4 lados del rombo siempre tienen la misma '

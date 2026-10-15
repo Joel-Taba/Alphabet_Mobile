@@ -25,6 +25,11 @@ class TraceableEntry {
   /// Le point se remplit (disque) plutôt que de rester un simple contour.
   final String family;
 
+  /// `true` pour un signe qui ne se trace pas mais se fait d'un simple
+  /// toucher sur son point vert (le point du Palier 1) — voir
+  /// `_OccurrenceCanvasState._onTapUp`.
+  final bool tapOnly;
+
   const TraceableEntry({
     required this.id,
     required this.pathD,
@@ -32,6 +37,7 @@ class TraceableEntry {
     this.endXY,
     required this.strokeColor,
     this.family = '',
+    this.tapOnly = false,
   });
 }
 
@@ -469,7 +475,8 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   }
 
   void _maybeStartMergeBlink() {
-    if (!_startEndMerged) return;
+    // Un signe "au toucher" n'a pas d'arrivée : sa pastille reste verte.
+    if (!_startEndMerged || widget.entry.tapOnly) return;
     _mergeBlinkTimer = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       if (!mounted) return;
       setState(() => _mergeGreenPhase = !_mergeGreenPhase);
@@ -505,8 +512,9 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     _mergeBlinkTimer?.cancel();
     // Filet de sécurité : si le widget disparaît pendant un tracé (par ex.
     // navigation en plein geste), le verrou ne doit jamais rester bloqué.
-    if (_localStatus == OccurrenceStatus.drawing) {
-      context.read<TracingScrollLock>().stop();
+    if (_lockHeld) {
+      _lockHeld = false;
+      _scrollLock.stop();
     }
     super.dispose();
   }
@@ -520,9 +528,109 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     (canvasPt.dy - _origin.dy) / _scale,
   );
 
+  // --- Signe "au toucher" (le point) ---------------------------------------
+  //
+  // Un toucher = un doigt posé PUIS relevé sans avoir glissé. Volontairement
+  // strict et prévisible :
+  //  - le doigt doit se poser sur la cible (zone ronde autour du point vert) ;
+  //  - s'il glisse de plus de quelques pixels avant de se relever, ce n'est
+  //    pas un toucher mais un défilement de la page : on ignore le geste
+  //    sans le compter comme une erreur ;
+  //  - un seul doigt à la fois (un second doigt ou la paume sont ignorés) ;
+  //  - aucune entrée pendant l'affichage d'un "réessaie".
+  // Contrairement au tracé, le défilement de la page n'est jamais verrouillé.
+
+  /// Position du doigt à l'écran quand il s'est posé — le glissement se
+  /// mesure à l'écran et non dans la case : pendant un défilement, la case
+  /// suit le doigt et la position "dans la case" ne bouge presque pas.
+  Offset? _tapDownGlobal;
+  Offset? _tapDownLocal;
+
+  /// Glissement maximal (en pixels écran) encore considéré comme un toucher.
+  static const double _tapSlop = 12;
+
+  /// Rayon minimal de la cible, en pixels écran : assez grand pour un doigt
+  /// d'enfant (cible de 48 px de diamètre, repère usuel des interfaces
+  /// tactiles), sans dépendre de la taille de la case.
+  static const double _minTapRadius = 24;
+
+  /// Centre du point, dans le repère 200×200 du signe.
+  Offset get _tapCenterSvg {
+    if (_refPoints.isEmpty) return widget.entry.startXY;
+    var sum = Offset.zero;
+    for (final p in _refPoints) {
+      sum += p;
+    }
+    return sum / _refPoints.length.toDouble();
+  }
+
+  /// Centre du point, en pixels dans la case.
+  Offset get _tapCenterLocal => _tapCenterSvg * _scale + _origin;
+
+  /// Rayon de la cible en pixels : borné au niveau 1 de souplesse (10 %),
+  /// la souplesse ne concerne que les tracés, pas l'endroit du toucher ;
+  /// jamais sous [_minTapRadius].
+  double get _tapRadius => math.max(
+    _minTapRadius,
+    (math.min(widget.tolerancePct, 10) / 100) * 200 * _scale + 8,
+  );
+
+  void _onTapDown(PointerDownEvent event) {
+    if (!widget.isActive ||
+        _localStatus != OccurrenceStatus.idle ||
+        _activePointer != null) {
+      return;
+    }
+    _activePointer = event.pointer;
+    _tapDownGlobal = event.position;
+    _tapDownLocal = event.localPosition;
+  }
+
+  void _onTapMove(PointerMoveEvent event) {
+    if (event.pointer != _activePointer || _tapDownGlobal == null) return;
+    if ((event.position - _tapDownGlobal!).distance > _tapSlop) {
+      _resetTap(); // glissement : c'est un défilement, pas un toucher
+    }
+  }
+
+  void _onTapUp(PointerUpEvent event) {
+    if (event.pointer != _activePointer || _tapDownLocal == null) return;
+    final down = _tapDownLocal!;
+    final moved = (event.position - _tapDownGlobal!).distance > _tapSlop;
+    _resetTap();
+    if (moved || !widget.isActive || _localStatus != OccurrenceStatus.idle) {
+      return;
+    }
+    if ((down - _tapCenterLocal).distance <= _tapRadius) {
+      setState(() {
+        _localStatus = OccurrenceStatus.success;
+        _showSuccessMascot = true;
+      });
+      _scheduleSuccessMascotHide();
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) widget.onSuccess();
+      });
+    } else {
+      setState(() => _localStatus = OccurrenceStatus.retry);
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (!mounted) return;
+        setState(() => _localStatus = OccurrenceStatus.idle);
+        widget.onRetry();
+      });
+    }
+  }
+
+  void _resetTap() {
+    _activePointer = null;
+    _tapDownGlobal = null;
+    _tapDownLocal = null;
+  }
+
   void _onPointerDown(PointerDownEvent event) {
+    if (widget.entry.tapOnly) return _onTapDown(event);
     if (!widget.isActive ||
         _localStatus == OccurrenceStatus.success ||
+        _localStatus == OccurrenceStatus.retry ||
         _activePointer != null) {
       return;
     }
@@ -531,7 +639,8 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     // `Listener` (événements pointeur bruts) plutôt qu'un `GestureDetector`
     // à base de pan.
     _activePointer = event.pointer;
-    context.read<TracingScrollLock>().start();
+    _scrollLock.start();
+    _lockHeld = true;
     setState(() {
       _localStatus = OccurrenceStatus.drawing;
       _userPoints.clear();
@@ -540,6 +649,7 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   }
 
   void _onPointerMove(PointerMoveEvent event) {
+    if (widget.entry.tapOnly) return _onTapMove(event);
     if (_localStatus != OccurrenceStatus.drawing ||
         event.pointer != _activePointer) {
       return;
@@ -547,15 +657,44 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     setState(() => _userPoints.add(_toSvg(event.localPosition)));
   }
 
-  void _onPointerUp(PointerUpEvent event) {
-    if (_localStatus != OccurrenceStatus.drawing ||
-        event.pointer != _activePointer) {
-      return;
-    }
+  /// Le verrou de défilement est tenu par CETTE case.
+  bool _lockHeld = false;
+
+  /// Mis en cache : `context.read` n'est plus permis dans `dispose()`.
+  late TracingScrollLock _scrollLock;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollLock = context.read<TracingScrollLock>();
+  }
+
+  /// Libère le doigt suivi et le verrou, quel que soit l'état de la case —
+  /// voir `LetterTraceCell._releasePointer` : un doigt jamais libéré
+  /// bloquait définitivement tout nouveau tracé dans la case.
+  void _releasePointer() {
     _activePointer = null;
-    context.read<TracingScrollLock>().stop();
+    if (_lockHeld) {
+      _lockHeld = false;
+      _scrollLock.stop();
+    }
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    if (widget.entry.tapOnly) return _onTapUp(event);
+    if (event.pointer != _activePointer) return;
+    final wasDrawing = _localStatus == OccurrenceStatus.drawing;
+    _releasePointer();
+    if (!wasDrawing) return;
     final tolerancePx = (widget.tolerancePct / 100) * 200;
-    final result = validateTrace(_userPoints, _refPoints, tolerancePx);
+    // Départ et arrivée : jamais plus larges qu'à l'ancien réglage par
+    // défaut (10 %), quel que soit le niveau de souplesse choisi.
+    final result = validateTrace(
+      _userPoints,
+      _refPoints,
+      tolerancePx,
+      anchorTolerancePx: math.min(tolerancePx, 20),
+    );
     if (result.valid) {
       setState(() {
         _localStatus = OccurrenceStatus.success;
@@ -568,7 +707,7 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
     } else {
       setState(() => _localStatus = OccurrenceStatus.retry);
       Future.delayed(const Duration(milliseconds: 2400), () {
-        if (!mounted) return;
+        if (!mounted || _localStatus != OccurrenceStatus.retry) return;
         setState(() {
           _userPoints.clear();
           _localStatus = OccurrenceStatus.idle;
@@ -579,12 +718,14 @@ class _OccurrenceCanvasState extends State<_OccurrenceCanvas> {
   }
 
   void _onPointerCancel(PointerCancelEvent event) {
-    if (_localStatus != OccurrenceStatus.drawing ||
-        event.pointer != _activePointer) {
+    if (widget.entry.tapOnly) {
+      if (event.pointer == _activePointer) _resetTap();
       return;
     }
-    _activePointer = null;
-    context.read<TracingScrollLock>().stop();
+    if (event.pointer != _activePointer) return;
+    final wasDrawing = _localStatus == OccurrenceStatus.drawing;
+    _releasePointer();
+    if (!wasDrawing) return;
     setState(() {
       _userPoints.clear();
       _localStatus = OccurrenceStatus.idle;
@@ -689,6 +830,39 @@ class _OccurrencePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (status != OccurrenceStatus.success && entry.tapOnly) {
+      // Signe "au toucher" : seulement le point vert à toucher, posé à
+      // l'emplacement exact du point, dans un halo qui signale la cible.
+      // Ni pointillés ni point rouge : il n'y a rien à tracer.
+      var sum = Offset.zero;
+      for (final p in refPoints) {
+        sum += p;
+      }
+      final centerSvg = refPoints.isEmpty
+          ? entry.startXY
+          : sum / refPoints.length.toDouble();
+      final center = centerSvg * scale + origin;
+      final retry = status == OccurrenceStatus.retry;
+      final dotColor = retry
+          ? const Color(0xFFD9A84A)
+          : const Color(0xFF5BAA6A);
+      canvas.drawCircle(
+        center,
+        15,
+        Paint()..color = dotColor.withValues(alpha: 0.18),
+      );
+      canvas.drawCircle(center, 7, Paint()..color = dotColor);
+      canvas.drawCircle(
+        center,
+        7,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+      return;
+    }
+
     if (status != OccurrenceStatus.success) {
       canvas.save();
       canvas.translate(origin.dx, origin.dy);

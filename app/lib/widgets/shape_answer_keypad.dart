@@ -446,13 +446,16 @@ class _RoundKeyState extends State<_RoundKey> {
                   ],
           ),
           child: widget.label != null
-              ? Text(
-                  widget.label!,
-                  style: TextStyle(
-                    fontFamily: kBalooFontFamily,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22,
-                    color: fg,
+              ? FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    widget.label!,
+                    style: TextStyle(
+                      fontFamily: kBalooFontFamily,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                      color: fg,
+                    ),
                   ),
                 )
               : Icon(widget.icon, size: 24, color: fg),

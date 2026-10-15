@@ -25,6 +25,8 @@ import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
 import '../widgets/keep_alive_list.dart';
+import '../widgets/unbroken_text.dart';
+import '../widgets/letter_trace_cell.dart';
 
 /// Exercice complet d'écriture d'une lettre/chiffre : Phase A (chaque signe
 /// exercé séparément) puis Phase B (la lettre entière, répétée autant de
@@ -421,7 +423,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               '${el['title'] ?? 'Tracer'} "${letter['char']}"',
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,
@@ -582,6 +584,17 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                             startXY: pathStartPoint(
                                               steps[i]['pathD'] as String,
                                             ),
+                                            // Point d'arrivée rouge, comme
+                                            // au Palier 1.
+                                            endXY: pathEndPoint(
+                                              steps[i]['pathD'] as String,
+                                            ),
+                                            family:
+                                                steps[i]['family'] as String? ??
+                                                '',
+                                            // Le point du i et du j se fait
+                                            // d'un simple toucher.
+                                            tapOnly: kIsPointStep(steps[i]),
                                             strokeColor: Color(
                                               int.parse(
                                                 (steps[i]['strokeColor']
@@ -595,7 +608,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                                   .name] ??
                                               '',
                                           repetitions: _settings.repetitions,
-                                          tolerance: _settings.tolerance,
+                                          tolerance: _settings.tolerancePct,
                                           doneLabel: elL['done'] ?? 'Terminé !',
                                           initiallyDone: _doneSteps.contains(i),
                                           onSpeak: () => speech.speak(
@@ -614,21 +627,24 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                                               shape: BoxShape.circle,
                                             ),
                                             alignment: Alignment.center,
-                                            child: Text(
-                                              '${i + 1}',
-                                              textHeightBehavior:
-                                                  const TextHeightBehavior(
-                                                    applyHeightToFirstAscent:
-                                                        false,
-                                                    applyHeightToLastDescent:
-                                                        false,
-                                                  ),
-                                              style: TextStyle(
-                                                fontFamily: kBalooFontFamily,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 14,
-                                                color: Colors.white,
-                                                height: 1,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                '${i + 1}',
+                                                textHeightBehavior:
+                                                    const TextHeightBehavior(
+                                                      applyHeightToFirstAscent:
+                                                          false,
+                                                      applyHeightToLastDescent:
+                                                          false,
+                                                    ),
+                                                style: TextStyle(
+                                                  fontFamily: kBalooFontFamily,
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 14,
+                                                  color: Colors.white,
+                                                  height: 1,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -940,7 +956,7 @@ class _ExerciceLettreScreenState extends State<ExerciceLettreScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               progressionGroup.title[lang.name] ?? '',
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,

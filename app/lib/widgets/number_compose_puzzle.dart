@@ -71,8 +71,7 @@ class NumberComposePuzzleWidget extends StatefulWidget {
       _NumberComposePuzzleWidgetState();
 }
 
-class _NumberComposePuzzleWidgetState
-    extends State<NumberComposePuzzleWidget> {
+class _NumberComposePuzzleWidgetState extends State<NumberComposePuzzleWidget> {
   late List<int?> _slotNumberTileIdx;
   late List<int?> _slotOperatorTileIdx;
   bool? _feedbackCorrect;
@@ -87,10 +86,7 @@ class _NumberComposePuzzleWidgetState
 
   void _reset() {
     _slotNumberTileIdx = List<int?>.filled(widget.puzzle.slotCount, null);
-    _slotOperatorTileIdx = List<int?>.filled(
-      widget.puzzle.slotCount - 1,
-      null,
-    );
+    _slotOperatorTileIdx = List<int?>.filled(widget.puzzle.slotCount - 1, null);
     _feedbackCorrect = null;
     _numberStatuses = null;
     _operatorStatuses = null;
@@ -138,7 +134,10 @@ class _NumberComposePuzzleWidgetState
     final correct = evalComposeLeftToRight(nums, ops) == widget.puzzle.target;
     setState(() {
       _feedbackCorrect = correct;
-      _numberStatuses = _wordleStatuses<int>(nums, widget.puzzle.solutionNumbers);
+      _numberStatuses = _wordleStatuses<int>(
+        nums,
+        widget.puzzle.solutionNumbers,
+      );
       _operatorStatuses = _wordleStatuses<String>(
         ops,
         widget.puzzle.solutionOperators,
@@ -262,13 +261,16 @@ class _Slot extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor, width: 2.5),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: kBalooFontFamily,
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
-            color: AmaniColors.textPrimary,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: kBalooFontFamily,
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+              color: AmaniColors.textPrimary,
+            ),
           ),
         ),
       ),
@@ -312,15 +314,18 @@ class _PoolTile extends StatelessWidget {
               width: 2,
             ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: kBalooFontFamily,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-              color: isOperator
-                  ? const Color(0xFF6B3F94)
-                  : AmaniColors.textPrimary,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: kBalooFontFamily,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: isOperator
+                    ? const Color(0xFF6B3F94)
+                    : AmaniColors.textPrimary,
+              ),
             ),
           ),
         ),

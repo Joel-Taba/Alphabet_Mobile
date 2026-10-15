@@ -20,6 +20,7 @@ import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// Exercice du Palier "Les Calculs" : trace la réponse de chaque problème,
@@ -369,7 +370,7 @@ class _ExerciceCalculScreenState extends State<ExerciceCalculScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               topic.title[lang.name] ?? topic.title['fr']!,
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,

@@ -37,10 +37,10 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-vertical-full",
     "label": {
-      "fr": "Trait vertical",
-      "en": "Vertical line",
-      "es": "Trazo vertical",
-      "ar": "خط عمودي"
+      "fr": "Long trait vertical",
+      "en": "Long vertical line",
+      "es": "Trazo vertical largo",
+      "ar": "خط عمودي طويل"
     },
     "consigne": {
       "fr": "Trace le trait vertical. Pars du haut et descends jusqu'en bas d'un seul geste régulier.",
@@ -99,10 +99,10 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-horizontal-full",
     "label": {
-      "fr": "Trait horizontal",
-      "en": "Horizontal line",
-      "es": "Trazo horizontal",
-      "ar": "خط أفقي"
+      "fr": "Long trait horizontal",
+      "en": "Long horizontal line",
+      "es": "Trazo horizontal largo",
+      "ar": "خط أفقي طويل"
     },
     "consigne": {
       "fr": "Trace le trait horizontal. Pars de gauche à droite d'un geste stable.",
@@ -161,10 +161,10 @@ final List<dynamic> TRAITS = jsonDecode(r'''
   {
     "id": "trait-oblique-gauche-full",
     "label": {
-      "fr": "Trait oblique à droite",
-      "en": "Diagonal line to the left",
-      "es": "Trazo oblicuo a la izquierda",
-      "ar": "خط مائل إلى اليسار"
+      "fr": "Long trait oblique à droite",
+      "en": "Long diagonal line to the left",
+      "es": "Trazo oblicuo largo a la izquierda",
+      "ar": "خط مائل طويل إلى اليسار"
     },
     "consigne": {
       "fr": "Trace le trait oblique à droite en partant du haut droit et en descendant vers le bas gauche.",
@@ -190,43 +190,12 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "badgeText": "#4A3B2A"
   },
   {
-    "id": "trait-oblique-droit-full",
-    "label": {
-      "fr": "Trait oblique à gauche",
-      "en": "Diagonal line to the right",
-      "es": "Trazo oblicuo a la derecha",
-      "ar": "خط مائل إلى اليمين"
-    },
-    "consigne": {
-      "fr": "Trace le trait oblique à gauche en partant du haut gauche et en descendant vers le bas droit.",
-      "en": "Trace the right diagonal line, starting at the top right and going down to the bottom left.",
-      "es": "Traza el trazo oblicuo a la derecha, partiendo de arriba a la derecha y bajando hacia abajo a la izquierda.",
-      "ar": "ارسم الخط المائل إلى اليمين، بدءًا من أعلى اليمين وانزل نحو أسفل اليسار."
-    },
-    "family": "trait",
-    "variant": "oblique-droit",
-    "scale": "full",
-    "pathD": "M 156.5 13.5 L 43.5 126.5",
-    "startXY": [
-      160,
-      10
-    ],
-    "endXY": [
-      40,
-      130
-    ],
-    "zone": "hampe",
-    "strokeColor": "#4A3B2A",
-    "badgeBg": "#F5EDE0",
-    "badgeText": "#4A3B2A"
-  },
-  {
     "id": "trait-oblique-gauche-reduced",
     "label": {
-      "fr": "Petit oblique à droite",
-      "en": "Small left diagonal",
-      "es": "Oblicuo a la izquierda pequeño",
-      "ar": "مائل صغير إلى اليسار"
+      "fr": "Petit trait oblique à droite",
+      "en": "Small diagonal line to the left",
+      "es": "Trazo oblicuo pequeño a la izquierda",
+      "ar": "خط مائل صغير إلى اليسار"
     },
     "consigne": {
       "fr": "Trace le petit trait oblique à droite en partant du haut et en descendant.",
@@ -252,12 +221,43 @@ final List<dynamic> TRAITS = jsonDecode(r'''
     "badgeText": "#4A3B2A"
   },
   {
+    "id": "trait-oblique-droit-full",
+    "label": {
+      "fr": "Long trait oblique à gauche",
+      "en": "Long diagonal line to the right",
+      "es": "Trazo oblicuo largo a la derecha",
+      "ar": "خط مائل طويل إلى اليمين"
+    },
+    "consigne": {
+      "fr": "Trace le trait oblique à gauche en partant du haut gauche et en descendant vers le bas droit.",
+      "en": "Trace the right diagonal line, starting at the top right and going down to the bottom left.",
+      "es": "Traza el trazo oblicuo a la derecha, partiendo de arriba a la derecha y bajando hacia abajo a la izquierda.",
+      "ar": "ارسم الخط المائل إلى اليمين، بدءًا من أعلى اليمين وانزل نحو أسفل اليسار."
+    },
+    "family": "trait",
+    "variant": "oblique-droit",
+    "scale": "full",
+    "pathD": "M 156.5 13.5 L 43.5 126.5",
+    "startXY": [
+      160,
+      10
+    ],
+    "endXY": [
+      40,
+      130
+    ],
+    "zone": "hampe",
+    "strokeColor": "#4A3B2A",
+    "badgeBg": "#F5EDE0",
+    "badgeText": "#4A3B2A"
+  },
+  {
     "id": "trait-oblique-droit-reduced",
     "label": {
-      "fr": "Petit oblique à gauche",
-      "en": "Small right diagonal",
-      "es": "Oblicuo a la derecha pequeño",
-      "ar": "مائل صغير إلى اليمين"
+      "fr": "Petit trait oblique à gauche",
+      "en": "Small diagonal line to the right",
+      "es": "Trazo oblicuo pequeño a la derecha",
+      "ar": "خط مائل صغير إلى اليمين"
     },
     "consigne": {
       "fr": "Trace le petit trait oblique à gauche en partant du haut et en descendant.",
@@ -290,10 +290,10 @@ final List<dynamic> COURBES = jsonDecode(r'''
   {
     "id": "courbe-open-right-full",
     "label": {
-      "fr": "Courbe ouverte à droite",
-      "en": "Curve open to the right",
-      "es": "Curva abierta a la derecha",
-      "ar": "منحنى مفتوح من اليمين"
+      "fr": "Longue courbe ouverte à droite",
+      "en": "Long curve open to the right",
+      "es": "Curva larga abierta a la derecha",
+      "ar": "منحنى طويل مفتوح من اليمين"
     },
     "consigne": {
       "fr": "Trace la courbe ouverte à droite, comme la lettre C.",
@@ -321,10 +321,10 @@ final List<dynamic> COURBES = jsonDecode(r'''
   {
     "id": "courbe-open-right-reduced",
     "label": {
-      "fr": "Petite courbe à droite",
-      "en": "Small curve to the right",
-      "es": "Curva pequeña a la derecha",
-      "ar": "منحنى صغير من اليمين"
+      "fr": "Petite courbe ouverte à droite",
+      "en": "Small curve open to the right",
+      "es": "Curva pequeña abierta a la derecha",
+      "ar": "منحنى صغير مفتوح من اليمين"
     },
     "consigne": {
       "fr": "Trace la petite courbe ouverte à droite.",
@@ -352,10 +352,10 @@ final List<dynamic> COURBES = jsonDecode(r'''
   {
     "id": "courbe-open-left-full",
     "label": {
-      "fr": "Courbe ouverte à gauche",
-      "en": "Curve open to the left",
-      "es": "Curva abierta a la izquierda",
-      "ar": "منحنى مفتوح من اليسار"
+      "fr": "Longue courbe ouverte à gauche",
+      "en": "Long curve open to the left",
+      "es": "Curva larga abierta a la izquierda",
+      "ar": "منحنى طويل مفتوح من اليسار"
     },
     "consigne": {
       "fr": "Trace la courbe ouverte à gauche.",
@@ -383,10 +383,10 @@ final List<dynamic> COURBES = jsonDecode(r'''
   {
     "id": "courbe-open-left-reduced",
     "label": {
-      "fr": "Petite courbe à gauche",
-      "en": "Small curve to the left",
-      "es": "Curva pequeña a la izquierda",
-      "ar": "منحنى صغير من اليسار"
+      "fr": "Petite courbe ouverte à gauche",
+      "en": "Small curve open to the left",
+      "es": "Curva pequeña abierta a la izquierda",
+      "ar": "منحنى صغير مفتوح من اليسار"
     },
     "consigne": {
       "fr": "Trace la petite courbe ouverte à gauche.",
@@ -414,16 +414,16 @@ final List<dynamic> COURBES = jsonDecode(r'''
   {
     "id": "courbe-closed-full",
     "label": {
-      "fr": "Cercle fermé",
-      "en": "Closed circle",
-      "es": "Círculo cerrado",
-      "ar": "دائرة مغلقة"
+      "fr": "Courbe fermée ou rond",
+      "en": "Closed curve or round",
+      "es": "Curva cerrada o redondo",
+      "ar": "منحنى مغلق أو دائرة"
     },
     "consigne": {
-      "fr": "Trace le cercle complet, en partant du haut et en tournant dans le sens anti-horaire (vers la gauche).",
-      "en": "Trace the full circle, starting at the top and turning counter-clockwise (to the left).",
-      "es": "Traza el círculo completo, partiendo de arriba y girando en sentido antihorario (hacia la izquierda).",
-      "ar": "ارسم الدائرة الكاملة، بدءًا من الأعلى ودورانًا عكس اتجاه عقارب الساعة (نحو اليسار)."
+      "fr": "Pour tracer la courbe fermée ou le rond, je pars du point de départ, qui est également le point d'arrivée.",
+      "en": "Trace the closed curve, the round, starting at the top and turning counter-clockwise (to the left).",
+      "es": "Traza la curva cerrada, el redondo, partiendo de arriba y girando en sentido antihorario (hacia la izquierda).",
+      "ar": "ارسم المنحنى المغلق، الدائرة، بدءًا من الأعلى ودورانًا عكس اتجاه عقارب الساعة (نحو اليسار)."
     },
     "family": "courbe",
     "variant": "closed",
@@ -456,10 +456,10 @@ final List<dynamic> POINTS = jsonDecode(r'''
       "ar": "النقطة"
     },
     "consigne": {
-      "fr": "Trace le point en faisant un petit rond circulaire dans le sens anti-horaire (vers la gauche).",
-      "en": "Trace the dot by making a small round circle counter-clockwise (to the left).",
-      "es": "Traza el punto haciendo un pequeño círculo redondo en sentido antihorario (hacia la izquierda).",
-      "ar": "ارسم النقطة بتكوين دائرة صغيرة مستديرة عكس اتجاه عقارب الساعة (نحو اليسار)."
+      "fr": "Pour tracer le point, je touche simplement l'écran une seule fois, sur le point vert.",
+      "en": "To trace the dot, simply touch the screen once, on the green dot.",
+      "es": "Para trazar el punto, toca simplemente la pantalla una sola vez, sobre el punto verde.",
+      "ar": "لرسم النقطة، المس الشاشة مرة واحدة فقط، على النقطة الخضراء."
     },
     "family": "point",
     "variant": "center",
@@ -486,10 +486,10 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
   {
     "id": "crochet-top-right-full",
     "label": {
-      "fr": "Crochet haut-droite",
-      "en": "Top-right hook",
-      "es": "Gancho arriba-derecha",
-      "ar": "خطاف أعلى اليمين"
+      "fr": "Long crochet haut-droite",
+      "en": "Long top-right hook",
+      "es": "Gancho largo arriba-derecha",
+      "ar": "خطاف طويل أعلى اليمين"
     },
     "consigne": {
       "fr": "Trace le crochet haut droite en partant de l'extrémité haute puis en descendant la tige vers le bas.",
@@ -548,10 +548,10 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
   {
     "id": "crochet-top-left-full",
     "label": {
-      "fr": "Crochet haut-gauche",
-      "en": "Top-left hook",
-      "es": "Gancho arriba-izquierda",
-      "ar": "خطاف أعلى اليسار"
+      "fr": "Long crochet haut-gauche",
+      "en": "Long top-left hook",
+      "es": "Gancho largo arriba-izquierda",
+      "ar": "خطاف طويل أعلى اليسار"
     },
     "consigne": {
       "fr": "Trace le crochet haut gauche en partant de l'extrémité haute puis en descendant la tige vers le bas.",
@@ -608,12 +608,43 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "badgeText": "#2D6BBF"
   },
   {
+    "id": "crochet-top-left-incline-full",
+    "label": {
+      "fr": "Crochet haut-gauche incliné",
+      "en": "Slanted top-left hook",
+      "es": "Gancho arriba-izquierda inclinado",
+      "ar": "خطاف أعلى اليسار مائل"
+    },
+    "consigne": {
+      "fr": "Trace le crochet haut gauche incliné, comme pour le chiffre 2 : pars du haut, arrondis, puis descends en biais vers le bas à gauche.",
+      "en": "Trace the slanted top-left hook, as in the digit 2: start at the top, curve round, then go down diagonally to the lower left.",
+      "es": "Traza el gancho arriba-izquierda inclinado, como en el número 2: parte de arriba, redondea y baja en diagonal hacia abajo a la izquierda.",
+      "ar": "ارسم الخطاف المائل أعلى اليسار، كما في الرقم 2: ابدأ من الأعلى، انحنِ، ثم انزل بشكل مائل نحو أسفل اليسار."
+    },
+    "family": "crochet",
+    "variant": "top-left-incline",
+    "scale": "full",
+    "pathD": "M 85.25 22.15 A 29.5 29.5 0 0 1 126.99 63.86 L 64.38 126.5",
+    "startXY": [
+      85.25,
+      22.15
+    ],
+    "endXY": [
+      64.38,
+      130
+    ],
+    "zone": "hampe",
+    "strokeColor": "#4A90E2",
+    "badgeBg": "#EAF1FB",
+    "badgeText": "#2D6BBF"
+  },
+  {
     "id": "crochet-bottom-right-full",
     "label": {
-      "fr": "Crochet bas-droite",
-      "en": "Bottom-right hook",
-      "es": "Gancho abajo-derecha",
-      "ar": "خطاف أسفل اليمين"
+      "fr": "Long crochet bas-droite",
+      "en": "Long bottom-right hook",
+      "es": "Gancho largo abajo-derecha",
+      "ar": "خطاف طويل أسفل اليمين"
     },
     "consigne": {
       "fr": "Trace le crochet bas droite : descends la tige puis courbe vers la droite en bas.",
@@ -717,14 +748,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-gauche",
     "scale": "full",
-    "pathD": "M 80.69 32.81 A 19.31 19.31 0 0 1 119.31 32.81 L 119.31 107.19 A 19.31 19.31 0 0 1 80.69 107.19",
+    "pathD": "M 89.31 28.5 A 15 15 0 0 1 119.31 28.5 L 119.31 111.5 A 15 15 0 0 1 89.31 111.5",
     "startXY": [
-      82.23,
-      35.77
+      89.31,
+      28.5
     ],
     "endXY": [
-      82.23,
-      104.23
+      89.31,
+      111.5
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -748,14 +779,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-droit",
     "scale": "full",
-    "pathD": "M 119.31 32.81 A 19.31 19.31 0 0 0 80.69 32.81 L 80.69 107.19 A 19.31 19.31 0 0 0 119.31 107.19",
+    "pathD": "M 110.69 28.5 A 15 15 0 0 0 80.69 28.5 L 80.69 111.5 A 15 15 0 0 0 110.69 111.5",
     "startXY": [
-      117.77,
-      35.77
+      110.69,
+      28.5
     ],
     "endXY": [
-      117.77,
-      104.23
+      110.69,
+      111.5
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -765,10 +796,10 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
   {
     "id": "crochet-double-gauche-droit-full",
     "label": {
-      "fr": "Double-crochet gauche-droit",
-      "en": "Left-right double hook",
-      "es": "Bucle izquierda-derecha",
-      "ar": "حلقة مزدوجة يسار-يمين"
+      "fr": "Long double-crochet gauche-droit",
+      "en": "Long left-right double hook",
+      "es": "Bucle largo izquierda-derecha",
+      "ar": "حلقة مزدوجة طويلة يسار-يمين"
     },
     "consigne": {
       "fr": "Trace le double-crochet gauche et droit en forme de S.",
@@ -779,14 +810,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-gauche-droit",
     "scale": "full",
-    "pathD": "M 61.38 32.81 A 19.31 19.31 0 0 1 100 32.81 L 100 107.19 A 19.31 19.31 0 0 0 138.62 107.19",
+    "pathD": "M 70 28.5 A 15 15 0 0 1 100 28.5 L 100 111.5 A 15 15 0 0 0 130 111.5",
     "startXY": [
-      64.46,
-      35.77
+      70,
+      28.5
     ],
     "endXY": [
-      135.54,
-      104.23
+      130,
+      111.5
     ],
     "zone": "hampe",
     "strokeColor": "#4A90E2",
@@ -810,14 +841,14 @@ final List<dynamic> CROCHETS = jsonDecode(r'''
     "family": "crochet",
     "variant": "double-crochet-gauche-droit",
     "scale": "reduced",
-    "pathD": "M 78 84.5 A 11 11 0 0 1 100 84.5 L 100 115.5 A 11 11 0 0 0 122 115.5",
+    "pathD": "M 82 82.5 A 9 9 0 0 1 100 82.5 L 100 117.5 A 9 9 0 0 0 118 117.5",
     "startXY": [
-      78,
-      84.5
+      82,
+      82.5
     ],
     "endXY": [
-      122,
-      115.5
+      118,
+      117.5
     ],
     "zone": "corps",
     "strokeColor": "#4A90E2",

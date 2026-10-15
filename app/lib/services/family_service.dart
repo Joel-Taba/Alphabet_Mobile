@@ -171,7 +171,8 @@ class FamilyService extends ChangeNotifier {
   Future<void> renameChild(String id, String nom) async {
     final prefs = await SharedPreferences.getInstance();
     _children = [
-      for (final c in _children) c.id == id ? ChildProfile(id: id, nom: nom) : c,
+      for (final c in _children)
+        c.id == id ? ChildProfile(id: id, nom: nom) : c,
     ];
     await _writeChildren(prefs);
     notifyListeners();

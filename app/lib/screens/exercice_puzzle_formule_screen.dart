@@ -19,6 +19,7 @@ import '../widgets/free_writing_sheet.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// Jeu "Formule en puzzle" du Palier 2 : pour chaque lettre/chiffre du
@@ -191,7 +192,7 @@ class _ExercicePuzzleFormuleScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               progressionGroup.title[lang.name] ?? '',
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,

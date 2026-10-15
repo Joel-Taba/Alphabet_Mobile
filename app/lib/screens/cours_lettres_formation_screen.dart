@@ -16,6 +16,7 @@ import '../services/progress_service.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Choisit la phrase prononcée pour la consigne d'une lettre. La consigne
@@ -31,7 +32,9 @@ String _spokenLetterConsigne(
   String category,
   String style,
 ) {
-  if (category == 'chiffre') return spokenDigitInstruction(lang, char, consigne);
+  if (category == 'chiffre') {
+    return spokenDigitInstruction(lang, char, consigne);
+  }
   if (style == 'script') return consigne;
   return spokenLetterInstruction(lang, char, consigne);
 }
@@ -163,8 +166,7 @@ class _CoursLettresFormationScreenState
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () =>
-                      goHome(context),
+                  onTap: () => goHome(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -269,7 +271,7 @@ class _CoursLettresFormationScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        UnbrokenText(
                           pageTitle,
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 19),
                         ),
@@ -322,15 +324,18 @@ class _CoursLettresFormationScreenState
                             ),
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            l['char'],
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 20,
-                              color: isCurrent
-                                  ? Colors.white
-                                  : AmaniColors.textPrimary,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              l['char'],
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 20,
+                                color: isCurrent
+                                    ? Colors.white
+                                    : AmaniColors.textPrimary,
+                              ),
                             ),
                           ),
                         ),
@@ -341,219 +346,240 @@ class _CoursLettresFormationScreenState
                   const SizedBox(height: 24),
 
                   // Animation
-                  Builder(builder: (context) {
-                    final headerColor = steps.isNotEmpty
-                        ? Color(int.parse(
-                            (steps.first['strokeColor'] as String)
-                                .replaceFirst('#', '0xFF'),
-                          ))
-                        : AmaniColors.primary;
-                    return Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x1F000000),
-                            blurRadius: 20,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 11,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  headerColor,
-                                  Color.lerp(headerColor, Colors.black, 0.18)!,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                  Builder(
+                    builder: (context) {
+                      final headerColor = steps.isNotEmpty
+                          ? Color(
+                              int.parse(
+                                (steps.first['strokeColor'] as String)
+                                    .replaceFirst('#', '0xFF'),
                               ),
+                            )
+                          : AmaniColors.primary;
+                      return Container(
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x1F000000),
+                              blurRadius: 20,
+                              offset: Offset(0, 6),
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.22),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    widget.char,
-                                    style: TextStyle(
-                                      fontFamily: kBalooFontFamily,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 27,
-                                      color: Colors.white,
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 11,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    headerColor,
+                                    Color.lerp(
+                                      headerColor,
+                                      Colors.black,
+                                      0.18,
+                                    )!,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.22,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      widget.char,
+                                      style: TextStyle(
+                                        fontFamily: kBalooFontFamily,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 27,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        letter['name'][lang.name] as String? ??
-                                            '',
-                                        style: TextStyle(
-                                          fontFamily: kBalooFontFamily,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 15,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      if (steps.length > 1)
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
                                         Text(
-                                          tFormat(
-                                            cf['signeCount'] as String? ?? '',
-                                            {'count': steps.length},
-                                          ),
+                                          letter['name'][lang.name]
+                                                  as String? ??
+                                              '',
                                           style: TextStyle(
                                             fontFamily: kBalooFontFamily,
-                                            fontSize: 11,
-                                            color: Colors.white.withValues(
-                                              alpha: 0.82,
-                                            ),
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 15,
+                                            color: Colors.white,
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFFFBF6EC),
-                                  Color(0xFFF0E4CC),
-                                ],
-                              ),
-                            ),
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minHeight: TraceControlsToolbar.heightFor(3),
-                              ),
-                              child: Stack(
-                                children: [
-                          Center(
-                            child: SizedBox(
-                              width: 260,
-                              height: 260,
-                              child: CahierFrame(
-                                width: 260,
-                                height: 260,
-                                child: AnimatedBuilder(
-                                  animation: _controller,
-                                  builder: (context, _) {
-                                    final elapsedMs =
-                                        _controller.value * _totalMs;
-                                    var stepIdx = 0;
-                                    var stepProgress = 0.0;
-                                    var acc = 0.0;
-                                    for (var i = 0; i < steps.length; i++) {
-                                      final stepEnd = acc + _stepDurationMs;
-                                      if (elapsedMs <= stepEnd ||
-                                          i == steps.length - 1) {
-                                        stepIdx = i;
-                                        stepProgress =
-                                            ((elapsedMs - acc) /
-                                                    _stepDurationMs)
-                                                .clamp(0.0, 1.0);
-                                        break;
-                                      }
-                                      acc = stepEnd + _pauseDurationMs;
-                                    }
-                                    return CustomPaint(
-                                      painter: _MultiStepPainter(
-                                        steps: steps,
-                                        currentStepIdx: stepIdx,
-                                        stepProgress: stepProgress,
-                                        isFinished: _controller.value >= 1.0,
-                                      ),
-                                      size: const Size(260, 260),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: TraceControlsToolbar(
-                              expandAria:
-                                  t['common']?['toolbarExpandAria'] ?? '',
-                              collapseAria:
-                                  t['common']?['toolbarCollapseAria'] ?? '',
-                              actions: [
-                                ToolbarAction(
-                                  icon: LucideIcons.rotateCcw,
-                                  label: t['common']?['replay'] ?? 'Revoir',
-                                  background: AmaniColors.secondary.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  foreground: const Color(0xFF2F4B1C),
-                                  onTap: () => _playAnimation(
-                                    immediate: true,
-                                    speak: false,
-                                  ),
-                                ),
-                                ToolbarAction(
-                                  icon: LucideIcons.volume2,
-                                  label:
-                                      t['common']?['instruction'] ?? 'Consigne',
-                                  background: AmaniColors.background,
-                                  foreground: Colors.black,
-                                  onTap: () => speech.speak(
-                                    _spokenLetterConsigne(
-                                      lang,
-                                      widget.char,
-                                      letter['consigne'][lang.name] ?? '',
-                                      letter['category'],
-                                      style,
+                                        if (steps.length > 1)
+                                          Text(
+                                            tFormat(
+                                              cf['signeCount'] as String? ?? '',
+                                              {'count': steps.length},
+                                            ),
+                                            style: TextStyle(
+                                              fontFamily: kBalooFontFamily,
+                                              fontSize: 11,
+                                              color: Colors.white.withValues(
+                                                alpha: 0.82,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
-                                    lang,
                                   ),
-                                ),
-                                ToolbarAction(
-                                  icon: Icons.play_arrow_rounded,
-                                  label:
-                                      '${cfc['practice'] ?? "S'entrainer sur"} "${letter['char']}"',
-                                  background: AmaniColors.secondary,
-                                  foreground: Colors.white,
-                                  onTap: () => context.push(
-                                    '/exercice/lettre/${letter['char']}${widget.pg != null ? '?pg=${widget.pg}' : ''}',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFFFBF6EC),
+                                    Color(0xFFF0E4CC),
+                                  ],
+                                ),
+                              ),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: TraceControlsToolbar.heightFor(3),
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Center(
+                                      child: SizedBox(
+                                        width: 260,
+                                        height: 260,
+                                        child: CahierFrame(
+                                          width: 260,
+                                          height: 260,
+                                          child: AnimatedBuilder(
+                                            animation: _controller,
+                                            builder: (context, _) {
+                                              final elapsedMs =
+                                                  _controller.value * _totalMs;
+                                              var stepIdx = 0;
+                                              var stepProgress = 0.0;
+                                              var acc = 0.0;
+                                              for (
+                                                var i = 0;
+                                                i < steps.length;
+                                                i++
+                                              ) {
+                                                final stepEnd =
+                                                    acc + _stepDurationMs;
+                                                if (elapsedMs <= stepEnd ||
+                                                    i == steps.length - 1) {
+                                                  stepIdx = i;
+                                                  stepProgress =
+                                                      ((elapsedMs - acc) /
+                                                              _stepDurationMs)
+                                                          .clamp(0.0, 1.0);
+                                                  break;
+                                                }
+                                                acc =
+                                                    stepEnd + _pauseDurationMs;
+                                              }
+                                              return CustomPaint(
+                                                painter: _MultiStepPainter(
+                                                  steps: steps,
+                                                  currentStepIdx: stepIdx,
+                                                  stepProgress: stepProgress,
+                                                  isFinished:
+                                                      _controller.value >= 1.0,
+                                                ),
+                                                size: const Size(260, 260),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: TraceControlsToolbar(
+                                        muteLabel:
+                                            t['common']?['muteVoice'] ?? '',
+                                        unmuteLabel:
+                                            t['common']?['unmuteVoice'] ?? '',
+                                        actions: [
+                                          ToolbarAction(
+                                            icon: LucideIcons.rotateCcw,
+                                            label:
+                                                t['common']?['replay'] ??
+                                                'Revoir',
+                                            background: AmaniColors.secondary
+                                                .withValues(alpha: 0.15),
+                                            foreground: const Color(0xFF2F4B1C),
+                                            onTap: () => _playAnimation(
+                                              immediate: true,
+                                              speak: false,
+                                            ),
+                                          ),
+                                          ToolbarAction(
+                                            icon: LucideIcons.volume2,
+                                            label:
+                                                t['common']?['instruction'] ??
+                                                'Consigne',
+                                            background: AmaniColors.background,
+                                            foreground: Colors.black,
+                                            onTap: () => speech.speak(
+                                              _spokenLetterConsigne(
+                                                lang,
+                                                widget.char,
+                                                letter['consigne'][lang.name] ??
+                                                    '',
+                                                letter['category'],
+                                                style,
+                                              ),
+                                              lang,
+                                            ),
+                                          ),
+                                          ToolbarAction(
+                                            icon: Icons.play_arrow_rounded,
+                                            label:
+                                                '${cfc['practice'] ?? "S'entrainer sur"} "${letter['char']}"',
+                                            background: AmaniColors.secondary,
+                                            foreground: Colors.white,
+                                            onTap: () => context.push(
+                                              '/exercice/lettre/${letter['char']}${widget.pg != null ? '?pg=${widget.pg}' : ''}',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -666,7 +692,6 @@ class _CoursLettresFormationScreenState
     );
   }
 }
-
 
 class _MultiStepPainter extends CustomPainter {
   final List steps;

@@ -13,6 +13,7 @@ import '../hooks/use_writing_style.dart';
 import '../theme/amani_theme.dart';
 import '../utils/pick_profile_photo.dart';
 import '../widgets/directional_icon.dart';
+import '../widgets/unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ProfileCreateScreen extends StatefulWidget {
@@ -167,7 +168,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                             size: 36,
                           ),
                           const SizedBox(height: 8),
-                          Text(
+                          UnbrokenText(
                             t['onboarding']['title'],
                             style: const TextStyle(
                               fontSize: 34,
@@ -627,7 +628,10 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
       onTap: canContinue ? _handleStart : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 58,
+        // Hauteur minimale plutôt que fixe : le libellé agrandi passe à la
+        // ligne dans le bouton au lieu d'en déborder.
+        constraints: const BoxConstraints(minHeight: 58),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         width: double.infinity,
         decoration: BoxDecoration(
           color: canContinue ? AmaniColors.secondary : AmaniColors.disabled,
@@ -643,6 +647,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
         alignment: Alignment.center,
         child: Text(
           t['onboarding']['start'],
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,

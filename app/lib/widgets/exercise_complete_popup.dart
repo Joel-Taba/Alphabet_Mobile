@@ -6,6 +6,7 @@ import '../services/sound_effect_service.dart';
 import 'amani_mascot.dart';
 import 'confetti_burst.dart';
 import 'directional_icon.dart';
+import 'unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Pop-up affiché à la fin de CHAQUE exercice du parcours. Laisse l'enfant
@@ -99,7 +100,7 @@ class _ExerciseCompletePopupState extends State<ExerciseCompletePopup> {
                         size: AmaniSize.medium,
                       ),
                       const SizedBox(height: 16),
-                      Text(
+                      UnbrokenText(
                         complete['title'] ?? 'Exercice terminé !',
                         textAlign: TextAlign.center,
                         style: TextStyle(

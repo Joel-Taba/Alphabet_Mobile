@@ -132,7 +132,9 @@ class _ConfettiPainter extends CustomPainter {
     for (final p in pieces) {
       final dx = p.start.dx + p.velocity.dx * elapsed;
       final dy =
-          p.start.dy + p.velocity.dy * elapsed + 0.5 * gravity * elapsed * elapsed;
+          p.start.dy +
+          p.velocity.dy * elapsed +
+          0.5 * gravity * elapsed * elapsed;
       final rotation = p.initialRotation + p.rotationSpeed * elapsed;
       final paint = Paint()..color = p.color.withValues(alpha: opacity);
       canvas.save();
@@ -140,7 +142,11 @@ class _ConfettiPainter extends CustomPainter {
       canvas.rotate(rotation);
       if (p.isRect) {
         canvas.drawRect(
-          Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.5),
+          Rect.fromCenter(
+            center: Offset.zero,
+            width: p.size,
+            height: p.size * 0.5,
+          ),
           paint,
         );
       } else {

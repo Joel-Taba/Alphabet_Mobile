@@ -22,13 +22,17 @@ class ShapeGlyph extends StatelessWidget {
         return Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(border: Border.all(color: color, width: size * 0.08)),
+          decoration: BoxDecoration(
+            border: Border.all(color: color, width: size * 0.08),
+          ),
         );
       case 'rectangle':
         return Container(
           width: size * 1.4,
           height: size * 0.75,
-          decoration: BoxDecoration(border: Border.all(color: color, width: size * 0.08)),
+          decoration: BoxDecoration(
+            border: Border.all(color: color, width: size * 0.08),
+          ),
         );
       case 'triangle':
         return CustomPaint(
@@ -47,7 +51,10 @@ class ShapeGlyph extends StatelessWidget {
       case 'parallelogramme':
         return CustomPaint(
           size: Size(size * 1.4, size * 0.8),
-          painter: _ParallelogramPainter(color: color, strokeWidth: size * 0.08),
+          painter: _ParallelogramPainter(
+            color: color,
+            strokeWidth: size * 0.08,
+          ),
         );
       case 'losange':
         return CustomPaint(

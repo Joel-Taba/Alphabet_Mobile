@@ -127,13 +127,16 @@ class _LetteredChoiceButtonState extends State<LetteredChoiceButton> {
                       color: Colors.white,
                       size: 20,
                     ),
-                    ChoiceVisualState.idle => Text(
-                      widget.letter,
-                      style: TextStyle(
-                        fontFamily: kBalooFontFamily,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: Colors.white,
+                    ChoiceVisualState.idle => FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.letter,
+                        style: TextStyle(
+                          fontFamily: kBalooFontFamily,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   },

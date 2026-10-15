@@ -18,6 +18,7 @@ import '../hooks/use_tracing_scroll_lock.dart';
 import '../hooks/use_writing_style.dart';
 import '../services/mode_libre_controller.dart';
 import '../utils/text_case.dart';
+import '../widgets/unbroken_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 enum ModeLibreTab {
@@ -203,7 +204,7 @@ class _BibliothequeScreenState extends State<BibliothequeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      UnbrokenText(
                         modeLibre['title'] ?? 'Mode Libre',
                         style: AmaniTheme.titleStyle.copyWith(fontSize: 28),
                       ),

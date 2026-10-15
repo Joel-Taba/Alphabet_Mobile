@@ -195,6 +195,9 @@ class _SignPainter extends CustomPainter {
     String d = 'M 150 70 A 45 45 0 0 0 60 70 L 60 170';
     if (variant == 'top-left') {
       d = 'M 50 70 A 45 45 0 0 1 140 70 L 140 170';
+    } else if (variant == 'top-left-incline') {
+      // Crochet du chiffre 2 : tige en biais vers le bas-gauche.
+      d = 'M 81.8 40.7 A 36.5 36.5 0 0 1 133.4 92.2 L 56 169.6';
     } else if (variant == 'bottom-right') {
       d = 'M 60 30 L 60 130 A 45 45 0 0 0 150 130';
     } else if (variant == 'bottom-left') {

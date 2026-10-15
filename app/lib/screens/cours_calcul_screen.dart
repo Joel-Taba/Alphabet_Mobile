@@ -11,6 +11,7 @@ import '../widgets/small_calc_balls.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Extrait les deux opérandes d'un `CalculProblem.display` (ex. "34 + 89")
@@ -222,7 +223,7 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                                 color: const Color(0xFF6B3F94),
                               ),
                             ),
-                            Text(
+                            UnbrokenText(
                               topic.title[lang.name] ?? topic.title['fr']!,
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 20,
@@ -407,8 +408,8 @@ class _CoursCalculScreenState extends State<CoursCalculScreen> {
                           top: 0,
                           right: 0,
                           child: TraceControlsToolbar(
-                            expandAria: common['toolbarExpandAria'] ?? '',
-                            collapseAria: common['toolbarCollapseAria'] ?? '',
+                            muteLabel: common['muteVoice'] ?? '',
+                            unmuteLabel: common['unmuteVoice'] ?? '',
                             actions: [
                               ToolbarAction(
                                 icon: LucideIcons.rotateCcw,
@@ -558,13 +559,16 @@ class _MultiplicationTableCard extends StatelessWidget {
               border: Border.all(color: border, width: 3),
             ),
             alignment: Alignment.center,
-            child: Text(
-              '$tableNumber',
-              style: TextStyle(
-                fontFamily: kBalooFontFamily,
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-                color: AmaniColors.textPrimary,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$tableNumber',
+                style: TextStyle(
+                  fontFamily: kBalooFontFamily,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  color: AmaniColors.textPrimary,
+                ),
               ),
             ),
           ),

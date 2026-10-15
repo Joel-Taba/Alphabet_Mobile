@@ -4,22 +4,39 @@ import '../services/family_service.dart';
 import '../utils/safe_prefs.dart';
 
 const String kRepetitionsStorageKey = 'amani_setting_repetitions';
-const String kToleranceStorageKey = 'amani_setting_tolerance';
+
+/// Niveau de souplesse du tracé (1 à 10). Nouvelle clé : l'ancienne
+/// (`amani_setting_tolerance`) stockait un pourcentage (1-25), qu'il ne faut
+/// pas relire comme un niveau.
+const String kToleranceStorageKey = 'amani_setting_tolerance_level';
 const String kEvaluationDurationStorageKey =
     'amani_setting_evaluation_duration';
 
 const int kDefaultRepetitions = 3;
 
-/// Tolérance de validation, en points de pourcentage (pas une fraction) —
-/// reflète `src/hooks/useExerciseSettings.ts`, qui stocke la même valeur
-/// brute (ex. 10 pour "10%"), consommée par `RepetitionRow` via `/100`.
-const int kDefaultTolerance = 10;
+/// Souplesse du tracé, affichée comme un simple chiffre de 1 (exigeant) à 10
+/// (très souple). Elle n'élargit que le couloir autour du modèle : le sens du
+/// tracé, le point de départ et le point d'arrivée restent aussi exigeants à
+/// tous les niveaux (voir `anchorTolerancePx` dans `validateTrace`).
+const int kDefaultTolerance = 5;
 const int kDefaultEvaluationDuration = 5;
 
 const int kMinRepetitions = 1;
 const int kMaxRepetitions = 20;
 const int kMinTolerance = 1;
-const int kMaxTolerance = 25;
+const int kMaxTolerance = 10;
+
+/// Largeur du couloir pour un niveau, en % du repère SVG 200×200 (consommée
+/// par `RepetitionRow` via `/100`) : niveau 1 = 10 % (l'ancien réglage par
+/// défaut), niveau 5 = 18 %, niveau 10 = 28 %.
+int tolerancePctForLevel(int level) =>
+    8 + 2 * level.clamp(kMinTolerance, kMaxTolerance);
+
+/// Dernier niveau lu ou choisi, pour les cases de tracé qui n'ont pas accès
+/// aux réglages de leur écran (syllabes, mots — voir `LetterTraceCell`).
+final ValueNotifier<int> toleranceLevelNotifier = ValueNotifier(
+  kDefaultTolerance,
+);
 const int kMinEvaluationDuration = 2;
 const int kMaxEvaluationDuration = 30;
 
@@ -31,6 +48,8 @@ class ExerciseSettings extends ChangeNotifier {
   int tolerance = kDefaultTolerance;
   int evaluationDuration = kDefaultEvaluationDuration;
 
+  int get tolerancePct => tolerancePctForLevel(tolerance);
+
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     // Bornés : une valeur hors plage (stockage abîmé) donnerait sinon un
@@ -41,6 +60,7 @@ class ExerciseSettings extends ChangeNotifier {
     tolerance =
         (prefs.readInt(scopeKey(kToleranceStorageKey)) ?? kDefaultTolerance)
             .clamp(kMinTolerance, kMaxTolerance);
+    toleranceLevelNotifier.value = tolerance;
     evaluationDuration =
         (prefs.readInt(scopeKey(kEvaluationDurationStorageKey)) ??
                 kDefaultEvaluationDuration)
@@ -57,6 +77,7 @@ class ExerciseSettings extends ChangeNotifier {
 
   Future<void> setTolerance(int value) async {
     tolerance = value.clamp(kMinTolerance, kMaxTolerance);
+    toleranceLevelNotifier.value = tolerance;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(scopeKey(kToleranceStorageKey), tolerance);

@@ -16,8 +16,10 @@ List<String> _rejected(String label, String pathD, double tolerance) {
     final user = sampleSvgPath(pathD, n);
     final r = validateTrace(user, ref, tolerance);
     if (!r.valid) {
-      out.add('$label (${user.length} pts) → ${r.failReason} '
-          '(couverture ${(r.coverage * 100).round()} %)');
+      out.add(
+        '$label (${user.length} pts) → ${r.failReason} '
+        '(couverture ${(r.coverage * 100).round()} %)',
+      );
     }
   }
   return out;
@@ -53,15 +55,17 @@ void main() {
     expect(bad, isEmpty, reason: bad.join('\n'));
   });
 
-  test('tracé parfait validé : tous les signes du Palier 1 (tolérance min)',
-      () {
-    // Réglage "Tolérance" minimal (1 %) : 2 unités du repère 200×200.
-    final bad = [
-      for (final e in EXERCISE_CATALOG)
-        ..._rejected('signe ${e['id']}', e['pathD'] as String, 2),
-    ];
-    expect(bad, isEmpty, reason: bad.join('\n'));
-  });
+  test(
+    'tracé parfait validé : tous les signes du Palier 1 (tolérance min)',
+    () {
+      // Réglage "Tolérance" minimal (1 %) : 2 unités du repère 200×200.
+      final bad = [
+        for (final e in EXERCISE_CATALOG)
+          ..._rejected('signe ${e['id']}', e['pathD'] as String, 2),
+      ];
+      expect(bad, isEmpty, reason: bad.join('\n'));
+    },
+  );
 
   test('les mauvais tracés restent refusés (décalé, à l\'envers, à moitié, '
       'gribouillage)', () {
@@ -85,12 +89,17 @@ void main() {
         for (var i = 1; i < ref.length; i++) (ref[i] - ref[i - 1]).distance,
       ].fold<double>(0, (a, b) => a + b);
       if (length < tol * 3) continue;
-      check('$label décalé', [for (final p in user) p + Offset(tol * 3, 0)],
-          ref, tol);
+      check(
+        '$label décalé',
+        [for (final p in user) p + Offset(tol * 3, 0)],
+        ref,
+        tol,
+      );
       // Sens indiscernable : un point n'a pas de sens, et les boucles très
       // étroites du "0"/"8" ont leurs deux côtés à moins d'une tolérance
       // l'un de l'autre.
-      final ambiguous = label.contains('point-') ||
+      final ambiguous =
+          label.contains('point-') ||
           label == 'lettre "0"' ||
           label == 'lettre "8"';
       if (!ambiguous) {

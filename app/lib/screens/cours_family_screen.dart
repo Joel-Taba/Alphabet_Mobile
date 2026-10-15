@@ -17,6 +17,7 @@ import '../utils/trace_validation.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 const Map<String, Color> _familyColor = {
@@ -114,14 +115,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
       ..forward();
     final lang = context.read<LanguageProvider>().lang;
     if (speak) {
-      context.read<SignSpeechService>().speak(
-        spokenSignInstruction(
-          lang,
-          _selectedSign['label'][lang.name] ?? '',
-          _selectedSign['consigne'][lang.name] ?? '',
-        ),
-        lang,
-      );
+      context.read<SignSpeechService>().speak(_spokenSign(lang), lang);
     }
     // Les points du cours ne sont attribués qu'une fois TOUTES les variantes
     // de la famille consultées — jamais dès l'ouverture du cours.
@@ -132,6 +126,22 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
       totalItems: _entries.length,
       palier: 1,
     );
+  }
+
+  /// Phrase lue par la synthèse vocale : exactement le titre-consigne du
+  /// signe sur sa page d'exercice (`exerciceListe.signTitles`), pour que
+  /// l'enfant entende la même phrase que celle qu'il lira en s'entraînant.
+  String _spokenSign(Lang lang) {
+    final titles =
+        (context.read<LanguageProvider>().t['exerciceListe']
+                as Map<String, dynamic>?)?['signTitles']
+            as Map<String, dynamic>?;
+    return titles?[_selectedSign['id']] as String? ??
+        spokenSignInstruction(
+          lang,
+          _selectedSign['label'][lang.name] ?? '',
+          _selectedSign['consigne'][lang.name] ?? '',
+        );
   }
 
   void _selectSign(dynamic sign) {
@@ -201,7 +211,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: UnbrokenText(
                       title,
                       style: TextStyle(
                         fontFamily: kBalooFontFamily,
@@ -296,11 +306,9 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                   top: 0,
                                   right: 0,
                                   child: TraceControlsToolbar(
-                                    expandAria:
-                                        t['common']?['toolbarExpandAria'] ?? '',
-                                    collapseAria:
-                                        t['common']?['toolbarCollapseAria'] ??
-                                        '',
+                                    muteLabel: t['common']?['muteVoice'] ?? '',
+                                    unmuteLabel:
+                                        t['common']?['unmuteVoice'] ?? '',
                                     actions: [
                                       ToolbarAction(
                                         icon: LucideIcons.rotateCcw,
@@ -322,14 +330,7 @@ class _CoursFamilyScreenState extends State<CoursFamilyScreen>
                                         background: AmaniColors.background,
                                         foreground: Colors.black,
                                         onTap: () => speech.speak(
-                                          spokenSignInstruction(
-                                            lang,
-                                            _selectedSign['label'][lang.name] ??
-                                                '',
-                                            _selectedSign['consigne'][lang
-                                                    .name] ??
-                                                '',
-                                          ),
+                                          _spokenSign(lang),
                                           lang,
                                         ),
                                       ),
@@ -610,12 +611,25 @@ class _StrokeAnimPainter extends CustomPainter {
     final isPoint = family == 'point';
 
     if (isPoint) {
+      // Le point se présente simplement : un petit disque déjà plein, sans
+      // pointillés, sans tracé progressif, sans pastilles ni stylet.
       canvas.drawPath(
         fullPath,
         Paint()
-          ..color = const Color(0xFF9BB5CC)
+          ..color = strokeColor
           ..style = PaintingStyle.fill,
       );
+      canvas.drawPath(
+        fullPath,
+        Paint()
+          ..color = strokeColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 9
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+      canvas.restore();
+      return;
     }
 
     // Guide en pointillés
@@ -628,15 +642,6 @@ class _StrokeAnimPainter extends CustomPainter {
       dashPath(fullPath, dashArray: CircularIntervalList<double>([6, 8])),
       guidePaint,
     );
-
-    if (isPoint) {
-      canvas.drawPath(
-        fullPath,
-        Paint()
-          ..color = strokeColor
-          ..style = PaintingStyle.fill,
-      );
-    }
 
     // Trait animé
     Offset? penPos;

@@ -22,6 +22,7 @@ import '../hooks/use_tracing_scroll_lock.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// Exercice d'écriture des syllabes : trace la consonne puis la voyelle pour
@@ -277,7 +278,7 @@ class _ExerciceSyllabesScreenState extends State<ExerciceSyllabesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               tFormat(cs['consonantTitle'] ?? '', {
                                 'consonant': '"${widget.consonant}"',
                               }),
@@ -649,9 +650,8 @@ class _SyllableTraceRowState extends State<_SyllableTraceRow> {
                     ),
                     const SizedBox(width: 6),
                     Flexible(
-                      child: Text(
+                      child: UnbrokenText(
                         '${widget.exampleWordPrefix} « ${((widget.entry['exampleWord'] as Map<String, dynamic>)[lang.name] ?? (widget.entry['exampleWord'] as Map<String, dynamic>)['fr'])} »',
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: kBalooFontFamily,
                           fontWeight: FontWeight.w500,

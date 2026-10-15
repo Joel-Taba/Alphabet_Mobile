@@ -10,6 +10,7 @@ import '../widgets/mini_letter_frame.dart';
 import '../widgets/directional_icon.dart';
 import '../widgets/trace_controls_toolbar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Cours du Palier "Figures géométriques" : anime le tracé de la figure
@@ -164,7 +165,7 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: UnbrokenText(
                       name,
                       style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                     ),
@@ -224,8 +225,10 @@ class _CoursFigureScreenState extends State<CoursFigureScreen> {
                             top: 0,
                             right: 0,
                             child: TraceControlsToolbar(
-                              expandAria: common['toolbarExpandAria'] ?? '',
-                              collapseAria: common['toolbarCollapseAria'] ?? '',
+                              // Ce cours n'a aucune consigne vocale à couper.
+                              showMute: false,
+                              muteLabel: common['muteVoice'] ?? '',
+                              unmuteLabel: common['unmuteVoice'] ?? '',
                               actions: [
                                 ToolbarAction(
                                   icon: LucideIcons.rotateCcw,

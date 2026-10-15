@@ -49,7 +49,8 @@ const Map<String, Map<String, String>> _STATEMENT_TEMPLATES = {
     'ar': 'أرضٌ مربعة الشكل طول ضلعها {side} م.',
   },
   'rectangle': {
-    'fr': 'Un champ rectangulaire mesure {length} m de long et {width} m de large.',
+    'fr':
+        'Un champ rectangulaire mesure {length} m de long et {width} m de large.',
     'en': 'A rectangular field is {length} m long and {width} m wide.',
     'es': 'Un campo rectangular mide {length} m de largo y {width} m de ancho.',
     'ar': 'حقلٌ مستطيل الشكل طوله {length} م وعرضه {width} م.',
@@ -67,9 +68,12 @@ const Map<String, Map<String, String>> _STATEMENT_TEMPLATES = {
     'ar': 'حقلٌ مثلث الشكل أضلاعه {a} م و{b} م و{c} م.',
   },
   'triangle_area': {
-    'fr': 'Un champ triangulaire a une base de {base} m et une hauteur de {height} m.',
-    'en': 'A triangular field has a base of {base} m and a height of {height} m.',
-    'es': 'Un terreno triangular tiene una base de {base} m y una altura de {height} m.',
+    'fr':
+        'Un champ triangulaire a une base de {base} m et une hauteur de {height} m.',
+    'en':
+        'A triangular field has a base of {base} m and a height of {height} m.',
+    'es':
+        'Un terreno triangular tiene una base de {base} m y una altura de {height} m.',
     'ar': 'حقلٌ مثلث الشكل قاعدته {base} م وارتفاعه {height} م.',
   },
   'parallelogramme_perimeter': {
@@ -79,9 +83,12 @@ const Map<String, Map<String, String>> _STATEMENT_TEMPLATES = {
     'ar': 'حقلٌ على شكل متوازي أضلاع طول ضلعيه {a} م و{b} م.',
   },
   'parallelogramme_area': {
-    'fr': 'Un champ en forme de parallélogramme a une base de {base} m et une hauteur de {height} m.',
-    'en': 'A parallelogram-shaped field has a base of {base} m and a height of {height} m.',
-    'es': 'Un terreno en forma de paralelogramo tiene una base de {base} m y una altura de {height} m.',
+    'fr':
+        'Un champ en forme de parallélogramme a une base de {base} m et une hauteur de {height} m.',
+    'en':
+        'A parallelogram-shaped field has a base of {base} m and a height of {height} m.',
+    'es':
+        'Un terreno en forma de paralelogramo tiene una base de {base} m y una altura de {height} m.',
     'ar': 'حقلٌ على شكل متوازي أضلاع قاعدته {base} م وارتفاعه {height} م.',
   },
   'losange_perimeter': {
@@ -91,9 +98,12 @@ const Map<String, Map<String, String>> _STATEMENT_TEMPLATES = {
     'ar': 'حديقةٌ على شكل معين طول ضلعها {side} م.',
   },
   'losange_area': {
-    'fr': 'Un jardin en forme de losange a des diagonales de {bigDiagonal} m et {smallDiagonal} m.',
-    'en': 'A rhombus-shaped garden has diagonals of {bigDiagonal} m and {smallDiagonal} m.',
-    'es': 'Un jardín en forma de rombo tiene diagonales de {bigDiagonal} m y {smallDiagonal} m.',
+    'fr':
+        'Un jardin en forme de losange a des diagonales de {bigDiagonal} m et {smallDiagonal} m.',
+    'en':
+        'A rhombus-shaped garden has diagonals of {bigDiagonal} m and {smallDiagonal} m.',
+    'es':
+        'Un jardín en forma de rombo tiene diagonales de {bigDiagonal} m y {smallDiagonal} m.',
     'ar': 'حديقةٌ على شكل معين قطراها {bigDiagonal} م و{smallDiagonal} م.',
   },
 };
@@ -208,9 +218,8 @@ ShapeCalcProblem _generateOne(String shapeId, ShapeCalcKind kind, Random rng) {
       // Résultat en centièmes, en entiers (π ≈ 3,14) : on re-tire le rayon
       // tant que le résultat tombe pile sur ",5" (ex. aire du cercle de
       // rayon 5 = 78,5), arrondi ambigu pour un enfant.
-      int hundredths(int r) => kind == ShapeCalcKind.perimeter
-          ? 2 * 314 * r
-          : 314 * r * r;
+      int hundredths(int r) =>
+          kind == ShapeCalcKind.perimeter ? 2 * 314 * r : 314 * r * r;
       var radius = 2 + rng.nextInt(9); // 2-10 m
       while (hundredths(radius) % 100 == 50) {
         radius = 2 + rng.nextInt(9);
@@ -291,16 +300,21 @@ const Map<String, Map<String, String>> _COMBINED_TEMPLATES = {
     'ar': 'أرضٌ مربعة الشكل طول ضلعها {side} م.',
   },
   'rectangle': {
-    'fr': 'Un champ rectangulaire mesure {length} m de long et {width} m de large.',
+    'fr':
+        'Un champ rectangulaire mesure {length} m de long et {width} m de large.',
     'en': 'A rectangular field is {length} m long and {width} m wide.',
     'es': 'Un campo rectangular mide {length} m de largo y {width} m de ancho.',
     'ar': 'حقلٌ مستطيل الشكل طوله {length} م وعرضه {width} م.',
   },
   'triangle': {
-    'fr': 'Un triangle isocèle a une base de {base} m et une hauteur de {height} m. Ses côtés égaux mesurent {a} m.',
-    'en': 'An isosceles triangle has a base of {base} m and a height of {height} m. Its equal sides measure {a} m.',
-    'es': 'Un triángulo isósceles tiene una base de {base} m y una altura de {height} m. Sus lados iguales miden {a} m.',
-    'ar': 'مثلثٌ متساوي الساقين قاعدته {base} م وارتفاعه {height} م وساقاه {a} م.',
+    'fr':
+        'Un triangle isocèle a une base de {base} m et une hauteur de {height} m. Ses côtés égaux mesurent {a} m.',
+    'en':
+        'An isosceles triangle has a base of {base} m and a height of {height} m. Its equal sides measure {a} m.',
+    'es':
+        'Un triángulo isósceles tiene una base de {base} m y una altura de {height} m. Sus lados iguales miden {a} m.',
+    'ar':
+        'مثلثٌ متساوي الساقين قاعدته {base} م وارتفاعه {height} م وساقاه {a} م.',
   },
   'cercle': {
     'fr': 'Un bassin rond a un rayon de {radius} m.',
@@ -309,15 +323,22 @@ const Map<String, Map<String, String>> _COMBINED_TEMPLATES = {
     'ar': 'بركةٌ دائرية نصف قطرها {radius} م.',
   },
   'parallelogramme': {
-    'fr': 'Un parallélogramme a une base de {base} m, une hauteur de {height} m et des côtés obliques de {sideB} m.',
-    'en': 'A parallelogram has a base of {base} m, a height of {height} m, and oblique sides of {sideB} m.',
-    'es': 'Un paralelogramo tiene una base de {base} m, una altura de {height} m y lados oblicuos de {sideB} m.',
-    'ar': 'متوازي أضلاع قاعدته {base} م وارتفاعه {height} م وأضلاعه المائلة {sideB} م.',
+    'fr':
+        'Un parallélogramme a une base de {base} m, une hauteur de {height} m et des côtés obliques de {sideB} m.',
+    'en':
+        'A parallelogram has a base of {base} m, a height of {height} m, and oblique sides of {sideB} m.',
+    'es':
+        'Un paralelogramo tiene una base de {base} m, una altura de {height} m y lados oblicuos de {sideB} m.',
+    'ar':
+        'متوازي أضلاع قاعدته {base} م وارتفاعه {height} م وأضلاعه المائلة {sideB} م.',
   },
   'losange': {
-    'fr': 'Un losange a des diagonales de {bigDiagonal} m et {smallDiagonal} m. Ses côtés mesurent {side} m.',
-    'en': 'A rhombus has diagonals of {bigDiagonal} m and {smallDiagonal} m. Its sides measure {side} m.',
-    'es': 'Un rombo tiene diagonales de {bigDiagonal} m y {smallDiagonal} m. Sus lados miden {side} m.',
+    'fr':
+        'Un losange a des diagonales de {bigDiagonal} m et {smallDiagonal} m. Ses côtés mesurent {side} m.',
+    'en':
+        'A rhombus has diagonals of {bigDiagonal} m and {smallDiagonal} m. Its sides measure {side} m.',
+    'es':
+        'Un rombo tiene diagonales de {bigDiagonal} m y {smallDiagonal} m. Sus lados miden {side} m.',
     'ar': 'معينٌ قطراه {bigDiagonal} م و{smallDiagonal} م وأضلاعه {side} م.',
   },
 };
@@ -393,8 +414,11 @@ ShapeCombinedProblem _generateCombined(String shapeId, Random rng) {
       return ShapeCombinedProblem(
         shapeId: shapeId,
         dimensions: {
-          'a': side, 'b': base, 'c': side,
-          'base': base, 'height': height,
+          'a': side,
+          'b': base,
+          'c': side,
+          'base': base,
+          'height': height,
         },
         perimeterAnswer: 2 * side + base,
         areaAnswer: (base * height) ~/ 2,
@@ -404,10 +428,8 @@ ShapeCombinedProblem _generateCombined(String shapeId, Random rng) {
       int hundredthsP(int r) => 2 * 314 * r;
       int hundredthsA(int r) => 314 * r * r;
       var radius = 2 + rng.nextInt(9);
-      while (
-        hundredthsP(radius) % 100 == 50 ||
-        hundredthsA(radius) % 100 == 50
-      ) {
+      while (hundredthsP(radius) % 100 == 50 ||
+          hundredthsA(radius) % 100 == 50) {
         radius = 2 + rng.nextInt(9);
       }
       return ShapeCombinedProblem(
@@ -427,8 +449,11 @@ ShapeCombinedProblem _generateCombined(String shapeId, Random rng) {
       return ShapeCombinedProblem(
         shapeId: shapeId,
         dimensions: {
-          'base': base, 'height': height, 'sideB': sideB,
-          'a': base, 'b': sideB,
+          'base': base,
+          'height': height,
+          'sideB': sideB,
+          'a': base,
+          'b': sideB,
         },
         perimeterAnswer: (base + sideB) * 2,
         areaAnswer: base * height,
@@ -443,9 +468,7 @@ ShapeCombinedProblem _generateCombined(String shapeId, Random rng) {
       final side = 5 * k;
       return ShapeCombinedProblem(
         shapeId: shapeId,
-        dimensions: {
-          'bigDiagonal': big, 'smallDiagonal': small, 'side': side,
-        },
+        dimensions: {'bigDiagonal': big, 'smallDiagonal': small, 'side': side},
         perimeterAnswer: side * 4,
         areaAnswer: (big * small) ~/ 2,
       );

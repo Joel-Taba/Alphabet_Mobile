@@ -181,7 +181,8 @@ class ScribbleCanvasState extends State<ScribbleCanvas> {
     if (onTopOfExisting && previous != null) {
       canvas.drawImageRect(
         previous,
-        Offset.zero & Size(previous.width.toDouble(), previous.height.toDouble()),
+        Offset.zero &
+            Size(previous.width.toDouble(), previous.height.toDouble()),
         Offset.zero & _bakedSize,
         Paint()..filterQuality = FilterQuality.medium,
       );

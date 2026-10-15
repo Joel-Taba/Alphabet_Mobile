@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme/amani_theme.dart';
+import 'unbroken_text.dart';
 import 'amani_mascot.dart';
 
 /// Kit visuel commun aux mini-jeux "Vrai ou Faux ?" et aux quiz (figures,
@@ -348,7 +349,7 @@ class QuizDoneCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
+          UnbrokenText(
             title,
             textAlign: TextAlign.center,
             style: AmaniTheme.titleStyle.copyWith(fontSize: 22),

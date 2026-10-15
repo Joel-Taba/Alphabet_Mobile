@@ -91,11 +91,7 @@ class _SignCardState extends State<SignCard>
           BoxShadow(color: Color(0x2E000000), offset: Offset(0, 3)),
         ],
       );
-      overlay = const Icon(
-        LucideIcons.lock,
-        color: Colors.white,
-        size: 16,
-      );
+      overlay = const Icon(LucideIcons.lock, color: Colors.white, size: 16);
       badgeBg = AmaniColors.textSecondary;
     } else {
       Color ringColor = Colors.transparent;
@@ -107,7 +103,11 @@ class _SignCardState extends State<SignCard>
           break;
         case SignCardState.correct:
           ringColor = AmaniColors.success;
-          overlay = const Icon(LucideIcons.check, color: Colors.white, size: 18);
+          overlay = const Icon(
+            LucideIcons.check,
+            color: Colors.white,
+            size: 18,
+          );
           badgeBg = AmaniColors.success;
           break;
         case SignCardState.incorrect:

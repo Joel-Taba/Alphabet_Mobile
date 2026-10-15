@@ -71,7 +71,13 @@ class _ShapeCalcPainter extends CustomPainter {
         if (problem.kind == ShapeCalcKind.perimeter) {
           _drawLosangePerimeter(canvas, size, d['side']!, unit);
         } else {
-          _drawLosangeArea(canvas, size, d['bigDiagonal']!, d['smallDiagonal']!, unit);
+          _drawLosangeArea(
+            canvas,
+            size,
+            d['bigDiagonal']!,
+            d['smallDiagonal']!,
+            unit,
+          );
         }
         break;
     }
@@ -123,20 +129,27 @@ class _ShapeCalcPainter extends CustomPainter {
       canvas,
       Offset(mid.dx, rect.top),
       Offset(mid.dx, rect.bottom),
-      Paint()..color = Colors.white..strokeWidth = 1.6,
-      dash: 5, gap: 4,
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1.6,
+      dash: 5,
+      gap: 4,
     );
     // Cercle central
     _dashedCircle(
-      canvas, mid, fieldSize * 0.18,
-      Paint()..color = Colors.white..strokeWidth = 1.6,
+      canvas,
+      mid,
+      fieldSize * 0.18,
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1.6,
     );
 
     // Fourmis aux 4 coins
     _emoji(canvas, '🐜', Offset(rect.left - 10, rect.top - 12), size: 13);
-    _emoji(canvas, '🐜', Offset(rect.right - 4,  rect.top - 12), size: 13);
+    _emoji(canvas, '🐜', Offset(rect.right - 4, rect.top - 12), size: 13);
     _emoji(canvas, '🐜', Offset(rect.left - 10, rect.bottom - 2), size: 13);
-    _emoji(canvas, '🐜', Offset(rect.right - 4,  rect.bottom - 2), size: 13);
+    _emoji(canvas, '🐜', Offset(rect.right - 4, rect.bottom - 2), size: 13);
 
     // Ticks "côtés égaux"
     final tickPaint = Paint()
@@ -148,8 +161,12 @@ class _ShapeCalcPainter extends CustomPainter {
       [rect.topLeft, rect.bottomLeft],
       [rect.topRight, rect.bottomRight],
     ]) {
-      _tick(canvas, Offset.lerp(edge[0], edge[1], 0.5)!,
-            (edge[1] - edge[0]).normalized(), tickPaint);
+      _tick(
+        canvas,
+        Offset.lerp(edge[0], edge[1], 0.5)!,
+        (edge[1] - edge[0]).normalized(),
+        tickPaint,
+      );
     }
 
     // Label
@@ -158,7 +175,13 @@ class _ShapeCalcPainter extends CustomPainter {
 
   // ─────────────────────────────────────── Rectangle — piscine des dauphins
 
-  void _drawRectangle(Canvas canvas, Size s, int length, int width, String unit) {
+  void _drawRectangle(
+    Canvas canvas,
+    Size s,
+    int length,
+    int width,
+    String unit,
+  ) {
     // Fond ciel/carrelage
     canvas.drawRect(
       Rect.fromLTWH(0, 0, s.width, s.height),
@@ -204,7 +227,12 @@ class _ShapeCalcPainter extends CustomPainter {
     );
 
     // Dauphin
-    _emoji(canvas, '🐬', Offset(rect.center.dx - 8, rect.center.dy - 10), size: 22);
+    _emoji(
+      canvas,
+      '🐬',
+      Offset(rect.center.dx - 8, rect.center.dy - 10),
+      size: 22,
+    );
 
     // Labels
     _label(canvas, '$length $unit', Offset(rect.center.dx, rect.bottom + 18));
@@ -213,7 +241,14 @@ class _ShapeCalcPainter extends CustomPainter {
 
   // ─────────────────────────────────────── Triangle — champ (périmètre)
 
-  void _drawTrianglePerimeter(Canvas c, Size s, int a, int b, int cSide, String unit) {
+  void _drawTrianglePerimeter(
+    Canvas c,
+    Size s,
+    int a,
+    int b,
+    int cSide,
+    String unit,
+  ) {
     c.drawRect(
       Rect.fromLTWH(0, 0, s.width, s.height),
       Paint()..color = const Color(0xFFF9F3DC),
@@ -301,22 +336,30 @@ class _ShapeCalcPainter extends CustomPainter {
       ..color = const Color(0xFF8D6E63)
       ..strokeWidth = 3.5
       ..strokeCap = StrokeCap.round;
-    c.drawLine(Offset(cx - r * 0.6, cy + r), Offset(cx, cy + r * 0.08), standPaint);
-    c.drawLine(Offset(cx + r * 0.6, cy + r), Offset(cx, cy + r * 0.08), standPaint);
+    c.drawLine(
+      Offset(cx - r * 0.6, cy + r),
+      Offset(cx, cy + r * 0.08),
+      standPaint,
+    );
+    c.drawLine(
+      Offset(cx + r * 0.6, cy + r),
+      Offset(cx, cy + r * 0.08),
+      standPaint,
+    );
     // Sol
     c.drawLine(
       Offset(cx - r * 0.8, cy + r + 1),
       Offset(cx + r * 0.8, cy + r + 1),
-      Paint()..color = const Color(0xFF8D6E63)..strokeWidth = 3,
+      Paint()
+        ..color = const Color(0xFF8D6E63)
+        ..strokeWidth = 3,
     );
 
     // Roue (cercle)
+    c.drawCircle(Offset(cx, cy), r, Paint()..color = const Color(0xFFFFF9C4));
     c.drawCircle(
-      Offset(cx, cy), r,
-      Paint()..color = const Color(0xFFFFF9C4),
-    );
-    c.drawCircle(
-      Offset(cx, cy), r,
+      Offset(cx, cy),
+      r,
       Paint()
         ..color = const Color(0xFFF57F17)
         ..style = PaintingStyle.stroke
@@ -346,12 +389,17 @@ class _ShapeCalcPainter extends CustomPainter {
           Rect.fromCenter(center: Offset(gx, gy + 6), width: 10, height: 7),
           const Radius.circular(3),
         ),
-        Paint()..color = [
-          const Color(0xFFF44336), const Color(0xFF2196F3),
-          const Color(0xFF4CAF50), const Color(0xFFFF9800),
-          const Color(0xFF9C27B0), const Color(0xFF00BCD4),
-          const Color(0xFFE91E63), const Color(0xFFFFEB3B),
-        ][i],
+        Paint()
+          ..color = [
+            const Color(0xFFF44336),
+            const Color(0xFF2196F3),
+            const Color(0xFF4CAF50),
+            const Color(0xFFFF9800),
+            const Color(0xFF9C27B0),
+            const Color(0xFF00BCD4),
+            const Color(0xFFE91E63),
+            const Color(0xFFFFEB3B),
+          ][i],
       );
     }
 
@@ -374,7 +422,7 @@ class _ShapeCalcPainter extends CustomPainter {
 
     final cx = s.width / 2;
     final cy = s.height * 0.45;
-    final hw = s.width * 0.30;  // demi-largeur
+    final hw = s.width * 0.30; // demi-largeur
     final hh = s.height * 0.38; // demi-hauteur
 
     final top = Offset(cx, cy - hh);
@@ -422,12 +470,27 @@ class _ShapeCalcPainter extends CustomPainter {
     _kiteString(c, bottom, s.height);
 
     // Label côté
-    _label(c, '$side $unit', Offset.lerp(top, right, 0.5)! + const Offset(16, -4));
+    _label(
+      c,
+      '$side $unit',
+      Offset.lerp(top, right, 0.5)! + const Offset(16, -4),
+    );
     // Ticks côtés égaux
-    final tPaint = Paint()..color = Colors.white..strokeWidth = 1.4;
-    for (final edge in [[top, right], [right, bottom], [bottom, left], [left, top]]) {
-      _tick(c, Offset.lerp(edge[0], edge[1], 0.5)!,
-            (edge[1] - edge[0]).normalized(), tPaint);
+    final tPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.4;
+    for (final edge in [
+      [top, right],
+      [right, bottom],
+      [bottom, left],
+      [left, top],
+    ]) {
+      _tick(
+        c,
+        Offset.lerp(edge[0], edge[1], 0.5)!,
+        (edge[1] - edge[0]).normalized(),
+        tPaint,
+      );
     }
   }
 
@@ -447,8 +510,10 @@ class _ShapeCalcPainter extends CustomPainter {
     final left = Offset(cx - hw, cy);
 
     final colors = [
-      const Color(0xFFEF5350), const Color(0xFF42A5F5),
-      const Color(0xFFFFCA28), const Color(0xFF66BB6A),
+      const Color(0xFFEF5350),
+      const Color(0xFF42A5F5),
+      const Color(0xFFFFCA28),
+      const Color(0xFF66BB6A),
     ];
     final quad = [
       [top, right, Offset(cx, cy)],
@@ -470,24 +535,46 @@ class _ShapeCalcPainter extends CustomPainter {
       ..lineTo(bottom.dx, bottom.dy)
       ..lineTo(left.dx, left.dy)
       ..close();
-    c.drawPath(outline, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+    c.drawPath(
+      outline,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
 
     // Diagonales en tirets
-    final dp = Paint()..color = Colors.white..strokeWidth = 1.8;
+    final dp = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.8;
     _dashedLine(c, top, bottom, dp);
     _dashedLine(c, left, right, dp);
 
     _kiteString(c, bottom, s.height);
 
-    _label(c, '$big $unit', Offset(cx - 26, cy - hh / 2 - 8),
-        bgColor: Colors.white.withValues(alpha: 0.9));
-    _label(c, '$small $unit', Offset(cx + hw / 2 + 14, cy - 8),
-        bgColor: Colors.white.withValues(alpha: 0.9));
+    _label(
+      c,
+      '$big $unit',
+      Offset(cx - 26, cy - hh / 2 - 8),
+      bgColor: Colors.white.withValues(alpha: 0.9),
+    );
+    _label(
+      c,
+      '$small $unit',
+      Offset(cx + hw / 2 + 14, cy - 8),
+      bgColor: Colors.white.withValues(alpha: 0.9),
+    );
   }
 
   // ─────────────────────────────────────── Parallélogramme — satellite (périmètre)
 
-  void _drawParallelogramPerimeter(Canvas c, Size s, int a, int b, String unit) {
+  void _drawParallelogramPerimeter(
+    Canvas c,
+    Size s,
+    int a,
+    int b,
+    String unit,
+  ) {
     _spaceBackground(c, s);
 
     final bl = Offset(s.width * 0.18, s.height * 0.84);
@@ -496,18 +583,31 @@ class _ShapeCalcPainter extends CustomPainter {
     final tl = bl + slant;
     final tr = br + slant;
 
-    _drawSatellitePanel(c, tl, tr, br, bl,
-        color: const Color(0xFF1565C0));
+    _drawSatellitePanel(c, tl, tr, br, bl, color: const Color(0xFF1565C0));
 
-    _label(c, '$a $unit', Offset((bl.dx + br.dx) / 2, bl.dy + 18),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
-    _label(c, '$b $unit', Offset.lerp(tl, bl, 0.5)! + const Offset(-28, 0),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
+    _label(
+      c,
+      '$a $unit',
+      Offset((bl.dx + br.dx) / 2, bl.dy + 18),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
+    _label(
+      c,
+      '$b $unit',
+      Offset.lerp(tl, bl, 0.5)! + const Offset(-28, 0),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
   }
 
   // ─────────────────────────────────────── Parallélogramme — satellite (aire)
 
-  void _drawParallelogramArea(Canvas c, Size s, int base, int height, String unit) {
+  void _drawParallelogramArea(
+    Canvas c,
+    Size s,
+    int base,
+    int height,
+    String unit,
+  ) {
     _spaceBackground(c, s);
 
     final bl = Offset(s.width * 0.20, s.height * 0.84);
@@ -517,26 +617,43 @@ class _ShapeCalcPainter extends CustomPainter {
     final tr = br + slant;
     final foot = Offset(tl.dx, bl.dy);
 
-    _drawSatellitePanel(c, tl, tr, br, bl,
-        color: const Color(0xFF1565C0));
+    _drawSatellitePanel(c, tl, tr, br, bl, color: const Color(0xFF1565C0));
 
-    final dp = Paint()..color = const Color(0xFFFFCA28)..strokeWidth = 1.8;
+    final dp = Paint()
+      ..color = const Color(0xFFFFCA28)
+      ..strokeWidth = 1.8;
     _dashedLine(c, tl, foot, dp);
     _rightAngle(c, foot, const Offset(-1, 0), const Offset(0, -1), dp);
 
-    _label(c, '$base $unit', Offset((bl.dx + br.dx) / 2, bl.dy + 18),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
-    _label(c, '$height $unit', Offset(foot.dx - 30, (tl.dy + foot.dy) / 2),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
+    _label(
+      c,
+      '$base $unit',
+      Offset((bl.dx + br.dx) / 2, bl.dy + 18),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
+    _label(
+      c,
+      '$height $unit',
+      Offset(foot.dx - 30, (tl.dy + foot.dy) / 2),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
   }
 
   // ─────────────────────────────────────── Primitives partagées
 
-  void _drawSatellitePanel(Canvas c, Offset tl, Offset tr, Offset br, Offset bl, {required Color color}) {
+  void _drawSatellitePanel(
+    Canvas c,
+    Offset tl,
+    Offset tr,
+    Offset br,
+    Offset bl, {
+    required Color color,
+  }) {
     // Corps satellite (petit rectangle)
     final bodyRect = Rect.fromCenter(
       center: Offset((tl.dx + tr.dx) / 2, (tl.dy + tr.dy) / 2 - 14),
-      width: 28, height: 18,
+      width: 28,
+      height: 18,
     );
     c.drawRRect(
       RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
@@ -544,7 +661,10 @@ class _ShapeCalcPainter extends CustomPainter {
     );
     c.drawRRect(
       RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
-      Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
     );
     _emoji(c, '🛰️', Offset(bodyRect.left - 4, bodyRect.top - 10), size: 16);
 
@@ -562,16 +682,8 @@ class _ShapeCalcPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: 0.25)
       ..strokeWidth = 0.8;
     for (double t = 0.25; t < 1.0; t += 0.25) {
-      c.drawLine(
-        Offset.lerp(tl, bl, t)!,
-        Offset.lerp(tr, br, t)!,
-        cellPaint,
-      );
-      c.drawLine(
-        Offset.lerp(tl, tr, t)!,
-        Offset.lerp(bl, br, t)!,
-        cellPaint,
-      );
+      c.drawLine(Offset.lerp(tl, bl, t)!, Offset.lerp(tr, br, t)!, cellPaint);
+      c.drawLine(Offset.lerp(tl, tr, t)!, Offset.lerp(bl, br, t)!, cellPaint);
     }
 
     c.drawPath(
@@ -625,12 +737,19 @@ class _ShapeCalcPainter extends CustomPainter {
     final path = Path()
       ..moveTo(bottom.dx, bottom.dy)
       ..quadraticBezierTo(
-        bottom.dx + 10, bottom.dy + (endY - bottom.dy) * 0.4,
-        bottom.dx - 6, endY,
+        bottom.dx + 10,
+        bottom.dy + (endY - bottom.dy) * 0.4,
+        bottom.dx - 6,
+        endY,
       );
     c.drawPath(path, stringPaint);
     // Petits rubans
-    _emoji(c, '🎀', Offset(bottom.dx - 10, bottom.dy + (endY - bottom.dy) * 0.35), size: 10);
+    _emoji(
+      c,
+      '🎀',
+      Offset(bottom.dx - 10, bottom.dy + (endY - bottom.dy) * 0.35),
+      size: 10,
+    );
   }
 
   void _label(Canvas canvas, String text, Offset center, {Color? bgColor}) {
@@ -660,7 +779,10 @@ class _ShapeCalcPainter extends CustomPainter {
 
   void _emoji(Canvas canvas, String emoji, Offset topLeft, {double size = 14}) {
     final tp = TextPainter(
-      text: TextSpan(text: emoji, style: TextStyle(fontSize: size)),
+      text: TextSpan(
+        text: emoji,
+        style: TextStyle(fontSize: size),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, topLeft);
@@ -671,8 +793,14 @@ class _ShapeCalcPainter extends CustomPainter {
     canvas.drawLine(mid - perp * 5, mid + perp * 5, paint);
   }
 
-  void _dashedLine(Canvas canvas, Offset a, Offset b, Paint paint,
-      {double dash = 5, double gap = 4}) {
+  void _dashedLine(
+    Canvas canvas,
+    Offset a,
+    Offset b,
+    Paint paint, {
+    double dash = 5,
+    double gap = 4,
+  }) {
     final total = (b - a).distance;
     final dir = (b - a) / total;
     var t = 0.0;
@@ -686,8 +814,14 @@ class _ShapeCalcPainter extends CustomPainter {
     }
   }
 
-  void _dashedCircle(Canvas canvas, Offset center, double r, Paint paint,
-      {double dash = 0.2, double gap = 0.15}) {
+  void _dashedCircle(
+    Canvas canvas,
+    Offset center,
+    double r,
+    Paint paint, {
+    double dash = 0.2,
+    double gap = 0.15,
+  }) {
     double angle = 0;
     bool draw = true;
     while (angle < math.pi * 2) {
@@ -695,7 +829,10 @@ class _ShapeCalcPainter extends CustomPainter {
       if (draw) {
         canvas.drawArc(
           Rect.fromCircle(center: center, radius: r),
-          angle, len, false, paint,
+          angle,
+          len,
+          false,
+          paint,
         );
       }
       angle += len;
@@ -703,7 +840,13 @@ class _ShapeCalcPainter extends CustomPainter {
     }
   }
 
-  void _rightAngle(Canvas canvas, Offset corner, Offset u, Offset v, Paint paint) {
+  void _rightAngle(
+    Canvas canvas,
+    Offset corner,
+    Offset u,
+    Offset v,
+    Paint paint,
+  ) {
     const s = 10.0;
     final p1 = corner + u * s;
     final p2 = corner + u * s + v * s;
@@ -773,22 +916,44 @@ class _ShapeCombinedPainter extends CustomPainter {
         _drawRectangle(canvas, size, d['length']!, d['width']!, unit);
         break;
       case 'triangle':
-        _drawTriangleCombined(canvas, size, d['base']!, d['height']!, d['a']!, unit);
+        _drawTriangleCombined(
+          canvas,
+          size,
+          d['base']!,
+          d['height']!,
+          d['a']!,
+          unit,
+        );
         break;
       case 'cercle':
         _drawCercle(canvas, size, d['radius']!, unit);
         break;
       case 'parallelogramme':
-        _drawParallelogramCombined(canvas, size, d['base']!, d['height']!, d['sideB']!, unit);
+        _drawParallelogramCombined(
+          canvas,
+          size,
+          d['base']!,
+          d['height']!,
+          d['sideB']!,
+          unit,
+        );
         break;
       case 'losange':
-        _drawLosangeCombined(canvas, size, d['bigDiagonal']!, d['smallDiagonal']!, d['side']!, unit);
+        _drawLosangeCombined(
+          canvas,
+          size,
+          d['bigDiagonal']!,
+          d['smallDiagonal']!,
+          d['side']!,
+          unit,
+        );
         break;
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ShapeCombinedPainter old) => old.problem != problem;
+  bool shouldRepaint(covariant _ShapeCombinedPainter old) =>
+      old.problem != problem;
 
   // ── Carré — identique au diagramme périmètre (côté suffit pour les deux) ──
 
@@ -814,41 +979,77 @@ class _ShapeCombinedPainter extends CustomPainter {
     final oy = (s.height - fieldSize) / 2 - 8;
     final rect = Rect.fromLTWH(ox, oy, fieldSize, fieldSize);
     canvas.drawRect(rect, Paint()..color = const Color(0xFF5DB83B));
-    canvas.drawRect(rect, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2.5);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
     final mid = rect.center;
-    _dashedLine(canvas, Offset(mid.dx, rect.top), Offset(mid.dx, rect.bottom),
-        Paint()..color = Colors.white..strokeWidth = 1.6, dash: 5, gap: 4);
-    _dashedCircle(canvas, mid, fieldSize * 0.18,
-        Paint()..color = Colors.white..strokeWidth = 1.6);
+    _dashedLine(
+      canvas,
+      Offset(mid.dx, rect.top),
+      Offset(mid.dx, rect.bottom),
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1.6,
+      dash: 5,
+      gap: 4,
+    );
+    _dashedCircle(
+      canvas,
+      mid,
+      fieldSize * 0.18,
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1.6,
+    );
     _emoji(canvas, '🐜', Offset(rect.left - 10, rect.top - 12), size: 13);
     _emoji(canvas, '🐜', Offset(rect.right - 4, rect.top - 12), size: 13);
     _emoji(canvas, '🐜', Offset(rect.left - 10, rect.bottom - 2), size: 13);
     _emoji(canvas, '🐜', Offset(rect.right - 4, rect.bottom - 2), size: 13);
-    final tickPaint = Paint()..color = Colors.white..strokeWidth = 1.4;
+    final tickPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.4;
     for (final edge in [
       [rect.topLeft, rect.topRight],
       [rect.bottomLeft, rect.bottomRight],
       [rect.topLeft, rect.bottomLeft],
       [rect.topRight, rect.bottomRight],
     ]) {
-      _tick(canvas, Offset.lerp(edge[0], edge[1], 0.5)!,
-          (edge[1] - edge[0]).normalized(), tickPaint);
+      _tick(
+        canvas,
+        Offset.lerp(edge[0], edge[1], 0.5)!,
+        (edge[1] - edge[0]).normalized(),
+        tickPaint,
+      );
     }
     _label(canvas, '$side $unit', Offset(rect.center.dx, rect.bottom + 18));
   }
 
   // ── Rectangle — identique (longueur + largeur suffisent pour les deux) ──
 
-  void _drawRectangle(Canvas canvas, Size s, int length, int width, String unit) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, s.width, s.height),
-        Paint()..color = const Color(0xFFE1F5FE));
+  void _drawRectangle(
+    Canvas canvas,
+    Size s,
+    int length,
+    int width,
+    String unit,
+  ) {
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFFE1F5FE),
+    );
     final pw = s.width * 0.74;
     final ph = s.height * 0.62;
     final ox = (s.width - pw) / 2;
     final oy = (s.height - ph) / 2 - 6;
     final rect = Rect.fromLTWH(ox, oy, pw, ph);
-    canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(10)),
-        Paint()..color = const Color(0xFF4FC3F7));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+      Paint()..color = const Color(0xFF4FC3F7),
+    );
     final wavePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.7)
       ..style = PaintingStyle.stroke
@@ -865,18 +1066,37 @@ class _ShapeCombinedPainter extends CustomPainter {
       }
       canvas.drawPath(path, wavePaint);
     }
-    canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(10)),
-        Paint()..color = const Color(0xFF0277BD)..style = PaintingStyle.stroke..strokeWidth = 2.5);
-    _emoji(canvas, '🐬', Offset(rect.center.dx - 8, rect.center.dy - 10), size: 22);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+      Paint()
+        ..color = const Color(0xFF0277BD)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
+    _emoji(
+      canvas,
+      '🐬',
+      Offset(rect.center.dx - 8, rect.center.dy - 10),
+      size: 22,
+    );
     _label(canvas, '$length $unit', Offset(rect.center.dx, rect.bottom + 18));
     _label(canvas, '$width $unit', Offset(rect.right + 26, rect.center.dy));
   }
 
   // ── Triangle — isocèle : base + hauteur (tirets) + côté ──
 
-  void _drawTriangleCombined(Canvas c, Size s, int base, int height, int side, String unit) {
-    c.drawRect(Rect.fromLTWH(0, 0, s.width, s.height),
-        Paint()..color = const Color(0xFFF9F3DC));
+  void _drawTriangleCombined(
+    Canvas c,
+    Size s,
+    int base,
+    int height,
+    int side,
+    String unit,
+  ) {
+    c.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFFF9F3DC),
+    );
 
     // Triangle isocèle symétrique
     final apex = Offset(s.width / 2, s.height * 0.1);
@@ -890,65 +1110,118 @@ class _ShapeCombinedPainter extends CustomPainter {
       ..lineTo(bl.dx, bl.dy)
       ..close();
     c.drawPath(path, Paint()..color = const Color(0xFF66BB6A));
-    c.drawPath(path, Paint()..color = const Color(0xFF2E7D32)..style = PaintingStyle.stroke..strokeWidth = 2.5);
+    c.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF2E7D32)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
     _emoji(c, '🌻', Offset(s.width / 2 - 8, s.height / 2 - 4), size: 15);
 
     // Hauteur en tirets
-    final dp = Paint()..color = const Color(0xFF1565C0)..strokeWidth = 1.8;
+    final dp = Paint()
+      ..color = const Color(0xFF1565C0)
+      ..strokeWidth = 1.8;
     _dashedLine(c, apex, foot, dp);
     _rightAngle(c, foot, const Offset(-1, 0), const Offset(0, -1), dp);
 
     // Ticks côtés égaux
-    final tPaint = Paint()..color = const Color(0xFF2E7D32).withValues(alpha: 0.7)..strokeWidth = 1.4;
+    final tPaint = Paint()
+      ..color = const Color(0xFF2E7D32).withValues(alpha: 0.7)
+      ..strokeWidth = 1.4;
     _tick(c, Offset.lerp(apex, bl, 0.5)!, (bl - apex).normalized(), tPaint);
     _tick(c, Offset.lerp(apex, br, 0.5)!, (br - apex).normalized(), tPaint);
 
     // Labels
     _label(c, '$base $unit', Offset(s.width / 2, bl.dy + 18));
     _label(c, '$height $unit', Offset(foot.dx + 34, (apex.dy + foot.dy) / 2));
-    _label(c, '$side $unit', Offset.lerp(apex, bl, 0.5)! + const Offset(-28, 0));
+    _label(
+      c,
+      '$side $unit',
+      Offset.lerp(apex, bl, 0.5)! + const Offset(-28, 0),
+    );
   }
 
   // ── Cercle — identique (rayon suffit pour les deux) ──
 
   void _drawCercle(Canvas c, Size s, int radius, String unit) {
-    c.drawRect(Rect.fromLTWH(0, 0, s.width, s.height),
-        Paint()..color = const Color(0xFFE3F2FD));
+    c.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFFE3F2FD),
+    );
     _cloudBlob(c, Offset(s.width * 0.1, s.height * 0.1), 22);
     _cloudBlob(c, Offset(s.width * 0.82, s.height * 0.08), 18);
     final cx = s.width / 2;
     final cy = s.height * 0.46;
     final r = math.min(s.width * 0.34, s.height * 0.38);
-    final standPaint = Paint()..color = const Color(0xFF8D6E63)..strokeWidth = 3.5..strokeCap = StrokeCap.round;
-    c.drawLine(Offset(cx - r * 0.6, cy + r), Offset(cx, cy + r * 0.08), standPaint);
-    c.drawLine(Offset(cx + r * 0.6, cy + r), Offset(cx, cy + r * 0.08), standPaint);
-    c.drawLine(Offset(cx - r * 0.8, cy + r + 1), Offset(cx + r * 0.8, cy + r + 1),
-        Paint()..color = const Color(0xFF8D6E63)..strokeWidth = 3);
+    final standPaint = Paint()
+      ..color = const Color(0xFF8D6E63)
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
+    c.drawLine(
+      Offset(cx - r * 0.6, cy + r),
+      Offset(cx, cy + r * 0.08),
+      standPaint,
+    );
+    c.drawLine(
+      Offset(cx + r * 0.6, cy + r),
+      Offset(cx, cy + r * 0.08),
+      standPaint,
+    );
+    c.drawLine(
+      Offset(cx - r * 0.8, cy + r + 1),
+      Offset(cx + r * 0.8, cy + r + 1),
+      Paint()
+        ..color = const Color(0xFF8D6E63)
+        ..strokeWidth = 3,
+    );
     c.drawCircle(Offset(cx, cy), r, Paint()..color = const Color(0xFFFFF9C4));
-    c.drawCircle(Offset(cx, cy), r,
-        Paint()..color = const Color(0xFFF57F17)..style = PaintingStyle.stroke..strokeWidth = 3);
-    final spokePaint = Paint()..color = const Color(0xFFFF8F00)..strokeWidth = 1.5;
+    c.drawCircle(
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..color = const Color(0xFFF57F17)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
+    final spokePaint = Paint()
+      ..color = const Color(0xFFFF8F00)
+      ..strokeWidth = 1.5;
     for (int i = 0; i < 8; i++) {
       final angle = i * math.pi / 4;
-      c.drawLine(Offset(cx, cy), Offset(cx + r * math.cos(angle), cy + r * math.sin(angle)), spokePaint);
+      c.drawLine(
+        Offset(cx, cy),
+        Offset(cx + r * math.cos(angle), cy + r * math.sin(angle)),
+        spokePaint,
+      );
     }
     for (int i = 0; i < 8; i++) {
       final angle = i * math.pi / 4;
       final gx = cx + r * math.cos(angle);
       final gy = cy + r * math.sin(angle);
       c.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(gx, gy + 6), width: 10, height: 7),
-            const Radius.circular(3)),
-        Paint()..color = [
-          const Color(0xFFF44336), const Color(0xFF2196F3),
-          const Color(0xFF4CAF50), const Color(0xFFFF9800),
-          const Color(0xFF9C27B0), const Color(0xFF00BCD4),
-          const Color(0xFFE91E63), const Color(0xFFFFEB3B),
-        ][i],
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset(gx, gy + 6), width: 10, height: 7),
+          const Radius.circular(3),
+        ),
+        Paint()
+          ..color = [
+            const Color(0xFFF44336),
+            const Color(0xFF2196F3),
+            const Color(0xFF4CAF50),
+            const Color(0xFFFF9800),
+            const Color(0xFF9C27B0),
+            const Color(0xFF00BCD4),
+            const Color(0xFFE91E63),
+            const Color(0xFFFFEB3B),
+          ][i],
       );
     }
     c.drawCircle(Offset(cx, cy), 6, Paint()..color = const Color(0xFFBF360C));
-    final dashedPaint = Paint()..color = const Color(0xFF1565C0)..strokeWidth = 1.8;
+    final dashedPaint = Paint()
+      ..color = const Color(0xFF1565C0)
+      ..strokeWidth = 1.8;
     _dashedLine(c, Offset(cx, cy), Offset(cx + r, cy), dashedPaint);
     c.drawCircle(Offset(cx, cy), 2, Paint()..color = const Color(0xFF1565C0));
     _label(c, '$radius $unit', Offset(cx + r / 2, cy - 14));
@@ -956,7 +1229,14 @@ class _ShapeCombinedPainter extends CustomPainter {
 
   // ── Parallélogramme combiné : base + hauteur (tirets) + côté oblique ──
 
-  void _drawParallelogramCombined(Canvas c, Size s, int base, int height, int sideB, String unit) {
+  void _drawParallelogramCombined(
+    Canvas c,
+    Size s,
+    int base,
+    int height,
+    int sideB,
+    String unit,
+  ) {
     _spaceBackground(c, s);
 
     final bl = Offset(s.width * 0.20, s.height * 0.84);
@@ -969,22 +1249,43 @@ class _ShapeCombinedPainter extends CustomPainter {
     _drawSatellitePanel(c, tl, tr, br, bl, color: const Color(0xFF1565C0));
 
     // Hauteur en tirets
-    final dp = Paint()..color = const Color(0xFFFFCA28)..strokeWidth = 1.8;
+    final dp = Paint()
+      ..color = const Color(0xFFFFCA28)
+      ..strokeWidth = 1.8;
     _dashedLine(c, tl, foot, dp);
     _rightAngle(c, foot, const Offset(-1, 0), const Offset(0, -1), dp);
 
-    _label(c, '$base $unit', Offset((bl.dx + br.dx) / 2, bl.dy + 18),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
-    _label(c, '$height $unit', Offset(foot.dx - 30, (tl.dy + foot.dy) / 2),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
+    _label(
+      c,
+      '$base $unit',
+      Offset((bl.dx + br.dx) / 2, bl.dy + 18),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
+    _label(
+      c,
+      '$height $unit',
+      Offset(foot.dx - 30, (tl.dy + foot.dy) / 2),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
     // Côté oblique (gauche)
-    _label(c, '$sideB $unit', Offset.lerp(tl, bl, 0.5)! + const Offset(-30, 0),
-        bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9));
+    _label(
+      c,
+      '$sideB $unit',
+      Offset.lerp(tl, bl, 0.5)! + const Offset(-30, 0),
+      bgColor: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+    );
   }
 
   // ── Losange combiné : deux diagonales (tirets) + côté ──
 
-  void _drawLosangeCombined(Canvas c, Size s, int big, int small, int side, String unit) {
+  void _drawLosangeCombined(
+    Canvas c,
+    Size s,
+    int big,
+    int small,
+    int side,
+    String unit,
+  ) {
     _skyBackground(c, s);
 
     final cx = s.width / 2;
@@ -998,8 +1299,10 @@ class _ShapeCombinedPainter extends CustomPainter {
     final left = Offset(cx - hw, cy);
 
     final colors = [
-      const Color(0xFFEF5350), const Color(0xFF42A5F5),
-      const Color(0xFFFFCA28), const Color(0xFF66BB6A),
+      const Color(0xFFEF5350),
+      const Color(0xFF42A5F5),
+      const Color(0xFFFFCA28),
+      const Color(0xFF66BB6A),
     ];
     final quad = [
       [top, right, Offset(cx, cy)],
@@ -1021,42 +1324,88 @@ class _ShapeCombinedPainter extends CustomPainter {
       ..lineTo(bottom.dx, bottom.dy)
       ..lineTo(left.dx, left.dy)
       ..close();
-    c.drawPath(outline, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+    c.drawPath(
+      outline,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
 
     // Diagonales en tirets
-    final dp = Paint()..color = Colors.white..strokeWidth = 1.8;
+    final dp = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.8;
     _dashedLine(c, top, bottom, dp);
     _dashedLine(c, left, right, dp);
 
     _kiteString(c, bottom, s.height);
 
     // Labels diagonales
-    _label(c, '$big $unit', Offset(cx - 26, cy - hh / 2 - 8),
-        bgColor: Colors.white.withValues(alpha: 0.9));
-    _label(c, '$small $unit', Offset(cx + hw / 2 + 14, cy - 8),
-        bgColor: Colors.white.withValues(alpha: 0.9));
+    _label(
+      c,
+      '$big $unit',
+      Offset(cx - 26, cy - hh / 2 - 8),
+      bgColor: Colors.white.withValues(alpha: 0.9),
+    );
+    _label(
+      c,
+      '$small $unit',
+      Offset(cx + hw / 2 + 14, cy - 8),
+      bgColor: Colors.white.withValues(alpha: 0.9),
+    );
     // Label côté (bord haut-droite)
-    _label(c, '$side $unit', Offset.lerp(top, right, 0.5)! + const Offset(16, -6),
-        bgColor: Colors.white.withValues(alpha: 0.9));
+    _label(
+      c,
+      '$side $unit',
+      Offset.lerp(top, right, 0.5)! + const Offset(16, -6),
+      bgColor: Colors.white.withValues(alpha: 0.9),
+    );
     // Tick côtés égaux
-    final tPaint = Paint()..color = Colors.white..strokeWidth = 1.4;
-    for (final edge in [[top, right], [right, bottom], [bottom, left], [left, top]]) {
-      _tick(c, Offset.lerp(edge[0], edge[1], 0.5)!,
-          (edge[1] - edge[0]).normalized(), tPaint);
+    final tPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.4;
+    for (final edge in [
+      [top, right],
+      [right, bottom],
+      [bottom, left],
+      [left, top],
+    ]) {
+      _tick(
+        c,
+        Offset.lerp(edge[0], edge[1], 0.5)!,
+        (edge[1] - edge[0]).normalized(),
+        tPaint,
+      );
     }
   }
 
   // ── Primitives partagées (copie de _ShapeCalcPainter) ──
 
-  void _drawSatellitePanel(Canvas c, Offset tl, Offset tr, Offset br, Offset bl, {required Color color}) {
+  void _drawSatellitePanel(
+    Canvas c,
+    Offset tl,
+    Offset tr,
+    Offset br,
+    Offset bl, {
+    required Color color,
+  }) {
     final bodyRect = Rect.fromCenter(
       center: Offset((tl.dx + tr.dx) / 2, (tl.dy + tr.dy) / 2 - 14),
-      width: 28, height: 18,
+      width: 28,
+      height: 18,
     );
-    c.drawRRect(RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
-        Paint()..color = const Color(0xFF607D8B));
-    c.drawRRect(RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
-        Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1);
+    c.drawRRect(
+      RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
+      Paint()..color = const Color(0xFF607D8B),
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
     _emoji(c, '🛰️', Offset(bodyRect.left - 4, bodyRect.top - 10), size: 16);
     final path = Path()
       ..moveTo(tl.dx, tl.dy)
@@ -1065,30 +1414,43 @@ class _ShapeCombinedPainter extends CustomPainter {
       ..lineTo(bl.dx, bl.dy)
       ..close();
     c.drawPath(path, Paint()..color = color.withValues(alpha: 0.85));
-    final cellPaint = Paint()..color = Colors.white.withValues(alpha: 0.25)..strokeWidth = 0.8;
+    final cellPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.25)
+      ..strokeWidth = 0.8;
     for (double t = 0.25; t < 1.0; t += 0.25) {
       c.drawLine(Offset.lerp(tl, bl, t)!, Offset.lerp(tr, br, t)!, cellPaint);
       c.drawLine(Offset.lerp(tl, tr, t)!, Offset.lerp(bl, br, t)!, cellPaint);
     }
-    c.drawPath(path, Paint()..color = const Color(0xFF90CAF9)..style = PaintingStyle.stroke..strokeWidth = 2.5);
+    c.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF90CAF9)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
   }
 
   void _skyBackground(Canvas c, Size s) {
-    c.drawRect(Rect.fromLTWH(0, 0, s.width, s.height),
-        Paint()..color = const Color(0xFFDEEFFB));
+    c.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFFDEEFFB),
+    );
     _cloudBlob(c, Offset(s.width * 0.08, s.height * 0.12), 20);
     _cloudBlob(c, Offset(s.width * 0.78, s.height * 0.08), 16);
   }
 
   void _spaceBackground(Canvas c, Size s) {
-    c.drawRect(Rect.fromLTWH(0, 0, s.width, s.height),
-        Paint()..color = const Color(0xFF0D1B2A));
+    c.drawRect(
+      Rect.fromLTWH(0, 0, s.width, s.height),
+      Paint()..color = const Color(0xFF0D1B2A),
+    );
     final starPaint = Paint()..color = Colors.white.withValues(alpha: 0.8);
     final rng = math.Random(42);
     for (int i = 0; i < 24; i++) {
       c.drawCircle(
         Offset(rng.nextDouble() * s.width, rng.nextDouble() * s.height),
-        rng.nextDouble() * 1.2 + 0.4, starPaint,
+        rng.nextDouble() * 1.2 + 0.4,
+        starPaint,
       );
     }
   }
@@ -1102,14 +1464,25 @@ class _ShapeCombinedPainter extends CustomPainter {
   }
 
   void _kiteString(Canvas c, Offset bottom, double canvasH) {
-    final stringPaint = Paint()..color = const Color(0xFF795548)..strokeWidth = 1.4;
+    final stringPaint = Paint()
+      ..color = const Color(0xFF795548)
+      ..strokeWidth = 1.4;
     final endY = canvasH * 0.96;
     final path = Path()
       ..moveTo(bottom.dx, bottom.dy)
-      ..quadraticBezierTo(bottom.dx + 10, bottom.dy + (endY - bottom.dy) * 0.4,
-          bottom.dx - 6, endY);
+      ..quadraticBezierTo(
+        bottom.dx + 10,
+        bottom.dy + (endY - bottom.dy) * 0.4,
+        bottom.dx - 6,
+        endY,
+      );
     c.drawPath(path, stringPaint);
-    _emoji(c, '🎀', Offset(bottom.dx - 10, bottom.dy + (endY - bottom.dy) * 0.35), size: 10);
+    _emoji(
+      c,
+      '🎀',
+      Offset(bottom.dx - 10, bottom.dy + (endY - bottom.dy) * 0.35),
+      size: 10,
+    );
   }
 
   void _label(Canvas canvas, String text, Offset center, {Color? bgColor}) {
@@ -1125,15 +1498,24 @@ class _ShapeCombinedPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    final rect = Rect.fromCenter(center: center, width: tp.width + 10, height: tp.height + 4);
-    canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-        Paint()..color = bgColor ?? AmaniColors.surface);
+    final rect = Rect.fromCenter(
+      center: center,
+      width: tp.width + 10,
+      height: tp.height + 4,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+      Paint()..color = bgColor ?? AmaniColors.surface,
+    );
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   void _emoji(Canvas canvas, String emoji, Offset topLeft, {double size = 14}) {
     final tp = TextPainter(
-      text: TextSpan(text: emoji, style: TextStyle(fontSize: size)),
+      text: TextSpan(
+        text: emoji,
+        style: TextStyle(fontSize: size),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, topLeft);
@@ -1144,8 +1526,14 @@ class _ShapeCombinedPainter extends CustomPainter {
     canvas.drawLine(mid - perp * 5, mid + perp * 5, paint);
   }
 
-  void _dashedLine(Canvas canvas, Offset a, Offset b, Paint paint,
-      {double dash = 5, double gap = 4}) {
+  void _dashedLine(
+    Canvas canvas,
+    Offset a,
+    Offset b,
+    Paint paint, {
+    double dash = 5,
+    double gap = 4,
+  }) {
     final total = (b - a).distance;
     final dir = (b - a) / total;
     var t = 0.0;
@@ -1159,27 +1547,48 @@ class _ShapeCombinedPainter extends CustomPainter {
     }
   }
 
-  void _dashedCircle(Canvas canvas, Offset center, double r, Paint paint,
-      {double dash = 0.2, double gap = 0.15}) {
+  void _dashedCircle(
+    Canvas canvas,
+    Offset center,
+    double r,
+    Paint paint, {
+    double dash = 0.2,
+    double gap = 0.15,
+  }) {
     double angle = 0;
     bool draw = true;
     while (angle < math.pi * 2) {
       final len = draw ? dash : gap;
       if (draw) {
-        canvas.drawArc(Rect.fromCircle(center: center, radius: r), angle, len, false, paint);
+        canvas.drawArc(
+          Rect.fromCircle(center: center, radius: r),
+          angle,
+          len,
+          false,
+          paint,
+        );
       }
       angle += len;
       draw = !draw;
     }
   }
 
-  void _rightAngle(Canvas canvas, Offset corner, Offset u, Offset v, Paint paint) {
+  void _rightAngle(
+    Canvas canvas,
+    Offset corner,
+    Offset u,
+    Offset v,
+    Paint paint,
+  ) {
     const sz = 10.0;
     final p1 = corner + u * sz;
     final p2 = corner + u * sz + v * sz;
     final p3 = corner + v * sz;
     canvas.drawPath(
-      Path()..moveTo(p1.dx, p1.dy)..lineTo(p2.dx, p2.dy)..lineTo(p3.dx, p3.dy),
+      Path()
+        ..moveTo(p1.dx, p1.dy)
+        ..lineTo(p2.dx, p2.dy)
+        ..lineTo(p3.dx, p3.dy),
       paint,
     );
   }

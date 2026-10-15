@@ -113,7 +113,7 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
         "consonant": "c",
         "vowel": "o",
         "exampleWord": {
-          "fr": "coco",
+          "fr": "coude",
           "en": "corn",
           "es": "coco"
         }
@@ -915,6 +915,52 @@ final List<dynamic> SYLLABLE_GROUPS = jsonDecode(r'''
           "fr": "wagon",
           "en": "wagon",
           "es": "wafle"
+        }
+      }
+    ]
+  },
+  {
+    "id": "syl-x",
+    "consonant": "x",
+    "syllables": [
+      {
+        "syllable": "xa",
+        "consonant": "x",
+        "vowel": "a",
+        "exampleWord": {
+          "fr": "examen",
+          "en": "exam",
+          "es": "examen"
+        }
+      },
+      {
+        "syllable": "xe",
+        "consonant": "x",
+        "vowel": "e",
+        "exampleWord": {
+          "fr": "boxe",
+          "en": "boxer",
+          "es": "boxeo"
+        }
+      },
+      {
+        "syllable": "xi",
+        "consonant": "x",
+        "vowel": "i",
+        "exampleWord": {
+          "fr": "taxi",
+          "en": "taxi",
+          "es": "taxi"
+        }
+      },
+      {
+        "syllable": "xu",
+        "consonant": "x",
+        "vowel": "u",
+        "exampleWord": {
+          "fr": "luxueux",
+          "en": "luxury",
+          "es": "exuberante"
         }
       }
     ]

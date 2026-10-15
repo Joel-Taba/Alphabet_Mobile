@@ -10,6 +10,7 @@ import '../widgets/wrong_answer_popup.dart';
 import '../widgets/quiz_bubble_card.dart';
 import '../widgets/quiz_kit.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Vrai ou Faux ?" du Palier "Les Calculs" — purement
@@ -210,7 +211,7 @@ class _ExerciceCalculVraiFauxScreenState
                                 color: const Color(0xFF6B3F94),
                               ),
                             ),
-                            Text(
+                            UnbrokenText(
                               (vf['title'] ??
                                       level.title[lang.name] ??
                                       level.title['fr'])

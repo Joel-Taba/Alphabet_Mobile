@@ -50,8 +50,9 @@ void main() {
     await tester.runAsync(() => family.createChild('Awa'));
     await goTo(tester, '/exercice-liste?family=trait');
 
-    final firstId =
-        EXERCISE_CATALOG.firstWhere((e) => e['family'] == 'trait')['id'];
+    final firstId = EXERCISE_CATALOG.firstWhere(
+      (e) => e['family'] == 'trait',
+    )['id'];
     final row = find.descendant(
       of: find.byKey(ValueKey('$firstId-r0')),
       matching: find.byType(RepetitionRow),

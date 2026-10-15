@@ -19,6 +19,7 @@ import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// Exercice du Palier "Figures géométriques" : un petit problème de calcul
@@ -276,7 +277,7 @@ class _ExerciceFigureScreenState extends State<ExerciceFigureScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
+                        child: UnbrokenText(
                           name,
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),
@@ -714,13 +715,16 @@ class _CombinedProblemRowState extends State<_CombinedProblemRow> {
                             color: Colors.white,
                             size: 18,
                           )
-                        : Text(
-                            labelSymbol,
-                            style: TextStyle(
-                              fontFamily: kBalooFontFamily,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 15,
-                              color: accentColor,
+                        : FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              labelSymbol,
+                              style: TextStyle(
+                                fontFamily: kBalooFontFamily,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: accentColor,
+                              ),
                             ),
                           ),
                   ),

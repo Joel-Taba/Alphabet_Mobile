@@ -10,6 +10,7 @@ import '../widgets/word_search_play.dart';
 import '../widgets/free_writing_sheet.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Exercice de mots mêlés à difficulté progressive (`lvl2` → 2 mots,
@@ -130,7 +131,7 @@ class _ExerciceMotsMelesScreenState extends State<ExerciceMotsMelesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               mm['title'] ?? '',
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 22,

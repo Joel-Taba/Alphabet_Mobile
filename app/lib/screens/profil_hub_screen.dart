@@ -27,6 +27,7 @@ import '../data/solid3d_catalog.dart';
 import 'child_switcher_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/safe_prefs.dart';
 
 class ProfilHubScreen extends StatefulWidget {
@@ -134,7 +135,7 @@ class _LockScreenState extends State<_LockScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
+                UnbrokenText(
                   t['profileLock']?['title'] ?? 'Zone Protégée',
                   style: AmaniTheme.titleStyle.copyWith(fontSize: 22),
                 ),
@@ -582,9 +583,12 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
     final clamped = value.clamp(kMinTolerance, kMaxTolerance);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(scopeKey(kToleranceStorageKey), clamped);
+    toleranceLevelNotifier.value = clamped;
     if (mounted) setState(() => _tolerance = clamped);
-    // Le back-end attend une fraction (0.05-0.30), pas un pourcentage brut.
-    unawaited(backend.pushReglages(tolerance: clamped / 100.0));
+    // Le back-end attend une fraction (0.05-0.30), pas un niveau.
+    unawaited(
+      backend.pushReglages(tolerance: tolerancePctForLevel(clamped) / 100.0),
+    );
   }
 
   Future<void> _handleSavePassword() async {
@@ -698,7 +702,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      UnbrokenText(
                         hub['title'] ?? 'Mon Carnet',
                         style: AmaniTheme.titleStyle.copyWith(fontSize: 21),
                       ),
@@ -925,7 +929,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             const SizedBox(height: 20),
 
             // Section Réglages
-            Text(
+            UnbrokenText(
               hub['settingsTitle'] ?? 'Mes Réglages',
               style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
             ),
@@ -995,7 +999,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(
+            UnbrokenText(
               hub['soundCardTitle'] ?? 'Audio',
               style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
             ),
@@ -1079,7 +1083,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(
+            UnbrokenText(
               hub['exercisesCardTitle'] ?? "Exercices d'écriture",
               style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
             ),
@@ -1120,9 +1124,9 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
                   ),
                   const SizedBox(height: 10),
                   _Stepper(
-                    value: '$_tolerance%',
-                    onDecrement: () => _updateTolerance(_tolerance - 3),
-                    onIncrement: () => _updateTolerance(_tolerance + 3),
+                    value: '$_tolerance',
+                    onDecrement: () => _updateTolerance(_tolerance - 1),
+                    onIncrement: () => _updateTolerance(_tolerance + 1),
                   ),
                   const Divider(color: AmaniColors.disabled, height: 32),
                   Text(
@@ -1208,7 +1212,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(
+            UnbrokenText(
               hub['accessibilityCardTitle'] ?? 'Accessibilité',
               style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
             ),
@@ -1285,7 +1289,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
 
             const SizedBox(height: 20),
 
-            Text(
+            UnbrokenText(
               hub['passwordCardTitle'] ?? 'Mot de passe',
               style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
             ),
@@ -1619,7 +1623,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
             const SizedBox(height: 28),
 
             // Progression par palier
-            Text(
+            UnbrokenText(
               hub['progressionTitle'] ?? '',
               style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
             ),
@@ -1674,7 +1678,7 @@ class _UnlockedProfileState extends State<_UnlockedProfile> {
         Icon(icon, color: AmaniColors.textSecondary, size: 24),
         const SizedBox(width: 16),
         Expanded(
-          child: Text(
+          child: UnbrokenText(
             title,
             style: AmaniTheme.titleStyle.copyWith(fontSize: 18),
           ),

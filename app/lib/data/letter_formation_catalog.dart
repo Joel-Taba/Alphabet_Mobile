@@ -423,10 +423,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 66.3 75 L 97.73 75",
+        "pathD": "M 66.3 65 L 97.73 65",
         "startXY": [
           66.3,
-          75
+          65
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -1051,10 +1051,10 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "horizontal",
-        "pathD": "M 78.96 36.64 L 115.04 36.64",
+        "pathD": "M 78.96 46.64 L 115.04 46.64",
         "startXY": [
           78.96,
-          36.64
+          46.64
         ],
         "strokeColor": "#4A3B2A",
         "description": {
@@ -1271,7 +1271,7 @@ final List<dynamic> CONSONANTS = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-gauche",
-        "pathD": "M 119.22 75 L 97 125 L 87.28 150",
+        "pathD": "M 119.22 75 L 97 125 L 75.61 180",
         "startXY": [
           119.22,
           75
@@ -1755,10 +1755,10 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
     "category": "majuscule",
     "zone": "hampe",
     "consigne": {
-      "fr": "Pour écrire la lettre G majuscule, je prends une courbe ouverte à droite et je trace un petit trait horizontal sur la tête de la partie basse de courbe.",
-      "en": "The letter G is formed in three gestures. First a large curve open on the right. Then a horizontal line going from left to right, at the curve's center height. Finally, at its end, a vertical line going down from top to bottom.",
-      "es": "La letra G se forma en tres gestos. Primero una gran curva abierta a la derecha. Luego un trazo horizontal que va de izquierda a derecha, a la altura del centro de la curva. Por último, en su extremo, un trazo vertical que baja de arriba hacia abajo.",
-      "ar": "يتكون الحرف G من ثلاث حركات. أولاً منحنى كبير مفتوح من اليمين. ثم خط أفقي يمتد من اليسار إلى اليمين عند مستوى منتصف المنحنى. وأخيرًا، عند طرفه، خط عمودي ينزل من الأعلى إلى الأسفل."
+      "fr": "Pour écrire la lettre G majuscule, je prends la courbe ouverte à droite, je trace un petit trait vertical en bas et un trait horizontal sur la tête du trait vertical.",
+      "en": "The letter G is formed in three gestures. First a large curve open on the right. Then, on the right, a vertical line going down from the curve's center height to the end of the curve. Finally a horizontal line going from left to right, reaching the top of the vertical line.",
+      "es": "La letra G se forma en tres gestos. Primero una gran curva abierta a la derecha. Luego, a la derecha, un trazo vertical que baja desde la altura del centro de la curva hasta su extremo. Por último un trazo horizontal que va de izquierda a derecha, hasta lo alto del trazo vertical.",
+      "ar": "يتكون الحرف G من ثلاث حركات. أولاً منحنى كبير مفتوح من اليمين. ثم، على اليمين، خط عمودي ينزل من مستوى منتصف المنحنى حتى نهايته. وأخيرًا خط أفقي يمتد من اليسار إلى اليمين حتى أعلى الخط العمودي."
     },
     "steps": [
       {
@@ -1779,22 +1779,6 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       },
       {
         "family": "trait",
-        "variant": "horizontal",
-        "pathD": "M 101.04 70 L 134.54 70",
-        "startXY": [
-          101.04,
-          70
-        ],
-        "strokeColor": "#4A3B2A",
-        "description": {
-          "fr": "Trait horizontal, de gauche à droite, au centre de la courbe",
-          "en": "Horizontal line, left to right, at the curve's center",
-          "es": "Trazo horizontal, de izquierda a derecha, en el centro de la curva",
-          "ar": "خط أفقي، من اليسار إلى اليمين، في منتصف المنحنى"
-        }
-      },
-      {
-        "family": "trait",
         "variant": "vertical",
         "pathD": "M 134.54 70 L 134.54 119.63",
         "startXY": [
@@ -1803,10 +1787,26 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
         ],
         "strokeColor": "#4A3B2A",
         "description": {
-          "fr": "Trait vertical, à l'extrémité de l'horizontale, du haut vers le bas",
-          "en": "Vertical line, at the end of the horizontal, top to bottom",
-          "es": "Trazo vertical, en el extremo de la horizontal, de arriba hacia abajo",
-          "ar": "خط عمودي، عند طرف الأفقي، من الأعلى إلى الأسفل"
+          "fr": "Trait vertical à droite, du haut vers le bas, jusqu'au bout de la courbe",
+          "en": "Vertical line on the right, top to bottom, down to the end of the curve",
+          "es": "Trazo vertical a la derecha, de arriba hacia abajo, hasta el final de la curva",
+          "ar": "خط عمودي على اليمين، من الأعلى إلى الأسفل، حتى نهاية المنحنى"
+        }
+      },
+      {
+        "family": "trait",
+        "variant": "horizontal",
+        "pathD": "M 101.04 70 L 134.54 70",
+        "startXY": [
+          101.04,
+          70
+        ],
+        "strokeColor": "#4A3B2A",
+        "description": {
+          "fr": "Trait horizontal, de gauche à droite, jusqu'en haut du trait vertical",
+          "en": "Horizontal line, left to right, up to the top of the vertical line",
+          "es": "Trazo horizontal, de izquierda a derecha, hasta lo alto del trazo vertical",
+          "ar": "خط أفقي، من اليسار إلى اليمين، حتى أعلى الخط العمودي"
         }
       }
     ]
@@ -1956,7 +1956,7 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
     "category": "majuscule",
     "zone": "hampe",
     "consigne": {
-      "fr": "Pour écrire la lettre J majuscule, je prends un crochet ouvert en bas à gauche avec un trait horizontal.",
+      "fr": "Pour écrire la lettre J majuscule, je prends un crochet ouvert en bas à gauche avec un trait horizontal sur la tête du crochet.",
       "en": "The letter J is formed in two gestures. First a horizontal line crossing the top. Then a hook going down and curving to the left at the bottom.",
       "es": "La letra J se forma en dos gestos. Primero un trazo horizontal que cruza la parte de arriba. Luego un gancho que baja y se curva hacia la izquierda abajo.",
       "ar": "يتكون الحرف J من حركتين. أولاً خط أفقي يمر أعلى القمة. ثم خطاف ينزل وينحني نحو اليسار في الأسفل."
@@ -2035,9 +2035,9 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-droit",
-        "pathD": "M 144.42 15 L 62.51 72.35",
+        "pathD": "M 124 15 L 62.33 72.35",
         "startXY": [
-          144.42,
+          124,
           15
         ],
         "strokeColor": "#4A3B2A",
@@ -2052,10 +2052,10 @@ final List<dynamic> UPPERCASE = jsonDecode(r'''
       {
         "family": "trait",
         "variant": "oblique-gauche",
-        "pathD": "M 65.57 73.57 L 139.04 125",
+        "pathD": "M 62.33 72.35 L 120 125",
         "startXY": [
-          65.57,
-          73.57
+          62.33,
+          72.35
         ],
         "strokeColor": "#4A3B2A",
         "zIndex": 3,
@@ -2968,7 +2968,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 0 est un ovale complet. Pars du sommet et tourne dans le sens anti-horaire.",
+      "fr": "Le 0 est un ovale complet. Pars du sommet et tourne dans le sens anti-horaire.",
       "en": "The digit 0 is a full oval. Start at the top and turn counter-clockwise.",
       "es": "El número 0 es un óvalo completo. Parte desde arriba y gira en sentido antihorario.",
       "ar": "الرقم 0 عبارة عن بيضاوي كامل. ابدأ من الأعلى ودُر في اتجاه عكس عقارب الساعة."
@@ -3003,7 +3003,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 1 se forme en deux gestes. Une petite amorce oblique qui rejoint le sommet, puis un trait vertical qui descend jusqu'à la ligne.",
+      "fr": "Le 1 se forme en deux gestes. Une petite amorce oblique qui rejoint le sommet, puis un trait vertical qui descend jusqu'à la ligne.",
       "en": "The digit 1 is formed in two gestures. A small diagonal lead-in reaching the top, then a vertical line going down to the baseline.",
       "es": "El número 1 se forma en dos gestos. Un pequeño trazo oblicuo de entrada que llega hasta arriba, luego un trazo vertical que baja hasta la línea.",
       "ar": "يتكون الرقم 1 من حركتين. بداية مائلة صغيرة تصل إلى القمة، ثم خط عمودي ينزل حتى السطر."
@@ -3054,7 +3054,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 2 se forme en deux gestes. Un crochet qui part du haut, s'arrondit puis descend vers le bas-gauche, ensuite un trait horizontal à la base.",
+      "fr": "Le 2 se forme en deux gestes. Un crochet qui part du haut, s'arrondit puis descend vers le bas-gauche, ensuite un trait horizontal à la base.",
       "en": "The digit 2 is formed in two gestures. A hook starting at the top, curving and going down to the lower left, then a horizontal line at the base.",
       "es": "El número 2 se forma en dos gestos. Un gancho que parte de arriba, se curva y baja hacia abajo a la izquierda, luego un trazo horizontal en la base.",
       "ar": "يتكون الرقم 2 من حركتين. خطاف ينطلق من الأعلى، ينحني ثم ينزل نحو أسفل اليسار، ثم خط أفقي عند القاعدة."
@@ -3062,7 +3062,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "steps": [
       {
         "family": "crochet",
-        "variant": "top-left",
+        "variant": "top-left-incline",
         "pathD": "M 92.5 78.81 A 13.02 13.02 0 0 1 110.92 97.22 L 83.29 124.86",
         "startXY": [
           92.5,
@@ -3105,7 +3105,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 3 se forme en deux courbes empilées, ouvertes vers la gauche, qui se touchent au centre.",
+      "fr": "Le 3 se forme en deux courbes empilées, ouvertes vers la gauche, qui se touchent au centre.",
       "en": "The digit 3 is formed with two stacked curves, open to the left, touching in the middle.",
       "es": "El número 3 se forma con dos curvas apiladas, abiertas hacia la izquierda, que se tocan en el centro.",
       "ar": "يتكون الرقم 3 من منحنيين متراكبين، مفتوحين نحو اليسار، يتلامسان في المنتصف."
@@ -3156,7 +3156,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 4 se forme en trois gestes. Une oblique qui descend vers le bas-gauche, un trait horizontal à sa base, puis un trait vertical qui traverse l'horizontale et dépasse vers le haut.",
+      "fr": "Le 4 se forme en trois gestes. Une oblique qui descend vers le bas-gauche, un trait horizontal à sa base, puis un trait vertical qui traverse l'horizontale et dépasse vers le haut.",
       "en": "The digit 4 is formed in three gestures. A diagonal going down to the lower left, a horizontal line at its base, then a vertical line crossing the horizontal and going past it at the top.",
       "es": "El número 4 se forma en tres gestos. Un oblicuo que baja hacia abajo a la izquierda, un trazo horizontal en su base, luego un trazo vertical que cruza la horizontal y sobrepasa hacia arriba.",
       "ar": "يتكون الرقم 4 من ثلاث حركات. خط مائل ينزل نحو أسفل اليسار، خط أفقي عند قاعدته، ثم خط عمودي يقطع الأفقي ويتجاوزه نحو الأعلى."
@@ -3223,7 +3223,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 5 se forme en trois gestes. Un trait horizontal en haut, un petit trait vertical qui descend à gauche, puis une courbe qui balaie un grand arc, de haut en bas, en restant alignée à la verticale entre son origine et son extrémité.",
+      "fr": "Le 5 se forme en trois gestes. Un trait horizontal en haut, un petit trait vertical qui descend à gauche, puis une courbe qui balaie un grand arc, de haut en bas, en restant alignée à la verticale entre son origine et son extrémité.",
       "en": "The digit 5 is formed in three gestures. A horizontal line at the top, a small vertical line going down on the left, then a curve sweeping a large arc, top to bottom, with its start and end vertically aligned.",
       "es": "El número 5 se forma en tres gestos. Un trazo horizontal arriba, un pequeño trazo vertical que baja a la izquierda, luego una curva que traza un gran arco, de arriba abajo, quedando alineada verticalmente entre su origen y su extremo.",
       "ar": "يتكون الرقم 5 من ثلاث حركات. خط أفقي في الأعلى، خط عمودي صغير ينزل إلى اليسار، ثم منحنى يرسم قوسًا كبيرًا، من الأعلى إلى الأسفل، مع بقائه محاذيًا عموديًا بين بدايته ونهايته."
@@ -3290,7 +3290,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 6 se forme comme le 9, mais inversé : d'abord un crochet qui part du haut, descend et s'arrondit en haut à droite, puis un anneau fermé en bas, dessiné dans le sens anti-horaire à partir du point où s'arrête le crochet.",
+      "fr": "Le 6 se forme comme le 9, mais inversé : d'abord un crochet qui part du haut, descend et s'arrondit en haut à droite, puis un anneau fermé en bas, dessiné dans le sens anti-horaire à partir du point où s'arrête le crochet.",
       "en": "The digit 6 is formed like the 9, but inverted: first a hook starting at the top, going down and curving at the upper right, then a closed ring at the bottom, drawn counterclockwise starting exactly where the hook ends.",
       "es": "El número 6 se forma como el 9, pero invertido: primero un gancho que parte de arriba, baja y se curva arriba a la derecha, luego un anillo cerrado abajo, trazado en sentido antihorario a partir del punto donde termina el gancho.",
       "ar": "يتكون الرقم 6 مثل الرقم 9 لكن معكوسًا: أولاً خطاف ينطلق من الأعلى، ينزل وينحني أعلى اليمين، ثم حلقة مغلقة في الأسفل، تُرسم عكس اتجاه عقارب الساعة بدءًا من النقطة التي توقف عندها الخطاف."
@@ -3341,7 +3341,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 7 se forme en deux gestes. Un trait horizontal en haut, puis une oblique qui descend du haut-droite vers le bas-centre.",
+      "fr": "Le 7 se forme en deux gestes. Un trait horizontal en haut, puis une oblique qui descend du haut-droite vers le bas-centre.",
       "en": "The digit 7 is formed in two gestures. A horizontal line at the top, then a diagonal going down from the upper right to the center-bottom.",
       "es": "El número 7 se forma en dos gestos. Un trazo horizontal arriba, luego un oblicuo que baja desde arriba a la derecha hacia el centro abajo.",
       "ar": "يتكون الرقم 7 من حركتين. خط أفقي في الأعلى، ثم خط مائل ينزل من أعلى اليمين نحو منتصف الأسفل."
@@ -3392,7 +3392,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 8 se forme en deux petits anneaux empilés, celui du haut un peu plus petit que celui du bas.",
+      "fr": "Le 8 se forme en deux petits anneaux empilés, celui du haut un peu plus petit que celui du bas.",
       "en": "The digit 8 is formed with two small stacked rings, the top one a little smaller than the bottom one.",
       "es": "El número 8 se forma con dos pequeños anillos apilados, el de arriba un poco más pequeño que el de abajo.",
       "ar": "يتكون الرقم 8 من حلقتين صغيرتين متراكبتين، العلوية أصغر قليلاً من السفلية."
@@ -3443,7 +3443,7 @@ final List<dynamic> DIGITS = jsonDecode(r'''
     "category": "chiffre",
     "zone": "corps",
     "consigne": {
-      "fr": "Le chiffre 9 se forme comme le 6 mais inversé. D'abord un anneau fermé en haut, dessiné dans le sens anti-horaire, puis un crochet tangent au bord droit de l'anneau, qui descend et s'arrondit en bas à gauche.",
+      "fr": "Pour écrire le 9, je fais la courbe ouverte à droite et un crochet en bas à gauche.",
       "en": "The digit 9 is formed like the 6 but inverted. First a closed ring at the top, drawn counterclockwise, then a hook tangent to the ring's right edge, going down and curving at the lower left.",
       "es": "El número 9 se forma como el 6 pero invertido. Primero un anillo cerrado arriba, trazado en sentido antihorario, luego un gancho tangente al borde derecho del anillo, que baja y se curva abajo a la izquierda.",
       "ar": "يتكون الرقم 9 مثل الرقم 6 لكن معكوسًا. أولاً حلقة مغلقة في الأعلى، تُرسم عكس اتجاه عقارب الساعة، ثم خطاف مماس للحافة اليمنى للحلقة، ينزل وينحني أسفل اليسار."

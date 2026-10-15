@@ -9,11 +9,12 @@ import '../data/flores_gong_nota.dart';
 import '../widgets/sign_glyph.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Leçon d'ouverture du Palier 1 "Les Signes de base", avant le premier
 /// signe (le trait) : présente les quatre signes fondamentaux de la méthode
-/// Flores Gong Nota (trait vertical, crochet haut-droit, cercle fermé,
+/// Flores Gong Nota (trait vertical, crochet haut-droit, courbe fermée,
 /// point) puis le texte institutionnel qui justifie la démarche (UNESCO,
 /// Francophonie, acquisition en 21 jours). Contenu French-only, sur le même
 /// principe que le Palier "Les Calculs" -- voir `parcours_screen.dart`, où
@@ -33,8 +34,7 @@ class CoursSignesIntroScreen extends StatefulWidget {
   const CoursSignesIntroScreen({super.key});
 
   @override
-  State<CoursSignesIntroScreen> createState() =>
-      _CoursSignesIntroScreenState();
+  State<CoursSignesIntroScreen> createState() => _CoursSignesIntroScreenState();
 }
 
 class _CoursSignesIntroScreenState extends State<CoursSignesIntroScreen> {
@@ -100,15 +100,16 @@ class _CoursSignesIntroScreenState extends State<CoursSignesIntroScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: UnbrokenText(
                       csi['title'] ?? 'Les 4 signes de base',
                       style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => context
-                        .read<SignSpeechService>()
-                        .speak(paragraphs.join(' '), lang),
+                    onTap: () => context.read<SignSpeechService>().speak(
+                      paragraphs.join(' '),
+                      lang,
+                    ),
                     child: Container(
                       width: 40,
                       height: 40,
@@ -212,7 +213,7 @@ class _SignePreview extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          UnbrokenText(
             label,
             textAlign: TextAlign.center,
             style: AmaniTheme.bodyStyle.copyWith(

@@ -7,6 +7,7 @@ import '../hooks/use_exercise_settings.dart';
 import '../widgets/number_compose_puzzle.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Compose le nombre !" du Palier "Les Calculs" — purement
@@ -155,7 +156,7 @@ class _ExerciceCalculComposeScreenState
                             color: const Color(0xFF6B3F94),
                           ),
                         ),
-                        Text(
+                        UnbrokenText(
                           (cc['title'] ??
                                   level.title[lang.name] ??
                                   level.title['fr'])
@@ -257,7 +258,7 @@ class _DoneCard extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
+        UnbrokenText(
           title,
           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
           textAlign: TextAlign.center,

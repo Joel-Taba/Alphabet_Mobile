@@ -12,6 +12,7 @@ import '../widgets/shape_glyph.dart';
 import '../widgets/amani_mascot.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../widgets/unbroken_text.dart';
 import '../utils/navigation_helpers.dart';
 
 /// Mini-jeu bonus "Quelle est cette figure ?" du Palier "Figures
@@ -131,7 +132,7 @@ class _ExerciceFigureQuizScreenState extends State<ExerciceFigureQuizScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        UnbrokenText(
                           (fq['title'] ?? '').toString(),
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),

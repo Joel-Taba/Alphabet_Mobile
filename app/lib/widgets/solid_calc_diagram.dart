@@ -72,12 +72,24 @@ class _SolidCalcPainter extends CustomPainter {
         _aquarium(canvas, size, d['length']!, d['width']!, d['height']!, unit);
         break;
       case 'pyramide':
-        _pyramide(canvas, size, outline, dashed,
-            '${d['side']} $unit', '${d['height']} $unit');
+        _pyramide(
+          canvas,
+          size,
+          outline,
+          dashed,
+          '${d['side']} $unit',
+          '${d['height']} $unit',
+        );
         break;
       case 'cylindre':
-        _cylindre(canvas, size, outline, dashed,
-            '${d['radius']} $unit', '${d['height']} $unit');
+        _cylindre(
+          canvas,
+          size,
+          outline,
+          dashed,
+          '${d['radius']} $unit',
+          '${d['height']} $unit',
+        );
         break;
     }
   }
@@ -130,7 +142,10 @@ class _SolidCalcPainter extends CustomPainter {
     );
     // Sol (deux rangées de tuiles)
     final dirtPaint = Paint()..color = const Color(0xFF8B5E3C);
-    c.drawRect(Rect.fromLTWH(0, s.height * 0.78, s.width, s.height * 0.22), dirtPaint);
+    c.drawRect(
+      Rect.fromLTWH(0, s.height * 0.78, s.width, s.height * 0.22),
+      dirtPaint,
+    );
     // Grille sol
     final gridPaint = Paint()
       ..color = const Color(0xFF6B4426)
@@ -195,37 +210,50 @@ class _SolidCalcPainter extends CustomPainter {
     // Labels
     _label(c, '$side $unit', Offset((fBL.dx + fBR.dx) / 2, fBL.dy + 16));
     _label(c, '$side $unit', Offset(fBL.dx - 22, (fTL.dy + fBL.dy) / 2));
-    _label(c, '$side $unit',
-        Offset(fTR.dx + skew.dx / 2 + 8, fTR.dy + skew.dy / 2 - 8));
+    _label(
+      c,
+      '$side $unit',
+      Offset(fTR.dx + skew.dx / 2 + 8, fTR.dy + skew.dy / 2 - 8),
+    );
 
     // Icône pixel-art
-    _emoji(c, '⛏️', Offset(fTR.dx + skew.dx - 2, fTR.dy + skew.dy - 20), size: 14);
+    _emoji(
+      c,
+      '⛏️',
+      Offset(fTR.dx + skew.dx - 2, fTR.dy + skew.dy - 20),
+      size: 14,
+    );
   }
 
   void _pixelGrid(
     Canvas c,
-    Offset tl, Offset tr, Offset br, Offset bl,
-    Color color, int divisions,
+    Offset tl,
+    Offset tr,
+    Offset br,
+    Offset bl,
+    Color color,
+    int divisions,
   ) {
-    final p = Paint()..color = color..strokeWidth = 0.7;
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = 0.7;
     for (int i = 1; i < divisions; i++) {
       final t = i / divisions;
-      c.drawLine(
-        Offset.lerp(tl, tr, t)!,
-        Offset.lerp(bl, br, t)!,
-        p,
-      );
-      c.drawLine(
-        Offset.lerp(tl, bl, t)!,
-        Offset.lerp(tr, br, t)!,
-        p,
-      );
+      c.drawLine(Offset.lerp(tl, tr, t)!, Offset.lerp(bl, br, t)!, p);
+      c.drawLine(Offset.lerp(tl, bl, t)!, Offset.lerp(tr, br, t)!, p);
     }
   }
 
   // ────────────────────────────────── Pavé droit — aquarium
 
-  void _aquarium(Canvas c, Size s, int length, int width, int height, String unit) {
+  void _aquarium(
+    Canvas c,
+    Size s,
+    int length,
+    int width,
+    int height,
+    String unit,
+  ) {
     // Fond clair (pièce/bureau)
     c.drawRect(
       Rect.fromLTWH(0, 0, s.width, s.height),
@@ -248,7 +276,10 @@ class _SolidCalcPainter extends CustomPainter {
       ..lineTo(fTR.dx, fTR.dy)
       ..lineTo(fTL.dx, fTL.dy)
       ..close();
-    c.drawPath(frontWater, Paint()..color = const Color(0xFF90CAF9).withValues(alpha: 0.7));
+    c.drawPath(
+      frontWater,
+      Paint()..color = const Color(0xFF90CAF9).withValues(alpha: 0.7),
+    );
 
     // Petites vagues
     final wavePaint = Paint()
@@ -264,8 +295,11 @@ class _SolidCalcPainter extends CustomPainter {
         final xFrac = j / steps;
         final x = fTL.dx + (fTR.dx - fTL.dx) * xFrac;
         final wave = (j % 2 == 0) ? 0.0 : -3.0;
-        if (j == 0) { path.moveTo(x, y + wave); }
-        else { path.lineTo(x, y + wave); }
+        if (j == 0) {
+          path.moveTo(x, y + wave);
+        } else {
+          path.lineTo(x, y + wave);
+        }
       }
       c.drawPath(path, wavePaint);
     }
@@ -277,7 +311,10 @@ class _SolidCalcPainter extends CustomPainter {
       ..lineTo(fTR.dx + skew.dx, fTR.dy + skew.dy)
       ..lineTo(fTL.dx + skew.dx, fTL.dy + skew.dy)
       ..close();
-    c.drawPath(top, Paint()..color = const Color(0xFFB3E5FC).withValues(alpha: 0.5));
+    c.drawPath(
+      top,
+      Paint()..color = const Color(0xFFB3E5FC).withValues(alpha: 0.5),
+    );
 
     // Côté droit
     final right = Path()
@@ -286,7 +323,10 @@ class _SolidCalcPainter extends CustomPainter {
       ..lineTo(fBR.dx + skew.dx, fBR.dy + skew.dy)
       ..lineTo(fTR.dx + skew.dx, fTR.dy + skew.dy)
       ..close();
-    c.drawPath(right, Paint()..color = const Color(0xFF4FC3F7).withValues(alpha: 0.5));
+    c.drawPath(
+      right,
+      Paint()..color = const Color(0xFF4FC3F7).withValues(alpha: 0.5),
+    );
 
     // Contours verre
     final glassPaint = Paint()
@@ -300,8 +340,15 @@ class _SolidCalcPainter extends CustomPainter {
 
     // Fond de l'aquarium (sable)
     final sandRect = Rect.fromLTWH(
-      fBL.dx + 3, fBL.dy - 10, fBR.dx - fBL.dx - 6, 10);
-    c.drawRect(sandRect, Paint()..color = const Color(0xFFFFF176).withValues(alpha: 0.6));
+      fBL.dx + 3,
+      fBL.dy - 10,
+      fBR.dx - fBL.dx - 6,
+      10,
+    );
+    c.drawRect(
+      sandRect,
+      Paint()..color = const Color(0xFFFFF176).withValues(alpha: 0.6),
+    );
 
     // Poissons et plantes (emojis)
     _emoji(c, '🐟', Offset(fBL.dx + fw * 0.2, fBL.dy - fh * 0.42), size: 18);
@@ -312,13 +359,19 @@ class _SolidCalcPainter extends CustomPainter {
     // Labels
     _label(c, '$length $unit', Offset((fBL.dx + fBR.dx) / 2, fBL.dy + 16));
     _label(c, '$height $unit', Offset(fBL.dx - 22, (fTL.dy + fBL.dy) / 2));
-    _label(c, '$width $unit',
-        Offset(fTR.dx + skew.dx / 2 + 8, fTR.dy + skew.dy / 2 - 8));
+    _label(
+      c,
+      '$width $unit',
+      Offset(fTR.dx + skew.dx / 2 + 8, fTR.dy + skew.dy / 2 - 8),
+    );
   }
 
   void _emoji(Canvas c, String emoji, Offset topLeft, {double size = 14}) {
     final tp = TextPainter(
-      text: TextSpan(text: emoji, style: TextStyle(fontSize: size)),
+      text: TextSpan(
+        text: emoji,
+        style: TextStyle(fontSize: size),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(c, topLeft);

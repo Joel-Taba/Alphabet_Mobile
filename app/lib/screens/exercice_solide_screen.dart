@@ -19,6 +19,7 @@ import '../widgets/evaluation_timer.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// Exercice "Solides 3D" du Palier "Figures géométriques" : un seul problème
@@ -277,7 +278,7 @@ class _ExerciceSolideScreenState extends State<ExerciceSolideScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
+                        child: UnbrokenText(
                           name,
                           style: AmaniTheme.titleStyle.copyWith(fontSize: 20),
                         ),

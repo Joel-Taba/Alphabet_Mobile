@@ -24,6 +24,7 @@ import '../hooks/use_tracing_scroll_lock.dart';
 import '../widgets/directional_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../utils/navigation_helpers.dart';
+import '../widgets/unbroken_text.dart';
 import '../widgets/keep_alive_list.dart';
 
 /// Exercice d'écriture des mots du Palier 3 : trace chaque lettre du mot dans
@@ -281,7 +282,7 @@ class _ExerciceMotsScreenState extends State<ExerciceMotsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            UnbrokenText(
                               groupTitle,
                               style: AmaniTheme.titleStyle.copyWith(
                                 fontSize: 22,

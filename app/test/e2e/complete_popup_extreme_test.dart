@@ -94,7 +94,11 @@ void main() {
         await goTo(tester, '/exercice/figure/carre');
         final topic = findShapeTopic('carre')!;
         final p = generateShapeCombinedProblem(topic, topic.id.hashCode ^ 0);
-        await _answer(tester, ef['perimeterLabel'] as String, p.perimeterAnswer);
+        await _answer(
+          tester,
+          ef['perimeterLabel'] as String,
+          p.perimeterAnswer,
+        );
         await _answer(tester, ef['areaLabel'] as String, p.areaAnswer);
         expect(find.byType(ExerciseCompletePopup), findsOneWidget);
 

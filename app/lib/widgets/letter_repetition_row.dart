@@ -212,7 +212,10 @@ class _LetterRepetitionRowState extends State<LetterRepetitionRow> {
                     final perRow =
                         ((constraints.maxWidth + spacing) / (occSize + spacing))
                             .floor()
-                            .clamp(1, widget.repetitions == 0 ? 1 : widget.repetitions);
+                            .clamp(
+                              1,
+                              widget.repetitions == 0 ? 1 : widget.repetitions,
+                            );
                     final rows = (widget.repetitions / perRow).ceil();
 
                     return SizedBox(
